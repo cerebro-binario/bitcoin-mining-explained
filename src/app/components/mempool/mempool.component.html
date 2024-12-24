@@ -1,23 +1,29 @@
 <p-button
-  label="Minerar Novo Bloco"
-  icon="pi pi-hammer"
-  [routerLink]="'/mine-new-block'"
+  label="Nova Transação"
+  icon="pi pi-plus-circle"
+  routerLink="new-transaction"
 />
 <p-table
-  [value]="blocks"
+  [value]="transactions"
   [tableStyle]="{ 'min-width': '50rem' }"
   styleClass="p-datatable-lg"
   stripedRows
 >
   <ng-template #caption>
     <div class="flex items-center justify-between">
-      <h5 class="m-0">Blocos</h5>
+      @if(transactions.length > 0) {
+      <h5 class="m-0">{{ transactions.length }} Transações</h5>
+      } @else {
+      <h5 class="m-0">Nenhuma transação ainda</h5>
+
+      }
     </div>
   </ng-template>
   <ng-template #header>
     <tr>
       <th pSortableColumn="height"># <p-sortIcon field="height" /></th>
-      <th>Nº de Transações</th>
+      <th>Nº de Inputs</th>
+      <th>Nº de Outputs</th>
       <th>Volume (BTC)</th>
       <th>Total de taxas (BTC)</th>
     </tr>

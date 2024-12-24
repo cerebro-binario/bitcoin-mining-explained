@@ -1,11 +1,17 @@
 import { Component } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { ToolbarModule } from 'primeng/toolbar';
 
 @Component({
   selector: 'app-blockchain',
-  imports: [],
+  imports: [TableModule, ButtonModule, ToolbarModule, RouterModule],
   templateUrl: './blockchain.component.html',
-  styleUrl: './blockchain.component.scss'
+  styleUrl: './blockchain.component.scss',
 })
 export class BlockchainComponent {
+  blocks: any = [{ height: 0, nTransactions: 0, btcVolume: 0, fees: 0 }];
 
+  mineNewBlock() {}
 }

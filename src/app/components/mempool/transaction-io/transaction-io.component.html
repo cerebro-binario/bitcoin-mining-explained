@@ -1,0 +1,24 @@
+<div class="flex gap-4 w-full">
+  <p-toast position="top-center" />
+  <div class="font-semibold text-sm lg:text-base">{{ index + 1 }}</div>
+  <div class="w-full truncate">
+    <div class="flex gap-2 w-full">
+      <div
+        [pTooltip]="item.address"
+        tooltipPosition="top"
+        [fitContent]="false"
+        class="text-orange-300 font-semibold text-sm lg:text-base truncate cursor-pointer"
+        (click)="copyToClipboard(item.address)"
+      >
+        {{ item.address }}
+      </div>
+      <i
+        class="pi pi-clone text-sm lg:text-base cursor-pointer"
+        (click)="copyToClipboard(item.address)"
+      ></i>
+    </div>
+    <div class="block text-base text-white">
+      {{ item.amount.toFixed(8) }} BTC
+    </div>
+  </div>
+</div>
