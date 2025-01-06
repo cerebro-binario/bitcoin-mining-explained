@@ -36,6 +36,11 @@ const Noir = definePreset(Aura, {
           color: '#ffffff',
           focusColor: '#ffffff',
         },
+        accent: {
+          textColor: '#d97706',
+          hoverColor: '#b45309',
+          activeColor: '#92400e',
+        },
       },
       dark: {
         primary: {
@@ -49,6 +54,11 @@ const Noir = definePreset(Aura, {
           focusBackground: 'rgba(250, 250, 250, .24)',
           color: 'rgba(255,255,255,.87)',
           focusColor: 'rgba(255,255,255,.87)',
+        },
+        accent: {
+          textColor: '{orange.300}',
+          hoverColor: '{orange.400}',
+          activeColor: '{orange.500}',
         },
       },
     },
