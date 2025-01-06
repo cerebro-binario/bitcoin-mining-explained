@@ -3,9 +3,9 @@ import { BlockchainComponent } from './components/blockchain/blockchain.componen
 import { MempoolComponent } from './components/mempool/mempool.component';
 import { NewTransactionComponent } from './components/mempool/new-transaction/new-transaction.component';
 import { MineNewBlockComponent } from './components/mine-new-block/mine-new-block.component';
-import { BlockchainLayout } from './layouts/blockchain/blockchain.layout';
+import { BlockchainLayout } from './layouts/home/blockchain/blockchain.layout';
 import { HomeLayout } from './layouts/home/home.layout';
-import { MempoolLayout } from './layouts/mempool/mempool.layout';
+import { MempoolLayout } from './layouts/home/mempool/mempool.layout';
 
 export const routes: Routes = [
   {
