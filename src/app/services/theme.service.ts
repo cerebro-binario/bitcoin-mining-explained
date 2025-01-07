@@ -5,11 +5,24 @@ import { Injectable } from '@angular/core';
 })
 export class ThemeService {
   private themeKey = 'theme';
+  private darkModeClass = 'my-app-dark';
 
   constructor() {}
 
+  get darkMode() {
+    return this.getTheme() === 'dark';
+  }
+
   applyTheme(theme: 'dark' | 'light'): void {
-    document.documentElement.setAttribute('data-p-color-scheme', theme);
+    const element = document.querySelector('html');
+
+    if (theme === 'dark') {
+      element?.classList.add(this.darkModeClass);
+    } else {
+      element?.classList.remove(this.darkModeClass);
+    }
+
+    element?.setAttribute('data-p-color-scheme', theme);
     localStorage.setItem(this.themeKey, theme);
   }
 

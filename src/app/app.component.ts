@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ToolbarModule } from 'primeng/toolbar';
+import { ThemeService } from './services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -13,16 +14,18 @@ import { ToolbarModule } from 'primeng/toolbar';
 export class AppComponent {
   title = 'bitcoin-mining-explained';
 
-  darkMode = false;
+  constructor(private themeService: ThemeService) {}
 
   get darkModeIcon() {
-    return (this.darkMode && 'pi pi-sun') || 'pi pi-moon';
+    return (this.themeService.darkMode && 'pi pi-sun') || 'pi pi-moon';
+  }
+
+  ngOnInit(): void {
+    const theme = this.themeService.getTheme();
+    this.themeService.applyTheme(theme);
   }
 
   toggleDarkMode() {
-    const element = document.querySelector('html');
-    element?.classList.toggle('my-app-dark');
-
-    this.darkMode = element?.classList.contains('my-app-dark') || false;
+    this.themeService.toggleTheme();
   }
 }
