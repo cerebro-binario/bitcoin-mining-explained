@@ -16,6 +16,11 @@ export class HomeLayout {
       icon: 'pi pi-arrow-right-arrow-left',
       label: 'Mempool',
     },
+    {
+      route: '/addresses',
+      icon: 'pi pi-wallet',
+      label: 'Endereços',
+    },
   ];
 
   selectedTab = '/blockchain';
