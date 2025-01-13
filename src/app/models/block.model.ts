@@ -5,7 +5,7 @@ export interface Block {
   height: number;
   transactions: Transaction[];
   timestamp: string;
-  merkleRoot?: string;
-  nonce?: number;
-  hash?: string;
+  merkleRoot: string;
+  nonce: number;
+  hash: string;
 }
