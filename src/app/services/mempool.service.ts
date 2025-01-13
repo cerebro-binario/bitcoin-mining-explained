@@ -24,11 +24,9 @@ export class MempoolService {
     private minerService: MinerService
   ) {}
 
-  createCandidateBlock(
-    previousHash: string,
-    height: number,
-    subsidy: number
-  ): void {
+  createCandidateBlock(previousHash: string, height: number): void {
+    const subsidy = 50000000 >> (height / 210000);
+
     this.candidateBlock = {
       previousHash,
       height,
