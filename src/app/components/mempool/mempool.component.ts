@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
+import { Transaction } from '../../models/transaction.model';
 import { MempoolService } from '../../services/mempool.service';
 
 @Component({
@@ -11,13 +12,11 @@ import { MempoolService } from '../../services/mempool.service';
   styleUrl: './mempool.component.scss',
 })
 export class MempoolComponent {
-  transactions: any = [];
+  transactions: Transaction[] = [];
 
-  constructor(private transactionService: MempoolService) {}
+  constructor(private mempoolService: MempoolService) {}
 
   ngOnInit(): void {
-    this.transactionService.transactions$.subscribe((transactions) => {
-      this.transactions = transactions;
-    });
+    this.transactions = this.mempoolService.transactions;
   }
 }
