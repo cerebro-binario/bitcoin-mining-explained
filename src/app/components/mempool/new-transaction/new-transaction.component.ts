@@ -30,10 +30,7 @@ export class NewTransactionComponent implements OnInit {
   transactionData: any; // Dados gerados para exibição
   isEditing = false; // Flag para alternar entre exibição e edição
 
-  constructor(
-    private fb: FormBuilder,
-    private transactionService: MempoolService
-  ) {
+  constructor(private fb: FormBuilder, private mempoolService: MempoolService) {
     this.transactionForm = this.fb.group({
       inputs: this.fb.array([]),
       outputs: this.fb.array([]),
@@ -53,7 +50,7 @@ export class NewTransactionComponent implements OnInit {
   }
 
   generateRandomTransaction() {
-    this.transactionData = this.transactionService.generateRandomTransaction();
+    this.transactionData = this.mempoolService.generateRandomTransaction();
     this.populateForm(this.transactionData); // Preenche o formulário, mas não mostra por padrão
   }
 
@@ -80,7 +77,7 @@ export class NewTransactionComponent implements OnInit {
 
   submitTransaction() {
     if (this.transactionForm.valid) {
-      this.transactionService.addTransaction(this.transactionForm.value);
+      this.mempoolService.addTransaction(this.transactionForm.value);
     }
   }
 }
