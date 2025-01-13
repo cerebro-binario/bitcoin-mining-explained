@@ -1,21 +1,73 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { createHash } from 'crypto';
+import { COINBASE_ADDRESS } from '../models/address.model';
+import { Block } from '../models/block.model';
+import { Transaction } from '../models/transaction.model';
+import {
+  getRandomAmount,
+  getRandomInt,
+  getWeightedRandomInput,
+  hashSHA256,
+} from '../utils/tools';
+import { AddressService } from './address.service';
+import { MinerService } from './miner.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MempoolService {
-  private transactionsSubject = new BehaviorSubject<any[]>([]);
-  transactions$ = this.transactionsSubject.asObservable();
+  candidateBlock: Block | null = null;
+  transactions: Transaction[] = [];
+
+  constructor(
+    private addressService: AddressService,
+    private minerService: MinerService
+  ) {}
+
+  createCandidateBlock(
+    previousHash: string,
+    height: number,
+    subsidy: number
+  ): void {
+    this.candidateBlock = {
+      previousHash,
+      height,
+      transactions: [],
+      timestamp: new Date().toISOString(),
+      hash: '',
+      merkleRoot: '',
+      nonce: 0,
+    };
+
+    // Adiciona a transação de coinbase
+    const coinbaseTx: Transaction = {
+      txid: '',
+      transfers: [
+        {
+          from: COINBASE_ADDRESS,
+          to: this.minerService.getRandomMiner(),
+          amount: subsidy,
+        },
+      ],
+      fee: 0,
+    };
+
+    coinbaseTx.txid = this.generateTxId(coinbaseTx);
+
+    this.candidateBlock.transactions.push(coinbaseTx);
+    this.candidateBlock.merkleRoot = this.generateMerkleRoot();
+
+    // nonce e hash serão calculados na mineração
+  }
 
   generateRandomTransaction() {
-    const numInputs = this.getWeightedRandomInput();
+    const numInputs = getWeightedRandomInput();
 
-    const numOutputs = this.getRandomInt(1, 3);
+    const numOutputs = getRandomInt(1, 3);
 
     const inputs = Array.from({ length: numInputs }, () => ({
-      address: this.generateRandomAddress(),
-      amount: this.getRandomAmount(),
+      address: this.addressService.generateRandomAddress(),
+      amount: getRandomAmount(),
     }));
 
     let totalAmount = inputs.reduce((sum, input) => sum + input.amount, 0);
@@ -23,11 +75,11 @@ export class MempoolService {
 
     const outputs = Array.from({ length: numOutputs }, (_, i): any => {
       const output = {
-        address: this.generateRandomAddress(),
+        address: this.addressService.generateRandomAddress(),
         amount:
           i === numOutputs - 1
             ? parseFloat(totalAmount.toFixed(8))
-            : this.getRandomAmount(totalAmount),
+            : getRandomAmount(totalAmount),
       };
 
       totalAmount -= output.amount;
@@ -37,67 +89,56 @@ export class MempoolService {
 
     const timestamp = new Date();
 
-    const feePercentage = this.getRandomInt(1, 10) / 100;
+    const feePercentage = getRandomInt(1, 10) / 100;
     const fees = parseFloat((btcVolume * feePercentage).toFixed(8));
 
     return { inputs, outputs, btcVolume, timestamp, fees };
   }
 
   addTransaction(transaction: any) {
-    const transactions = this.transactionsSubject.value;
-    this.transactionsSubject.next([...transactions, transaction]);
+    this.transactions.push(transaction);
   }
 
-  private generateRandomAddress(): string {
-    const addressTypes = ['1', '3', 'bc1']; // Legacy, P2SH, Bech32
-    const type = addressTypes[Math.floor(Math.random() * addressTypes.length)];
+  // Gera um TXID utilizando HASH256 (double-SHA256)
+  generateTxId(data: Transaction): string {
+    // Stringify os dados da transação
+    const transactionData = JSON.stringify(data);
 
-    if (type === 'bc1') {
-      // Bech32 address: "bc1" + alfanumérico de 39 a 59 caracteres
-      return (
-        type + this.getRandomString(39, 'abcdefghijklmnopqrstuvwxyz0123456789')
-      );
-    } else {
-      // Legacy (P2PKH) ou P2SH: alfanumérico de 25 a 34 caracteres
-      return (
-        type +
-        this.getRandomString(
-          this.getRandomInt(25, 34),
-          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-        )
-      );
+    // Primeiro SHA256
+    const firstHash = createHash('sha256').update(transactionData).digest();
+
+    // Segundo SHA256
+    const txid = createHash('sha256').update(firstHash).digest('hex');
+
+    return txid; // Retorna o TXID em formato hexadecimal
+  }
+
+  generateMerkleRoot(): string {
+    if (!this.candidateBlock || this.candidateBlock.transactions.length === 0) {
+      throw new Error('There is no candidate block or transactions'); // Não há transações no bloco candidato
     }
-  }
 
-  private getRandomString(length: number, characters: string): string {
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(
-        Math.floor(Math.random() * characters.length)
-      );
-    }
-    return result;
-  }
-
-  private getRandomAmount(max = 10): number {
-    return parseFloat((Math.random() * max).toFixed(8));
-  }
-
-  private getRandomInt(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  private getWeightedRandomInput(): number {
-    const weights = [70, 20, 10];
-    const cumulativeWeights = weights.map(
-      (
-        (sum) => (value) =>
-          (sum += value)
-      )(0)
+    // Calcula os hashes das transações
+    let transactionHashes = this.candidateBlock.transactions.map((tx) =>
+      hashSHA256(tx.txid)
     );
-    const random =
-      Math.random() * cumulativeWeights[cumulativeWeights.length - 1];
 
-    return cumulativeWeights.findIndex((weight) => random < weight) + 1;
+    // Gera o Merkle Root a partir dos hashes
+    while (transactionHashes.length > 1) {
+      const newLevel: string[] = [];
+
+      for (let i = 0; i < transactionHashes.length; i += 2) {
+        // Se houver um número ímpar de hashes, repita o último
+        const hash1 = transactionHashes[i];
+        const hash2 = transactionHashes[i + 1] || hash1; // Usa o mesmo hash para completar o par
+
+        // Concatena os dois hashes, calcula o SHA256, e adiciona ao próximo nível
+        newLevel.push(hashSHA256(hash1 + hash2));
+      }
+
+      transactionHashes = newLevel; // Atualiza o nível atual
+    }
+
+    return transactionHashes[0]; // O último hash é o Merkle Root
   }
 }
