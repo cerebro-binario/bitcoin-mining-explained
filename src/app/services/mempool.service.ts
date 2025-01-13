@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { createHash } from 'crypto';
 import { COINBASE_ADDRESS } from '../models/address.model';
 import { Block } from '../models/block.model';
 import { Transaction } from '../models/transaction.model';
 import {
+  dupHashSHA256,
   getRandomAmount,
   getRandomInt,
   getWeightedRandomInput,
@@ -102,11 +102,7 @@ export class MempoolService {
     // Stringify os dados da transação
     const transactionData = JSON.stringify(data);
 
-    // Primeiro SHA256
-    const firstHash = createHash('sha256').update(transactionData).digest();
-
-    // Segundo SHA256
-    const txid = createHash('sha256').update(firstHash).digest('hex');
+    const txid = dupHashSHA256(transactionData);
 
     return txid; // Retorna o TXID em formato hexadecimal
   }

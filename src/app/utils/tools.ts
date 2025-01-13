@@ -1,7 +1,11 @@
-import { createHash } from 'crypto';
+import * as CryptoJS from 'crypto-js';
 
 export function hashSHA256(data: string): string {
-  return createHash('sha256').update(data).digest('hex');
+  return CryptoJS.SHA256(data).toString(CryptoJS.enc.Hex);
+}
+
+export function dupHashSHA256(data: string): string {
+  return hashSHA256(hashSHA256(data));
 }
 
 export function getRandomAmount(max = 10): number {
