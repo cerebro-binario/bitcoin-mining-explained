@@ -74,7 +74,7 @@ export class AddressService {
   }
 
   getBalance(address: BitcoinAddress): number {
-    const addrInfo = this.keyPairs[address].addresses.find(
+    const addrInfo = this.keyPairs[address]?.addresses.find(
       (addr) => addr.address === address
     );
     return addrInfo?.balance || 0;
