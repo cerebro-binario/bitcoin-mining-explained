@@ -107,6 +107,12 @@
                 <span [pTooltip]="addr.address" tooltipPosition="top">
                   {{ shortenValue(addr.address) }}
                 </span>
+                <button
+                  class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+                  (click)="copyToClipboard(addr.address)"
+                >
+                  <i class="pi pi-copy"></i>
+                </button>
               </td>
 
               <!-- Saldo Correspondente -->
@@ -174,6 +180,12 @@
                   <span [pTooltip]="addr.address" tooltipPosition="top">
                     {{ shortenValue(addr.address) }}
                   </span>
+                  <button
+                    class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+                    (click)="copyToClipboard(addr.address)"
+                  >
+                    <i class="pi pi-copy"></i>
+                  </button>
                 </td>
 
                 <!-- Saldo Correspondente -->
