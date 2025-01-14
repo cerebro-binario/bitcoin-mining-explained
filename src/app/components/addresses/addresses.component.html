@@ -44,9 +44,40 @@
   </ng-template>
   <ng-template pTemplate="body" let-item>
     <tr>
-      <td>{{ item.privateKey }}</td>
-      <td>{{ item.publicKey }}</td>
-      <td>{{ item.address }}</td>
+      <!-- Chave privada com tooltip no hover -->
+      <td class="relative">
+        <span
+          class="cursor-pointer underline decoration-dashed"
+          [pTooltip]="item.privateKey"
+          tooltipPosition="top"
+          [attr.title]="item.privateKey"
+          >{{ shortenValue(item.privateKey) }}</span
+        >
+      </td>
+
+      <!-- Chave pública com tooltip no hover -->
+      <td class="relative">
+        <span
+          class="cursor-pointer underline decoration-dashed"
+          [pTooltip]="item.publicKey"
+          tooltipPosition="top"
+          [attr.title]="item.publicKey"
+        >
+          {{ shortenValue(item.publicKey) }}
+        </span>
+      </td>
+
+      <!-- Endereço Bitcoin com tooltip no hover -->
+      <td class="relative">
+        <span
+          class="cursor-pointer underline decoration-dashed"
+          [pTooltip]="item.address"
+          tooltipPosition="top"
+          [attr.title]="item.address"
+        >
+          {{ shortenValue(item.address) }}
+        </span>
+      </td>
       <td>{{ item.balance }}</td>
     </tr>
   </ng-template>

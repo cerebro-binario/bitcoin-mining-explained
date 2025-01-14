@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 import { AddressService, AddressType } from '../../services/address.service';
 
 @Component({
@@ -14,6 +15,7 @@ import { AddressService, AddressType } from '../../services/address.service';
     TableModule,
     CheckboxModule,
     SelectModule,
+    TooltipModule,
   ],
   templateUrl: './addresses.component.html',
   styleUrl: './addresses.component.scss',
@@ -34,6 +36,7 @@ export class AddressesComponent implements OnInit {
     { type: 'P2SH', name: 'P2SH (Multisig)' },
     { type: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
   ];
+  hoveredAddress: string | null = null;
 
   constructor(private addressService: AddressService) {}
 
@@ -74,6 +77,11 @@ export class AddressesComponent implements OnInit {
   toggleFilter(): void {
     this.currentPage = 0;
     this.updatePagination();
+  }
+
+  // Método para encurtar endereços, mostrando apenas os primeiros e últimos caracteres
+  shortenValue(value: string): string {
+    return `${value.slice(0, 6)}...${value.slice(-6)}`;
   }
 
   // Manipula a mudança de página
