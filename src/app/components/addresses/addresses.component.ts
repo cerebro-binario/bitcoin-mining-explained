@@ -37,13 +37,11 @@ export class AddressesComponent implements OnInit {
     }[];
     balance: number;
   }[] = [];
-  selectedAddressType: BitcoinAddressType = 'P2PKH';
   addressTypes: { type: BitcoinAddressType; name: string }[] = [
     { type: 'P2PKH', name: 'P2PKH (Legacy)' },
     { type: 'P2SH', name: 'P2SH (Multisig)' },
     { type: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
   ];
-  hoveredAddress: string | null = null;
   expandedRows: { [key: string]: boolean } = {};
 
   constructor(private addressService: AddressService) {}
