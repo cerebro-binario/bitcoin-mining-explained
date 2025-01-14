@@ -8,6 +8,12 @@ export type BitcoinAddressBalance = {
   balance: number;
 };
 
+export type KeyPairAddresses = {
+  privateKey: string;
+  publicKey: string;
+  addresses: BitcoinAddressBalance[];
+};
+
 export type CoinbaseAddress =
   '0000000000000000000000000000000000000000000000000000000000000000';
 

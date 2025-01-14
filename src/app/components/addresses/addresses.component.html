@@ -16,10 +16,9 @@
   </div>
 </div>
 
-<!-- Tabela de endereços -->
 <!-- Tabela de chaves privadas e endereços -->
 <p-table
-  [value]="paginatedKeys"
+  [value]="keyPairAddresses"
   [paginator]="true"
   [rows]="rowsPerPage"
   [expandedRowKeys]="expandedRows"
@@ -34,7 +33,6 @@
       <th>Chave Privada</th>
       <th>Chave Pública</th>
       <th>Endereços Bitcoin</th>
-      <th>Saldo</th>
     </tr>
   </ng-template>
 
@@ -53,14 +51,14 @@
       <td class="relative">
         <span
           class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="item.privateKey"
+          [pTooltip]="'0x' + item.privateKey"
           tooltipPosition="top"
-          [attr.title]="item.privateKey"
-          >{{ shortenValue(item.privateKey) }}</span
+          [attr.title]="'0x' + item.privateKey"
+          >0x{{ shortenValue(item.privateKey) }}</span
         >
         <button
           class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-          (click)="copyToClipboard(item.privateKey)"
+          (click)="copyToClipboard('0x' + item.privateKey)"
         >
           <i class="pi pi-copy"></i>
         </button>
@@ -70,50 +68,53 @@
       <td class="relative">
         <span
           class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="item.publicKey"
+          [pTooltip]="'0x' + item.publicKey"
           tooltipPosition="top"
-          [attr.title]="item.publicKey"
+          [attr.title]="'0x' + item.publicKey"
         >
-          {{ shortenValue(item.publicKey) }}
+          0x{{ shortenValue(item.publicKey) }}
         </span>
         <button
           class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-          (click)="copyToClipboard(item.publicKey)"
+          (click)="copyToClipboard('0x' + item.publicKey)"
         >
           <i class="pi pi-copy"></i>
         </button>
       </td>
 
-      <!-- Endereços Bitcoin (3 formatos na mesma coluna) -->
-      <td>
-        <div class="flex flex-col">
-          <div
-            *ngFor="let addr of item.addresses"
-            class="mb-1 grid grid-cols-[60px_auto_1fr]"
-          >
-            <strong class="text-xs text-gray-500 flex items-center"
-              >{{ addr.type }}:</strong
-            >
-            <span
-              class="truncate cursor-pointer ml-2 underline decoration-dashed"
-              [pTooltip]="addr.value"
-              tooltipPosition="top"
-              [attr.title]="addr.value"
-            >
-              {{ shortenValue(addr.value) }}
-            </span>
-            <button
-              class="p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(addr.value)"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
-        </div>
-      </td>
+      <!-- Coluna com a tabela aninhada para endereços e saldos -->
+      <td colspan="2">
+        <!-- Colspan une a célula com a coluna de saldo -->
+        <p-table
+          [value]="item.addresses"
+          class="p-datatable-sm w-full rounded-md"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th></th>
+              <th></th>
+              <th>Saldo</th>
+            </tr>
+          </ng-template>
 
-      <!-- Saldo -->
-      <td>{{ item.balance }}</td>
+          <ng-template pTemplate="body" let-addr>
+            <tr>
+              <!-- Tipo do Endereço -->
+              <td class="text-xs text-gray-500">{{ addr.type }}</td>
+
+              <!-- Endereço Bitcoin -->
+              <td class="truncate cursor-pointer underline decoration-dashed">
+                <span [pTooltip]="addr.address" tooltipPosition="top">
+                  {{ shortenValue(addr.address) }}
+                </span>
+              </td>
+
+              <!-- Saldo Correspondente -->
+              <td>{{ formatBalance(addr.balance) }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </td>
     </tr>
   </ng-template>
 
@@ -124,15 +125,15 @@
         <div
           class="p-4 bg-gray-100 dark:bg-gray-800 rounded-md shadow-md flex flex-col gap-2"
         >
-          <h3 class="text-lg font-bold mb-2">Detalhes do Endereço</h3>
+          <h3 class="text-lg font-bold mb-2">Detalhes do Key Pair</h3>
 
           <!-- Chave Privada -->
           <div>
             <strong>Chave Privada:</strong>
-            <span class="ml-2">{{ item.privateKey }}</span>
+            <span class="ml-2">0x{{ item.privateKey }}</span>
             <button
               class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.privateKey)"
+              (click)="copyToClipboard('0x' + item.privateKey)"
             >
               <i class="pi pi-copy"></i>
             </button>
@@ -141,60 +142,45 @@
           <!-- Chave Pública -->
           <div>
             <strong>Chave Pública:</strong>
-            <span class="ml-2">{{ item.publicKey }}</span>
+            <span class="ml-2">0x{{ item.publicKey }}</span>
             <button
               class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.publicKey)"
+              (click)="copyToClipboard('0x' + item.publicKey)"
             >
               <i class="pi pi-copy"></i>
             </button>
           </div>
 
-          <!-- Endereço Bitcoin -->
-          <div>
-            <strong>Endereço P2PKH (Legacy):</strong>
-            <span class="ml-2">{{ item.p2pkh }}</span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.p2pkh)"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
-          <!-- Endereço Bitcoin -->
-          <div>
-            <strong>Endereço P2SH (Multisig):</strong>
-            <span class="ml-2">{{ item.p2sh }}</span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.p2sh)"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
-          <!-- Endereço Bitcoin -->
-          <div>
-            <strong>Endereço P2WPKH (SegWit - Bech32):</strong>
-            <span class="ml-2">{{ item.p2wpkh }}</span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.p2wpkh)"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
+          <!-- Endereços Bitcoin -->
+          <p-table
+            [value]="item.addresses"
+            class="p-datatable-sm w-full rounded-md"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Tipo</th>
+                <th>Endereço</th>
+                <th>Saldo</th>
+              </tr>
+            </ng-template>
 
-          <!-- Saldo -->
-          <div>
-            <strong>Saldo:</strong>
-            <span class="ml-2">{{ item.balance }}</span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.balance)"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
+            <ng-template pTemplate="body" let-addr>
+              <tr>
+                <!-- Tipo do Endereço -->
+                <td class="text-xs text-gray-500">{{ addr.type }}</td>
+
+                <!-- Endereço Bitcoin -->
+                <td class="truncate cursor-pointer underline decoration-dashed">
+                  <span [pTooltip]="addr.address" tooltipPosition="top">
+                    {{ shortenValue(addr.address) }}
+                  </span>
+                </td>
+
+                <!-- Saldo Correspondente -->
+                <td>{{ formatBalance(addr.balance) }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
         </div>
       </td>
     </tr>

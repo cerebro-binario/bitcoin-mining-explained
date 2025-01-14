@@ -8,6 +8,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import {
   BitcoinAddressBalance,
   BitcoinAddressType,
+  KeyPairAddresses,
 } from '../../models/address.model';
 import { AddressService } from '../../services/address.service';
 
@@ -28,11 +29,7 @@ export class AddressesComponent implements OnInit {
   rowsPerPage = 100;
   currentPage = 0;
   showOnlyWithBalance = true;
-  paginatedKeys: {
-    privateKey: string;
-    publicKey: string;
-    addresses: BitcoinAddressBalance[];
-  }[] = [];
+  keyPairAddresses: KeyPairAddresses[] = [];
   addressTypes: { type: BitcoinAddressType; name: string }[] = [
     { type: 'P2PKH', name: 'P2PKH (Legacy)' },
     { type: 'P2SH', name: 'P2SH (Multisig)' },
@@ -48,7 +45,7 @@ export class AddressesComponent implements OnInit {
 
   // Atualiza a lista de chaves privadas e endereços na página atual
   updatePagination(): void {
-    this.paginatedKeys = [];
+    this.keyPairAddresses = [];
 
     const start = BigInt(this.currentPage * this.rowsPerPage + 1);
     const end = start + BigInt(this.rowsPerPage);
@@ -88,7 +85,7 @@ export class AddressesComponent implements OnInit {
         },
       ];
 
-      this.paginatedKeys.push({
+      this.keyPairAddresses.push({
         privateKey,
         publicKey,
         addresses,
@@ -129,5 +126,9 @@ export class AddressesComponent implements OnInit {
   onPageChange(event: any): void {
     this.currentPage = event.page;
     this.updatePagination();
+  }
+
+  formatBalance(balance: number): string {
+    return `${balance.toFixed(8)} BTC`;
   }
 }
