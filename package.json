@@ -19,6 +19,7 @@
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
     "@primeng/themes": "^19.0.1",
+    "bech32": "^2.0.0",
     "bs58": "^6.0.0",
     "crypto-js": "^4.2.0",
     "elliptic": "^6.6.1",

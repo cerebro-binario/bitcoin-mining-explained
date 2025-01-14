@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import * as CryptoJS from 'crypto-js';
 import { ec } from 'elliptic';
@@ -138,7 +139,15 @@ export class AddressService {
 
   // Gera um endereço Bech32 (SegWit)
   generateBech32Address(hash160: string): string {
-    // Bech32 usa "bc1" como prefixo e codifica em formato específico (sem checksum duplo)
-    return `bc1${hash160.substring(0, 39)}`; // Simulação do formato Bech32
+    const hashBytes = new Uint8Array(
+      hash160.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+    );
+
+    // Criar versão SegWit (P2WPKH) com witness version 0
+    const words = bech32.toWords(hashBytes);
+    words.unshift(0x00); // Witness version 0
+
+    // Codificar no formato Bech32 com prefixo "bc1" (Bitcoin Mainnet)
+    return bech32.encode('bc', words);
   }
 }
