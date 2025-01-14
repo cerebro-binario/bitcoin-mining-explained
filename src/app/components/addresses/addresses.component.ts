@@ -5,6 +5,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
+import { BitcoinAddress } from '../../models/address.model';
 import { AddressService, AddressType } from '../../services/address.service';
 
 @Component({
@@ -27,7 +28,9 @@ export class AddressesComponent implements OnInit {
   paginatedKeys: {
     privateKey: string;
     publicKey: string;
-    address: string;
+    p2pkh: BitcoinAddress;
+    p2sh: BitcoinAddress;
+    p2wpkh: BitcoinAddress;
     balance: number;
   }[] = [];
   selectedAddressType: AddressType = 'P2PKH';
@@ -55,17 +58,30 @@ export class AddressesComponent implements OnInit {
     for (let i = start; i < end; i++) {
       const privateKey = this.formatPrivateKey(i);
       const publicKey = this.addressService.generatePublicKey(privateKey);
-      const address = this.addressService.generateBitcoinAddress(
+
+      const p2pkh = this.addressService.generateBitcoinAddress(
         publicKey,
-        this.selectedAddressType
+        'P2PKH'
+      );
+      const p2sh = this.addressService.generateBitcoinAddress(
+        publicKey,
+        'P2SH'
+      );
+      const p2wpkh = this.addressService.generateBitcoinAddress(
+        publicKey,
+        'P2WPKH'
       );
 
-      if (this.addressService.isValidBitcoinAddress(address)) {
-        const balance = this.addressService.getBalance(address) || 0;
-        this.paginatedKeys.push({ privateKey, publicKey, address, balance });
-      } else {
-        console.error(`Endereço inválido gerado: ${address}`);
-      }
+      const balance = this.addressService.getBalance(p2pkh) || 0;
+
+      this.paginatedKeys.push({
+        privateKey,
+        publicKey,
+        p2pkh,
+        p2sh,
+        p2wpkh,
+        balance,
+      });
     }
   }
 

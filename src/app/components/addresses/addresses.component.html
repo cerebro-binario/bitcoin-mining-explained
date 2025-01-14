@@ -42,7 +42,7 @@
       <th></th>
       <th>Chave Privada</th>
       <th>Chave Pública</th>
-      <th>Endereço Bitcoin</th>
+      <th>Endereços Bitcoin</th>
       <th>Saldo</th>
     </tr>
   </ng-template>
@@ -67,6 +67,12 @@
           [attr.title]="item.privateKey"
           >{{ shortenValue(item.privateKey) }}</span
         >
+        <button
+          class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+          (click)="copyToClipboard(item.privateKey)"
+        >
+          <i class="pi pi-copy"></i>
+        </button>
       </td>
 
       <!-- Chave pública com tooltip no hover -->
@@ -79,19 +85,74 @@
         >
           {{ shortenValue(item.publicKey) }}
         </span>
+        <button
+          class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+          (click)="copyToClipboard(item.publicKey)"
+        >
+          <i class="pi pi-copy"></i>
+        </button>
       </td>
 
-      <!-- Endereço Bitcoin com tooltip no hover -->
-      <td class="relative">
-        <span
-          class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="item.address"
-          tooltipPosition="top"
-          [attr.title]="item.address"
-        >
-          {{ shortenValue(item.address) }}
-        </span>
+      <!-- Endereços Bitcoin (3 formatos na mesma coluna) -->
+      <td>
+        <div class="flex flex-col">
+          <div class="mb-1">
+            <strong class="text-xs text-gray-500">P2PKH:</strong>
+            <span
+              class="cursor-pointer ml-2 underline decoration-dashed"
+              [pTooltip]="item.p2pkh"
+              tooltipPosition="top"
+              [attr.title]="item.p2pkh"
+            >
+              {{ shortenValue(item.p2pkh) }}
+            </span>
+            <button
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+              (click)="copyToClipboard(item.p2pkh)"
+            >
+              <i class="pi pi-copy"></i>
+            </button>
+          </div>
+
+          <div class="mb-1">
+            <strong class="text-xs text-gray-500">P2SH:</strong>
+            <span
+              class="cursor-pointer ml-2 underline decoration-dashed"
+              [pTooltip]="item.p2sh"
+              tooltipPosition="top"
+              [attr.title]="item.p2sh"
+            >
+              {{ shortenValue(item.p2sh) }}
+            </span>
+            <button
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+              (click)="copyToClipboard(item.p2sh)"
+            >
+              <i class="pi pi-copy"></i>
+            </button>
+          </div>
+
+          <div>
+            <strong class="text-xs text-gray-500">P2WPKH:</strong>
+            <span
+              class="cursor-pointer ml-2 underline decoration-dashed"
+              [pTooltip]="item.p2wpkh"
+              tooltipPosition="top"
+              [attr.title]="item.p2wpkh"
+            >
+              {{ shortenValue(item.p2wpkh) }}
+            </span>
+            <button
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+              (click)="copyToClipboard(item.p2wpkh)"
+            >
+              <i class="pi pi-copy"></i>
+            </button>
+          </div>
+        </div>
       </td>
+
+      <!-- Saldo -->
       <td>{{ item.balance }}</td>
     </tr>
   </ng-template>
@@ -110,7 +171,7 @@
             <strong>Chave Privada:</strong>
             <span class="ml-2">{{ item.privateKey }}</span>
             <button
-              class="ml-2 p-button p-button-icon-only p-button-sm"
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
               (click)="copyToClipboard(item.privateKey)"
             >
               <i class="pi pi-copy"></i>
@@ -122,7 +183,7 @@
             <strong>Chave Pública:</strong>
             <span class="ml-2">{{ item.publicKey }}</span>
             <button
-              class="ml-2 p-button p-button-icon-only p-button-sm"
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
               (click)="copyToClipboard(item.publicKey)"
             >
               <i class="pi pi-copy"></i>
@@ -131,11 +192,33 @@
 
           <!-- Endereço Bitcoin -->
           <div>
-            <strong>Endereço Bitcoin:</strong>
-            <span class="ml-2">{{ item.address }}</span>
+            <strong>Endereço P2PKH (Legacy):</strong>
+            <span class="ml-2">{{ item.p2pkh }}</span>
             <button
-              class="ml-2 p-button p-button-icon-only p-button-sm"
-              (click)="copyToClipboard(item.address)"
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+              (click)="copyToClipboard(item.p2pkh)"
+            >
+              <i class="pi pi-copy"></i>
+            </button>
+          </div>
+          <!-- Endereço Bitcoin -->
+          <div>
+            <strong>Endereço P2SH (Multisig):</strong>
+            <span class="ml-2">{{ item.p2sh }}</span>
+            <button
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+              (click)="copyToClipboard(item.p2sh)"
+            >
+              <i class="pi pi-copy"></i>
+            </button>
+          </div>
+          <!-- Endereço Bitcoin -->
+          <div>
+            <strong>Endereço P2WPKH (SegWit - Bech32):</strong>
+            <span class="ml-2">{{ item.p2wpkh }}</span>
+            <button
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
+              (click)="copyToClipboard(item.p2wpkh)"
             >
               <i class="pi pi-copy"></i>
             </button>
@@ -146,7 +229,7 @@
             <strong>Saldo:</strong>
             <span class="ml-2">{{ item.balance }}</span>
             <button
-              class="ml-2 p-button p-button-icon-only p-button-sm"
+              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
               (click)="copyToClipboard(item.balance)"
             >
               <i class="pi pi-copy"></i>
