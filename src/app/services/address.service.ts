@@ -24,7 +24,7 @@ export class AddressService {
     { code: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
   ];
 
-  keyPairs: KeyPairByAddress = {};
+  keyPairsWithBalance: KeyPairByAddress = {};
 
   constructor() {}
 
@@ -40,9 +40,9 @@ export class AddressService {
     if (!addressInfo)
       throw new Error('Could not get address info for this key pair');
 
-    if (!this.keyPairs[addressInfo.address]) {
+    if (!this.keyPairsWithBalance[addressInfo.address]) {
       addressInfo.balance = 0;
-      this.keyPairs[addressInfo.address] = keyPair;
+      this.keyPairsWithBalance[addressInfo.address] = keyPair;
     }
 
     addressInfo.balance += amount;
@@ -66,7 +66,7 @@ export class AddressService {
       return false; // Saldo insuficiente
     }
 
-    const keyPair = this.keyPairs[to.address];
+    const keyPair = this.keyPairsWithBalance[to.address];
 
     this.addBalance(keyPair, to.type.code, amount);
 
@@ -74,14 +74,18 @@ export class AddressService {
   }
 
   getBalance(address: BitcoinAddress): number {
-    const addrInfo = this.keyPairs[address]?.addresses.find(
+    const addrInfo = this.keyPairsWithBalance[address]?.addresses.find(
       (addr) => addr.address === address
     );
     return addrInfo?.balance || 0;
   }
 
+  getAllKeyPairsWithBalance(): KeyPair[] {
+    return Object.values(this.keyPairsWithBalance);
+  }
+
   getKeyPairByAddress(address: BitcoinAddress) {
-    return this.keyPairs[address];
+    return this.keyPairsWithBalance[address];
   }
 
   isValidBitcoinAddress(address: string): address is BitcoinAddress {

@@ -24,7 +24,7 @@ import { AddressService } from '../../services/address.service';
   styleUrl: './addresses.component.scss',
 })
 export class AddressesComponent implements OnInit {
-  rowsPerPage = 100;
+  rowsPerPage = 10;
   currentPage = 0;
   showOnlyWithBalance = true;
   keyPairs: KeyPair[] = [];
@@ -39,6 +39,11 @@ export class AddressesComponent implements OnInit {
 
   // Atualiza a lista de chaves privadas e endereços na página atual
   updatePagination(): void {
+    if (this.showOnlyWithBalance) {
+      this.keyPairs = this.addressService.getAllKeyPairsWithBalance();
+      return;
+    }
+
     this.keyPairs = [];
 
     const start = BigInt(this.currentPage * this.rowsPerPage + 1);
