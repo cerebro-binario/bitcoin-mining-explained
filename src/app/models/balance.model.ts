@@ -1,5 +1,5 @@
 import { BitcoinAddress } from './address.model';
 
-export type Balances = {
+export type BalanceByAddress = {
   [address in BitcoinAddress]: number;
 };

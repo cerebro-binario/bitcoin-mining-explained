@@ -3,10 +3,8 @@ import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import * as CryptoJS from 'crypto-js';
 import { ec } from 'elliptic';
-import { BitcoinAddress } from '../models/address.model';
-import { Balances } from '../models/balance.model';
-
-export type BitcoinAddressType = 'P2PKH' | 'P2SH' | 'P2WPKH';
+import { BitcoinAddress, BitcoinAddressType } from '../models/address.model';
+import { BalanceByAddress } from '../models/balance.model';
 
 @Injectable({
   providedIn: 'root',
@@ -15,7 +13,7 @@ export class AddressService {
   private bitcoinAddressRegex = /^(1|3|bc1)[a-zA-HJ-NP-Z0-9]{25,39}$/;
   private ec = new ec('secp256k1');
 
-  balances: Balances = {};
+  balances: BalanceByAddress = {};
 
   constructor() {}
 
@@ -46,7 +44,7 @@ export class AddressService {
     return this.balances[address] || 0;
   }
 
-  getAllBalances(): Balances {
+  getAllBalances(): BalanceByAddress {
     return this.balances;
   }
 
