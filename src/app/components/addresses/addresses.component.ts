@@ -6,7 +6,10 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { BitcoinAddress } from '../../models/address.model';
-import { AddressService, AddressType } from '../../services/address.service';
+import {
+  AddressService,
+  BitcoinAddressType,
+} from '../../services/address.service';
 
 @Component({
   selector: 'app-addresses',
@@ -28,13 +31,14 @@ export class AddressesComponent implements OnInit {
   paginatedKeys: {
     privateKey: string;
     publicKey: string;
-    p2pkh: BitcoinAddress;
-    p2sh: BitcoinAddress;
-    p2wpkh: BitcoinAddress;
+    addresses: {
+      value: BitcoinAddress;
+      type: BitcoinAddressType;
+    }[];
     balance: number;
   }[] = [];
-  selectedAddressType: AddressType = 'P2PKH';
-  addressTypes: { type: AddressType; name: string }[] = [
+  selectedAddressType: BitcoinAddressType = 'P2PKH';
+  addressTypes: { type: BitcoinAddressType; name: string }[] = [
     { type: 'P2PKH', name: 'P2PKH (Legacy)' },
     { type: 'P2SH', name: 'P2SH (Multisig)' },
     { type: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
@@ -74,12 +78,19 @@ export class AddressesComponent implements OnInit {
 
       const balance = this.addressService.getBalance(p2pkh) || 0;
 
+      const addresses: {
+        value: BitcoinAddress;
+        type: BitcoinAddressType;
+      }[] = [
+        { type: 'P2PKH', value: p2pkh },
+        { type: 'P2SH', value: p2sh },
+        { type: 'P2WPKH', value: p2wpkh },
+      ];
+
       this.paginatedKeys.push({
         privateKey,
         publicKey,
-        p2pkh,
-        p2sh,
-        p2wpkh,
+        addresses,
         balance,
       });
     }

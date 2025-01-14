@@ -96,55 +96,24 @@
       <!-- Endereços Bitcoin (3 formatos na mesma coluna) -->
       <td>
         <div class="flex flex-col">
-          <div class="mb-1">
-            <strong class="text-xs text-gray-500">P2PKH:</strong>
-            <span
-              class="cursor-pointer ml-2 underline decoration-dashed"
-              [pTooltip]="item.p2pkh"
-              tooltipPosition="top"
-              [attr.title]="item.p2pkh"
+          <div
+            *ngFor="let addr of item.addresses"
+            class="mb-1 grid grid-cols-[60px_auto_1fr]"
+          >
+            <strong class="text-xs text-gray-500 flex items-center"
+              >{{ addr.type }}:</strong
             >
-              {{ shortenValue(item.p2pkh) }}
+            <span
+              class="truncate cursor-pointer ml-2 underline decoration-dashed"
+              [pTooltip]="addr.value"
+              tooltipPosition="top"
+              [attr.title]="addr.value"
+            >
+              {{ shortenValue(addr.value) }}
             </span>
             <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.p2pkh)"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
-
-          <div class="mb-1">
-            <strong class="text-xs text-gray-500">P2SH:</strong>
-            <span
-              class="cursor-pointer ml-2 underline decoration-dashed"
-              [pTooltip]="item.p2sh"
-              tooltipPosition="top"
-              [attr.title]="item.p2sh"
-            >
-              {{ shortenValue(item.p2sh) }}
-            </span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.p2sh)"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
-
-          <div>
-            <strong class="text-xs text-gray-500">P2WPKH:</strong>
-            <span
-              class="cursor-pointer ml-2 underline decoration-dashed"
-              [pTooltip]="item.p2wpkh"
-              tooltipPosition="top"
-              [attr.title]="item.p2wpkh"
-            >
-              {{ shortenValue(item.p2wpkh) }}
-            </span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(item.p2wpkh)"
+              class="p-button p-button-icon-only p-button-sm p-button-text"
+              (click)="copyToClipboard(addr.value)"
             >
               <i class="pi pi-copy"></i>
             </button>

@@ -5,7 +5,7 @@ import { ec } from 'elliptic';
 import { BitcoinAddress } from '../models/address.model';
 import { Balances } from '../models/balance.model';
 
-export type AddressType = 'P2PKH' | 'P2SH' | 'P2WPKH';
+export type BitcoinAddressType = 'P2PKH' | 'P2SH' | 'P2WPKH';
 
 @Injectable({
   providedIn: 'root',
@@ -61,7 +61,7 @@ export class AddressService {
 
   generateBitcoinAddress(
     publicKey: string,
-    type: AddressType = 'P2WPKH'
+    type: BitcoinAddressType = 'P2WPKH'
   ): BitcoinAddress {
     // 1. SHA-256 da chave pública
     const sha256Hash = CryptoJS.SHA256(
