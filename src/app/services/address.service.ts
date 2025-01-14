@@ -5,10 +5,12 @@ import * as CryptoJS from 'crypto-js';
 import { ec } from 'elliptic';
 import {
   BitcoinAddress,
+  BitcoinAddressInfo,
   BitcoinAddressType,
   BitcoinAddressTypeCode,
+  KeyPair,
+  KeyPairByAddress,
 } from '../models/address.model';
-import { BalanceByAddress } from '../models/balance.model';
 
 @Injectable({
   providedIn: 'root',
@@ -22,39 +24,64 @@ export class AddressService {
     { code: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
   ];
 
-  balances: BalanceByAddress = {};
+  keyPairs: KeyPairByAddress = {};
 
   constructor() {}
 
-  addBalance(address: BitcoinAddress, amount: number): void {
-    if (!this.balances[address]) {
-      this.balances[address] = 0;
+  addBalance(
+    keyPair: KeyPair,
+    code: BitcoinAddressTypeCode,
+    amount: number
+  ): void {
+    const addressInfo = keyPair.addresses.find(
+      (addr) => addr.type.code === code
+    );
+
+    if (!addressInfo)
+      throw new Error('Could not get address info for this key pair');
+
+    if (!this.keyPairs[addressInfo.address]) {
+      addressInfo.balance = 0;
+      this.keyPairs[addressInfo.address] = keyPair;
     }
-    this.balances[address] += amount;
+
+    addressInfo.balance += amount;
   }
 
-  subtractBalance(address: BitcoinAddress, amount: number): boolean {
-    if (this.balances[address] && this.balances[address] >= amount) {
-      this.balances[address] -= amount;
+  subtractBalance(addressInfo: BitcoinAddressInfo, amount: number): boolean {
+    if (addressInfo.balance >= amount) {
+      addressInfo.balance -= amount;
       return true;
     }
+
     return false;
   }
 
-  transfer(from: BitcoinAddress, to: BitcoinAddress, amount: number): boolean {
-    if (this.subtractBalance(from, amount)) {
-      this.addBalance(to, amount);
-      return true;
+  transfer(
+    from: BitcoinAddressInfo,
+    to: BitcoinAddressInfo,
+    amount: number
+  ): boolean {
+    if (!this.subtractBalance(from, amount)) {
+      return false; // Saldo insuficiente
     }
-    return false; // Saldo insuficiente
+
+    const keyPair = this.keyPairs[to.address];
+
+    this.addBalance(keyPair, to.type.code, amount);
+
+    return true;
   }
 
   getBalance(address: BitcoinAddress): number {
-    return this.balances[address] || 0;
+    const addrInfo = this.keyPairs[address].addresses.find(
+      (addr) => addr.address === address
+    );
+    return addrInfo?.balance || 0;
   }
 
-  getAllBalances(): BalanceByAddress {
-    return this.balances;
+  getKeyPairByAddress(address: BitcoinAddress) {
+    return this.keyPairs[address];
   }
 
   isValidBitcoinAddress(address: string): address is BitcoinAddress {

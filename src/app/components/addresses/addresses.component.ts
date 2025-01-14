@@ -4,11 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import { TooltipModule } from 'primeng/tooltip';
-import {
-  BitcoinAddressBalance,
-  KeyPairAddresses,
-} from '../../models/address.model';
+import { BitcoinAddressInfo, KeyPair } from '../../models/address.model';
 import { AddressService } from '../../services/address.service';
 
 @Component({
@@ -20,6 +18,7 @@ import { AddressService } from '../../services/address.service';
     CheckboxModule,
     SelectModule,
     TooltipModule,
+    ToggleButtonModule,
   ],
   templateUrl: './addresses.component.html',
   styleUrl: './addresses.component.scss',
@@ -28,8 +27,9 @@ export class AddressesComponent implements OnInit {
   rowsPerPage = 100;
   currentPage = 0;
   showOnlyWithBalance = true;
-  keyPairAddresses: KeyPairAddresses[] = [];
+  keyPairAddresses: KeyPair[] = [];
   expandedRows: { [key: string]: boolean } = {};
+  isHexFormat: boolean = true;
 
   constructor(private addressService: AddressService) {}
 
@@ -61,7 +61,7 @@ export class AddressesComponent implements OnInit {
         'P2WPKH'
       );
 
-      const addresses: BitcoinAddressBalance[] = [
+      const addresses: BitcoinAddressInfo[] = [
         {
           type: this.addressService.getAddressTypeByCode('P2PKH'),
           address: p2pkh,
@@ -111,8 +111,19 @@ export class AddressesComponent implements OnInit {
     this.updatePagination();
   }
 
+  // Alterna entre hexadecimal e decimal
+  formatKey(key: string): string {
+    if (this.isHexFormat) {
+      return '0x' + key; // Retorna como hexadecimal
+    } else {
+      return BigInt('0x' + key).toString(10); // Converte para decimal
+    }
+  }
+
   // Método para encurtar endereços, mostrando apenas os primeiros e últimos caracteres
   shortenValue(value: string): string {
+    if (value.length < 13) return value;
+
     return `${value.slice(0, 6)}...${value.slice(-6)}`;
   }
 

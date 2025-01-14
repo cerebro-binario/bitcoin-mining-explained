@@ -3,16 +3,19 @@
 <div class="flex flex-col md:flex-row gap-4 md:justify-end mb-4">
   <!-- Filtro para mostrar apenas endereços com saldo -->
   <div class="flex items-center gap-2">
-    <p-checkbox
+    <p-toggleButton
+      [(ngModel)]="isHexFormat"
+      onLabel="Hexadecimal"
+      offLabel="Decimal"
+      styleClass="p-button-sm"
+    />
+    <p-toggleButton
       [(ngModel)]="showOnlyWithBalance"
-      [binary]="true"
-      inputId="showOnlyWithBalance"
-      name="showOnlyWithBalance"
+      onLabel="Apenas com saldo"
+      offLabel="Todos"
+      styleClass="p-button-sm"
       (onChange)="toggleFilter()"
     />
-    <label for="showOnlyWithBalance">
-      Mostrar apenas endereços com saldo
-    </label>
   </div>
 </div>
 
@@ -51,14 +54,14 @@
       <td class="relative">
         <span
           class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="'0x' + item.privateKey"
+          [pTooltip]="formatKey(item.privateKey)"
           tooltipPosition="top"
-          [attr.title]="'0x' + item.privateKey"
-          >0x{{ shortenValue(item.privateKey) }}</span
+          [attr.title]="formatKey(item.privateKey)"
+          >{{ shortenValue(formatKey(item.privateKey)) }}</span
         >
         <button
           class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-          (click)="copyToClipboard('0x' + item.privateKey)"
+          (click)="copyToClipboard(formatKey(item.privateKey))"
         >
           <i class="pi pi-copy"></i>
         </button>
@@ -68,15 +71,15 @@
       <td class="relative">
         <span
           class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="'0x' + item.publicKey"
+          [pTooltip]="formatKey(item.publicKey)"
           tooltipPosition="top"
-          [attr.title]="'0x' + item.publicKey"
+          [attr.title]="formatKey(item.publicKey)"
         >
-          0x{{ shortenValue(item.publicKey) }}
+          {{ shortenValue(formatKey(item.publicKey)) }}
         </span>
         <button
           class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-          (click)="copyToClipboard('0x' + item.publicKey)"
+          (click)="copyToClipboard(formatKey(item.publicKey))"
         >
           <i class="pi pi-copy"></i>
         </button>
@@ -136,10 +139,10 @@
           <!-- Chave Privada -->
           <div>
             <strong>Chave Privada:</strong>
-            <span class="ml-2">0x{{ item.privateKey }}</span>
+            <span class="ml-2">{{ formatKey(item.privateKey) }}</span>
             <button
               class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard('0x' + item.privateKey)"
+              (click)="copyToClipboard(formatKey(item.privateKey))"
             >
               <i class="pi pi-copy"></i>
             </button>
@@ -148,10 +151,10 @@
           <!-- Chave Pública -->
           <div>
             <strong>Chave Pública:</strong>
-            <span class="ml-2">0x{{ item.publicKey }}</span>
+            <span class="ml-2">{{ formatKey(item.publicKey) }}</span>
             <button
               class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard('0x' + item.publicKey)"
+              (click)="copyToClipboard(formatKey(item.publicKey))"
             >
               <i class="pi pi-copy"></i>
             </button>

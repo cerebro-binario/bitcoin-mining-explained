@@ -26,15 +26,7 @@ export class MinerService {
 
   // Cria um novo miner (endereço aleatório)
   private createNewMiner(): BitcoinAddress {
-    let newMinerAddress: BitcoinAddress;
-
-    do {
-      newMinerAddress = this.addressService.generateRandomAddress();
-    } while (this.miners[newMinerAddress]); // Garante que o endereço não exista no dicionário
-
-    this.miners[newMinerAddress] = true; // Adiciona o miner ao dicionário
-    this.addressService.addBalance(newMinerAddress, 0); // Inicializa saldo do miner
-    return newMinerAddress;
+    throw new Error('Not implemented');
   }
 
   // Seleciona um miner existente aleatoriamente

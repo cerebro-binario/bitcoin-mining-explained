@@ -7,16 +7,20 @@ export type BitcoinAddressType = {
 
 export type BitcoinAddress = `1${string}` | `3${string}` | `bc1${string}`;
 
-export type BitcoinAddressBalance = {
+export type BitcoinAddressInfo = {
   type: BitcoinAddressType;
   address: BitcoinAddress;
   balance: number;
 };
 
-export type KeyPairAddresses = {
+export type KeyPair = {
   privateKey: string;
   publicKey: string;
-  addresses: BitcoinAddressBalance[];
+  addresses: BitcoinAddressInfo[];
+};
+
+export type KeyPairByAddress = {
+  [address in BitcoinAddress]: KeyPair;
 };
 
 export type CoinbaseAddress =
