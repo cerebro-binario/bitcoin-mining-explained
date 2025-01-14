@@ -11,7 +11,7 @@ import { ToolbarModule } from 'primeng/toolbar';
   styleUrl: './blockchain.component.scss',
 })
 export class BlockchainComponent {
-  blocks: any = [{ height: 0, nTransactions: 0, btcVolume: 0, fees: 0 }];
+  blocks: any = [];
 
-  mineNewBlock() {}
+  constructor() {}
 }

@@ -1,7 +1,7 @@
 <p-button
   label="Minerar Novo Bloco"
   icon="pi pi-hammer"
-  [routerLink]="'/mine-new-block'"
+  [routerLink]="'mine-new-block'"
 />
 <p-table
   [value]="blocks"
@@ -11,7 +11,11 @@
 >
   <ng-template #caption>
     <div class="flex items-center justify-between">
+      @if(blocks.length > 0) {
       <h5 class="m-0">Blocos</h5>
+      }@else {
+      <h5 class="m-0">Nenhum bloco ainda. Minere o primeiro bloco.</h5>
+      }
     </div>
   </ng-template>
   <ng-template #header>
