@@ -7,7 +7,6 @@ import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import {
   BitcoinAddressBalance,
-  BitcoinAddressType,
   KeyPairAddresses,
 } from '../../models/address.model';
 import { AddressService } from '../../services/address.service';
@@ -30,11 +29,6 @@ export class AddressesComponent implements OnInit {
   currentPage = 0;
   showOnlyWithBalance = true;
   keyPairAddresses: KeyPairAddresses[] = [];
-  addressTypes: { type: BitcoinAddressType; name: string }[] = [
-    { type: 'P2PKH', name: 'P2PKH (Legacy)' },
-    { type: 'P2SH', name: 'P2SH (Multisig)' },
-    { type: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
-  ];
   expandedRows: { [key: string]: boolean } = {};
 
   constructor(private addressService: AddressService) {}
@@ -69,17 +63,17 @@ export class AddressesComponent implements OnInit {
 
       const addresses: BitcoinAddressBalance[] = [
         {
-          type: 'P2PKH',
+          type: this.addressService.getAddressTypeByCode('P2PKH'),
           address: p2pkh,
           balance: this.addressService.getBalance(p2pkh) || 0,
         },
         {
-          type: 'P2SH',
+          type: this.addressService.getAddressTypeByCode('P2SH'),
           address: p2sh,
           balance: this.addressService.getBalance(p2sh) || 0,
         },
         {
-          type: 'P2WPKH',
+          type: this.addressService.getAddressTypeByCode('P2WPKH'),
           address: p2wpkh,
           balance: this.addressService.getBalance(p2pkh) || 0,
         },

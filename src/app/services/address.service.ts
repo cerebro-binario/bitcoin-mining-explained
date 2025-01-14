@@ -3,7 +3,11 @@ import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import * as CryptoJS from 'crypto-js';
 import { ec } from 'elliptic';
-import { BitcoinAddress, BitcoinAddressType } from '../models/address.model';
+import {
+  BitcoinAddress,
+  BitcoinAddressType,
+  BitcoinAddressTypeCode,
+} from '../models/address.model';
 import { BalanceByAddress } from '../models/balance.model';
 
 @Injectable({
@@ -12,6 +16,11 @@ import { BalanceByAddress } from '../models/balance.model';
 export class AddressService {
   private bitcoinAddressRegex = /^(1|3|bc1)[a-zA-HJ-NP-Z0-9]{25,39}$/;
   private ec = new ec('secp256k1');
+  private addressTypes: BitcoinAddressType[] = [
+    { code: 'P2PKH', name: 'P2PKH (Legacy)' },
+    { code: 'P2SH', name: 'P2SH (Multisig)' },
+    { code: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
+  ];
 
   balances: BalanceByAddress = {};
 
@@ -52,6 +61,16 @@ export class AddressService {
     return this.bitcoinAddressRegex.test(address);
   }
 
+  getAddressTypeByCode(code: BitcoinAddressTypeCode): BitcoinAddressType {
+    const type = this.addressTypes.find((t) => t.code === code);
+
+    if (!type) {
+      throw new Error('Invalid code');
+    }
+
+    return type;
+  }
+
   // Gera a chave pública a partir da chave privada (ECC Secp256k1)
   generatePublicKey(privateKey: string): string {
     const keyPair = this.ec.keyFromPrivate(privateKey, 'hex'); // Cria um par de chaves
@@ -60,7 +79,7 @@ export class AddressService {
 
   generateBitcoinAddress(
     publicKey: string,
-    type: BitcoinAddressType = 'P2WPKH'
+    type: BitcoinAddressTypeCode = 'P2WPKH'
   ): BitcoinAddress {
     // 1. SHA-256 da chave pública
     const sha256Hash = CryptoJS.SHA256(

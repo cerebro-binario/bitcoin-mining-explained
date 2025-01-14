@@ -1,4 +1,9 @@
-export type BitcoinAddressType = 'P2PKH' | 'P2SH' | 'P2WPKH';
+export type BitcoinAddressTypeCode = 'P2PKH' | 'P2SH' | 'P2WPKH';
+
+export type BitcoinAddressType = {
+  code: BitcoinAddressTypeCode;
+  name: string;
+};
 
 export type BitcoinAddress = `1${string}` | `3${string}` | `bc1${string}`;
 

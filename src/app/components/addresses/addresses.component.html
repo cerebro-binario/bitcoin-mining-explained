@@ -91,8 +91,8 @@
         >
           <ng-template pTemplate="header">
             <tr>
-              <th></th>
-              <th></th>
+              <th>Tipo</th>
+              <th>Endereço</th>
               <th>Saldo</th>
             </tr>
           </ng-template>
@@ -100,7 +100,7 @@
           <ng-template pTemplate="body" let-addr>
             <tr>
               <!-- Tipo do Endereço -->
-              <td class="text-xs text-gray-500">{{ addr.type }}</td>
+              <td class="text-xs text-gray-500">{{ addr.type.name }}</td>
 
               <!-- Endereço Bitcoin -->
               <td class="truncate cursor-pointer underline decoration-dashed">
@@ -173,7 +173,7 @@
             <ng-template pTemplate="body" let-addr>
               <tr>
                 <!-- Tipo do Endereço -->
-                <td class="text-xs text-gray-500">{{ addr.type }}</td>
+                <td class="text-xs text-gray-500">{{ addr.type.name }}</td>
 
                 <!-- Endereço Bitcoin -->
                 <td class="truncate cursor-pointer underline decoration-dashed">
