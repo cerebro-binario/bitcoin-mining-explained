@@ -37,6 +37,7 @@ export class AddressesComponent implements OnInit {
     { type: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
   ];
   hoveredAddress: string | null = null;
+  expandedRows: { [key: string]: boolean } = {};
 
   constructor(private addressService: AddressService) {}
 
@@ -66,6 +67,19 @@ export class AddressesComponent implements OnInit {
         console.error(`Endereço inválido gerado: ${address}`);
       }
     }
+  }
+
+  // Expande ou colapsa a linha da tabela ao clicar
+  toggleRow(item: any): void {
+    const key = item.privateKey;
+    this.expandedRows[key] = !this.expandedRows[key];
+  }
+
+  // Copia um valor para a área de transferência
+  copyToClipboard(value: string): void {
+    navigator.clipboard.writeText(value).then(() => {
+      console.log(`Copiado: ${value}`);
+    });
   }
 
   // Gera a chave privada no formato hexadecimal (64 caracteres)

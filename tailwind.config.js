@@ -23,3 +23,4 @@ export const theme = {
     },
   },
 };
+export const darkMode = "class";
