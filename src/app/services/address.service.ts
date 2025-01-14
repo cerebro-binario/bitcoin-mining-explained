@@ -55,7 +55,7 @@ export class AddressService {
 
   // Gera a chave pública a partir da chave privada (ECC Secp256k1)
   generatePublicKey(privateKey: string): string {
-    const keyPair = this.ec.keyFromPrivate('0x' + privateKey, 'hex'); // Cria um par de chaves
+    const keyPair = this.ec.keyFromPrivate(privateKey, 'hex'); // Cria um par de chaves
     return keyPair.getPublic().encode('hex', false); // Retorna a chave pública em formato hexadecimal
   }
 

@@ -56,7 +56,7 @@ export class AddressesComponent implements OnInit {
   updatePagination(): void {
     this.paginatedKeys = [];
 
-    const start = BigInt(this.currentPage * this.rowsPerPage);
+    const start = BigInt(this.currentPage * this.rowsPerPage + 1);
     const end = start + BigInt(this.rowsPerPage);
 
     for (let i = start; i < end; i++) {
