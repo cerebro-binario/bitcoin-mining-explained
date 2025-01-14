@@ -27,7 +27,7 @@ export class AddressesComponent implements OnInit {
   rowsPerPage = 100;
   currentPage = 0;
   showOnlyWithBalance = true;
-  keyPairAddresses: KeyPair[] = [];
+  keyPairs: KeyPair[] = [];
   expandedRows: { [key: string]: boolean } = {};
   isHexFormat: boolean = true;
 
@@ -39,7 +39,7 @@ export class AddressesComponent implements OnInit {
 
   // Atualiza a lista de chaves privadas e endereços na página atual
   updatePagination(): void {
-    this.keyPairAddresses = [];
+    this.keyPairs = [];
 
     const start = BigInt(this.currentPage * this.rowsPerPage + 1);
     const end = start + BigInt(this.rowsPerPage);
@@ -79,7 +79,7 @@ export class AddressesComponent implements OnInit {
         },
       ];
 
-      this.keyPairAddresses.push({
+      this.keyPairs.push({
         privateKey,
         publicKey,
         addresses,
