@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
@@ -19,6 +20,7 @@ import { AddressService } from '../../services/address.service';
     SelectModule,
     TooltipModule,
     ToggleButtonModule,
+    ButtonModule,
   ],
   templateUrl: './addresses.component.html',
   styleUrl: './addresses.component.scss',
@@ -140,5 +142,37 @@ export class AddressesComponent implements OnInit {
 
   formatBalance(balance: number): string {
     return `${balance.toFixed(8)} BTC`;
+  }
+
+  isFirstPage() {
+    return this.currentPage === 0;
+  }
+
+  prev() {
+    this.currentPage -= 1;
+    this.updatePagination();
+  }
+
+  reset() {
+    this.currentPage = 0;
+    this.updatePagination();
+  }
+
+  next() {
+    this.currentPage += 1;
+    this.updatePagination();
+  }
+
+  isLastPage() {
+    console.log('ran');
+    const start = BigInt(this.currentPage * this.rowsPerPage + 1);
+    const end = start + BigInt(this.rowsPerPage);
+
+    return (
+      end >=
+      BigInt(
+        '0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140'
+      )
+    );
   }
 }
