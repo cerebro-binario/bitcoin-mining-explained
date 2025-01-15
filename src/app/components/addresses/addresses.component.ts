@@ -44,6 +44,13 @@ export class AddressesComponent implements OnInit {
     this.updatePagination();
   }
 
+  get totalPages() {
+    const rowsPerPage = BigInt(this.rowsPerPage);
+    const lastPage = this.totalKeyPairs % rowsPerPage > 0 ? 1 : 0;
+
+    return this.totalKeyPairs / rowsPerPage + BigInt(lastPage);
+  }
+
   // Atualiza a lista de chaves privadas e endereços na página atual
   updatePagination(): void {
     if (this.showOnlyWithBalance) {
@@ -136,10 +143,10 @@ export class AddressesComponent implements OnInit {
   }
 
   // Método para encurtar endereços, mostrando apenas os primeiros e últimos caracteres
-  shortenValue(value: string): string {
+  shortenValue(value: string, size: number = 6): string {
     if (value.length < 13) return value;
 
-    return `${value.slice(0, 6)}...${value.slice(-6)}`;
+    return `${value.slice(0, size)}...${value.slice(-size)}`;
   }
 
   // Manipula a mudança de página

@@ -4,7 +4,10 @@
   class="flex flex-col items-center md:flex-row gap-4 md:justify-between mb-4"
 >
   <div>
-    <div *ngIf="keyPairs.length > rowsPerPage || !showOnlyWithBalance">
+    <div
+      *ngIf="keyPairs.length > rowsPerPage || !showOnlyWithBalance"
+      class="flex flex-row items-center"
+    >
       <p-button
         type="button"
         icon="pi pi-chevron-left"
@@ -20,6 +23,16 @@
         [disabled]="isLastPage()"
         text
       />
+      <div class="text-gray-600 dark:text-gray-300">
+        Página {{ currentPage + 1 }} de
+        <span
+          class="cursor-pointer underline decoration-dashed"
+          [pTooltip]="totalPages.toString()"
+          tooltipPosition="top"
+        >
+          {{ shortenValue(totalPages.toString(), 4) }}
+        </span>
+      </div>
     </div>
   </div>
   <div class="flex gap-4">
