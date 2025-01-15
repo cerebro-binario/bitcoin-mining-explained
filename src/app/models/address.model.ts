@@ -28,3 +28,6 @@ export type CoinbaseAddress =
 
 export const COINBASE_ADDRESS =
   '0000000000000000000000000000000000000000000000000000000000000000';
+
+export const MAX_PRIVATE_KEY =
+  'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140';

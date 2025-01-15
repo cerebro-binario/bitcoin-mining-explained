@@ -58,6 +58,18 @@
   dataKey="privateKey"
   class="p-datatable-sm w-full"
 >
+  <ng-template #caption>
+    <div class="flex gap-2 items-center text-gray-500">
+      <i class="pi pi-info-circle"></i>
+      <span>
+        @if(keyPairs.length > 0) {
+        {{ totalKeyPairs }} pares de chave pública/privada. } @else { Nenhum
+        endereço bitcoin com saldo ainda. Alterne para visualizar "Todos" ao
+        invés de "Apenas com saldo" ou minere o primeiro bloco para que um
+        endereço receba bitcoins. }
+      </span>
+    </div>
+  </ng-template>
   <!-- Header -->
   <ng-template pTemplate="header">
     <tr>

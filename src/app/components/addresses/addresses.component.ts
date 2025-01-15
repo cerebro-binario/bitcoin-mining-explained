@@ -7,7 +7,11 @@ import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
-import { BitcoinAddressInfo, KeyPair } from '../../models/address.model';
+import {
+  BitcoinAddressInfo,
+  KeyPair,
+  MAX_PRIVATE_KEY,
+} from '../../models/address.model';
 import { AddressService } from '../../services/address.service';
 
 @Component({
@@ -30,6 +34,7 @@ export class AddressesComponent implements OnInit {
   currentPage = 0;
   showOnlyWithBalance = true;
   keyPairs: KeyPair[] = [];
+  totalKeyPairs = BigInt(0);
   expandedRows: { [key: string]: boolean } = {};
   isHexFormat: boolean = true;
 
@@ -43,6 +48,7 @@ export class AddressesComponent implements OnInit {
   updatePagination(): void {
     if (this.showOnlyWithBalance) {
       this.keyPairs = this.addressService.getAllKeyPairsWithBalance();
+      this.totalKeyPairs = BigInt(this.keyPairs.length);
       return;
     }
 
@@ -92,6 +98,8 @@ export class AddressesComponent implements OnInit {
         addresses,
       });
     }
+
+    this.totalKeyPairs = BigInt('0x' + MAX_PRIVATE_KEY);
   }
 
   // Expande ou colapsa a linha da tabela ao clicar
@@ -168,11 +176,6 @@ export class AddressesComponent implements OnInit {
     const start = BigInt(this.currentPage * this.rowsPerPage + 1);
     const end = start + BigInt(this.rowsPerPage);
 
-    return (
-      end >=
-      BigInt(
-        '0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140'
-      )
-    );
+    return end >= BigInt('0x' + MAX_PRIVATE_KEY);
   }
 }
