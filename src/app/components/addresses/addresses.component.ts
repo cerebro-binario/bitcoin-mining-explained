@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
-import { ToggleButtonModule } from 'primeng/togglebutton';
 import { TooltipModule } from 'primeng/tooltip';
 import { BitcoinAddressInfo, KeyPair } from '../../models/address.model';
 import { AddressService } from '../../services/address.service';
@@ -19,7 +19,7 @@ import { AddressService } from '../../services/address.service';
     CheckboxModule,
     SelectModule,
     TooltipModule,
-    ToggleButtonModule,
+    SelectButtonModule,
     ButtonModule,
   ],
   templateUrl: './addresses.component.html',

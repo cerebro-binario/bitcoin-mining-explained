@@ -4,10 +4,7 @@
   class="flex flex-col items-center md:flex-row gap-4 md:justify-between mb-4"
 >
   <div>
-    <div
-      class="self-start"
-      *ngIf="keyPairs.length > rowsPerPage || !showOnlyWithBalance"
-    >
+    <div *ngIf="keyPairs.length > rowsPerPage || !showOnlyWithBalance">
       <p-button
         type="button"
         icon="pi pi-chevron-left"
@@ -25,23 +22,27 @@
       />
     </div>
   </div>
-  <div>
+  <div class="flex gap-4">
     <!-- Filtro para mostrar apenas endereços com saldo -->
-    <div class="gap-2">
-      <p-toggleButton
-        [(ngModel)]="isHexFormat"
-        onLabel="Hexadecimal"
-        offLabel="Decimal"
-        styleClass="p-button-sm"
-      />
-      <p-toggleButton
-        [(ngModel)]="showOnlyWithBalance"
-        [onLabel]="'Apenas com saldo'"
-        offLabel="Todos"
-        styleClass="p-button-sm"
-        (onChange)="toggleFilter()"
-      />
-    </div>
+    <p-selectButton
+      [options]="[
+        { label: 'Hexadecimal', value: true },
+        { label: 'Decimal', value: false }
+      ]"
+      [(ngModel)]="isHexFormat"
+      optionLabel="label"
+      optionValue="value"
+    />
+    <p-selectButton
+      [options]="[
+        { label: 'Apenas com saldo', value: true },
+        { label: 'Todos', value: false }
+      ]"
+      [(ngModel)]="showOnlyWithBalance"
+      optionLabel="label"
+      optionValue="value"
+      (onChange)="toggleFilter()"
+    />
   </div>
 </div>
 
