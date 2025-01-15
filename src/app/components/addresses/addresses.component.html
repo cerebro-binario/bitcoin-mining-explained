@@ -55,15 +55,15 @@
   [expandedRowKeys]="expandedRows"
   (onPage)="onPageChange($event)"
   dataKey="privateKey"
-  class="p-datatable-sm"
+  class="p-datatable-sm w-full"
 >
   <!-- Header -->
   <ng-template pTemplate="header">
     <tr>
-      <th></th>
-      <th>Chave Privada</th>
-      <th>Chave Pública</th>
-      <th>Endereços Bitcoin</th>
+      <th style="width: 5%"></th>
+      <th style="width: 22%">Chave Privada</th>
+      <th style="width: 22%">Chave Pública</th>
+      <th style="width: 50%">Endereços Bitcoin</th>
     </tr>
   </ng-template>
 
@@ -122,9 +122,9 @@
         >
           <ng-template pTemplate="header">
             <tr>
-              <th>Tipo</th>
-              <th>Endereço</th>
-              <th>Saldo</th>
+              <th style="width: 33%">Tipo</th>
+              <th style="width: 33%">Endereço</th>
+              <th style="width: 33%">Saldo</th>
             </tr>
           </ng-template>
 
