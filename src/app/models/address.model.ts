@@ -39,3 +39,26 @@ export const COINBASE_ADDRESS =
 
 export const MAX_PRIVATE_KEY =
   'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140';
+
+export const GENESIS_KEY_PAIR: KeyPair = {
+  privateKey: (0x01).toString(),
+  publicKey:
+    '0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8',
+  addresses: [
+    {
+      address: '1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm',
+      balance: 0,
+      type: BITCOIN_ADDRESS_TYPES['P2PKH'],
+    },
+    {
+      address: '3EyPVdtVrtMJ1XwPT9oiBrQysGpRY8LE9K',
+      balance: 0,
+      type: BITCOIN_ADDRESS_TYPES['P2SH'],
+    },
+    {
+      address: 'bc1qjxeyh7049zzn99s2c6r6hvp4zfa362997dpu0h',
+      balance: 0,
+      type: BITCOIN_ADDRESS_TYPES['P2WPKH'],
+    },
+  ],
+};
