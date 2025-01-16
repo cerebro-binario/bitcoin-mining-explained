@@ -5,6 +5,14 @@ export type BitcoinAddressType = {
   name: string;
 };
 
+export const BITCOIN_ADDRESS_TYPES: {
+  [code in BitcoinAddressTypeCode]: BitcoinAddressType;
+} = {
+  P2PKH: { code: 'P2PKH', name: 'P2PKH (Legacy)' },
+  P2SH: { code: 'P2SH', name: 'P2SH (Multisig)' },
+  P2WPKH: { code: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
+};
+
 export type BitcoinAddress = `1${string}` | `3${string}` | `bc1${string}`;
 
 export type BitcoinAddressInfo = {
