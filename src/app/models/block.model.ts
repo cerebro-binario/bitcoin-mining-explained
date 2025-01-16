@@ -4,7 +4,7 @@ export interface Block {
   previousHash: string;
   height: number;
   transactions: Transaction[];
-  timestamp: string;
+  timestamp: number;
   merkleRoot: string;
   nonce: number;
   hash: string;

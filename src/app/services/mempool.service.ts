@@ -31,7 +31,7 @@ export class MempoolService {
       previousHash,
       height,
       transactions: [],
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().getTime() / 1000,
       hash: '',
       merkleRoot: '',
       nonce: 0,
