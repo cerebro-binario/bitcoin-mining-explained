@@ -8,7 +8,8 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import {
-  BitcoinAddressInfo,
+  BITCOIN_ADDRESS_TYPES,
+  BitcoinAddresses,
   KeyPair,
   MAX_PRIVATE_KEY,
 } from '../../models/address.model';
@@ -81,23 +82,23 @@ export class AddressesComponent implements OnInit {
         'P2WPKH'
       );
 
-      const addresses: BitcoinAddressInfo[] = [
-        {
-          type: this.addressService.getAddressTypeByCode('P2PKH'),
+      const addresses: BitcoinAddresses = {
+        P2PKH: {
+          type: BITCOIN_ADDRESS_TYPES['P2PKH'],
           address: p2pkh,
           balance: this.addressService.getBalance(p2pkh) || 0,
         },
-        {
-          type: this.addressService.getAddressTypeByCode('P2SH'),
+        P2SH: {
+          type: BITCOIN_ADDRESS_TYPES['P2SH'],
           address: p2sh,
           balance: this.addressService.getBalance(p2sh) || 0,
         },
-        {
-          type: this.addressService.getAddressTypeByCode('P2WPKH'),
+        P2WPKH: {
+          type: BITCOIN_ADDRESS_TYPES['P2WPKH'],
           address: p2wpkh,
           balance: this.addressService.getBalance(p2pkh) || 0,
         },
-      ];
+      };
 
       this.keyPairs.push({
         privateKey,

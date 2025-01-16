@@ -4,6 +4,7 @@ import bs58 from 'bs58';
 import * as CryptoJS from 'crypto-js';
 import { ec } from 'elliptic';
 import {
+  BITCOIN_ADDRESS_TYPES,
   BitcoinAddress,
   BitcoinAddressInfo,
   BitcoinAddressType,
@@ -33,9 +34,7 @@ export class AddressService {
     code: BitcoinAddressTypeCode,
     amount: number
   ): void {
-    const addressInfo = keyPair.addresses.find(
-      (addr) => addr.type.code === code
-    );
+    const addressInfo = keyPair.addresses[code];
 
     if (!addressInfo)
       throw new Error('Could not get address info for this key pair');
@@ -74,9 +73,11 @@ export class AddressService {
   }
 
   getBalance(address: BitcoinAddress): number {
-    const addrInfo = this.keyPairsWithBalance[address]?.addresses.find(
-      (addr) => addr.address === address
+    const addresses = Object.values(
+      this.keyPairsWithBalance[address]?.addresses || {}
     );
+    const addrInfo = addresses.find((addr) => addr.address === address);
+
     return addrInfo?.balance || 0;
   }
 
@@ -93,7 +94,7 @@ export class AddressService {
   }
 
   getAddressTypeByCode(code: BitcoinAddressTypeCode): BitcoinAddressType {
-    const type = this.addressTypes.find((t) => t.code === code);
+    const type = BITCOIN_ADDRESS_TYPES[code];
 
     if (!type) {
       throw new Error('Invalid code');
