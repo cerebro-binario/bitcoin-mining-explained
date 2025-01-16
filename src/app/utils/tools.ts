@@ -1,7 +1,9 @@
 import * as CryptoJS from 'crypto-js';
 
 export function hashSHA256(data: string): string {
-  return CryptoJS.SHA256(data).toString(CryptoJS.enc.Hex);
+  return CryptoJS.SHA256(CryptoJS.enc.Hex.parse(data)).toString(
+    CryptoJS.enc.Hex
+  );
 }
 
 export function dupHashSHA256(data: string): string {
