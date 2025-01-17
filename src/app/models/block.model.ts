@@ -34,3 +34,6 @@ export const GENESIS_BLOCK: Block = {
     '54e39cc08806e3809f279abac25867ae3206c5892eb1df69ac51b7c5dbe11be0',
   nonce: 346257,
 };
+
+export const INITIAL_SUBSIDY = 50 * 100000000;
+export const N_BLOCKS_PER_HALVING = 210000;
