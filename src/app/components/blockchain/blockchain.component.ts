@@ -3,6 +3,8 @@ import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
+import { Block } from '../../models/block.model';
+import { BlockchainService } from '../../services/blockchain.service';
 
 @Component({
   selector: 'app-blockchain',
@@ -11,7 +13,9 @@ import { ToolbarModule } from 'primeng/toolbar';
   styleUrl: './blockchain.component.scss',
 })
 export class BlockchainComponent {
-  blocks: any = [];
+  blocks: Block[] = [];
 
-  constructor() {}
+  constructor(private blockchainService: BlockchainService) {
+    this.blocks = this.blockchainService.getBlockchain();
+  }
 }
