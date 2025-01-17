@@ -1,18 +1,24 @@
 import { Injectable } from '@angular/core';
-import { BitcoinAddress } from '../models/address.model';
+import {
+  GENESIS_KEY_PAIR,
+  KeyPair,
+  KeyPairByPrivateKey,
+} from '../models/address.model';
 import { AddressService } from './address.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MinerService {
-  private miners: Record<BitcoinAddress, boolean> = {};
+  private miners: KeyPairByPrivateKey = {
+    [GENESIS_KEY_PAIR.privateKey]: GENESIS_KEY_PAIR,
+  };
   private creationProbability = 0.3;
 
   constructor(private addressService: AddressService) {}
 
   // Gera um miner aleatório ou seleciona um existente
-  getRandomMiner(): BitcoinAddress {
+  getRandomMiner(): KeyPair {
     const createNew = Math.random() < this.creationProbability;
 
     if (createNew) {
@@ -25,12 +31,19 @@ export class MinerService {
   }
 
   // Cria um novo miner (endereço aleatório)
-  private createNewMiner(): BitcoinAddress {
-    throw new Error('Not implemented');
+  private createNewMiner(): KeyPair {
+    let newMiner;
+    do {
+      newMiner = this.addressService.generateRandomKeyPair();
+    } while (this.miners[newMiner.privateKey]);
+
+    this.miners[newMiner.privateKey] = newMiner;
+
+    return newMiner;
   }
 
   // Seleciona um miner existente aleatoriamente
-  private selectExistingMiner(): BitcoinAddress {
+  private selectExistingMiner(): KeyPair {
     const minerAddresses = this.getAllMiners();
 
     if (minerAddresses.length === 0) {
@@ -42,7 +55,7 @@ export class MinerService {
   }
 
   // Retorna todos os miners existentes
-  getAllMiners(): BitcoinAddress[] {
-    return Object.keys(this.miners).map((a) => a as BitcoinAddress);
+  getAllMiners(): KeyPair[] {
+    return Object.values(this.miners);
   }
 }
