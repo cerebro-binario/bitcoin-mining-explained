@@ -199,4 +199,38 @@ export class AddressService {
     // Codificar no formato Bech32 com prefixo "bc1" (Bitcoin Mainnet)
     return bech32.encode('bc', words);
   }
+
+  generateRandomKeyPair(): KeyPair {
+    const ecKeyPair = this.ec.genKeyPair();
+
+    const privateKey = ecKeyPair.getPrivate('hex');
+    const publicKey = ecKeyPair.getPublic('hex');
+    const p2pkh = this.generateBitcoinAddress(publicKey, 'P2PKH');
+    const p2sh = this.generateBitcoinAddress(publicKey, 'P2SH');
+    const p2wpkh = this.generateBitcoinAddress(publicKey, 'P2WPKH');
+
+    const appKeyPair: KeyPair = {
+      privateKey,
+      publicKey,
+      addresses: {
+        P2PKH: {
+          address: p2pkh,
+          balance: 0,
+          type: BITCOIN_ADDRESS_TYPES['P2PKH'],
+        },
+        P2SH: {
+          address: p2sh,
+          balance: 0,
+          type: BITCOIN_ADDRESS_TYPES['P2SH'],
+        },
+        P2WPKH: {
+          address: p2wpkh,
+          balance: 0,
+          type: BITCOIN_ADDRESS_TYPES['P2WPKH'],
+        },
+      },
+    };
+
+    return appKeyPair;
+  }
 }
