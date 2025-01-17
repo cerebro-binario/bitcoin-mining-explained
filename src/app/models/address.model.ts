@@ -17,6 +17,12 @@ export const BITCOIN_ADDRESS_TYPES: {
   P2WPKH: { code: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
 };
 
+export const BITCOIN_ADDRESS_TYPE_CODES: BitcoinAddressTypeCode[] = [
+  'P2PKH',
+  'P2SH',
+  'P2WPKH',
+];
+
 export type BitcoinAddress = `1${string}` | `3${string}` | `bc1${string}`;
 
 export type BitcoinAddressInfo = {
@@ -33,6 +39,10 @@ export type KeyPair = {
 
 export type KeyPairByAddress = {
   [address in BitcoinAddress]: KeyPair;
+};
+
+export type KeyPairByPrivateKey = {
+  [privateKey: string]: KeyPair;
 };
 
 export type CoinbaseAddress =
