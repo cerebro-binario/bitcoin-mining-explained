@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
-import { COINBASE_ADDRESS } from '../models/address.model';
-import { Block } from '../models/block.model';
+import {
+  BITCOIN_ADDRESS_TYPE_CODES,
+  COINBASE_ADDRESS,
+} from '../models/address.model';
+import {
+  Block,
+  INITIAL_SUBSIDY,
+  N_BLOCKS_PER_HALVING,
+} from '../models/block.model';
 import { Transaction } from '../models/transaction.model';
 import {
   dupHashSHA256,
@@ -25,7 +32,7 @@ export class MempoolService {
   ) {}
 
   createCandidateBlock(previousHash: string, height: number): void {
-    const subsidy = 50000000 >> (height / 210000);
+    const subsidy = INITIAL_SUBSIDY >> (height / N_BLOCKS_PER_HALVING);
 
     this.candidateBlock = {
       previousHash,
@@ -37,25 +44,34 @@ export class MempoolService {
       nonce: 0,
     };
 
+    // Pega um minerador aleatoriamente
+    const randomMiner = this.minerService.getRandomMiner();
+
+    // Sorteia aleatoriamente um dos endereços desse minerador para receber a recompensa
+    const randomCoinbaseAddressIdx = Math.floor(
+      Math.random() * BITCOIN_ADDRESS_TYPE_CODES.length
+    );
+    const randomCoinbaseAddressType =
+      BITCOIN_ADDRESS_TYPE_CODES[randomCoinbaseAddressIdx];
+    const randomCoinbaseAddress =
+      randomMiner.addresses[randomCoinbaseAddressType];
+
     // Adiciona a transação de coinbase
     const coinbaseTx: Transaction = {
       txid: '',
       transfers: [
         {
           from: COINBASE_ADDRESS,
-          to: this.minerService.getRandomMiner(),
+          to: randomCoinbaseAddress.address,
           amount: subsidy,
         },
       ],
       fee: 0,
     };
 
-    coinbaseTx.txid = this.generateTxId(coinbaseTx);
-
     this.candidateBlock.transactions.push(coinbaseTx);
-    this.candidateBlock.merkleRoot = this.generateMerkleRoot();
 
-    // nonce e hash serão calculados na mineração
+    // txid's, merkle root, nonce e hash serão calculados na mineração
   }
 
   generateRandomTransaction() {
