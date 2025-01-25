@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
@@ -39,10 +40,23 @@ export class AddressesComponent implements OnInit {
   expandedRows: { [key: string]: boolean } = {};
   isHexFormat: boolean = true;
 
-  constructor(private addressService: AddressService) {}
+  constructor(
+    private addressService: AddressService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.updatePagination();
+    // Restaurar configurações dos query params
+    this.route.queryParams.subscribe((params) => {
+      this.isHexFormat = params['format'] === 'decimal' ? false : true;
+      this.showOnlyWithBalance =
+        params['filter'] === 'withBalance' ? true : false;
+      this.currentPage =
+        params['page'] && params['page'] > 0 ? +params['page'] - 1 : 0;
+
+      this.updatePagination();
+    });
   }
 
   get totalPages() {
@@ -50,6 +64,21 @@ export class AddressesComponent implements OnInit {
     const lastPage = this.totalKeyPairs % rowsPerPage > 0 ? 1 : 0;
 
     return this.totalKeyPairs / rowsPerPage + BigInt(lastPage);
+  }
+
+  // Atualiza os parâmetros na URL
+  updateQueryParamsAndPagination(): void {
+    this.router
+      .navigate([], {
+        relativeTo: this.route,
+        queryParams: {
+          format: this.isHexFormat ? 'hex' : 'decimal',
+          filter: this.showOnlyWithBalance ? 'withBalance' : 'all',
+          page: this.currentPage + 1,
+        },
+        queryParamsHandling: 'merge', // Mantém os parâmetros existentes
+      })
+      .finally(() => this.updatePagination());
   }
 
   // Atualiza a lista de chaves privadas e endereços na página atual
@@ -131,7 +160,7 @@ export class AddressesComponent implements OnInit {
   // Alterna entre mostrar apenas endereços com saldo e todas as chaves privadas
   toggleFilter(): void {
     this.currentPage = 0;
-    this.updatePagination();
+    this.updateQueryParamsAndPagination();
   }
 
   // Alterna entre hexadecimal e decimal
@@ -153,7 +182,7 @@ export class AddressesComponent implements OnInit {
   // Manipula a mudança de página
   onPageChange(event: any): void {
     this.currentPage = event.page;
-    this.updatePagination();
+    this.updateQueryParamsAndPagination();
   }
 
   formatBalance(balance: number): string {
@@ -166,17 +195,17 @@ export class AddressesComponent implements OnInit {
 
   prev() {
     this.currentPage -= 1;
-    this.updatePagination();
+    this.updateQueryParamsAndPagination();
   }
 
   reset() {
     this.currentPage = 0;
-    this.updatePagination();
+    this.updateQueryParamsAndPagination();
   }
 
   next() {
     this.currentPage += 1;
-    this.updatePagination();
+    this.updateQueryParamsAndPagination();
   }
 
   isLastPage() {

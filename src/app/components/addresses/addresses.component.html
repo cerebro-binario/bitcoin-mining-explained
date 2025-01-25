@@ -43,6 +43,7 @@
         { label: 'Decimal', value: false }
       ]"
       [(ngModel)]="isHexFormat"
+      (ngModelChange)="updateQueryParamsAndPagination()"
       optionLabel="label"
       optionValue="value"
     />
@@ -52,6 +53,7 @@
         { label: 'Todos', value: false }
       ]"
       [(ngModel)]="showOnlyWithBalance"
+      (ngModelChange)="updateQueryParamsAndPagination()"
       optionLabel="label"
       optionValue="value"
       (onChange)="toggleFilter()"
