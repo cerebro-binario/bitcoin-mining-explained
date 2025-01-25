@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs';
+import { ToolbarModule } from 'primeng/toolbar';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-home',
-  imports: [TabsModule, RouterModule],
+  imports: [TabsModule, RouterModule, ToolbarModule, ButtonModule],
   templateUrl: './home.layout.html',
   styleUrl: './home.layout.scss',
 })
@@ -25,10 +28,23 @@ export class HomeLayout {
 
   selectedTab = '/blockchain';
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private themeService: ThemeService) {
     const url = this.router.url;
 
     this.selectedTab =
       this.tabs.find((t) => url.includes(t.route))?.route || '/blockchain';
+  }
+
+  get darkModeIcon() {
+    return (this.themeService.darkMode && 'pi pi-sun') || 'pi pi-moon';
+  }
+
+  ngOnInit(): void {
+    const theme = this.themeService.getTheme();
+    this.themeService.applyTheme(theme);
+  }
+
+  toggleDarkMode() {
+    this.themeService.toggleTheme();
   }
 }
