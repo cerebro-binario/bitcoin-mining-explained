@@ -40,6 +40,12 @@ export class AddressesComponent implements OnInit {
   expandedRows: { [key: string]: boolean } = {};
   isHexFormat: boolean = true;
 
+  // Estados de paginação para cada filtro
+  pageState = {
+    all: 0,
+    withBalance: 0,
+  };
+
   constructor(
     private addressService: AddressService,
     private route: ActivatedRoute,
@@ -52,8 +58,12 @@ export class AddressesComponent implements OnInit {
       this.isHexFormat = params['format'] === 'decimal' ? false : true;
       this.showOnlyWithBalance =
         params['filter'] === 'withBalance' ? true : false;
+
+      const filterKey = this.showOnlyWithBalance ? 'withBalance' : 'all';
       this.currentPage =
-        params['page'] && params['page'] > 0 ? +params['page'] - 1 : 0;
+        params['page'] && params['page'] > 0
+          ? +params['page'] - 1
+          : this.pageState[filterKey];
 
       this.updatePagination();
     });
@@ -158,9 +168,14 @@ export class AddressesComponent implements OnInit {
   }
 
   // Alterna entre mostrar apenas endereços com saldo e todas as chaves privadas
-  toggleFilter(): void {
-    this.currentPage = 0;
-    this.updateQueryParamsAndPagination();
+  updatePageState(): void {
+    if (this.showOnlyWithBalance) {
+      this.pageState['all'] = this.currentPage;
+      this.currentPage = this.pageState['withBalance'];
+    } else {
+      this.pageState['withBalance'] = this.currentPage;
+      this.currentPage = this.pageState['all'];
+    }
   }
 
   // Alterna entre hexadecimal e decimal

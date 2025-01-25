@@ -53,10 +53,9 @@
         { label: 'Todos', value: false }
       ]"
       [(ngModel)]="showOnlyWithBalance"
-      (ngModelChange)="updateQueryParamsAndPagination()"
+      (ngModelChange)="updatePageState(); updateQueryParamsAndPagination()"
       optionLabel="label"
       optionValue="value"
-      (onChange)="toggleFilter()"
     />
   </div>
 </div>
