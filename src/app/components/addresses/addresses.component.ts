@@ -180,7 +180,6 @@ export class AddressesComponent implements OnInit {
   }
 
   isLastPage() {
-    console.log('ran');
     const start = BigInt(this.currentPage * this.rowsPerPage + 1);
     const end = start + BigInt(this.rowsPerPage);
 
