@@ -1,14 +1,16 @@
-<p-menubar [model]="tabs">
-  <ng-template #item let-item let-root="root">
-    <a [routerLink]="item.route" class="p-menubar-item-link">
-      <span [class]="item.icon"></span>
-      <span class="ml-2">{{ item.label }}</span>
-    </a>
-  </ng-template>
-  <ng-template #end>
-    <p-button [icon]="darkModeIcon" (onClick)="toggleDarkMode()" />
-  </ng-template>
-</p-menubar>
 <div class="m-3">
-  <router-outlet />
+  <p-menubar [model]="tabs">
+    <ng-template #item let-item let-root="root">
+      <a [routerLink]="item.route" class="p-menubar-item-link">
+        <span [class]="item.icon"></span>
+        <span class="ml-2">{{ item.label }}</span>
+      </a>
+    </ng-template>
+    <ng-template #end>
+      <p-button [icon]="darkModeIcon" (onClick)="toggleDarkMode()" />
+    </ng-template>
+  </p-menubar>
+  <div class="mt-3">
+    <router-outlet />
+  </div>
 </div>
