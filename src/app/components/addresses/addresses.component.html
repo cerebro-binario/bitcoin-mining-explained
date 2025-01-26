@@ -36,24 +36,25 @@
     </div>
   </div>
   <div class="flex gap-4">
-    <!-- Filtro para mostrar apenas endereços com saldo -->
+    <!-- Selecionar formato de apresentação dos números das chaves -->
     <p-selectButton
       [options]="[
         { label: 'Hexadecimal', value: true },
         { label: 'Decimal', value: false }
       ]"
       [(ngModel)]="isHexFormat"
-      (ngModelChange)="updateQueryParamsAndPagination()"
+      (ngModelChange)="toggleFormat()"
       optionLabel="label"
       optionValue="value"
     />
+    <!-- Filtro para mostrar apenas endereços com saldo -->
     <p-selectButton
       [options]="[
         { label: 'Apenas com saldo', value: true },
         { label: 'Todos', value: false }
       ]"
       [(ngModel)]="showOnlyWithBalance"
-      (ngModelChange)="updatePageState(); updateQueryParamsAndPagination()"
+      (ngModelChange)="filterAddresses()"
       optionLabel="label"
       optionValue="value"
     />

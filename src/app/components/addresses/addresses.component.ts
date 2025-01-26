@@ -8,6 +8,7 @@ import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
+import { tap } from 'rxjs';
 import {
   BITCOIN_ADDRESS_TYPES,
   BitcoinAddresses,
@@ -53,19 +54,16 @@ export class AddressesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Restaurar configurações dos query params
-    this.route.queryParams.subscribe((params) => {
-      this.isHexFormat = params['format'] === 'decimal' ? false : true;
-      this.showOnlyWithBalance =
-        params['filter'] === 'withBalance' ? true : false;
+    // Restaurar configurações do localStorage
+    this.loadStateFromLocalStorage();
 
-      const filterKey = this.showOnlyWithBalance ? 'withBalance' : 'all';
-      this.currentPage =
-        params['page'] && params['page'] > 0
-          ? +params['page'] - 1
-          : this.pageState[filterKey];
+    this.loadStateFromQueryParams().subscribe(() => {
+      // Atualizar a lista de endereços que será apresentada na tabela de acordo com os filtros e paginação
+      this.updateAddressesList();
 
-      this.updatePagination();
+      this.updateQueryParams();
+      // Atualizar localStorage (caso query params sobrescrevam os params vindos do local storage)
+      this.saveStateToLocalStorage();
     });
   }
 
@@ -76,23 +74,163 @@ export class AddressesComponent implements OnInit {
     return this.totalKeyPairs / rowsPerPage + BigInt(lastPage);
   }
 
-  // Atualiza os parâmetros na URL
-  updateQueryParamsAndPagination(): void {
-    this.router
-      .navigate([], {
-        relativeTo: this.route,
-        queryParams: {
-          format: this.isHexFormat ? 'hex' : 'decimal',
-          filter: this.showOnlyWithBalance ? 'withBalance' : 'all',
-          page: this.currentPage + 1,
-        },
-        queryParamsHandling: 'merge', // Mantém os parâmetros existentes
+  // Expande ou colapsa a linha da tabela ao clicar
+  toggleRow(item: any): void {
+    const key = item.privateKey;
+    this.expandedRows[key] = !this.expandedRows[key];
+  }
+
+  // Copia um valor para a área de transferência
+  copyToClipboard(value: string): void {
+    navigator.clipboard.writeText(value).then(() => {
+      console.log(`Copiado: ${value}`);
+    });
+  }
+
+  // Gera a chave privada no formato hexadecimal (64 caracteres)
+  formatPrivateKey(index: BigInt): string {
+    return index.toString(16).padStart(64, '0'); // Converte para hexadecimal
+  }
+
+  // Alterna entre hexadecimal e decimal
+  formatKey(key: string): string {
+    if (this.isHexFormat) {
+      return '0x' + key; // Retorna como hexadecimal
+    } else {
+      return BigInt('0x' + key).toString(10); // Converte para decimal
+    }
+  }
+
+  // Método para encurtar endereços, mostrando apenas os primeiros e últimos caracteres
+  shortenValue(value: string, size: number = 6): string {
+    if (value.length < 13) return value;
+
+    return `${value.slice(0, size)}...${value.slice(-size)}`;
+  }
+
+  // Manipula a mudança de página
+  onPageChange(event: any): void {
+    this.currentPage = event.page;
+
+    this.updatePageState();
+    this.updateAddressesList();
+
+    this.updateQueryParams();
+    this.saveStateToLocalStorage();
+  }
+
+  formatBalance(balance: number): string {
+    return `${balance.toFixed(8)} BTC`;
+  }
+
+  isFirstPage() {
+    return this.currentPage === 0;
+  }
+
+  prev() {
+    this.currentPage -= 1;
+
+    this.updatePageState();
+    this.updateAddressesList();
+
+    this.updateQueryParams();
+    this.saveStateToLocalStorage();
+  }
+
+  reset() {
+    this.currentPage = 0;
+    this.updatePageState();
+    this.updateQueryParams();
+    this.updateAddressesList();
+  }
+
+  next() {
+    this.currentPage += 1;
+
+    this.updatePageState();
+    this.updateAddressesList();
+
+    this.updateQueryParams();
+    this.saveStateToLocalStorage();
+  }
+
+  isLastPage() {
+    const start = BigInt(this.currentPage * this.rowsPerPage + 1);
+    const end = start + BigInt(this.rowsPerPage);
+
+    return end >= BigInt('0x' + MAX_PRIVATE_KEY);
+  }
+
+  toggleFormat() {
+    this.updateQueryParams();
+    this.saveStateToLocalStorage();
+  }
+
+  // Filtrar a lista de endereços com base na escolha entre 'Apenas com saldo' e 'Todos'
+  filterAddresses() {
+    this.updatePageState(true);
+    this.updateAddressesList();
+
+    this.updateQueryParams();
+    this.saveStateToLocalStorage();
+  }
+
+  // Carregar configurações do localStorage
+  private loadStateFromLocalStorage(): void {
+    const savedState = localStorage.getItem('addressesPageState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      this.isHexFormat = state.isHexFormat ?? true;
+      this.showOnlyWithBalance = state.showOnlyWithBalance ?? false;
+      this.currentPage = state.currentPage ?? 1;
+      this.pageState = state.pageState || { all: 1, withBalance: 1 };
+    }
+  }
+
+  // Salvar configurações no localStorage
+  private saveStateToLocalStorage(): void {
+    const state = {
+      isHexFormat: this.isHexFormat,
+      showOnlyWithBalance: this.showOnlyWithBalance,
+      currentPage: this.currentPage,
+      pageState: this.pageState,
+    };
+    localStorage.setItem('addressesPageState', JSON.stringify(state));
+  }
+
+  // Restaurar configurações dos query params
+  private loadStateFromQueryParams() {
+    return this.route.queryParams.pipe(
+      tap((params) => {
+        this.isHexFormat =
+          params['format'] === 'decimal' ? false : this.isHexFormat;
+        this.showOnlyWithBalance =
+          params['filter'] === 'withBalance' ? true : this.showOnlyWithBalance;
+
+        const filterKey = this.showOnlyWithBalance ? 'withBalance' : 'all';
+        this.currentPage =
+          params['page'] && params['page'] > 0
+            ? +params['page'] - 1
+            : this.pageState[filterKey];
       })
-      .finally(() => this.updatePagination());
+    );
+  }
+
+  // Atualiza os parâmetros na URL
+  private updateQueryParams(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        format: this.isHexFormat ? 'hex' : 'decimal',
+        filter: this.showOnlyWithBalance ? 'withBalance' : 'all',
+        page: this.currentPage + 1,
+      },
+      queryParamsHandling: 'merge', // Mantém os parâmetros existentes
+    });
   }
 
   // Atualiza a lista de chaves privadas e endereços na página atual
-  updatePagination(): void {
+  private updateAddressesList(): void {
     if (this.showOnlyWithBalance) {
       this.keyPairs = this.addressService.getAllKeyPairsWithBalance();
       this.totalKeyPairs = BigInt(this.keyPairs.length);
@@ -149,84 +287,16 @@ export class AddressesComponent implements OnInit {
     this.totalKeyPairs = BigInt('0x' + MAX_PRIVATE_KEY);
   }
 
-  // Expande ou colapsa a linha da tabela ao clicar
-  toggleRow(item: any): void {
-    const key = item.privateKey;
-    this.expandedRows[key] = !this.expandedRows[key];
-  }
-
-  // Copia um valor para a área de transferência
-  copyToClipboard(value: string): void {
-    navigator.clipboard.writeText(value).then(() => {
-      console.log(`Copiado: ${value}`);
-    });
-  }
-
-  // Gera a chave privada no formato hexadecimal (64 caracteres)
-  formatPrivateKey(index: BigInt): string {
-    return index.toString(16).padStart(64, '0'); // Converte para hexadecimal
-  }
-
   // Alterna entre mostrar apenas endereços com saldo e todas as chaves privadas
-  updatePageState(): void {
-    if (this.showOnlyWithBalance) {
-      this.pageState['all'] = this.currentPage;
-      this.currentPage = this.pageState['withBalance'];
+  private updatePageState(onFilterToggle: boolean = false): void {
+    const currentKey = this.showOnlyWithBalance ? 'withBalance' : 'all';
+    const prevKey = this.showOnlyWithBalance ? 'all' : 'withBalance';
+
+    if (onFilterToggle) {
+      this.pageState[prevKey] = this.currentPage;
+      this.currentPage = this.pageState[currentKey];
     } else {
-      this.pageState['withBalance'] = this.currentPage;
-      this.currentPage = this.pageState['all'];
+      this.pageState[currentKey] = this.currentPage;
     }
-  }
-
-  // Alterna entre hexadecimal e decimal
-  formatKey(key: string): string {
-    if (this.isHexFormat) {
-      return '0x' + key; // Retorna como hexadecimal
-    } else {
-      return BigInt('0x' + key).toString(10); // Converte para decimal
-    }
-  }
-
-  // Método para encurtar endereços, mostrando apenas os primeiros e últimos caracteres
-  shortenValue(value: string, size: number = 6): string {
-    if (value.length < 13) return value;
-
-    return `${value.slice(0, size)}...${value.slice(-size)}`;
-  }
-
-  // Manipula a mudança de página
-  onPageChange(event: any): void {
-    this.currentPage = event.page;
-    this.updateQueryParamsAndPagination();
-  }
-
-  formatBalance(balance: number): string {
-    return `${balance.toFixed(8)} BTC`;
-  }
-
-  isFirstPage() {
-    return this.currentPage === 0;
-  }
-
-  prev() {
-    this.currentPage -= 1;
-    this.updateQueryParamsAndPagination();
-  }
-
-  reset() {
-    this.currentPage = 0;
-    this.updateQueryParamsAndPagination();
-  }
-
-  next() {
-    this.currentPage += 1;
-    this.updateQueryParamsAndPagination();
-  }
-
-  isLastPage() {
-    const start = BigInt(this.currentPage * this.rowsPerPage + 1);
-    const end = start + BigInt(this.rowsPerPage);
-
-    return end >= BigInt('0x' + MAX_PRIVATE_KEY);
   }
 }
