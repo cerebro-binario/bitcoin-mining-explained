@@ -24,7 +24,7 @@ export class HomeLayout {
     {
       route: '/mempool',
       icon: 'pi pi-arrow-right-arrow-left',
-      label: 'Mempool',
+      label: 'Transações',
     },
     {
       route: '/addresses',
