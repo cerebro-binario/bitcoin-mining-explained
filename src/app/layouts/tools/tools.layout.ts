@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-tools',
-  imports: [],
+  imports: [RouterModule],
   templateUrl: './tools.layout.html',
-  styleUrl: './tools.layout.scss'
+  styleUrl: './tools.layout.scss',
 })
-export class ToolsLayout {
-
-}
+export class ToolsLayout {}
