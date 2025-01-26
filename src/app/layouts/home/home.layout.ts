@@ -1,13 +1,20 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { TabsModule } from 'primeng/tabs';
+import { MenubarModule } from 'primeng/menubar';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-home',
-  imports: [TabsModule, RouterModule, ToolbarModule, ButtonModule],
+  imports: [
+    CommonModule,
+    MenubarModule,
+    RouterModule,
+    ToolbarModule,
+    ButtonModule,
+  ],
   templateUrl: './home.layout.html',
   styleUrl: './home.layout.scss',
 })
