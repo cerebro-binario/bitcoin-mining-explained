@@ -9,7 +9,7 @@ import { AddressesLayout } from './layouts/home/addresses/addresses.layout';
 import { BlockchainLayout } from './layouts/home/blockchain/blockchain.layout';
 import { HomeLayout } from './layouts/home/home.layout';
 import { MempoolLayout } from './layouts/home/mempool/mempool.layout';
-import { ToolsLayout } from './layouts/tools/tools.layout';
+import { ToolsLayout } from './layouts/home/tools/tools.layout';
 
 export const routes: Routes = [
   {
