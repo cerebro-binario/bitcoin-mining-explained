@@ -31,6 +31,11 @@ export class HomeLayout {
       icon: 'pi pi-wallet',
       label: 'Endereços',
     },
+    {
+      route: '/tools',
+      icon: 'pi pi-wrench',
+      label: 'Ferramentas',
+    },
   ];
 
   selectedTab = '/blockchain';
