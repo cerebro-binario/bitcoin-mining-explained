@@ -1,7 +1,9 @@
 <p-card id="Hash" header="Hash" class="mb-6 shadow-lg w-full">
   <div class="mb-4 flex flex-col gap-y-3">
     <p>
-      Um hash é como uma <strong>impressão digital</strong> para informações.
+      Um hash é como uma <strong>impressão digital</strong> de informações,
+      geralmente representada em um formato que o computador entende, como o
+      hexadecimal.
     </p>
     <p class="text-sm">
       Ele pega um pedaço de dados (como um texto, um número ou até mesmo um
@@ -29,6 +31,9 @@
           placeholder="Insira o conteúdo que deseja transformar em hash"
         ></textarea>
         <label for="content">Conteúdo</label>
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ content.length }}</p-message
+        >
       </p-iftalabel>
     </div>
     <div>
@@ -47,6 +52,9 @@
         <label for="hex"
           >Hexadecimal (como o computador "entende o conteúdo")</label
         >
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ hex.length }}</p-message
+        >
       </p-iftalabel>
     </div>
   </div>
@@ -62,6 +70,9 @@
         [ngClass]="hash && !isHashValid() ? 'ng-invalid ng-dirty' : ''"
       ></textarea>
       <label for="hash">Hash (impressão digital)</label>
+      <p-message variant="simple" size="small" severity="contrast"
+        >Tamanho: {{ hash.length }}</p-message
+      >
       <p-message
         *ngIf="hash && !isHashValid()"
         severity="error"
