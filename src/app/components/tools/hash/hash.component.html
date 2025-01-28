@@ -1,0 +1,72 @@
+<p-card id="Hash" header="Hash" class="mb-6 shadow-lg w-full">
+  <div class="mb-4 flex flex-col gap-y-3">
+    <p>
+      Um hash é como uma <strong>impressão digital</strong> para informações.
+    </p>
+    <p class="text-sm">
+      Ele pega um pedaço de dados (como um texto, um número ou até mesmo um
+      arquivo inteiro) e transforma isso em uma sequência única de letras e
+      números. Essa sequência sempre terá o mesmo tamanho, independentemente do
+      tamanho do dado original.
+    </p>
+    <p class="text-sm">
+      Hexadecimal: é o formato que o computador "vê o conteúdo" da informação.
+    </p>
+  </div>
+
+  <!-- Campo de entrada -->
+  <div class="flex flex-row gap-4 mb-4 items-center">
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="content"
+          rows="5"
+          pTextarea
+          [(ngModel)]="content"
+          (ngModelChange)="onContentChange()"
+          [fluid]="true"
+          placeholder="Insira o conteúdo que deseja transformar em hash"
+        ></textarea>
+        <label for="content">Conteúdo</label>
+      </p-iftalabel>
+    </div>
+    <div>
+      <i class="pi pi-arrow-right-arrow-left"></i>
+    </div>
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="hex"
+          rows="5"
+          pTextarea
+          [(ngModel)]="hex"
+          (ngModelChange)="onHexChange()"
+          [fluid]="true"
+        ></textarea>
+        <label for="hex">Hexadecimal (como o computador "vê o conteúdo")</label>
+      </p-iftalabel>
+    </div>
+  </div>
+
+  <div class="field mb-4">
+    <p-iftalabel>
+      <textarea
+        id="hash"
+        rows="2"
+        pTextarea
+        [(ngModel)]="hash"
+        [fluid]="true"
+        [ngClass]="hash && !isHashValid() ? 'ng-invalid ng-dirty' : ''"
+      ></textarea>
+      <label for="hash">Hash (impressão digital)</label>
+      <p-message
+        *ngIf="hash && !isHashValid()"
+        severity="error"
+        variant="simple"
+        size="small"
+        icon="pi pi-times-circle"
+        >Hash inválido</p-message
+      >
+    </p-iftalabel>
+  </div>
+</p-card>
