@@ -55,19 +55,6 @@ export class ToolsComponent {
     return this.hash === dupHashSHA256(this.content);
   }
 
-  // Copia o hash para a área de transferência
-  copyHash(): void {
-    const hash = dupHashSHA256(this.content);
-    navigator.clipboard.writeText(hash).then(() => {
-      alert('Hash copiado para a área de transferência!');
-    });
-  }
-
-  // Limpa o conteúdo
-  clearContent(): void {
-    this.content = '';
-  }
-
   onContentChange() {
     this.generateHex();
     this.generateHash();
