@@ -1,0 +1,116 @@
+<p-card
+  id="hashes-compared"
+  header="Comparar Hashes"
+  class="mb-6 shadow-lg w-full"
+>
+  <!-- Campo de entrada -->
+  <div class="flex flex-row gap-4 mb-4 items-center">
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="content"
+          rows="5"
+          pTextarea
+          [(ngModel)]="content"
+          (ngModelChange)="onContentChange()"
+          [fluid]="true"
+          placeholder="Insira o conteúdo que deseja transformar em hash"
+        ></textarea>
+        <label for="content">Conteúdo 1</label>
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ content.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+    <div>
+      <i class="pi pi-arrow-right-arrow-left"></i>
+    </div>
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="hex"
+          rows="5"
+          pTextarea
+          [(ngModel)]="hex"
+          (ngModelChange)="onHexChange()"
+          [fluid]="true"
+        ></textarea>
+        <label for="hex"
+          >Hexadecimal 1 (como o computador "entende o conteúdo")</label
+        >
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ hex.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+  </div>
+  <div class="flex flex-row gap-4 mb-4 items-center">
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="compare"
+          rows="5"
+          pTextarea
+          [(ngModel)]="compare"
+          (ngModelChange)="onCompareChange()"
+          [fluid]="true"
+          placeholder="Insira o conteúdo que deseja transformar em hash"
+        ></textarea>
+        <label for="compare">Conteúdo 2</label>
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ compare.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+    <div>
+      <i class="pi pi-arrow-right-arrow-left"></i>
+    </div>
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="compareHex"
+          rows="5"
+          pTextarea
+          [(ngModel)]="compareHex"
+          (ngModelChange)="onHexChange()"
+          [fluid]="true"
+        ></textarea>
+        <label for="compareHex"
+          >Hexadecimal 2 (como o computador "entende o conteúdo")</label
+        >
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ compareHex.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    @if(hash) {
+    <p class="font-mono">Hash 1: {{ hash }}</p>
+    } @else {
+    <p>Hash 1: <i>(vazio)</i></p>
+    } @if(compareHash) {
+
+    <p class="font-mono">Hash 2: {{ compareHash || "(vazio)" }}</p>
+    } @else {
+    <p>Hash 2: <i>(vazio)</i></p>
+    } @if(hash && compareHash) { @if(areHashesEqual()) {
+
+    <p-message
+      severity="success"
+      variant="simple"
+      size="small"
+      icon="pi pi-check"
+      >Hashes Iguais</p-message
+    >
+    } @else {
+    <p-message
+      severity="error"
+      variant="simple"
+      size="small"
+      icon="pi pi-times-circle"
+      >Hashes diferentes</p-message
+    >} }
+  </div>
+</p-card>
