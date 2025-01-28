@@ -1,13 +1,37 @@
 import * as CryptoJS from 'crypto-js';
 
-export function hashSHA256(data: string): string {
+export function textToHex(text: string): string {
+  return text
+    .split('')
+    .map((char) => char.charCodeAt(0).toString(16).padStart(2, '0')) // Converte cada caractere para hexadecimal
+    .join(''); // Junta todos os valores hexadecimais em uma string
+}
+
+export function hexToText(hex: string): string {
+  // Divide a string hexadecimal em pares de dois caracteres (cada byte em hexadecimal tem 2 caracteres)
+  const hexPairs = hex.match(/.{1,2}/g) || [];
+
+  // Converte cada par de hexadecimal em seu caractere correspondente
+  return hexPairs
+    .map((byte) => String.fromCharCode(parseInt(byte, 16)))
+    .join('');
+}
+
+export function hashSHA256(data: string, enc: 'text' | 'hex' = 'text'): string {
+  if (enc === 'text') {
+    data = textToHex(data);
+  }
+
   return CryptoJS.SHA256(CryptoJS.enc.Hex.parse(data)).toString(
     CryptoJS.enc.Hex
   );
 }
 
-export function dupHashSHA256(data: string): string {
-  return hashSHA256(hashSHA256(data));
+export function dupHashSHA256(
+  data: string,
+  enc: 'text' | 'hex' = 'text'
+): string {
+  return hashSHA256(hashSHA256(data, enc), 'hex');
 }
 
 export function ripemd160OfSHA256(hash: string): string {
