@@ -8,6 +8,7 @@ import { MessageModule } from 'primeng/message';
 import { PanelModule } from 'primeng/panel';
 import { TextareaModule } from 'primeng/textarea';
 import { dupHashSHA256, hexToText, textToHex } from '../../utils/tools';
+import { HexadecimalComponent } from './hexadecimal/hexadecimal.component';
 
 @Component({
   selector: 'app-tools',
@@ -20,6 +21,7 @@ import { dupHashSHA256, hexToText, textToHex } from '../../utils/tools';
     IftaLabelModule,
     CardModule,
     MessageModule,
+    HexadecimalComponent,
   ],
   templateUrl: './tools.component.html',
   styleUrl: './tools.component.scss',

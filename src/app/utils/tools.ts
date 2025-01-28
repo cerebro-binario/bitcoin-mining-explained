@@ -17,6 +17,14 @@ export function hexToText(hex: string): string {
     .join('');
 }
 
+export function hexToBinary(hex: string): string {
+  // Converte cada caractere hexadecimal em seu valor binário correspondente
+  return hex
+    .split('') // Divide o hexadecimal em caracteres individuais
+    .map((char) => parseInt(char, 16).toString(2).padStart(4, '0')) // Converte cada caractere para binário (4 bits)
+    .join(''); // Junta todos os valores binários em uma única string
+}
+
 export function hashSHA256(data: string, enc: 'text' | 'hex' = 'text'): string {
   if (enc === 'text') {
     data = textToHex(data);

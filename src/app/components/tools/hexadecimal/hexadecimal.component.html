@@ -1,0 +1,81 @@
+<p-card id="Hexadecimal" header="# Hexadecimal" class="mb-6 shadow-lg w-full">
+  <div class="mb-4 flex flex-col gap-y-3">
+    <p>
+      Hexadecimal é o formato que o computador "entende o conteúdo" da
+      informação.
+    </p>
+    <p class="text-sm">O computador não entende texto, ele entende números.</p>
+    <p class="text-sm">
+      Um número hexadecimal é, na verdade, vários 0's e 1's formatados de uma
+      forma mais compacta.
+    </p>
+  </div>
+
+  <div class="flex flex-row gap-4 mb-4 items-center">
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="content"
+          rows="5"
+          pTextarea
+          [(ngModel)]="content"
+          (ngModelChange)="onContentChange()"
+          [fluid]="true"
+          placeholder="Insira o conteúdo que deseja transformar em número que o computador entenda"
+        ></textarea>
+        <label for="content">Conteúdo</label>
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ content.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+    <div>
+      <i class="pi pi-arrow-right-arrow-left"></i>
+    </div>
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="hex"
+          rows="5"
+          pTextarea
+          [(ngModel)]="hex"
+          (ngModelChange)="onHexChange()"
+          [fluid]="true"
+        ></textarea>
+        <label for="hex"
+          >Hexadecimal (como o computador "entende o conteúdo")</label
+        >
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ hex.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+  </div>
+
+  <div class="field mb-4">
+    <p-iftalabel>
+      <textarea
+        id="binary"
+        rows="2"
+        pTextarea
+        [(ngModel)]="binary"
+        [fluid]="true"
+        [ngClass]="binary && !isBinaryValid() ? 'ng-invalid ng-dirty' : ''"
+      ></textarea>
+      <label for="binary"
+        >Binário (0's e 1's com os quais o computador trabalha)</label
+      >
+      <p-message variant="simple" size="small" severity="contrast"
+        >Tamanho: {{ binary.length }}</p-message
+      >
+      <p-message
+        *ngIf="binary && !isBinaryValid()"
+        severity="error"
+        variant="simple"
+        size="small"
+        icon="pi pi-times-circle"
+        >Binário inválido</p-message
+      >
+    </p-iftalabel>
+  </div>
+</p-card>
