@@ -6,8 +6,12 @@
     </p>
     <p class="text-sm">O computador não entende texto, ele entende números.</p>
     <p class="text-sm">
-      Um número hexadecimal é, na verdade, vários 0's e 1's formatados de uma
-      forma mais compacta.
+      Um número hexadecimal é, na verdade, vários 0's e 1's (binário) formatados
+      de uma forma mais compacta.
+    </p>
+    <p class="text-sm">
+      Além disso, um número hexadecimal também tem seu equivalente no formato
+      decimal.
     </p>
   </div>
 
@@ -75,6 +79,31 @@
         size="small"
         icon="pi pi-times-circle"
         >Binário inválido</p-message
+      >
+    </p-iftalabel>
+  </div>
+
+  <div class="field mb-4">
+    <p-iftalabel>
+      <textarea
+        id="decimal"
+        rows="2"
+        pTextarea
+        [(ngModel)]="decimal"
+        [fluid]="true"
+        [ngClass]="decimal && !isDecimalValid() ? 'ng-invalid ng-dirty' : ''"
+      ></textarea>
+      <label for="binary">Decimal (número que usamos no dia a dia)</label>
+      <p-message variant="simple" size="small" severity="contrast"
+        >Tamanho: {{ decimal.length }}</p-message
+      >
+      <p-message
+        *ngIf="decimal && !isDecimalValid()"
+        severity="error"
+        variant="simple"
+        size="small"
+        icon="pi pi-times-circle"
+        >Decimal inválido</p-message
       >
     </p-iftalabel>
   </div>

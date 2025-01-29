@@ -5,7 +5,12 @@ import { CardModule } from 'primeng/card';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
-import { hexToBinary, hexToText, textToHex } from '../../../utils/tools';
+import {
+  hexToBinary,
+  hexToDecimal,
+  hexToText,
+  textToHex,
+} from '../../../utils/tools';
 
 @Component({
   selector: 'app-hexadecimal',
@@ -24,6 +29,7 @@ export class HexadecimalComponent {
   content: string = ''; // Conteúdo do textarea
   hex: string = '';
   binary: string = '';
+  decimal: string = '';
 
   generateContent(): string {
     this.content = hexToText(this.hex);
@@ -46,6 +52,16 @@ export class HexadecimalComponent {
     return this.binary;
   }
 
+  generateDecimal(): string {
+    if (this.hex === '') {
+      this.decimal = '';
+    } else {
+      this.decimal = hexToDecimal(this.hex);
+    }
+
+    return this.decimal;
+  }
+
   // Validar binary
   isBinaryValid(): boolean {
     // 1. Verifica se o valor está no formato binário (apenas 0s e 1s)
@@ -64,13 +80,29 @@ export class HexadecimalComponent {
     return this.binary === contentToBinary;
   }
 
+  isDecimalValid(): boolean {
+    // 1. Verifica se o valor está no formato decimal (apenas números)
+    const isDecimalFormat = /^[0-9]+$/.test(this.decimal);
+    if (!isDecimalFormat) {
+      return false; // Retorna falso se não estiver no formato decimal
+    }
+
+    // Transforma o content para hexadecimal e depois para decimal
+    const contentToDecimal = hexToDecimal(this.hex);
+
+    // Verifica se o decimal fornecido é equivalente ao conteúdo convertido
+    return this.decimal === contentToDecimal;
+  }
+
   onContentChange() {
     this.generateHex();
     this.generateBinary();
+    this.generateDecimal();
   }
 
   onHexChange() {
     this.generateContent();
     this.generateBinary();
+    this.generateDecimal();
   }
 }

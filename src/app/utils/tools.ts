@@ -25,6 +25,17 @@ export function hexToBinary(hex: string): string {
     .join(''); // Junta todos os valores binários em uma única string
 }
 
+export function hexToDecimal(hex: string): string {
+  // Remove prefixo '0x' se existir
+  if (hex.startsWith('0x')) {
+    hex = hex.slice(2);
+  }
+
+  // Converte o hexadecimal para decimal usando BigInt para suportar valores grandes
+  const decimalValue = BigInt(`0x${hex}`);
+  return decimalValue.toString(); // Retorna o valor decimal como string
+}
+
 export function hashSHA256(data: string, enc: 'text' | 'hex' = 'text'): string {
   if (enc === 'text') {
     data = textToHex(data);
