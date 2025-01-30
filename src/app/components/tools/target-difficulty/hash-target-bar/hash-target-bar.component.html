@@ -1,4 +1,35 @@
 <div class="flex flex-col gap-2 items-start overflow-hidden">
+  <p-table [value]="[1]" class="p-datatable-sm w-full">
+    <!-- Header -->
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 10%"></th>
+        <th style="width: 40%">Hexadecimal</th>
+        <th style="width: 50%">Decimal</th>
+      </tr>
+    </ng-template>
+
+    <!-- Linhas principais -->
+    <ng-template pTemplate="body" let-item>
+      <tr>
+        <td class="font-bold">Hash</td>
+
+        <td class="font-mono text-right">{{ hash || "(vazio)" }}</td>
+
+        <td class="font-mono text-right">{{ hashDecimal || "(vazio)" }}</td>
+      </tr>
+      <tr>
+        <td class="font-bold">Alvo</td>
+
+        <td class="font-mono text-right">{{ targetHash || "(vazio)" }}</td>
+
+        <td class="font-mono text-right">
+          {{ targetHashDecimal || "(vazio)" }}
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
   <!-- Barra vertical -->
   <div
     #bar

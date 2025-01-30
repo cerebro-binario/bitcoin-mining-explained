@@ -10,27 +10,35 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageModule } from 'primeng/message';
-import { clamp } from '../../../../utils/tools';
+import { TableModule } from 'primeng/table';
+import { clamp, hexToDecimal } from '../../../../utils/tools';
 
 @Component({
   selector: 'app-hash-target-bar',
-  imports: [CommonModule, FormsModule, MessageModule],
+  imports: [CommonModule, FormsModule, MessageModule, TableModule],
   templateUrl: './hash-target-bar.component.html',
   styleUrl: './hash-target-bar.component.scss',
 })
 export class HashTargetBarComponent {
   private _hash: string = '';
+  private _hashDecimal: string = '';
   private _targetHash: string = '';
+  private _targetHashDecimal: string = '';
 
   @Input()
   set hash(value: string) {
     if (value !== this._hash) {
       this._hash = value;
+      this._hashDecimal = hexToDecimal(value).padStart(78, '0');
       this.updateHashPosition();
     }
   }
-  get hash() {
+  get hash(): string {
     return this._hash;
+  }
+
+  get hashDecimal(): string {
+    return this._hashDecimal;
   }
 
   @Output() onTargetChange = new EventEmitter<string>();
@@ -46,12 +54,17 @@ export class HashTargetBarComponent {
   set targetHash(value: string) {
     if (this._targetHash !== value) {
       this._targetHash = value;
+      this._targetHashDecimal = hexToDecimal(value).padStart(78, '0');
       this.onTargetChange.emit(value);
     }
   }
 
   get targetHash(): string {
     return this._targetHash;
+  }
+
+  get targetHashDecimal(): string {
+    return this._targetHashDecimal;
   }
 
   // Posições das linhas (em porcentagem)
@@ -100,7 +113,7 @@ export class HashTargetBarComponent {
       );
 
       // Atualiza o target com base na nova posição
-      this.targetHash = this.calculateHash(newTargetPosition);
+      this.targetHash = this.calculateHash(this.targetPosition);
       this.checkTarget();
     }
   }
@@ -114,10 +127,10 @@ export class HashTargetBarComponent {
   // Função para calcular o target com base em uma escala logarítmica/exponencial
   private calculateHash(position: number): string {
     const exponent = (100 - position) / 100; // Escala inversa de 0 a 1
-    const scaledValue =
-      BigInt(Math.round(Math.pow(2, 256 * exponent))) - BigInt(1);
+    const scaledValue = Math.max(Math.round(Math.pow(2, 256 * exponent)), 1);
+    const scaledValueBigInt = BigInt(scaledValue) - BigInt(1);
 
-    return scaledValue.toString(16).padStart(64, '0'); // Target ajustado com zeros perceptíveis
+    return scaledValueBigInt.toString(16).padStart(64, '0'); // Target ajustado com zeros perceptíveis
   }
 
   private calculatePosition(hash: string): number {
@@ -137,7 +150,6 @@ export class HashTargetBarComponent {
   }
 
   private checkTarget() {
-    console.log('test');
     if (!this._hash || !this._targetHash) {
       this.isHashBelowTarget = false;
       return;
