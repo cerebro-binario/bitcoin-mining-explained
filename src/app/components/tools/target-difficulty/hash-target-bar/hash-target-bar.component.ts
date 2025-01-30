@@ -9,11 +9,12 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MessageModule } from 'primeng/message';
 import { clamp } from '../../../../utils/tools';
 
 @Component({
   selector: 'app-hash-target-bar',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MessageModule],
   templateUrl: './hash-target-bar.component.html',
   styleUrl: './hash-target-bar.component.scss',
 })
@@ -59,15 +60,11 @@ export class HashTargetBarComponent {
 
   draggingTarget = false;
 
+  isHashBelowTarget: boolean = false;
+
   ngOnInit() {
     this.targetHash = (this.maxHashValue / BigInt(2)).toString(16);
-  }
-
-  // Verifica se o hash está abaixo do target
-  isHashBelowTarget(): boolean {
-    const hashValue = BigInt(`0x${this.hash || 0}`);
-    const targetValue = BigInt(`0x${this.targetHash}`);
-    return hashValue < targetValue;
+    this.targetPosition = this.calculatePosition(this.targetHash);
   }
 
   // Inicia o arraste do target
@@ -104,12 +101,14 @@ export class HashTargetBarComponent {
 
       // Atualiza o target com base na nova posição
       this.targetHash = this.calculateHash(newTargetPosition);
+      this.checkTarget();
     }
   }
 
   // Atualiza o hash e a posição
   private updateHashPosition(): void {
     this.hashPosition = this.calculatePosition(this.hash);
+    this.checkTarget();
   }
 
   // Função para calcular o target com base em uma escala logarítmica/exponencial
@@ -122,6 +121,10 @@ export class HashTargetBarComponent {
   }
 
   private calculatePosition(hash: string): number {
+    if (!hash) {
+      return -1;
+    }
+
     const hashValue = BigInt(`0x${hash}`);
 
     // Calcula a posição como a relação logarítmica do hash em relação ao valor máximo
@@ -131,5 +134,17 @@ export class HashTargetBarComponent {
 
     // Garante que a posição fique no intervalo [0, 100]
     return Math.max(0, Math.min(100, position));
+  }
+
+  private checkTarget() {
+    console.log('test');
+    if (!this._hash || !this._targetHash) {
+      this.isHashBelowTarget = false;
+      return;
+    }
+
+    const hashValue = BigInt(`0x${this.hash}`);
+    const targetValue = BigInt(`0x${this.targetHash}`);
+    this.isHashBelowTarget = hashValue < targetValue;
   }
 }

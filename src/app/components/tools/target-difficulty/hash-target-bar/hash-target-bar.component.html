@@ -1,4 +1,4 @@
-<div class="flex gap-5 items-start overflow-hidden">
+<div class="flex flex-col gap-2 items-start overflow-hidden">
   <!-- Barra vertical -->
   <div
     #bar
@@ -8,15 +8,32 @@
     <!-- Área do Target (vermelha) -->
     <div
       #targetArea
-      class="absolute h-full w-full bg-rose-700 cursor-grab select-none"
+      [ngClass]="{
+        'absolute h-full w-full cursor-grab select-none': true,
+        'bg-green-500': isHashBelowTarget,
+        'bg-rose-700': !isHashBelowTarget
+      }"
       [ngStyle]="{ right: targetPosition + '%' }"
     ></div>
 
     <!-- Linha do Hash (verde) -->
     <div
       #hashLine
-      class="absolute w-1 h-full bg-green-500 pointer-events-none"
+      class="absolute w-0.5 h-full bg-green-900 pointer-events-none"
       [ngStyle]="{ right: hashPosition + '%' }"
     ></div>
   </div>
+  @if(isHashBelowTarget) {
+
+  <p-message severity="success" variant="simple" size="small" icon="pi pi-check"
+    >Hash dentro do target</p-message
+  >
+  } @else {
+  <p-message
+    severity="error"
+    variant="simple"
+    size="small"
+    icon="pi pi-times-circle"
+    >Hash fora do target</p-message
+  >}
 </div>
