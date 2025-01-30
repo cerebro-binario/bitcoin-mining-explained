@@ -78,3 +78,7 @@ export function getWeightedRandomInput(): number {
 
   return cumulativeWeights.findIndex((weight) => random < weight) + 1;
 }
+
+export function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(value, max));
+}
