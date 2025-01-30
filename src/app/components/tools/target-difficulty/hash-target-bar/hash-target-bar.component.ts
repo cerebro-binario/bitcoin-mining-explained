@@ -29,7 +29,6 @@ export class HashTargetBarComponent {
     }
   }
   get hash() {
-    console.log('test');
     return this._hash;
   }
 
@@ -61,7 +60,7 @@ export class HashTargetBarComponent {
   draggingTarget = false;
 
   ngOnInit() {
-    this._targetHash = (this.maxHashValue / BigInt(2)).toString(16);
+    this.targetHash = (this.maxHashValue / BigInt(2)).toString(16);
   }
 
   // Verifica se o hash está abaixo do target
