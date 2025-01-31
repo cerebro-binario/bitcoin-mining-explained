@@ -16,7 +16,7 @@ import {
   MAX_PRIVATE_KEY,
 } from '../../models/address.model';
 import { AddressService } from '../../services/address.service';
-import { shortenValue } from '../../utils/tools';
+import { hexToDecimal, shortenValue } from '../../utils/tools';
 
 @Component({
   selector: 'app-addresses',
@@ -98,7 +98,7 @@ export class AddressesComponent implements OnInit {
     if (this.isHexFormat) {
       return '0x' + key; // Retorna como hexadecimal
     } else {
-      return BigInt('0x' + key).toString(10); // Converte para decimal
+      return hexToDecimal(key); // Converte para decimal
     }
   }
 
