@@ -1,0 +1,53 @@
+<p-card
+  id="target-difficulty"
+  header="Hash-Alvo (target)"
+  class="mb-6 shadow-lg w-full"
+>
+  <!-- Campo de entrada -->
+  <div class="flex flex-row gap-4 mb-4 items-center">
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="content"
+          rows="5"
+          pTextarea
+          [(ngModel)]="content"
+          (ngModelChange)="onContentChange()"
+          [fluid]="true"
+          placeholder="Insira o conteúdo que deseja transformar em hash"
+        ></textarea>
+        <label for="content">Conteúdo</label>
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ content.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+    <div>
+      <i class="pi pi-arrow-right-arrow-left"></i>
+    </div>
+    <div class="field w-full">
+      <p-iftalabel>
+        <textarea
+          id="hex"
+          rows="5"
+          pTextarea
+          [(ngModel)]="hex"
+          (ngModelChange)="onHexChange()"
+          [fluid]="true"
+        ></textarea>
+        <label for="hex"
+          >Hexadecimal (como o computador "entende o conteúdo")</label
+        >
+        <p-message variant="simple" size="small" severity="contrast"
+          >Tamanho: {{ hex.length }}</p-message
+        >
+      </p-iftalabel>
+    </div>
+  </div>
+  <div class="mb-4">
+    <app-hash-target-bar
+      [hash]="hash"
+      (onTargetChange)="target = $event"
+    ></app-hash-target-bar>
+  </div>
+</p-card>

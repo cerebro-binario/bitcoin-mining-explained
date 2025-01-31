@@ -1,11 +1,17 @@
 import { Component } from '@angular/core';
+import { HashTargetComponent } from './hash-target/hash-target.component';
 import { HashComponent } from './hash/hash.component';
 import { HashesComparedComponent } from './hashes-compared/hashes-compared.component';
 import { HexadecimalComponent } from './hexadecimal/hexadecimal.component';
 
 @Component({
   selector: 'app-tools',
-  imports: [HexadecimalComponent, HashComponent, HashesComparedComponent],
+  imports: [
+    HexadecimalComponent,
+    HashComponent,
+    HashesComparedComponent,
+    HashTargetComponent,
+  ],
   templateUrl: './tools.component.html',
   styleUrl: './tools.component.scss',
 })
