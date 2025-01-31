@@ -82,3 +82,10 @@ export function getWeightedRandomInput(): number {
 export function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(value, max));
 }
+
+// Método para encurtar endereços, mostrando apenas os primeiros e últimos caracteres
+export function shortenValue(value: string, size: number = 6): string {
+  if (value.length < size * 2 + 1) return value;
+
+  return `${value.slice(0, size)}...${value.slice(-size)}`;
+}

@@ -16,6 +16,7 @@ import {
   MAX_PRIVATE_KEY,
 } from '../../models/address.model';
 import { AddressService } from '../../services/address.service';
+import { shortenValue } from '../../utils/tools';
 
 @Component({
   selector: 'app-addresses',
@@ -103,9 +104,7 @@ export class AddressesComponent implements OnInit {
 
   // Método para encurtar endereços, mostrando apenas os primeiros e últimos caracteres
   shortenValue(value: string, size: number = 6): string {
-    if (value.length < 13) return value;
-
-    return `${value.slice(0, size)}...${value.slice(-size)}`;
+    return shortenValue(value, size);
   }
 
   // Manipula a mudança de página
