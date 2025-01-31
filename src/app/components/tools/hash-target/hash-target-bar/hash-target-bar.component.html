@@ -1,5 +1,5 @@
-<div class="flex flex-col gap-2 items-start overflow-hidden">
-  <p-table [value]="[1]" class="p-datatable-sm w-full">
+<div class="flex flex-col items-start">
+  <p-table [value]="[1]" class="p-datatable-sm w-full mb-2">
     <!-- Header -->
     <ng-template pTemplate="header">
       <tr>
@@ -30,6 +30,26 @@
     </ng-template>
   </p-table>
 
+  <div class="relative w-full h-8 rounded-md border-2 border-transparent">
+    <div
+      [ngClass]="{
+        'absolute flex flex-col items-center': true,
+        'text-green-500': isHashBelowTarget,
+        'text-rose-700': !isHashBelowTarget
+      }"
+      [ngStyle]="{
+        right: targetPosition + '%',
+        bottom: '-4px',
+        transform: 'translateX(50%)'
+      }"
+    >
+      <span>
+        {{ shortenValue(targetHash, 4) }}
+      </span>
+      <i class="pi pi-sort-down-fill"></i>
+    </div>
+  </div>
+
   <!-- Barra vertical -->
   <div
     #bar
@@ -50,21 +70,42 @@
     <!-- Linha do Hash (verde) -->
     <div
       #hashLine
-      class="absolute w-0.5 h-full bg-green-900 pointer-events-none"
+      class="absolute w-1 h-full bg-green-900 pointer-events-none opacity-70"
       [ngStyle]="{ right: hashPosition + '%' }"
     ></div>
   </div>
-  @if(isHashBelowTarget) {
+  <div *ngIf="hash" class="relative w-full overflow-visible">
+    <div
+      class="absolute flex flex-col items-center dark:text-slate-300 text-slate-700"
+      [ngStyle]="{
+        right: hashPosition + '%',
+        top: '-4px',
+        transform: 'translateX(calc(50% - 0.25rem))'
+      }"
+    >
+      <i class="pi pi-sort-up-fill"></i>
+      <span>
+        {{ shortenValue(hash, 4) }}
+      </span>
+    </div>
+  </div>
+  <div class="mt-2">
+    @if(isHashBelowTarget) {
 
-  <p-message severity="success" variant="simple" size="small" icon="pi pi-check"
-    >Hash dentro do target</p-message
-  >
-  } @else {
-  <p-message
-    severity="error"
-    variant="simple"
-    size="small"
-    icon="pi pi-times-circle"
-    >Hash fora do target</p-message
-  >}
+    <p-message
+      severity="success"
+      variant="simple"
+      size="small"
+      icon="pi pi-check"
+      >Hash dentro do target</p-message
+    >
+    } @else {
+    <p-message
+      severity="error"
+      variant="simple"
+      size="small"
+      icon="pi pi-times-circle"
+      >Hash fora do target</p-message
+    >}
+  </div>
 </div>

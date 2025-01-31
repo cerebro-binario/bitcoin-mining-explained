@@ -11,7 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { MessageModule } from 'primeng/message';
 import { TableModule } from 'primeng/table';
-import { clamp, hexToDecimal } from '../../../../utils/tools';
+import { clamp, hexToDecimal, shortenValue } from '../../../../utils/tools';
 
 @Component({
   selector: 'app-hash-target-bar',
@@ -96,6 +96,10 @@ export class HashTargetBarComponent {
   stopDraggingTarget(event: MouseEvent): void {
     this.updateTarget(event);
     this.draggingTarget = false;
+  }
+
+  shortenValue(value: string, size: number) {
+    return shortenValue(value, size);
   }
 
   private updateTarget(event: MouseEvent) {
