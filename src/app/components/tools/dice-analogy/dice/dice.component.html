@@ -1,0 +1,19 @@
+<div
+  class="w-16 h-16 bg-white border-2 border-gray-700 rounded-lg flex flex-wrap p-1 shadow-md items-center justify-center"
+  [ngClass]="{ 'animate-roll': isRolling }"
+>
+  <div
+    *ngFor="let row of [0, 1, 2]; let rIndex = index"
+    class="flex w-full justify-center"
+  >
+    <div
+      *ngFor="let col of [0, 1, 2]; let cIndex = index"
+      class="w-1/3 h-1/3 flex items-center justify-center"
+    >
+      <div
+        *ngIf="hasDot(value, rIndex, cIndex)"
+        class="w-3 h-3 bg-black rounded-full"
+      ></div>
+    </div>
+  </div>
+</div>
