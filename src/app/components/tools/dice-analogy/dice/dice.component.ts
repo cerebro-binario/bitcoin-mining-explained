@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-dice',
@@ -7,10 +8,40 @@ import { Component, Input } from '@angular/core';
   templateUrl: './dice.component.html',
   styleUrl: './dice.component.scss',
 })
-export class DiceComponent {
-  @Input() value: number = 1; // Valor padrão do dado
+export class DiceComponent implements OnDestroy {
+  private _value = 0;
+  private _target = 6;
+
+  private destroy$ = new Subject<void>();
+
+  @Input()
+  set dice(s: Subject<number>) {
+    s.pipe(takeUntil(this.destroy$)).subscribe((v) => {
+      this.rollDice(v);
+    });
+  }
+
+  get value() {
+    return this._value;
+  }
+
+  @Input()
+  set target(v: number) {
+    if (v === null) {
+      return;
+    }
+
+    if (this._target !== v) {
+      this._target = v;
+      this.checkSuccess();
+    }
+  }
+  get target() {
+    return this._target;
+  }
 
   isRolling = false;
+  success = false;
 
   // Posições das bolinhas (1 a 6)
   dotsPositions: { [i: number]: number[][] } = {
@@ -47,11 +78,15 @@ export class DiceComponent {
     ],
   };
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   /**
    * Verifica se há uma bolinha na posição específica do grid 3x3
    */
   hasDot(value: number, row: number, col: number): boolean {
-    console.log('test');
     return (
       this.dotsPositions[value]?.some(
         (pos) => pos[0] === row && pos[1] === col
@@ -61,9 +96,21 @@ export class DiceComponent {
 
   rollDice(newValue: number) {
     this.isRolling = true;
+    this.success = false;
+    const interval = setInterval(() => {
+      this._value = Math.floor(Math.random() * 6) + 1;
+    }, 50);
+
     setTimeout(() => {
-      this.value = newValue;
-      this.isRolling = false;
+      clearInterval(interval);
+      this._value = newValue;
+      this.checkSuccess();
+
+      setTimeout(() => (this.isRolling = false), 100);
     }, 500); // Tempo da animação
+  }
+
+  private checkSuccess() {
+    this.success = this._value <= this._target;
   }
 }
