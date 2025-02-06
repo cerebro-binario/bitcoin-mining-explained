@@ -9,13 +9,14 @@ import { Subject, takeUntil } from 'rxjs';
   styleUrl: './dice.component.scss',
 })
 export class DiceComponent implements OnDestroy {
-  private _value = 0;
+  private _value = 1;
   private _target = 6;
 
   private destroy$ = new Subject<void>();
 
   @Input()
   set dice(s: Subject<number>) {
+    this.destroy$.next();
     s.pipe(takeUntil(this.destroy$)).subscribe((v) => {
       this.rollDice(v);
     });
@@ -95,6 +96,11 @@ export class DiceComponent implements OnDestroy {
   }
 
   rollDice(newValue: number) {
+    if (newValue === null) {
+      this.clearDice();
+      return;
+    }
+
     this.isRolling = true;
     this.success = false;
     const interval = setInterval(() => {
@@ -112,5 +118,11 @@ export class DiceComponent implements OnDestroy {
 
   private checkSuccess() {
     this.success = this._value <= this._target;
+  }
+
+  private clearDice() {
+    this.success = false;
+    this.isRolling = false;
+    this._value = 1;
   }
 }
