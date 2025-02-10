@@ -1,0 +1,34 @@
+.container {
+  margin: 20px;
+}
+
+.target-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.target-value {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.action-buttons {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+/* Estilo para a área dos dados */
+.dice-container {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+/* Destaque para o dado vencedor */
+.dice.success {
+  background-color: #4caf50;
+  color: #fff;
+  font-weight: bold;
+}
