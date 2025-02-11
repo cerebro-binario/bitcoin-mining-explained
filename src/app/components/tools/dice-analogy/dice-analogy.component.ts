@@ -24,14 +24,15 @@ interface Competitor {
   dices: Subject<number>[];
 }
 
-interface Block {
+export interface BlockWinner {
   winner: Competitor;
-  previous?: Block;
-  next: Block[];
+  previous?: BlockWinner;
+  next: BlockWinner[];
+  isDeadFork: boolean;
 }
 
 interface Chain {
-  heights: Block[][];
+  heights: BlockWinner[][];
 }
 
 @Component({
@@ -88,6 +89,18 @@ export class DiceAnalogyComponent {
     },
   };
 
+  ngOnInit() {
+    let i;
+    for (i = 0; i < 3; i++) {
+      this.addCompetitor();
+    }
+
+    this.competitors.forEach((c) => {
+      this.increaseDice(c);
+      this.increaseDice(c);
+      this.increaseDice(c);
+    });
+  }
 
   // Adiciona um novo competidor (inicia com 1 dado e resultado null)
   addCompetitor() {
@@ -167,27 +180,32 @@ export class DiceAnalogyComponent {
 
   resolveForks(winners: Competitor[]) {
     const height = this.chain.heights.length;
-    const newBlocks: Block[] = winners.map((w) => ({
+    const newBlocks: BlockWinner[] = winners.map((w) => ({
       winner: w,
       next: [],
+      isDeadFork: false,
     }));
 
     this.isMoving = true;
 
     setTimeout(() => {
-      this.chain.heights.unshift(newBlocks);
       this.isMoving = false;
 
       // Resolver possíveis forks
       if (height > 0) {
-        const lastBlocks = this.chain.heights[1];
+        const lastBlocks = this.chain.heights[0];
         newBlocks.forEach((block) => {
           const closest = this.determineClosest(lastBlocks, block);
 
           block.previous = closest;
           closest.next.push(block);
         });
+
+        this.reorderChainBeforeAddingNewBlocks();
+
+        this.chain.heights.unshift(newBlocks);
       } else {
+        this.chain.heights.unshift(newBlocks);
         requestAnimationFrame(() => {
           this.calculateGaps();
         });
@@ -195,7 +213,7 @@ export class DiceAnalogyComponent {
     }, 750);
   }
 
-  determineClosest(lastBlocks: Block[], block: Block): Block {
+  determineClosest(lastBlocks: BlockWinner[], block: BlockWinner): BlockWinner {
     return (
       lastBlocks.find((b) => b === block) ||
       lastBlocks.reduce((result, current, i) => {
@@ -230,8 +248,12 @@ export class DiceAnalogyComponent {
     return (100 / (total + 1)) * (index + 1);
   }
 
-  getCurvedPath(block: Block, index: number): string {
-    const prev = block.previous as Block;
+  getCurvedPath(
+    block: BlockWinner,
+    index: number,
+    heightBlocks: BlockWinner[]
+  ): string {
+    const prev = block.previous as BlockWinner;
     const hTotal = prev.next.length;
     const h = prev.next.findIndex((b) => b.winner === block.winner);
     const prevPosition = this.chain.heights[index + 1].findIndex(
@@ -255,6 +277,10 @@ export class DiceAnalogyComponent {
     const controlY = startY + (endY - startY) / 2; // Ponto médio na vertical
 
     return `M ${startX},${startY} C ${controlX},${controlY} ${controlX},${controlY} ${endX},${endY}`;
+  }
+
+  trackBlocksByFn(index: number, item: BlockWinner) {
+    return item.winner.id;
   }
 
   private calculateGaps() {
@@ -290,5 +316,66 @@ export class DiceAnalogyComponent {
 
     this.gap.x.percentage = (this.gap.x.value / heightWidth) * 100;
     this.gap.y.percentage = (this.gap.y.value / blockHeight) * 100;
+  }
+
+  // Método para reordenar a cadeia e marcar forks mortos antes de adicionar novos blocos
+  reorderChainBeforeAddingNewBlocks() {
+    if (this.chain.heights.length === 0) return;
+
+    const heightsToReorder = new Set<number>(); // Guarda os heights que precisam ser reordenados
+
+    // Passo 1: Identificar forks mortos e registrar os heights afetados
+    for (let h = 0; h < this.chain.heights.length; h++) {
+      this.chain.heights[h].forEach((block) => {
+        if (block.next.length === 0) {
+          this.markAsDeadFork(block, heightsToReorder, h);
+        }
+      });
+    }
+
+    // Passo 2: Reordenar todos os heights afetados
+    heightsToReorder.forEach((height) => {
+      this.chain.heights[height] = this.chain.heights[height].sort((a, b) => {
+        // Prioriza blocos **ativos** (não mortos)
+        if (a.isDeadFork && !b.isDeadFork) return 1;
+        if (!a.isDeadFork && b.isDeadFork) return -1;
+
+        // Caso ambos sejam ativos ou ambos sejam forks, ordena por ID do minerador
+        return a.winner.id - b.winner.id;
+      });
+    });
+  }
+
+  // Método para marcar um fork morto recursivamente
+  private markAsDeadFork(
+    block: BlockWinner,
+    heightsToReorder: Set<number>,
+    height: number
+  ) {
+    if (block.isDeadFork) return; // Se já foi marcado, evita loops infinitos
+
+    if (block.next.some((b) => !b.isDeadFork)) return; // Se possui um sucessor não morto
+
+    block.isDeadFork = true; // Marca como fork morto
+    heightsToReorder.add(height); // Adiciona este height à lista de reordenação
+
+    // Recursivamente marca os blocos anteriores
+    if (block.previous) {
+      // Encontrar em qual height o bloco anterior está para reordenar essa camada também
+      const previousHeight = this.findBlockHeight(block.previous);
+      if (previousHeight !== -1) {
+        this.markAsDeadFork(block.previous, heightsToReorder, previousHeight);
+      }
+    }
+  }
+
+  // Método para encontrar em qual height um bloco específico está
+  private findBlockHeight(block: BlockWinner): number {
+    for (let h = 0; h < this.chain.heights.length; h++) {
+      if (this.chain.heights[h].includes(block)) {
+        return h;
+      }
+    }
+    return -1; // Retorna -1 se não encontrar (caso improvável)
   }
 }
