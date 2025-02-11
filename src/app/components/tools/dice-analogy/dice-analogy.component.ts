@@ -142,12 +142,15 @@ export class DiceAnalogyComponent {
       });
     });
 
-    if (roundWinners.length > 0) {
-      this.resolveForks(roundWinners);
-      if (this.autoPause) {
-        this.stopCompetition();
+    // esperar animação do dado terminar
+    setTimeout(() => {
+      if (roundWinners.length > 0) {
+        this.resolveForks(roundWinners);
+        if (this.autoPause) {
+          this.stopCompetition();
+        }
       }
-    }
+    }, 500);
   }
 
   resolveForks(winners: Competitor[]) {
