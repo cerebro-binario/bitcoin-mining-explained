@@ -77,6 +77,18 @@ export class DiceAnalogyComponent {
 
   chain: Chain = { heights: [] };
 
+  gap = {
+    x: {
+      value: 0,
+      percentage: 0,
+    },
+    y: {
+      value: 0,
+      percentage: 0,
+    },
+  };
+
+
   // Adiciona um novo competidor (inicia com 1 dado e resultado null)
   addCompetitor() {
     const newCompetitor: Competitor = {
@@ -175,6 +187,10 @@ export class DiceAnalogyComponent {
           block.previous = closest;
           closest.next.push(block);
         });
+      } else {
+        requestAnimationFrame(() => {
+          this.calculateGaps();
+        });
       }
     }, 750);
   }
@@ -229,14 +245,50 @@ export class DiceAnalogyComponent {
     const startY = 50;
 
     // Calcula a posição final do bloco filho
-    const endX = 125;
+    const endX = 100 + this.gap.x.percentage;
     const endY =
-      this.getDynamicTopValue(hTotal, h) + 110 * (prevPosition - currPosition);
+      this.getDynamicTopValue(hTotal, h) +
+      (100 + this.gap.y.percentage) * (prevPosition - currPosition);
 
     // Ponto de controle para a curva
     const controlX = (startX + endX) / 2; // Ponto médio na horizontal
     const controlY = startY + (endY - startY) / 2; // Ponto médio na vertical
 
     return `M ${startX},${startY} C ${controlX},${controlY} ${controlX},${controlY} ${endX},${endY}`;
+  }
+
+  private calculateGaps() {
+    // Calcular gap horizontal
+    const blockchainContainer = document.querySelector(
+      '#blockchain'
+    ) as HTMLElement;
+
+    const blockchainContainerComputedStyle =
+      window.getComputedStyle(blockchainContainer);
+
+    this.gap.x.value =
+      parseFloat(blockchainContainerComputedStyle.getPropertyValue('gap')) || 0;
+
+    // Calcular gap vertical
+    const heightContainer = document.querySelector(
+      '.height-element-container'
+    ) as HTMLElement;
+
+    const heightComputedStyle = window.getComputedStyle(heightContainer);
+    this.gap.y.value =
+      parseFloat(heightComputedStyle.getPropertyValue('gap')) || 0;
+
+    const heightElement = document.querySelector(
+      '.height-element'
+    ) as HTMLElement;
+    const blockElement = document.querySelector(
+      '.block-element'
+    ) as HTMLElement;
+
+    const heightWidth = heightElement.getBoundingClientRect().width;
+    const blockHeight = blockElement.getBoundingClientRect().height;
+
+    this.gap.x.percentage = (this.gap.x.value / heightWidth) * 100;
+    this.gap.y.percentage = (this.gap.y.value / blockHeight) * 100;
   }
 }

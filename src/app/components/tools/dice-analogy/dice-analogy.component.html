@@ -149,24 +149,24 @@
       <div class="flex flex-col gap-5 w-full">
         <h3 class="font-bold text-lg mb-3">Histórico de Blocos</h3>
         <div
-          class="flex gap-10 relative overflow-x-auto whitespace-nowrap w-full h-auto"
+          id="blockchain"
+          class="flex gap-20 relative overflow-x-auto whitespace-nowrap w-full h-auto"
         >
           <!-- Blocos de vencedores -->
           <div
             *ngFor="let blocks of chain.heights; let height = index"
-            class="relative flex"
-            #blockElement
+            class="height-element relative flex"
             @blockAnimation
             [@slideRightAnimation]="isMoving ? 'moved' : 'default'"
           >
             <!-- Bloco individual ou múltiplo -->
-            <div class="flex flex-col gap-2">
-              <div class="p-4 rounded-lg shadow-md text-center min-w-[150px]">
+            <div class="height-element-container flex flex-col gap-5">
+              <div class="p-4 rounded-lg shadow-md text-center w-40">
                 #{{ chain.heights.length - height }}
               </div>
               <div
                 *ngFor="let block of blocks"
-                class="relative p-4 bg-blue-500 text-white rounded-lg shadow-md text-center w-40 h-40 transition-colors duration-500"
+                class="block-element relative p-4 bg-blue-500 text-white rounded-lg shadow-md text-center w-40 h-40 transition-colors duration-500"
                 [ngClass]="{
                     'bg-green-500': blocks.length === 1 || (chain.heights.length - height - 1 < chain.heights.length - 1 && block.next.length > 0),
                     'bg-red-500': chain.heights.length - height - 1 < chain.heights.length - 1 && block.next.length === 0,
