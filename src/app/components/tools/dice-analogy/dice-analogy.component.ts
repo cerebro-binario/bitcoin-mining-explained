@@ -208,4 +208,8 @@ export class DiceAnalogyComponent {
       }, lastBlocks[0])
     );
   }
+
+  getDynamicTop(total: number, index: number): string {
+    return `calc((100% / ${total + 1}) * ${index + 1})`;
+  }
 }
