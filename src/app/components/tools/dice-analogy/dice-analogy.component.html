@@ -96,12 +96,22 @@
           <div
             *ngFor="let blocks of chain.heights; let height = index"
             class="relative flex"
+            #blockElement
+            @blockAnimation
+            [@slideRightAnimation]="isMoving ? 'moved' : 'default'"
           >
             <!-- Bloco individual ou múltiplo -->
             <div class="flex flex-col gap-2">
+              <div class="p-4 rounded-lg shadow-md text-center min-w-[150px]">
+                #{{ chain.heights.length - height }}
+              </div>
               <div
                 *ngFor="let block of blocks"
-                class="p-4 bg-blue-500 text-white rounded-lg shadow-md text-center min-w-[150px]"
+                class="p-4 bg-blue-500 text-white rounded-lg shadow-md text-center min-w-[150px] transition-colors duration-500"
+                [ngClass]="{
+                    'bg-green-500': blocks.length === 1 || (chain.heights.length - height - 1 < chain.heights.length - 1 && block.next.length > 0),
+                    'bg-red-500': chain.heights.length - height - 1 < chain.heights.length - 1 && block.next.length === 0,
+                }"
               >
                 <span class="font-bold">{{ block.winner.name }}</span>
               </div>

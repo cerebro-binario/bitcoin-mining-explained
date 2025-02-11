@@ -1,3 +1,10 @@
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -42,6 +49,20 @@ interface Chain {
   ],
   templateUrl: './dice-analogy.component.html',
   styleUrl: './dice-analogy.component.scss',
+  animations: [
+    trigger('blockAnimation', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('0.5s ease-out', style({ opacity: 1 })),
+      ]),
+    ]),
+    trigger('slideRightAnimation', [
+      state('default', style({ transform: 'translateX(0)' })),
+      state('moved', style({ transform: 'translateX(calc(100% + 40px))' })),
+      transition('default => moved', [animate('0.5s ease-out')]),
+      transition('moved => default', [animate('0s ease-out')]),
+    ]),
+  ],
 })
 export class DiceAnalogyComponent {
   target: number = 1;
@@ -52,6 +73,7 @@ export class DiceAnalogyComponent {
   autoPause: boolean = true;
   isMining: boolean = false;
   private miningSubscription: Subscription | null = null;
+  isMoving = false;
 
   chain: Chain = { heights: [] };
 
@@ -130,20 +152,28 @@ export class DiceAnalogyComponent {
 
   resolveForks(winners: Competitor[]) {
     const height = this.chain.heights.length;
-    const newBlocks: Block[] = winners.map((w) => ({ winner: w, next: [] }));
+    const newBlocks: Block[] = winners.map((w) => ({
+      winner: w,
+      next: [],
+    }));
 
-    this.chain.heights.push(newBlocks);
+    this.isMoving = true;
 
-    // Resolver possíveis forks
-    if (height > 0) {
-      const lastBlocks = this.chain.heights[height - 1];
-      newBlocks.forEach((block) => {
-        const closest = this.determineClosest(lastBlocks, block);
+    setTimeout(() => {
+      this.chain.heights.unshift(newBlocks);
+      this.isMoving = false;
 
-        block.previous = closest;
-        closest.next.push(block);
-      });
-    }
+      // Resolver possíveis forks
+      if (height > 0) {
+        const lastBlocks = this.chain.heights[1];
+        newBlocks.forEach((block) => {
+          const closest = this.determineClosest(lastBlocks, block);
+
+          block.previous = closest;
+          closest.next.push(block);
+        });
+      }
+    }, 750);
   }
 
   determineClosest(lastBlocks: Block[], block: Block): Block {
