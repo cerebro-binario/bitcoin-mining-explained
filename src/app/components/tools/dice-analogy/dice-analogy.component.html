@@ -173,13 +173,25 @@
                 }"
               >
                 <span class="font-bold">{{ block.winner.name }}</span>
+                @if(block.previous) {
+
                 <div
-                  *ngIf="block.previous"
-                  class="absolute text-xs px-1 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white text-black"
+                  class="absolute text-xs px-1 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white text-black z-50"
                 >
                   {{ block.previous.winner.id }}
                 </div>
-                @if(block.next.length === 0) {
+                <svg
+                  class="absolute top-0 right-0 bottom-0 left-0 pointer-events-none overflow-visible"
+                  viewBox="0 0 100 100"
+                >
+                  <path
+                    [attr.d]="getCurvedPath(block, height)"
+                    stroke="white"
+                    stroke-width="2"
+                    fill="transparent"
+                  />
+                </svg>
+                } @if(block.next.length === 0) {
                 <div
                   *ngIf="block.next.length === 0 && height !== 0"
                   class="absolute text-xs w-3 h-3 left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 bg-red-300"
@@ -189,7 +201,8 @@
                   *ngFor="let n of block.next; let i = index"
                   class="absolute text-xs px-1 rounded-lg left-0 -translate-y-1/2 -translate-x-1/2 bg-white text-black"
                   [ngStyle]="{
-                    top: getDynamicTop(block.next.length, i)
+                    top:
+                      'calc(' + getDynamicTopValue(block.next.length, i) + '%)'
                   }"
                 >
                   {{ n.winner.id }}

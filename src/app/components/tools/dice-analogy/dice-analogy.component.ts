@@ -209,7 +209,34 @@ export class DiceAnalogyComponent {
     );
   }
 
-  getDynamicTop(total: number, index: number): string {
-    return `calc((100% / ${total + 1}) * ${index + 1})`;
+  // Converte o `top` de string para número para posicionar o `path`
+  getDynamicTopValue(total: number, index: number): number {
+    return (100 / (total + 1)) * (index + 1);
+  }
+
+  getCurvedPath(block: Block, index: number): string {
+    const prev = block.previous as Block;
+    const hTotal = prev.next.length;
+    const h = prev.next.findIndex((b) => b.winner === block.winner);
+    const prevPosition = this.chain.heights[index + 1].findIndex(
+      (b) => b.winner === prev.winner
+    );
+    const currPosition = this.chain.heights[index].findIndex(
+      (b) => b.winner === block.winner
+    );
+
+    const startX = 100;
+    const startY = 50;
+
+    // Calcula a posição final do bloco filho
+    const endX = 125;
+    const endY =
+      this.getDynamicTopValue(hTotal, h) + 110 * (prevPosition - currPosition);
+
+    // Ponto de controle para a curva
+    const controlX = (startX + endX) / 2; // Ponto médio na horizontal
+    const controlY = startY + (endY - startY) / 2; // Ponto médio na vertical
+
+    return `M ${startX},${startY} C ${controlX},${controlY} ${controlX},${controlY} ${endX},${endY}`;
   }
 }
