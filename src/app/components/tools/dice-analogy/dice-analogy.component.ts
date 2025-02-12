@@ -59,7 +59,9 @@ interface Chain {
     ]),
     trigger('slideRightAnimation', [
       state('default', style({ transform: 'translateX(0)' })),
-      state('moved', style({ transform: 'translateX(calc(100% + 40px))' })),
+      state('moved', style({ transform: '{{slideXValue}}' }), {
+        params: { slideXValue: 'translateX(100%)' },
+      }),
       transition('default => moved', [animate('0.5s ease-out')]),
       transition('moved => default', [animate('0s ease-out')]),
     ]),
@@ -75,6 +77,7 @@ export class DiceAnalogyComponent {
   isMining: boolean = false;
   private miningSubscription: Subscription | null = null;
   isMoving = false;
+  slideXValue = 'translateX(100%)';
 
   chain: Chain = { heights: [] };
 
@@ -316,6 +319,8 @@ export class DiceAnalogyComponent {
 
     this.gap.x.percentage = (this.gap.x.value / heightWidth) * 100;
     this.gap.y.percentage = (this.gap.y.value / blockHeight) * 100;
+
+    this.slideXValue = `translateX(calc(100% + ${this.gap.x.value}px))`;
   }
 
   // Método para reordenar a cadeia e marcar forks mortos antes de adicionar novos blocos

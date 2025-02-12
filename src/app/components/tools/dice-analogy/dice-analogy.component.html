@@ -157,7 +157,10 @@
             *ngFor="let blocks of chain.heights; let height = index"
             class="height-element relative flex"
             @blockAnimation
-            [@slideRightAnimation]="isMoving ? 'moved' : 'default'"
+            [@slideRightAnimation]="{
+              value: isMoving ? 'moved' : 'default',
+              params: { slideXValue }
+            }"
           >
             <!-- Bloco individual ou múltiplo -->
             <div class="height-element-container flex flex-col gap-5">
