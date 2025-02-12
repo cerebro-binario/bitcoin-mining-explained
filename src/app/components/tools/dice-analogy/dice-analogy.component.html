@@ -193,9 +193,7 @@
                 >
                   <path
                     [attr.d]="getCurvedPath(block, height)"
-                    [attr.stroke]="
-                      block.isDeadFork ? 'red' : isResolved ? 'green' : 'blue'
-                    "
+                    [attr.stroke]="getConnectionStrokeColor(block, isResolved)"
                     stroke-width="2"
                     fill="transparent"
                   />

@@ -360,6 +360,12 @@ export class DiceAnalogyComponent {
     return activeBlocks === 1;
   }
 
+  getConnectionStrokeColor(block: BlockWinner, isResolved: boolean): string {
+    if (block.isDeadFork) return '#ef4444'; // bg-red-500
+    if (isResolved) return '#22c55e'; // bg-green-500
+    return '#3b82f6'; // bg-blue-500
+  }
+
   // Método para marcar um fork morto recursivamente
   private markAsDeadFork(
     block: BlockWinner,
