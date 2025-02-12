@@ -354,6 +354,11 @@ export class DiceAnalogyComponent {
     });
   }
 
+  isBlockResolved(blocks: BlockWinner[]): boolean {
+    const activeBlocks = blocks.filter((b) => !b.isDeadFork).length; // Conta apenas blocos ativos
+    return activeBlocks === 1;
+  }
+
   // Método para marcar um fork morto recursivamente
   private markAsDeadFork(
     block: BlockWinner,

@@ -171,11 +171,7 @@
                 *ngFor="let block of blocks; trackBy: trackBlocksByFn"
                 class="block-element relative flex p-4 bg-blue-500 text-white rounded-lg shadow-md justify-center items-center w-40 h-20 transition-colors duration-500"
                 [ngClass]="{
-                  'bg-green-500':
-                    blocks.length === 1 ||
-                    (chain.heights.length - height - 1 <
-                      chain.heights.length - 1 &&
-                      block.next.length > 0),
+                  'bg-green-500': isBlockResolved(blocks),
                   'bg-red-500': block.isDeadFork
                 }"
               >
