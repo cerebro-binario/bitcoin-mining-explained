@@ -183,10 +183,12 @@
                 @if(block.previous) {
 
                 <div
-                  class="absolute text-xs px-1 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white text-black z-50"
-                >
-                  {{ block.previous.winner.id }}
-                </div>
+                  class="absolute text-xs w-2.5 h-2.5 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-50"
+                  [ngClass]="{
+                    'bg-white': !block.isDeadFork,
+                    'bg-red-500': block.isDeadFork
+                  }"
+                ></div>
                 <svg
                   class="absolute h-full w-full top-0 right-0 bottom-0 left-0 pointer-events-none overflow-visible"
                 >
@@ -209,14 +211,16 @@
                 } @else {
                 <div
                   *ngFor="let n of block.next; let i = index"
-                  class="absolute text-xs px-1 rounded-lg left-0 -translate-y-1/2 -translate-x-1/2 bg-white text-black"
+                  class="absolute text-xs w-2.5 h-2.5 rounded-lg left-0 -translate-y-1/2 -translate-x-1/2"
+                  [ngClass]="{
+                    'bg-white': !n.isDeadFork,
+                    'bg-red-500': n.isDeadFork
+                  }"
                   [ngStyle]="{
                     top:
                       'calc(' + getDynamicTopValue(block.next.length, i) + '%)'
                   }"
-                >
-                  {{ n.winner.id }}
-                </div>
+                ></div>
                 }
               </div>
             </div>
