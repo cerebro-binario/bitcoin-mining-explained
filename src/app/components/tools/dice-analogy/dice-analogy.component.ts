@@ -341,13 +341,15 @@ export class DiceAnalogyComponent {
 
     // Passo 2: Reordenar todos os heights afetados
     heightsToReorder.forEach((height) => {
-      this.chain.heights[height] = this.chain.heights[height].sort((a, b) => {
-        // Prioriza blocos **ativos** (não mortos)
-        if (a.isDeadFork && !b.isDeadFork) return 1;
-        if (!a.isDeadFork && b.isDeadFork) return -1;
+      this.chain.heights[height] = this.chain.heights[height].sort(
+        this.sortBlocks
+      );
+    });
 
-        // Caso ambos sejam ativos ou ambos sejam forks, ordena por ID do minerador
-        return a.winner.id - b.winner.id;
+    // Passo 3: Reordenar também os arrays `next[]` dentro de cada bloco
+    this.chain.heights.forEach((blocks) => {
+      blocks.forEach((block) => {
+        block.next.sort(this.sortBlocks);
       });
     });
   }
@@ -373,6 +375,16 @@ export class DiceAnalogyComponent {
         this.markAsDeadFork(block.previous, heightsToReorder, previousHeight);
       }
     }
+  }
+
+  // Método para ordenar os blocos, movendo forks mortos para o final
+  private sortBlocks(a: BlockWinner, b: BlockWinner): number {
+    // Prioriza blocos **ativos** (não mortos)
+    if (a.isDeadFork && !b.isDeadFork) return 1;
+    if (!a.isDeadFork && b.isDeadFork) return -1;
+
+    // Caso ambos sejam ativos ou ambos sejam forks, ordena por ID do minerador
+    return a.winner.id - b.winner.id;
   }
 
   // Método para encontrar em qual height um bloco específico está
