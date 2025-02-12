@@ -78,6 +78,7 @@ export class DiceAnalogyComponent {
   private miningSubscription: Subscription | null = null;
   isMoving = false;
   slideXValue = 'translateX(100%)';
+  connectorViewbox = { w: 100, h: 100 };
 
   chain: Chain = { heights: [] };
 
@@ -251,11 +252,7 @@ export class DiceAnalogyComponent {
     return (100 / (total + 1)) * (index + 1);
   }
 
-  getCurvedPath(
-    block: BlockWinner,
-    index: number,
-    heightBlocks: BlockWinner[]
-  ): string {
+  getCurvedPath(block: BlockWinner, index: number): string {
     const prev = block.previous as BlockWinner;
     const hTotal = prev.next.length;
     const h = prev.next.findIndex((b) => b.winner === block.winner);
@@ -266,14 +263,15 @@ export class DiceAnalogyComponent {
       (b) => b.winner === block.winner
     );
 
-    const startX = 100;
-    const startY = 50;
+    const startX = this.connectorViewbox.w;
+    const startY = this.connectorViewbox.h / 2;
 
     // Calcula a posição final do bloco filho
-    const endX = 100 + this.gap.x.percentage;
+    const endX = this.connectorViewbox.w + this.gap.x.value;
     const endY =
-      this.getDynamicTopValue(hTotal, h) +
-      (100 + this.gap.y.percentage) * (prevPosition - currPosition);
+      (this.getDynamicTopValue(hTotal, h) / 100) * this.connectorViewbox.h +
+      (this.connectorViewbox.h + this.gap.y.value) *
+        (prevPosition - currPosition);
 
     // Ponto de controle para a curva
     const controlX = (startX + endX) / 2; // Ponto médio na horizontal
@@ -315,12 +313,15 @@ export class DiceAnalogyComponent {
     ) as HTMLElement;
 
     const heightWidth = heightElement.getBoundingClientRect().width;
+    const blockWidth = blockElement.getBoundingClientRect().width;
     const blockHeight = blockElement.getBoundingClientRect().height;
 
     this.gap.x.percentage = (this.gap.x.value / heightWidth) * 100;
     this.gap.y.percentage = (this.gap.y.value / blockHeight) * 100;
 
     this.slideXValue = `translateX(calc(100% + ${this.gap.x.value}px))`;
+
+    this.connectorViewbox = { w: blockWidth, h: blockHeight };
   }
 
   // Método para reordenar a cadeia e marcar forks mortos antes de adicionar novos blocos
