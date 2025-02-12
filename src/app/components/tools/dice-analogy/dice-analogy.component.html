@@ -162,6 +162,9 @@
               params: { slideXValue }
             }"
           >
+            <!-- Criamos a variável `isResolved` para armazenar o resultado -->
+            @let isResolved = isHeightResolved(height);
+
             <!-- Bloco individual ou múltiplo -->
             <div class="height-element-container flex flex-col gap-5">
               <div class="p-4 rounded-lg shadow-md text-center w-40">
@@ -171,7 +174,7 @@
                 *ngFor="let block of blocks; trackBy: trackBlocksByFn"
                 class="block-element relative flex p-4 bg-blue-500 text-white rounded-lg shadow-md justify-center items-center w-40 h-20 transition-colors duration-500"
                 [ngClass]="{
-                  'bg-green-500': isBlockResolved(blocks),
+                  'bg-green-500': isResolved,
                   'bg-red-500': block.isDeadFork
                 }"
               >
@@ -179,9 +182,9 @@
                 @if(block.previous) {
 
                 <div
-                  class="absolute text-xs w-2.5 h-2.5 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-50"
+                  class="absolute text-xs bg-blue-500 w-2.5 h-2.5 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-50"
                   [ngClass]="{
-                    'bg-white': !block.isDeadFork,
+                    'bg-green-500': isResolved,
                     'bg-red-500': block.isDeadFork
                   }"
                 ></div>
@@ -190,7 +193,9 @@
                 >
                   <path
                     [attr.d]="getCurvedPath(block, height)"
-                    [attr.stroke]="block.isDeadFork ? 'red' : 'white'"
+                    [attr.stroke]="
+                      block.isDeadFork ? 'red' : isResolved ? 'green' : 'blue'
+                    "
                     stroke-width="2"
                     fill="transparent"
                   />
@@ -207,9 +212,9 @@
                 } @else {
                 <div
                   *ngFor="let n of block.next; let i = index"
-                  class="absolute text-xs w-2.5 h-2.5 rounded-lg left-0 -translate-y-1/2 -translate-x-1/2"
+                  class="absolute text-xs bg-blue-500 w-2.5 h-2.5 rounded-lg left-0 -translate-y-1/2 -translate-x-1/2"
                   [ngClass]="{
-                    'bg-white': !n.isDeadFork,
+                    'bg-green-500': isHeightResolved(height - 1),
                     'bg-red-500': n.isDeadFork
                   }"
                   [ngStyle]="{

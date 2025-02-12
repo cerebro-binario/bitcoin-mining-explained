@@ -354,7 +354,8 @@ export class DiceAnalogyComponent {
     });
   }
 
-  isBlockResolved(blocks: BlockWinner[]): boolean {
+  isHeightResolved(height: number): boolean {
+    const blocks = this.chain.heights[height];
     const activeBlocks = blocks.filter((b) => !b.isDeadFork).length; // Conta apenas blocos ativos
     return activeBlocks === 1;
   }
