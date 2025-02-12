@@ -182,7 +182,7 @@
                 @if(block.previous) {
 
                 <div
-                  class="absolute text-xs bg-blue-500 w-2.5 h-2.5 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-50"
+                  class="absolute text-xs bg-blue-500 w-2.5 h-2.5 rounded-lg right-0 top-1/2 -translate-y-1/2 translate-x-1/2 -z-50"
                   [ngClass]="{
                     'bg-green-500': isResolved,
                     'bg-red-500': block.isDeadFork
@@ -210,7 +210,7 @@
                 } @else {
                 <div
                   *ngFor="let n of block.next; let i = index"
-                  class="absolute text-xs bg-blue-500 w-2.5 h-2.5 rounded-lg left-0 -translate-y-1/2 -translate-x-1/2"
+                  class="absolute text-xs bg-blue-500 w-2.5 h-2.5 rounded-lg left-0 -translate-y-1/2 -translate-x-1/2 -z-50"
                   [ngClass]="{
                     'bg-green-500': isHeightResolved(height - 1),
                     'bg-red-500': n.isDeadFork
