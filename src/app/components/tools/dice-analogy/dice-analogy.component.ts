@@ -274,10 +274,16 @@ export class DiceAnalogyComponent {
         (prevPosition - currPosition);
 
     // Ponto de controle para a curva
-    const controlX = (startX + endX) / 2; // Ponto médio na horizontal
-    const controlY = startY + (endY - startY) / 2; // Ponto médio na vertical
+    const midX = (startX + endX) / 2; // Ponto no meio do caminho horizontalmente
 
-    return `M ${startX},${startY} C ${controlX},${controlY} ${controlX},${controlY} ${endX},${endY}`;
+    // **AUMENTAMOS** a distância dos pontos de controle para criar uma curva mais acentuada
+    const controlX1 = startX + (midX - startX) * 1.15; // Puxa mais a curva na 1ª metade
+    const controlX2 = endX + (midX - endX) * 1.15; // Puxa mais a curva na 2ª metade
+
+    const controlY1 = startY;
+    const controlY2 = endY;
+
+    return `M ${startX},${startY} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${endX},${endY}`;
   }
 
   trackBlocksByFn(index: number, item: BlockWinner) {
