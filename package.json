@@ -21,6 +21,7 @@
     "@primeng/themes": "^19.0.1",
     "bech32": "^2.0.0",
     "bs58": "^6.0.0",
+    "chart.js": "^4.4.7",
     "crypto-js": "^4.2.0",
     "elliptic": "^6.6.1",
     "primeicons": "^7.0.0",

@@ -1,0 +1,62 @@
+<p-card header="Emissão de bitcoins" class="mb-6 shadow-lg w-full">
+  <h2>Simulação da Emissão de Bitcoin</h2>
+
+  <div class="flex flex-row gap-4 m-4">
+    <p-button
+      label="Halving Anterior"
+      (click)="previousHalving()"
+      severity="secondary"
+      icon="pi pi-step-backward"
+    />
+    <p-button
+      label="Resetar"
+      (click)="resetSimulation()"
+      severity="secondary"
+      icon="pi pi-replay"
+    />
+    <p-button
+      label="Próximo Halving"
+      (click)="nextHalving()"
+      severity="secondary"
+      icon="pi pi-step-forward"
+    />
+  </div>
+
+  <div class="flex flex-col">
+    <div class="flex flex-col font-bold text-orange-500">
+      <p>
+        Blocos Atuais:
+        <span class="font-normal text-orange-300"
+          >{{ halvingBlocks[currentHalving] | formatNumber }} -
+          {{ halvingBlocks[currentHalving + 1] - 1 | formatNumber }}</span
+        >
+      </p>
+      <p>
+        Halving Atual:
+        <span class="font-normal text-orange-300">{{ currentHalving }}</span>
+      </p>
+      <p>
+        Bloco do Próximo Halving:
+        <span class="font-normal text-orange-300">{{
+          nextHalvingBlock | formatNumber
+        }}</span>
+      </p>
+      <p>
+        Subsídio:
+        <span class="font-normal text-orange-300"
+          >{{ currentSubsidy | formatNumber : 8 }} BTC</span
+        >
+      </p>
+      <p>
+        Total Emitido:
+        <span class="font-normal text-orange-300"
+          >{{ totalBTC | formatNumber : 8 }} BTC</span
+        >
+      </p>
+    </div>
+    <canvas
+      class="w-full max-w-[1080px] max-h-[720px]"
+      id="emissionChart"
+    ></canvas>
+  </div>
+</p-card>
