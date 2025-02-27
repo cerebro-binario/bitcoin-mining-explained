@@ -14,7 +14,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { KnobModule } from 'primeng/knob';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { interval, Subject, Subscription, takeWhile } from 'rxjs';
+import { interval, startWith, Subject, Subscription, takeWhile } from 'rxjs';
 import { DiceComponent } from './dice/dice.component';
 
 interface Competitor {
@@ -142,11 +142,22 @@ export class DiceAnalogyComponent {
     return Math.floor(Math.random() * 6) + 1;
   }
 
-  startCompetition() {
+  startCompetition(rounds?: number) {
     this.isMining = true;
     this.miningSubscription = interval(this.miningInterval)
-      .pipe(takeWhile(() => this.isMining))
-      .subscribe(() => this.simulateMining());
+      .pipe(
+        startWith(0),
+        takeWhile(() => this.isMining && (rounds === undefined || rounds > 0))
+      )
+      .subscribe(() => {
+        this.simulateMining();
+        if (rounds !== undefined) {
+          rounds--; // Decrementa o contador, se estiver definido
+          if (rounds === 0) {
+            this.stopCompetition(); // Para a competição após atingir o número de execuções
+          }
+        }
+      });
   }
 
   stopCompetition() {

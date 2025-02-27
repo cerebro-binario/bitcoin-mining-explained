@@ -83,11 +83,6 @@
           icon="pi pi-plus"
           (onClick)="addCompetitor()"
         ></p-button>
-        <p-button
-          label="Simular Mineração"
-          icon="pi pi-play"
-          (onClick)="simulateMining()"
-        ></p-button>
       </div>
 
       <p-table [value]="competitors" class="p-datatable-sm w-full rounded-md">
@@ -135,15 +130,22 @@
         </ng-template>
       </p-table>
 
-      <div class="my-5 pb-5 border-b">
+      <div class="my-5 pb-5 border-b w-full">
         <h3 class="font-bold text-lg mb-3">Controle da Competição</h3>
-        <p-button
-          label="{{ isMining ? 'Parar Competição' : 'Iniciar Competição' }}"
-          (click)="toggleCompetition()"
-          [severity]="isMining ? 'danger' : 'success'"
-          icon="pi pi-play"
-          class="w-full"
-        />
+        <div class="w-full flex flex-row gap-5">
+          <p-button
+            label="{{ isMining ? 'Parar Competição' : 'Iniciar Competição' }}"
+            (click)="toggleCompetition()"
+            [severity]="isMining ? 'danger' : 'success'"
+            icon="pi pi-play"
+          />
+          <p-button
+            [disabled]="isMining"
+            label="Próxima rodada"
+            icon="pi pi-play"
+            (onClick)="startCompetition(1)"
+          ></p-button>
+        </div>
       </div>
 
       <div class="flex flex-col gap-5 w-full">
