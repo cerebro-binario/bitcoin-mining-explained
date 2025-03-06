@@ -34,7 +34,6 @@ export class DiceComponent implements OnDestroy {
 
     if (this._target !== v) {
       this._target = v;
-      this.checkSuccess();
     }
   }
   get target() {
