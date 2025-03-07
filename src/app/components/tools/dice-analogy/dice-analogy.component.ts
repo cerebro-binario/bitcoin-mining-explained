@@ -383,6 +383,39 @@ export class DiceAnalogyComponent {
     return '#3b82f6'; // bg-blue-500
   }
 
+  // Método para contar quantos blocos vieram depois deste (profundidade)
+  getConfirmations(block: BlockWinner): number {
+    let confirmations = 0;
+    let currentBlock = block;
+
+    while (currentBlock.next.length > 0) {
+      confirmations++;
+      currentBlock = currentBlock.next[0]; // Segue pela cadeia principal
+    }
+
+    return confirmations;
+  }
+
+  // Retorna o ícone correto baseado na profundidade do bloco
+  getBlockStatusIcon(height: number): { icon: string; color: string } | null {
+    const confirmations =
+      this.chain.heights.length - (this.chain.heights.length - height);
+
+    if (confirmations < 6) {
+      return { icon: 'pi pi-exclamation-triangle', color: 'text-yellow-400' }; // 🔶 Alerta
+    }
+
+    if (confirmations >= 6 && confirmations < 10) {
+      return { icon: 'pi pi-check', color: 'text-white' }; // ✅ Check Azul
+    }
+
+    if (confirmations >= 10) {
+      return { icon: 'pi pi-verified', color: 'text-white' }; // ✅✅ Check Duplo Azul
+    }
+
+    return null; // Sem ícone
+  }
+
   // Método para marcar um fork morto recursivamente
   private markAsDeadFork(
     block: BlockWinner,
