@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { KnobModule } from 'primeng/knob';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -49,6 +50,7 @@ interface Chain {
     TagModule,
     CheckboxModule,
     TooltipModule,
+    InputNumberModule,
   ],
   templateUrl: './dice-analogy.component.html',
   styleUrl: './dice-analogy.component.scss',
@@ -71,6 +73,7 @@ interface Chain {
 })
 export class DiceAnalogyComponent {
   target: number = 1;
+  maxTarget: number = 6;
 
   competitors: Competitor[] = [];
   private nextCompetitorId: number = 1;
@@ -141,7 +144,7 @@ export class DiceAnalogyComponent {
 
   // Função para gerar um número aleatório entre 1 e 6
   rollDice(): number {
-    return Math.floor(Math.random() * 6) + 1;
+    return Math.floor(Math.random() * this.maxTarget) + 1;
   }
 
   startCompetition(rounds?: number) {

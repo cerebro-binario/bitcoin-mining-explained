@@ -14,6 +14,8 @@ export class DiceComponent implements OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  @Input() maxValue: number = 6;
+
   @Input()
   set dice(s: Subject<number>) {
     this.destroy$.next();
@@ -87,6 +89,8 @@ export class DiceComponent implements OnDestroy {
    * Verifica se há uma bolinha na posição específica do grid 3x3
    */
   hasDot(value: number, row: number, col: number): boolean {
+    if (value > 6) return false;
+
     return (
       this.dotsPositions[value]?.some(
         (pos) => pos[0] === row && pos[1] === col
@@ -103,7 +107,7 @@ export class DiceComponent implements OnDestroy {
     this.isRolling = true;
     this.success = false;
     const interval = setInterval(() => {
-      this._value = Math.floor(Math.random() * 6) + 1;
+      this._value = Math.floor(Math.random() * this.maxValue) + 1;
     }, 50);
 
     setTimeout(() => {
