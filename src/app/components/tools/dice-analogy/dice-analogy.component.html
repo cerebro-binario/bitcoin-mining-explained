@@ -188,6 +188,8 @@
                   class="absolute top-1 right-1 text-lg"
                   [class]="statusIcon.icon"
                   [ngClass]="statusIcon.color"
+                  pTooltip="{{ statusIcon.tooltip }}"
+                  tooltipPosition="top"
                 ></i>
                 } @if(block.previous) {
 

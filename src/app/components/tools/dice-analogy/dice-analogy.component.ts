@@ -14,6 +14,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { KnobModule } from 'primeng/knob';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 import { interval, startWith, Subject, Subscription, takeWhile } from 'rxjs';
 import { DiceComponent } from './dice/dice.component';
 
@@ -47,6 +48,7 @@ interface Chain {
     DiceComponent,
     TagModule,
     CheckboxModule,
+    TooltipModule,
   ],
   templateUrl: './dice-analogy.component.html',
   styleUrl: './dice-analogy.component.scss',
@@ -397,20 +399,35 @@ export class DiceAnalogyComponent {
   }
 
   // Retorna o ícone correto baseado na profundidade do bloco
-  getBlockStatusIcon(height: number): { icon: string; color: string } | null {
+  getBlockStatusIcon(
+    height: number
+  ): { icon: string; color: string; tooltip: string } | null {
     const confirmations =
       this.chain.heights.length - (this.chain.heights.length - height);
 
     if (confirmations < 6) {
-      return { icon: 'pi pi-exclamation-triangle', color: 'text-yellow-400' }; // 🔶 Alerta
+      return {
+        icon: 'pi pi-exclamation-triangle',
+        color: 'text-yellow-400',
+        tooltip: 'Bloco ainda não está seguro. Aguarde mais confirmações.',
+      }; // 🔶 Alerta
     }
 
     if (confirmations >= 6 && confirmations < 10) {
-      return { icon: 'pi pi-check', color: 'text-white' }; // ✅ Check Azul
+      return {
+        icon: 'pi pi-check',
+        color: 'text-white',
+        tooltip:
+          'Bloco razoavelmente seguro. Idealmente, aguarde mais algumas confirmações.',
+      }; // ✅ Check Azul
     }
 
     if (confirmations >= 10) {
-      return { icon: 'pi pi-verified', color: 'text-white' }; // ✅✅ Check Duplo Azul
+      return {
+        icon: 'pi pi-verified',
+        color: 'text-white',
+        tooltip: 'Bloco altamente seguro. Transação praticamente irreversível.',
+      }; // ✅✅ Check Duplo Azul
     }
 
     return null; // Sem ícone
