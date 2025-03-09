@@ -195,7 +195,7 @@ export class DiceAnalogyComponent {
           this.stopCompetition();
         }
       }
-    }, 500);
+    }, this.miningInterval / 2);
   }
 
   resolveForks(winners: Competitor[]) {
