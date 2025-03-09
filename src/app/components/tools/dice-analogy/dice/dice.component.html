@@ -1,6 +1,7 @@
 <div
   class="w-16 h-16 bg-white border-2 border-gray-700 rounded-lg flex flex-wrap p-1 shadow-md items-center justify-center"
-  [ngClass]="{ 'animate-roll': isRolling, success }"
+  [style.animation]="getRollAnimation()"
+  [ngClass]="{ success }"
 >
   @if(value <= 6) {
 

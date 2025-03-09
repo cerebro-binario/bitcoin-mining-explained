@@ -15,6 +15,7 @@ export class DiceComponent implements OnDestroy {
   private destroy$ = new Subject<void>();
 
   @Input() maxValue: number = 6;
+  @Input() animationDuration = 0.6;
 
   @Input()
   set dice(s: Subject<number>) {
@@ -42,7 +43,6 @@ export class DiceComponent implements OnDestroy {
     return this._target;
   }
 
-  isRolling = false;
   success = false;
 
   // Posições das bolinhas (1 a 6)
@@ -104,19 +104,29 @@ export class DiceComponent implements OnDestroy {
       return;
     }
 
-    this.isRolling = true;
     this.success = false;
+
+    if (this.animationDuration <= 0) {
+      this._value = newValue;
+      this.checkSuccess();
+      return;
+    }
+
     const interval = setInterval(() => {
       this._value = Math.floor(Math.random() * this.maxValue) + 1;
-    }, 50);
+    }, Math.max(50, this.animationDuration / 10));
 
     setTimeout(() => {
       clearInterval(interval);
       this._value = newValue;
       this.checkSuccess();
+    }, this.animationDuration); // Tempo da animação
+  }
 
-      setTimeout(() => (this.isRolling = false), 100);
-    }, 500); // Tempo da animação
+  getRollAnimation(): string {
+    return this.animationDuration > 0
+      ? `roll ${this.animationDuration}s ease-in-out`
+      : 'none';
   }
 
   private checkSuccess() {
@@ -125,7 +135,6 @@ export class DiceComponent implements OnDestroy {
 
   private clearDice() {
     this.success = false;
-    this.isRolling = false;
     this._value = 1;
   }
 }
