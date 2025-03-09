@@ -1,3 +1,10 @@
+import {
+  animate,
+  keyframes,
+  style,
+  transition,
+  trigger,
+} from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
@@ -7,6 +14,24 @@ import { Subject, takeUntil } from 'rxjs';
   imports: [CommonModule],
   templateUrl: './dice.component.html',
   styleUrl: './dice.component.scss',
+  animations: [
+    trigger('rollAnimation', [
+      transition(
+        'idle => rolling',
+        [
+          animate(
+            '{{duration}}ms ease-in-out',
+            keyframes([
+              style({ transform: 'rotate(0deg)', offset: 0 }),
+              style({ transform: 'rotate(180deg)', offset: 0.5 }),
+              style({ transform: 'rotate(360deg)', offset: 1 }),
+            ])
+          ),
+        ],
+        { params: { duration: 600 } }
+      ),
+    ]),
+  ],
 })
 export class DiceComponent implements OnDestroy {
   private _value = 1;
@@ -14,8 +39,10 @@ export class DiceComponent implements OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  isRolling = false;
+
   @Input() maxValue: number = 6;
-  @Input() animationDuration = 0.6;
+  @Input() animationDuration = 600;
 
   @Input()
   set dice(s: Subject<number>) {
@@ -112,6 +139,8 @@ export class DiceComponent implements OnDestroy {
       return;
     }
 
+    this.isRolling = true;
+
     const interval = setInterval(() => {
       this._value = Math.floor(Math.random() * this.maxValue) + 1;
     }, Math.max(50, this.animationDuration / 10));
@@ -120,13 +149,8 @@ export class DiceComponent implements OnDestroy {
       clearInterval(interval);
       this._value = newValue;
       this.checkSuccess();
+      this.isRolling = false;
     }, this.animationDuration); // Tempo da animação
-  }
-
-  getRollAnimation(): string {
-    return this.animationDuration > 0
-      ? `roll ${this.animationDuration}s ease-in-out`
-      : 'none';
   }
 
   private checkSuccess() {
@@ -135,6 +159,7 @@ export class DiceComponent implements OnDestroy {
 
   private clearDice() {
     this.success = false;
+    this.isRolling = false;
     this._value = 1;
   }
 }

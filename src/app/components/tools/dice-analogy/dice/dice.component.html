@@ -1,7 +1,10 @@
 <div
-  class="w-16 h-16 bg-white border-2 border-gray-700 rounded-lg flex flex-wrap p-1 shadow-md items-center justify-center"
-  [style.animation]="getRollAnimation()"
-  [ngClass]="{ success }"
+  class="w-16 h-16 border-2 border-gray-700 rounded-lg flex flex-wrap p-1 shadow-md items-center justify-center origin-center select-none"
+  [@rollAnimation]="{
+    value: isRolling ? 'rolling' : 'idle',
+    params: { duration: animationDuration }
+  }"
+  [ngClass]="{ 'bg-green-500': success, 'bg-white': !success }"
 >
   @if(value <= 6) {
 
