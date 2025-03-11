@@ -98,6 +98,10 @@ export class DiceAnalogyComponent {
     },
   };
 
+  get rollAnimationDuration() {
+    return Math.min(this.miningInterval / 2, 600);
+  }
+
   ngOnInit() {
     let i;
     for (i = 0; i < 3; i++) {
@@ -188,14 +192,12 @@ export class DiceAnalogyComponent {
     });
 
     // esperar animação do dado terminar
-    setTimeout(() => {
-      if (roundWinners.length > 0) {
-        this.resolveForks(roundWinners);
-        if (this.autoPause) {
-          this.stopCompetition();
-        }
+    if (roundWinners.length > 0) {
+      this.resolveForks(roundWinners);
+      if (this.autoPause) {
+        this.stopCompetition();
       }
-    }, this.miningInterval / 2);
+    }
   }
 
   resolveForks(winners: Competitor[]) {
@@ -230,7 +232,7 @@ export class DiceAnalogyComponent {
           this.calculateGaps();
         });
       }
-    }, 750);
+    }, this.rollAnimationDuration);
   }
 
   determineClosest(lastBlocks: BlockWinner[], block: BlockWinner): BlockWinner {
