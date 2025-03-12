@@ -80,7 +80,7 @@ export class DiceAnalogyComponent {
 
   competitors: Competitor[] = [];
   private nextCompetitorId: number = 1;
-  miningInterval: number = 1000;
+  miningInterval: number = 1;
   autoPause: boolean = true;
   isMining: boolean = false;
   private miningSubscription: Subscription | null = null;
@@ -102,7 +102,7 @@ export class DiceAnalogyComponent {
   };
 
   get rollAnimationDuration() {
-    return Math.min(this.miningInterval / 2, 600);
+    return Math.min((this.miningInterval * 1000) / 2, 600);
   }
 
   ngOnInit() {
@@ -156,7 +156,7 @@ export class DiceAnalogyComponent {
 
   startCompetition(rounds?: number) {
     this.isMining = true;
-    this.miningSubscription = interval(this.miningInterval)
+    this.miningSubscription = interval(this.miningInterval * 1000)
       .pipe(
         startWith(0),
         takeWhile(() => this.isMining && (rounds === undefined || rounds > 0))
