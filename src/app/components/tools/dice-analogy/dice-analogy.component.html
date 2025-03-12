@@ -76,6 +76,26 @@
               class="p-inputtext p-component w-full"
             />
           </div>
+          <div class="flex flex-col items-start gap-3">
+            <label class="font-bold"
+              >Quantidade de blocos para reajuste de dificuldade</label
+            >
+            <input
+              type="number"
+              [(ngModel)]="nBlocksToAdjust"
+              class="p-inputtext p-component w-full"
+            />
+          </div>
+          <div class="flex flex-col items-start gap-3">
+            <label class="font-bold"
+              >Tempo médio desejado de mineração de cada bloco (segundos)</label
+            >
+            <input
+              type="number"
+              [(ngModel)]="miningTimeSeconds"
+              class="p-inputtext p-component w-full"
+            />
+          </div>
           <div class="flex items-center gap-3">
             <p-checkbox [(ngModel)]="autoPause" binary="true"></p-checkbox>
             <label>Parar automaticamente quando houver um vencedor</label>
@@ -183,13 +203,16 @@
               </div>
               <div
                 *ngFor="let block of blocks; trackBy: trackBlocksByFn"
-                class="block-element relative flex p-4 bg-blue-500 text-white rounded-lg shadow-md justify-center items-center w-40 h-20 transition-colors duration-500"
+                class="block-element relative flex flex-col p-4 bg-blue-500 text-white rounded-lg shadow-md justify-center items-center min-w-40 h-20 transition-colors duration-500"
                 [ngClass]="{
                   'bg-green-500': isResolved,
                   'bg-red-500': block.isDeadFork
                 }"
               >
                 <span class="font-bold">{{ block.winner.name }}</span>
+                <span>{{
+                  block.timestamp | date : "dd/MM/yyyy HH:mm:ss"
+                }}</span>
                 <!-- Ícone de status no canto superior direito -->
                 @let statusIcon = getBlockStatusIcon(height); @if (statusIcon
                 !== null && !block.isDeadFork) {

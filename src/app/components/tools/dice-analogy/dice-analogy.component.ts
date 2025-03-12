@@ -31,6 +31,7 @@ export interface BlockWinner {
   previous?: BlockWinner;
   next: BlockWinner[];
   isDeadFork: boolean;
+  timestamp: number;
 }
 
 interface Chain {
@@ -74,6 +75,8 @@ interface Chain {
 export class DiceAnalogyComponent {
   target: number = 1;
   maxTarget: number = 6;
+  nBlocksToAdjust: number = 10;
+  miningTimeSeconds: number = 10;
 
   competitors: Competitor[] = [];
   private nextCompetitorId: number = 1;
@@ -191,21 +194,21 @@ export class DiceAnalogyComponent {
       });
     });
 
-    // esperar animação do dado terminar
     if (roundWinners.length > 0) {
-      this.resolveForks(roundWinners);
+      this.addNewBlocks(roundWinners);
       if (this.autoPause) {
         this.stopCompetition();
       }
     }
   }
 
-  resolveForks(winners: Competitor[]) {
+  addNewBlocks(winners: Competitor[]) {
     const height = this.chain.heights.length;
     const newBlocks: BlockWinner[] = winners.map((w) => ({
       winner: w,
       next: [],
       isDeadFork: false,
+      timestamp: Date.now(),
     }));
 
     this.isMoving = true;
@@ -232,7 +235,33 @@ export class DiceAnalogyComponent {
           this.calculateGaps();
         });
       }
+
+      this.adjustDifficulty();
     }, this.rollAnimationDuration);
+  }
+
+  adjustDifficulty() {
+    const height = this.chain.heights.length;
+
+    if (height === 0 || height % this.nBlocksToAdjust !== 0) {
+      return;
+    }
+
+    const last = this.chain.heights[0];
+    const first = this.chain.heights[this.nBlocksToAdjust - 1];
+
+    const timeDiff = last[0].timestamp - first[0].timestamp;
+
+    let adjustRate =
+      timeDiff / (this.nBlocksToAdjust * this.miningTimeSeconds * 1000);
+
+    adjustRate = Math.min(4, adjustRate);
+    adjustRate = Math.max(0.25, adjustRate);
+
+    let newTarget = Math.max(Math.round(this.target * adjustRate), 1);
+    newTarget = Math.min(newTarget, this.maxTarget);
+
+    this.target = newTarget;
   }
 
   determineClosest(lastBlocks: BlockWinner[], block: BlockWinner): BlockWinner {
