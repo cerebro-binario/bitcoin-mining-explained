@@ -14,9 +14,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { SliderModule } from 'primeng/slider';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { interval, startWith, Subject, Subscription, takeWhile } from 'rxjs';
 import { DiceComponent } from './dice/dice.component';
@@ -49,11 +47,9 @@ interface Chain {
     ButtonModule,
     TableModule,
     DiceComponent,
-    TagModule,
     CheckboxModule,
     TooltipModule,
     InputNumberModule,
-    SliderModule,
     DialogModule,
     SelectButtonModule,
   ],
