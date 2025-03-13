@@ -11,7 +11,9 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { SliderModule } from 'primeng/slider';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -52,6 +54,8 @@ interface Chain {
     TooltipModule,
     InputNumberModule,
     SliderModule,
+    DialogModule,
+    SelectButtonModule,
   ],
   templateUrl: './dice-analogy.component.html',
   styleUrl: './dice-analogy.component.scss',
@@ -73,6 +77,8 @@ interface Chain {
   ],
 })
 export class DiceAnalogyComponent {
+  isEditing = false; // Controla a visibilidade do modal
+
   target: number = 1;
   maxTarget: number = 6;
   nBlocksToAdjust: number = 10;
@@ -116,6 +122,10 @@ export class DiceAnalogyComponent {
       this.increaseDice(c);
       this.increaseDice(c);
     });
+  }
+
+  saveParameters() {
+    this.isEditing = false;
   }
 
   // Adiciona um novo competidor (inicia com 1 dado e resultado null)
