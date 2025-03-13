@@ -12,7 +12,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { KnobModule } from 'primeng/knob';
+import { SliderModule } from 'primeng/slider';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
@@ -43,7 +43,6 @@ interface Chain {
   imports: [
     CommonModule,
     FormsModule,
-    KnobModule,
     CardModule,
     ButtonModule,
     TableModule,
@@ -52,6 +51,7 @@ interface Chain {
     CheckboxModule,
     TooltipModule,
     InputNumberModule,
+    SliderModule,
   ],
   templateUrl: './dice-analogy.component.html',
   styleUrl: './dice-analogy.component.scss',

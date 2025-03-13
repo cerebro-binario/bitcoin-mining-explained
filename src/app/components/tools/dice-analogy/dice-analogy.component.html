@@ -24,50 +24,98 @@
 
   <h3 class="font-bold text-lg mb-5">O desafio:</h3>
   <div class="flex flex-col gap-3 items-start w-full">
-    <div class="my-5 pb-5 border-b">
+    <div class="my-5 pb-5 border-b w-full">
       <h3 class="font-bold text-lg mb-3">Parâmetros da Simulação</h3>
-      <div class="flex flex-col gap-5">
+      <div class="flex flex-col gap-5 w-full">
         <div class="flex flex-col items-start gap-3">
-          <label class="font-bold">Dificuldade do Target</label>
-          <p-knob [(ngModel)]="target" [min]="1" [max]="maxTarget" />
-          <div class="flex-auto">
-            <label for="maxtarget">Target máximo:</label>
-            <p-inputnumber inputId="maxtarget" [(ngModel)]="maxTarget" />
+          <label class="font-bold">Target</label>
+          <div class="flex flex-row gap-6 items-center pt-6 w-full">
+            <div class="relative w-1/2 min-w-56 flex flex-col gap-3">
+              <p-slider
+                #targetSlider
+                [(ngModel)]="target"
+                [min]="1"
+                [max]="maxTarget"
+                styleClass="w-full"
+              />
+              <div class="w-full justify-between flex">
+                <span>Min: 1</span>
+                <span class="text-lg font-bold"
+                  ><p-inputnumber
+                    [(ngModel)]="target"
+                    [showButtons]="true"
+                    [min]="1"
+                    [max]="maxTarget"
+                    [allowEmpty]="false"
+                    locale="pt-BR"
+                    buttonLayout="horizontal"
+                    inputStyleClass="text-center"
+                  >
+                    <ng-template #incrementbuttonicon>
+                      <span class="pi pi-plus"></span>
+                    </ng-template>
+                    <ng-template #decrementbuttonicon>
+                      <span class="pi pi-minus"></span>
+                    </ng-template> </p-inputnumber
+                ></span>
+                <span>Max: {{ maxTarget }}</span>
+              </div>
+            </div>
           </div>
         </div>
+        <div class="flex items-center gap-3">
+          <label for="maxTarget">Max:</label>
+          <p-inputnumber
+            [(ngModel)]="maxTarget"
+            [showButtons]="true"
+            buttonLayout="horizontal"
+            inputStyleClass="text-center"
+            (ngModelChange)="targetSlider.updateHandleValue()"
+          >
+            <ng-template #incrementbuttonicon>
+              <span class="pi pi-plus"></span>
+            </ng-template>
+            <ng-template #decrementbuttonicon>
+              <span class="pi pi-minus"></span>
+            </ng-template>
+          </p-inputnumber>
+        </div>
         <div class="flex flex-col items-start gap-3">
-          <label class="font-bold"
+          <label for="mininginterval" class="font-bold"
             >Intervalo entre Lançamentos (segundos)</label
           >
-          <input
-            type="number"
+          <p-inputnumber
+            inputId="mininginterval"
             [(ngModel)]="miningInterval"
-            class="p-inputtext p-component w-full"
           />
         </div>
         <div class="flex flex-col items-start gap-3">
-          <label class="font-bold"
+          <label for="nblockstoadjust" class="font-bold"
             >Quantidade de blocos para reajuste de dificuldade</label
           >
-          <input
-            type="number"
+          <p-inputnumber
+            inputId="nblockstoadjust"
             [(ngModel)]="nBlocksToAdjust"
-            class="p-inputtext p-component w-full"
           />
         </div>
         <div class="flex flex-col items-start gap-3">
-          <label class="font-bold"
+          <label for="miningtimeseconds" class="font-bold"
             >Tempo médio desejado de mineração de cada bloco (segundos)</label
           >
-          <input
-            type="number"
+          <p-inputnumber
+            inputId="miningtimeseconds"
             [(ngModel)]="miningTimeSeconds"
-            class="p-inputtext p-component w-full"
           />
         </div>
         <div class="flex items-center gap-3">
-          <p-checkbox [(ngModel)]="autoPause" binary="true"></p-checkbox>
-          <label>Parar automaticamente quando houver um vencedor</label>
+          <p-checkbox
+            inputId="autopause"
+            [(ngModel)]="autoPause"
+            binary="true"
+          ></p-checkbox>
+          <label for="autopause" class="cursor-pointer"
+            >Parar automaticamente quando houver um vencedor</label
+          >
         </div>
       </div>
     </div>
