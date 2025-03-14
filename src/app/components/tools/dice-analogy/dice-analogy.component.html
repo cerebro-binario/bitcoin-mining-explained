@@ -92,6 +92,45 @@
         ></button>
       </div>
 
+      <!-- Parâmetros da Simulação -->
+      <div class="mt-4 p-4 border border-gray-700 rounded-md">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-400">Target</span>
+            <span class="font-semibold text-lg">{{ target }}</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-400">Target Máximo</span>
+            <span class="font-semibold text-lg">{{ maxTarget }}</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-400"
+              >Intervalo entre Lançamentos</span
+            >
+            <span class="font-semibold text-lg">{{ miningInterval }}s</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-400">Blocos para Reajuste</span>
+            <span class="font-semibold text-lg">{{ nBlocksToAdjust }}</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-400">Tempo Médio por Bloco</span>
+            <span class="font-semibold text-lg">{{ miningTimeSeconds }}s</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-400">Parar Automaticamente</span>
+            <span class="font-semibold text-lg">{{
+              autoPause ? "Sim" : "Não"
+            }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="flex gap-4 mt-4">
         <p-button
           label="{{ isMining ? 'Pausar Competição' : 'Iniciar Competição' }}"
@@ -108,134 +147,9 @@
         ></p-button>
       </div>
 
-      <!-- Parâmetros da Simulação -->
-      <div class="mt-4 p-4 border border-gray-700 rounded-md">
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div class="flex flex-col">
-            <span class="text-sm text-gray-400">🎯 Target</span>
-            <span class="font-semibold text-lg">{{ target }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="text-sm text-gray-400">🎯 Target Máximo</span>
-            <span class="font-semibold text-lg">{{ maxTarget }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="text-sm text-gray-400"
-              >⏳ Intervalo entre Lançamentos</span
-            >
-            <span class="font-semibold text-lg">{{ miningInterval }}s</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="text-sm text-gray-400">🔄 Blocos para Reajuste</span>
-            <span class="font-semibold text-lg">{{ nBlocksToAdjust }}</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="text-sm text-gray-400">⏱ Tempo Médio por Bloco</span>
-            <span class="font-semibold text-lg">{{ miningTimeSeconds }}s</span>
-          </div>
-
-          <div class="flex flex-col">
-            <span class="text-sm text-gray-400">🚦 Parar Automaticamente</span>
-            <span class="font-semibold text-lg">{{
-              autoPause ? "Sim" : "Não"
-            }}</span>
-          </div>
-        </div>
-      </div>
-
       <hr class="border-gray-700 my-4" />
 
       <h3 class="text-lg font-bold">Histórico de Blocos</h3>
-    </div>
-
-    <!-- Modal para Edição dos Parâmetros -->
-    <p-dialog
-      [(visible)]="isEditing"
-      header="Editar Parâmetros"
-      [modal]="true"
-      [closable]="true"
-    >
-      <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-2">
-          <label for="target">🎯 Target</label>
-          <p-inputnumber
-            inputId="target"
-            [(ngModel)]="target"
-            inputStyleClass="p-inputtext"
-          />
-        </div>
-
-        <div class="flex items-center justify-between gap-2">
-          <label for="maxTarget">🎯 Target Máximo</label>
-          <p-inputnumber
-            inputId="maxTarget"
-            [(ngModel)]="maxTarget"
-            inputStyleClass="p-inputtext"
-          />
-        </div>
-
-        <div class="flex items-center justify-between gap-2">
-          <label for="miningInterval">⏳ Intervalo (s)</label>
-
-          <p-selectbutton
-            [options]="[
-              { name: '0s', value: 0 },
-              { name: '0.5s', value: 0.5 },
-              { name: '1s', value: 1 },
-              { name: '2s', value: 2 }
-            ]"
-            [(ngModel)]="miningInterval"
-            optionLabel="name"
-            optionValue="value"
-          />
-        </div>
-
-        <div class="flex items-center justify-between gap-2">
-          <label for="nBlocksToReadjust">🔄 Blocos para Reajuste</label>
-          <p-inputnumber
-            inputId="nBlocksToReadjust"
-            [(ngModel)]="nBlocksToAdjust"
-            inputStyleClass="p-inputtext"
-          />
-        </div>
-
-        <div class="flex items-center justify-between gap-2">
-          <label for="miningTimeSeconds">⏱ Tempo Médio (s)</label>
-          <p-selectbutton
-            [options]="[
-              { name: '1s', value: 1 },
-              { name: '10s', value: 10 },
-              { name: '100s', value: 100 }
-            ]"
-            [(ngModel)]="miningTimeSeconds"
-            optionLabel="name"
-            optionValue="value"
-          />
-        </div>
-
-        <div class="flex items-center justify-between gap-2">
-          <label>🚦 Parar Automaticamente</label>
-          <p-checkbox [(ngModel)]="autoPause" binary="true"></p-checkbox>
-        </div>
-      </div>
-
-      <ng-template #footer>
-        <button
-          pButton
-          label="Salvar"
-          icon="pi pi-check"
-          class="p-button-primary"
-          (click)="saveParameters()"
-        ></button>
-      </ng-template>
-    </p-dialog>
-
-    <div class="flex flex-col gap-5 w-full">
-      <h3 class="font-bold text-lg mb-3">Histórico de Blocos</h3>
       <div
         id="blockchain"
         class="flex gap-20 relative overflow-x-auto whitespace-nowrap w-full h-auto"
@@ -324,5 +238,87 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal para Edição dos Parâmetros -->
+    <p-dialog
+      [(visible)]="isEditing"
+      header="Editar Parâmetros"
+      [modal]="true"
+      [closable]="true"
+    >
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-2">
+          <label for="target">Target</label>
+          <p-inputnumber
+            inputId="target"
+            [(ngModel)]="target"
+            inputStyleClass="p-inputtext"
+          />
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <label for="maxTarget">Target Máximo</label>
+          <p-inputnumber
+            inputId="maxTarget"
+            [(ngModel)]="maxTarget"
+            inputStyleClass="p-inputtext"
+          />
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <label for="miningInterval">Intervalo (s)</label>
+
+          <p-selectbutton
+            [options]="[
+              { name: '0s', value: 0 },
+              { name: '0.5s', value: 0.5 },
+              { name: '1s', value: 1 },
+              { name: '2s', value: 2 }
+            ]"
+            [(ngModel)]="miningInterval"
+            optionLabel="name"
+            optionValue="value"
+          />
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <label for="nBlocksToReadjust">Blocos para Reajuste</label>
+          <p-inputnumber
+            inputId="nBlocksToReadjust"
+            [(ngModel)]="nBlocksToAdjust"
+            inputStyleClass="p-inputtext"
+          />
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <label for="miningTimeSeconds">Tempo Médio (s)</label>
+          <p-selectbutton
+            [options]="[
+              { name: '1s', value: 1 },
+              { name: '10s', value: 10 },
+              { name: '100s', value: 100 }
+            ]"
+            [(ngModel)]="miningTimeSeconds"
+            optionLabel="name"
+            optionValue="value"
+          />
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <label>Parar Automaticamente</label>
+          <p-checkbox [(ngModel)]="autoPause" binary="true"></p-checkbox>
+        </div>
+      </div>
+
+      <ng-template #footer>
+        <button
+          pButton
+          label="Salvar"
+          icon="pi pi-check"
+          class="p-button-primary"
+          (click)="saveParameters()"
+        ></button>
+      </ng-template>
+    </p-dialog>
   </div>
 </p-card>
