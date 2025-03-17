@@ -125,41 +125,6 @@
           </div>
 
           <div class="flex flex-col">
-            <span class="text-sm text-gray-400"
-              >Tempo Médio Real por Bloco</span
-            >
-
-            @if(realMiningTimeSeconds) {
-            <span
-              class="font-semibold text-lg"
-              [ngClass]="{
-                'text-yellow-500':
-                  realMiningTimeSeconds < miningTimeSeconds * 0.9 ||
-                  realMiningTimeSeconds > 1.1,
-                'text-green-500':
-                  realMiningTimeSeconds >= miningTimeSeconds * 0.9 &&
-                  realMiningTimeSeconds <= miningTimeSeconds * 1.1
-              }"
-              pTooltip="{{
-                realMiningTimeSeconds < miningTimeSeconds * 0.9
-                  ? 'Blocos muito rápidos, dificuldade aumentará'
-                  : realMiningTimeSeconds > miningTimeSeconds * 1.1
-                  ? 'Blocos muito lentos, dificuldade diminuirá'
-                  : 'Tempo dentro do esperado'
-              }}"
-              >~{{ realMiningTimeSeconds.toFixed(2) }}s
-              @if(realMiningTimeSeconds > miningTimeSeconds) { (~{{
-                (realMiningTimeSeconds / miningTimeSeconds).toFixed(2)
-              }}x mais lento) } @else { (~{{
-                (miningTimeSeconds / realMiningTimeSeconds).toFixed(2)
-              }}x mais rápido) }
-            </span>
-            } @else {
-            <span class="font-semibold text-lg">-</span>
-            }
-          </div>
-
-          <div class="flex flex-col">
             <span class="text-sm text-gray-400">Parar Automaticamente</span>
             <span class="font-semibold text-lg">{{
               getAutoPauseModeLabel()
@@ -190,12 +155,28 @@
         <h2 class="text-xl font-semibold">Histórico de Blocos</h2>
 
         <div class="flex items-center gap-4 bg-slate-800 rounded-lg px-4 py-2">
+          <!-- Tempo do bloco atual -->
           <div class="flex items-center gap-2">
             <i class="pi pi-clock text-blue-500"></i>
             <div class="flex flex-col">
-              <span class="text-xs text-slate-400">Tempo de mineração</span>
+              <span class="text-xs text-slate-400">Tempo atual</span>
               <span class="font-mono text-sm">{{
-                formatMiningTime(currentMiningTime)
+                currentMiningTime > 0
+                  ? formatMiningTime(currentMiningTime)
+                  : "-"
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Tempo médio -->
+          <div class="flex items-center gap-2">
+            <i class="pi pi-chart-line text-blue-500"></i>
+            <div class="flex flex-col">
+              <span class="text-xs text-slate-400">Tempo médio</span>
+              <span class="font-mono text-sm">{{
+                chain.heights.length > 0 && realMiningTimeSeconds
+                  ? formatMiningTime(realMiningTimeSeconds * 1000)
+                  : "-"
               }}</span>
             </div>
           </div>
