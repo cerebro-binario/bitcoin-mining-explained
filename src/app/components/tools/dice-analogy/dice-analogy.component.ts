@@ -32,6 +32,7 @@ export interface BlockWinner {
   next: BlockWinner[];
   isDeadFork: boolean;
   timestamp: number;
+  miningTime: number;
 }
 
 interface Chain {
@@ -113,6 +114,11 @@ export class DiceAnalogyComponent {
     return Math.min((this.miningInterval * 1000) / 2, 600);
   }
 
+  private miningStartTime: number = 0;
+  private accumulatedTime: number = 0;
+  private timerInterval: any;
+  currentMiningTime: number = 0;
+
   ngOnInit() {
     let i;
     for (i = 0; i < 3; i++) {
@@ -167,6 +173,16 @@ export class DiceAnalogyComponent {
   }
 
   startCompetition(rounds?: number) {
+    if (this.miningStartTime === 0) {
+      this.miningStartTime = Date.now();
+    } else {
+      this.miningStartTime = Date.now() - this.accumulatedTime;
+    }
+
+    this.timerInterval = setInterval(() => {
+      this.currentMiningTime = Date.now() - this.miningStartTime;
+    }, 100);
+
     this.isMining = true;
     this.miningSubscription = interval(this.miningInterval * 1000)
       .pipe(
@@ -176,9 +192,9 @@ export class DiceAnalogyComponent {
       .subscribe(() => {
         this.simulateMining();
         if (rounds !== undefined) {
-          rounds--; // Decrementa o contador, se estiver definido
+          rounds--;
           if (rounds === 0) {
-            this.stopCompetition(); // Para a competição após atingir o número de execuções
+            this.stopCompetition();
           }
         }
       });
@@ -187,6 +203,9 @@ export class DiceAnalogyComponent {
   stopCompetition() {
     this.isMining = false;
     this.miningSubscription?.unsubscribe();
+
+    clearInterval(this.timerInterval);
+    this.accumulatedTime = this.currentMiningTime;
   }
 
   toggleCompetition() {
@@ -221,6 +240,7 @@ export class DiceAnalogyComponent {
       next: [],
       isDeadFork: false,
       timestamp: Date.now(),
+      miningTime: this.currentMiningTime,
     }));
 
     this.isMoving = true;
@@ -261,16 +281,18 @@ export class DiceAnalogyComponent {
   }
 
   private updateMiningTimeMetrics() {
-    // Use the same number of blocks as the difficulty adjustment for consistency
-    const blocksToConsider = this.chain.heights.length % this.nBlocksToAdjust;
-    if (blocksToConsider === 0) return;
+    const blocksToConsider = Math.min(
+      this.nBlocksToAdjust,
+      this.chain.heights.length
+    );
+    if (blocksToConsider < 1) return;
 
-    const newest = this.chain.heights[0][0];
-    const oldest = this.chain.heights[blocksToConsider - 1][0];
+    let totalTime = 0;
+    for (let i = 0; i < blocksToConsider; i++) {
+      totalTime += this.chain.heights[i][0].miningTime;
+    }
 
-    const timeDiff = newest.timestamp - oldest.timestamp;
-    // Calculate average time per block
-    this.realMiningTimeSeconds = timeDiff / (blocksToConsider * 1000);
+    this.realMiningTimeSeconds = totalTime / blocksToConsider / 1000;
   }
 
   adjustDifficulty() {
@@ -553,5 +575,11 @@ export class DiceAnalogyComponent {
       default:
         return false;
     }
+  }
+
+  formatMiningTime(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const milliseconds = ms % 1000;
+    return `${seconds}.${milliseconds.toString().padStart(3, '0')}s`;
   }
 }
