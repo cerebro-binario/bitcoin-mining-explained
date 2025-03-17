@@ -115,7 +115,6 @@ export class DiceAnalogyComponent {
   }
 
   private miningStartTime: number = 0;
-  private accumulatedTime: number = 0;
   private timerInterval: any;
   currentMiningTime: number = 0;
 
@@ -173,11 +172,8 @@ export class DiceAnalogyComponent {
   }
 
   startCompetition(rounds?: number) {
-    if (this.miningStartTime === 0) {
-      this.miningStartTime = Date.now();
-    } else {
-      this.miningStartTime = Date.now() - this.accumulatedTime;
-    }
+    // Inicia o cronômetro do zero para o próximo bloco
+    this.miningStartTime = Date.now();
 
     this.timerInterval = setInterval(() => {
       this.currentMiningTime = Date.now() - this.miningStartTime;
@@ -203,9 +199,7 @@ export class DiceAnalogyComponent {
   stopCompetition() {
     this.isMining = false;
     this.miningSubscription?.unsubscribe();
-
     clearInterval(this.timerInterval);
-    this.accumulatedTime = this.currentMiningTime;
   }
 
   toggleCompetition() {
@@ -242,6 +236,10 @@ export class DiceAnalogyComponent {
       timestamp: Date.now(),
       miningTime: this.currentMiningTime,
     }));
+
+    // Reinicia o cronômetro para o próximo bloco
+    this.miningStartTime = Date.now();
+    this.currentMiningTime = 0;
 
     this.isMoving = true;
 
