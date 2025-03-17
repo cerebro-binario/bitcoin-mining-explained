@@ -79,11 +79,13 @@ export class DiceAnalogyComponent {
   maxTarget: number = 6;
   nBlocksToAdjust: number = 10;
   miningTimeSeconds: number = 10;
+  realMiningTimeSeconds!: number;
+  miningTimeRatio: number = 1;
 
   competitors: Competitor[] = [];
   private nextCompetitorId: number = 1;
   miningInterval: number = 1;
-  autoPause: boolean = true;
+  autoPause: boolean = false;
   isMining: boolean = false;
   private miningSubscription: Subscription | null = null;
   isMoving = false;
@@ -268,6 +270,10 @@ export class DiceAnalogyComponent {
     newTarget = Math.min(newTarget, this.maxTarget);
 
     this.target = newTarget;
+    this.realMiningTimeSeconds = timeDiff / (this.nBlocksToAdjust * 1000);
+
+    // Calculate the ratio between actual and target mining time
+    this.miningTimeRatio = this.realMiningTimeSeconds / this.miningTimeSeconds;
   }
 
   determineClosest(lastBlocks: BlockWinner[], block: BlockWinner): BlockWinner {

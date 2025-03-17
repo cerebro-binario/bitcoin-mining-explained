@@ -118,8 +118,47 @@
           </div>
 
           <div class="flex flex-col">
-            <span class="text-sm text-gray-400">Tempo Médio por Bloco</span>
+            <span class="text-sm text-gray-400"
+              >Tempo Médio Desejado por Bloco</span
+            >
             <span class="font-semibold text-lg">{{ miningTimeSeconds }}s</span>
+          </div>
+
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-400"
+              >Tempo Médio Real por Bloco</span
+            >
+
+            @if(realMiningTimeSeconds) {
+            <span
+              class="font-semibold text-lg"
+              [ngClass]="{
+                'text-red-500': realMiningTimeSeconds < miningTimeSeconds * 0.9,
+                'text-green-500':
+                  realMiningTimeSeconds > miningTimeSeconds * 1.1,
+                'text-yellow-500':
+                  realMiningTimeSeconds >= miningTimeSeconds * 0.9 &&
+                  realMiningTimeSeconds <= miningTimeSeconds * 1.1
+              }"
+              pTooltip="{{
+                realMiningTimeSeconds < miningTimeSeconds * 0.9
+                  ? 'Blocos muito rápidos, dificuldade aumentará'
+                  : realMiningTimeSeconds > miningTimeSeconds * 1.1
+                  ? 'Blocos muito lentos, dificuldade diminuirá'
+                  : 'Tempo dentro do esperado'
+              }}"
+              >~{{ realMiningTimeSeconds.toFixed(1) }}s ({{
+                (1 / miningTimeRatio).toFixed(2)
+              }}x
+              {{
+                realMiningTimeSeconds > miningTimeSeconds
+                  ? "mais lento"
+                  : "mais rápido"
+              }})</span
+            >
+            } @else {
+            <span class="font-semibold text-lg">-</span>
+            }
           </div>
 
           <div class="flex flex-col">
