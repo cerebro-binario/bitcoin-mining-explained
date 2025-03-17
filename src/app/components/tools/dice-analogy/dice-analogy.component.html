@@ -133,10 +133,10 @@
             <span
               class="font-semibold text-lg"
               [ngClass]="{
-                'text-red-500': realMiningTimeSeconds < miningTimeSeconds * 0.9,
-                'text-green-500':
-                  realMiningTimeSeconds > miningTimeSeconds * 1.1,
                 'text-yellow-500':
+                  realMiningTimeSeconds < miningTimeSeconds * 0.9 ||
+                  realMiningTimeSeconds > 1.1,
+                'text-green-500':
                   realMiningTimeSeconds >= miningTimeSeconds * 0.9 &&
                   realMiningTimeSeconds <= miningTimeSeconds * 1.1
               }"
@@ -147,15 +147,13 @@
                   ? 'Blocos muito lentos, dificuldade diminuirá'
                   : 'Tempo dentro do esperado'
               }}"
-              >~{{ realMiningTimeSeconds.toFixed(1) }}s ({{
-                (1 / miningTimeRatio).toFixed(2)
-              }}x
-              {{
-                realMiningTimeSeconds > miningTimeSeconds
-                  ? "mais lento"
-                  : "mais rápido"
-              }})</span
-            >
+              >~{{ realMiningTimeSeconds.toFixed(2) }}s
+              @if(realMiningTimeSeconds > miningTimeSeconds) { (~{{
+                (realMiningTimeSeconds / miningTimeSeconds).toFixed(2)
+              }}x mais lento) } @else { (~{{
+                (miningTimeSeconds / realMiningTimeSeconds).toFixed(2)
+              }}x mais rápido) }
+            </span>
             } @else {
             <span class="font-semibold text-lg">-</span>
             }

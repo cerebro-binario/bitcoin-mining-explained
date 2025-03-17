@@ -80,7 +80,6 @@ export class DiceAnalogyComponent {
   nBlocksToAdjust: number = 10;
   miningTimeSeconds: number = 10;
   realMiningTimeSeconds!: number;
-  miningTimeRatio: number = 1;
 
   competitors: Competitor[] = [];
   private nextCompetitorId: number = 1;
@@ -237,6 +236,7 @@ export class DiceAnalogyComponent {
         this.reorderChainBeforeAddingNewBlocks();
 
         this.chain.heights.unshift(newBlocks);
+        this.updateMiningTimeMetrics();
       } else {
         this.chain.heights.unshift(newBlocks);
         requestAnimationFrame(() => {
@@ -246,6 +246,19 @@ export class DiceAnalogyComponent {
 
       this.adjustDifficulty();
     }, this.rollAnimationDuration);
+  }
+
+  private updateMiningTimeMetrics() {
+    // Use the same number of blocks as the difficulty adjustment for consistency
+    const blocksToConsider = this.chain.heights.length % this.nBlocksToAdjust;
+    if (blocksToConsider === 0) return;
+
+    const newest = this.chain.heights[0][0];
+    const oldest = this.chain.heights[blocksToConsider - 1][0];
+
+    const timeDiff = newest.timestamp - oldest.timestamp;
+    // Calculate average time per block
+    this.realMiningTimeSeconds = timeDiff / (blocksToConsider * 1000);
   }
 
   adjustDifficulty() {
@@ -270,10 +283,6 @@ export class DiceAnalogyComponent {
     newTarget = Math.min(newTarget, this.maxTarget);
 
     this.target = newTarget;
-    this.realMiningTimeSeconds = timeDiff / (this.nBlocksToAdjust * 1000);
-
-    // Calculate the ratio between actual and target mining time
-    this.miningTimeRatio = this.realMiningTimeSeconds / this.miningTimeSeconds;
   }
 
   determineClosest(lastBlocks: BlockWinner[], block: BlockWinner): BlockWinner {
