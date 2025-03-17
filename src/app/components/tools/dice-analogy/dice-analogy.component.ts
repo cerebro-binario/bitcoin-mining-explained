@@ -84,7 +84,12 @@ export class DiceAnalogyComponent {
   competitors: Competitor[] = [];
   private nextCompetitorId: number = 1;
   miningInterval: number = 1;
-  autoPause: boolean = false;
+  autoPauseMode: 'none' | 'block' | 'adjustment' = 'none';
+  autoPauseModeOptions = [
+    { label: 'Não', value: 'none' },
+    { label: 'Bloco', value: 'block' },
+    { label: 'Reajuste', value: 'adjustment' },
+  ];
   isMining: boolean = false;
   private miningSubscription: Subscription | null = null;
   isMoving = false;
@@ -203,7 +208,7 @@ export class DiceAnalogyComponent {
 
     if (roundWinners.length > 0) {
       this.addNewBlocks(roundWinners);
-      if (this.autoPause) {
+      if (this.shouldAutoPause()) {
         this.stopCompetition();
       }
     }
@@ -246,6 +251,13 @@ export class DiceAnalogyComponent {
 
       this.adjustDifficulty();
     }, this.rollAnimationDuration);
+  }
+
+  getAutoPauseModeLabel(): string {
+    const option = this.autoPauseModeOptions.find(
+      (opt) => opt.value === this.autoPauseMode
+    );
+    return option?.label || 'Não';
   }
 
   private updateMiningTimeMetrics() {
@@ -529,5 +541,17 @@ export class DiceAnalogyComponent {
       }
     }
     return -1; // Retorna -1 se não encontrar (caso improvável)
+  }
+
+  private shouldAutoPause(): boolean {
+    switch (this.autoPauseMode) {
+      case 'block':
+        return true;
+      case 'adjustment':
+        const height = this.chain.heights.length + 1;
+        return height % this.nBlocksToAdjust === 0 && height > 1;
+      default:
+        return false;
+    }
   }
 }
