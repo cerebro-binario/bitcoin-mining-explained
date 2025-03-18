@@ -585,4 +585,12 @@ export class DiceAnalogyComponent {
   formatMiningTime(ms: number): string {
     return `${(ms / 1000).toFixed(3)}s`;
   }
+
+  getCurrentEpoch(): number {
+    return Math.floor(this.chain.heights.length / this.nBlocksToAdjust) + 1;
+  }
+
+  formatOrdinal(n: number): string {
+    return n + 'ª';
+  }
 }
