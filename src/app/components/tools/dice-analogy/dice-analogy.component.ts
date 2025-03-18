@@ -115,8 +115,9 @@ export class DiceAnalogyComponent {
   }
 
   private miningStartTime: number = 0;
-  private timerInterval: any;
+  private timerSubscription: any;
   currentMiningTime: number = 0;
+  private pausedCurrentMiningTime: number = 0;
 
   ngOnInit() {
     let i;
@@ -171,15 +172,21 @@ export class DiceAnalogyComponent {
     return Math.floor(Math.random() * this.maxTarget) + 1;
   }
 
-  startCompetition(rounds?: number) {
-    // Inicia o cronômetro do zero para o próximo bloco
-    this.miningStartTime = Date.now();
-
-    this.timerInterval = setInterval(() => {
-      this.currentMiningTime = Date.now() - this.miningStartTime;
-    }, 100);
+  playCompetition(rounds?: number) {
+    this.miningStartTime = Date.now() - this.pausedCurrentMiningTime;
 
     this.isMining = true;
+
+    // Usamos o timer do RxJS para atualizar o tempo a cada 100ms, independente do intervalo de mineração
+    this.timerSubscription = interval(100)
+      .pipe(
+        startWith(0),
+        takeWhile(() => this.isMining && (rounds === undefined || rounds > 0))
+      )
+      .subscribe(() => {
+        this.currentMiningTime = Date.now() - this.miningStartTime;
+      });
+
     this.miningSubscription = interval(this.miningInterval * 1000)
       .pipe(
         startWith(0),
@@ -190,20 +197,21 @@ export class DiceAnalogyComponent {
         if (rounds !== undefined) {
           rounds--;
           if (rounds === 0) {
-            this.stopCompetition();
+            this.pauseCompetition();
           }
         }
       });
   }
 
-  stopCompetition() {
+  pauseCompetition() {
     this.isMining = false;
+    this.pausedCurrentMiningTime = this.currentMiningTime;
     this.miningSubscription?.unsubscribe();
-    clearInterval(this.timerInterval);
+    this.timerSubscription?.unsubscribe();
   }
 
   toggleCompetition() {
-    this.isMining ? this.stopCompetition() : this.startCompetition();
+    this.isMining ? this.pauseCompetition() : this.playCompetition();
   }
 
   simulateMining() {
@@ -222,7 +230,7 @@ export class DiceAnalogyComponent {
     if (roundWinners.length > 0) {
       this.addNewBlocks(roundWinners);
       if (this.shouldAutoPause()) {
-        this.stopCompetition();
+        this.pauseCompetition();
       }
     }
   }
@@ -236,10 +244,6 @@ export class DiceAnalogyComponent {
       timestamp: Date.now(),
       miningTime: this.currentMiningTime,
     }));
-
-    // Reinicia o cronômetro para o próximo bloco
-    this.miningStartTime = Date.now();
-    this.currentMiningTime = 0;
 
     this.isMoving = true;
 
@@ -259,7 +263,6 @@ export class DiceAnalogyComponent {
         this.reorderChainBeforeAddingNewBlocks();
 
         this.chain.heights.unshift(newBlocks);
-        this.updateMiningTimeMetrics();
       } else {
         this.chain.heights.unshift(newBlocks);
         requestAnimationFrame(() => {
@@ -267,6 +270,7 @@ export class DiceAnalogyComponent {
         });
       }
 
+      this.updateMiningTimeMetrics();
       this.adjustDifficulty();
     }, this.rollAnimationDuration);
   }
@@ -279,6 +283,13 @@ export class DiceAnalogyComponent {
   }
 
   private updateMiningTimeMetrics() {
+    if (!this.isMining) return;
+
+    // Reinicia o cronômetro para o próximo bloco
+    this.miningStartTime = Date.now();
+    this.currentMiningTime = 0;
+    this.pausedCurrentMiningTime = 0;
+
     const blocksToConsider = Math.min(
       this.nBlocksToAdjust,
       this.chain.heights.length
