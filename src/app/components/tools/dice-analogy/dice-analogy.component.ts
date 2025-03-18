@@ -283,25 +283,21 @@ export class DiceAnalogyComponent {
   }
 
   private updateMiningTimeMetrics() {
-    if (!this.isMining) return;
-
     // Reinicia o cronômetro para o próximo bloco
     this.miningStartTime = Date.now();
     this.currentMiningTime = 0;
     this.pausedCurrentMiningTime = 0;
 
-    const blocksToConsider = Math.min(
-      this.nBlocksToAdjust,
-      this.chain.heights.length
-    );
-    if (blocksToConsider < 1) return;
+    const epochLast = 0;
+    const epochFirst = (this.chain.heights.length - 1) % this.nBlocksToAdjust;
+    const nBlocks = epochFirst + 1;
 
     let totalTime = 0;
-    for (let i = 0; i < blocksToConsider; i++) {
+    for (let i = epochLast; i <= epochFirst; i++) {
       totalTime += this.chain.heights[i][0].miningTime;
     }
 
-    this.realMiningTimeSeconds = totalTime / blocksToConsider / 1000;
+    this.realMiningTimeSeconds = totalTime / nBlocks / 1000;
   }
 
   adjustDifficulty() {
