@@ -74,6 +74,8 @@ interface Chain {
   ],
 })
 export class DiceAnalogyComponent {
+  Math = Math;
+
   isEditing = false; // Controla a visibilidade do modal
 
   target: number = 1;
