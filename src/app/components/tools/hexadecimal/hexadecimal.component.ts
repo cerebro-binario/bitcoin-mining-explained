@@ -87,6 +87,10 @@ export class HexadecimalComponent {
       return false; // Retorna falso se não estiver no formato decimal
     }
 
+    if (this.hex === '') {
+      return false;
+    }
+
     // Transforma o content para hexadecimal e depois para decimal
     const contentToDecimal = hexToDecimal(this.hex);
 
