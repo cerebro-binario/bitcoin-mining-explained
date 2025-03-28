@@ -71,6 +71,16 @@ interface Chain {
       transition('default => moved', [animate('0.5s ease-out')]),
       transition('moved => default', [animate('0s ease-out')]),
     ]),
+    trigger('difficultyChange', [
+      transition(':increment', [
+        style({ color: '#10b981', transform: 'scale(1.2)' }),
+        animate('300ms ease-out', style({ color: '*', transform: 'scale(1)' })),
+      ]),
+      transition(':decrement', [
+        style({ color: '#ef4444', transform: 'scale(1.2)' }),
+        animate('300ms ease-out', style({ color: '*', transform: 'scale(1)' })),
+      ]),
+    ]),
   ],
 })
 export class DiceAnalogyComponent {
@@ -120,6 +130,8 @@ export class DiceAnalogyComponent {
   private timerSubscription: any;
   currentMiningTime: number = 0;
   private pausedCurrentMiningTime: number = 0;
+
+  private previousTarget: number = 1;
 
   ngOnInit() {
     let i;
@@ -320,10 +332,27 @@ export class DiceAnalogyComponent {
     adjustRate = Math.min(4, adjustRate);
     adjustRate = Math.max(0.25, adjustRate);
 
-    let newTarget = Math.max(Math.round(this.target * adjustRate), 1);
+    this.previousTarget = this.target;
+    let newTarget = Math.max(this.target * adjustRate, 1);
     newTarget = Math.min(newTarget, this.maxTarget);
 
     this.target = newTarget;
+  }
+
+  getDifficultyAsPercentage(): number {
+    return (this.target / this.maxTarget) * 100;
+  }
+
+  getDifficultyVariation(): { value: number; increased: boolean | null } {
+    if (this.previousTarget === this.target)
+      return { value: 0, increased: null };
+    const currentProb = this.target / this.maxTarget;
+    const previousProb = this.previousTarget / this.maxTarget;
+    const variation = ((previousProb - currentProb) / previousProb) * 100;
+    return {
+      value: Math.abs(variation),
+      increased: variation > 0,
+    };
   }
 
   determineClosest(lastBlocks: BlockWinner[], block: BlockWinner): BlockWinner {
