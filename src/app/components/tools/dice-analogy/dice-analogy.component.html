@@ -376,21 +376,22 @@
     >
       <div class="flex flex-col gap-4">
         <div class="flex items-center justify-between gap-2">
-          <label for="target">Target</label>
-          <p-inputnumber
-            inputId="target"
-            [(ngModel)]="target"
-            inputStyleClass="p-inputtext"
-          />
+          <label>Target</label>
+          <p-inputNumber
+            [(ngModel)]="editingParams.target"
+            [min]="1"
+            [max]="editingParams.maxTarget"
+          >
+          </p-inputNumber>
         </div>
 
         <div class="flex items-center justify-between gap-2">
-          <label for="maxTarget">Target Máximo</label>
-          <p-inputnumber
-            inputId="maxTarget"
-            [(ngModel)]="maxTarget"
-            inputStyleClass="p-inputtext"
-          />
+          <label>Max Target</label>
+          <p-inputNumber
+            [(ngModel)]="editingParams.maxTarget"
+            [min]="editingParams.target"
+          >
+          </p-inputNumber>
         </div>
 
         <div class="flex items-center justify-between gap-2">
@@ -403,7 +404,7 @@
               { name: '1s', value: 1 },
               { name: '2s', value: 2 }
             ]"
-            [(ngModel)]="miningInterval"
+            [(ngModel)]="editingParams.miningInterval"
             optionLabel="name"
             optionValue="value"
           />
@@ -413,7 +414,7 @@
           <label for="nBlocksToReadjust">Blocos para Reajuste</label>
           <p-inputnumber
             inputId="nBlocksToReadjust"
-            [(ngModel)]="nBlocksToAdjust"
+            [(ngModel)]="editingParams.nBlocksToAdjust"
             inputStyleClass="p-inputtext"
           />
         </div>
@@ -426,7 +427,7 @@
               { name: '10s', value: 10 },
               { name: '100s', value: 100 }
             ]"
-            [(ngModel)]="miningTimeSeconds"
+            [(ngModel)]="editingParams.miningTimeSeconds"
             optionLabel="name"
             optionValue="value"
           />
@@ -436,7 +437,7 @@
           <label>Parar Automaticamente</label>
           <p-selectButton
             [options]="autoPauseModeOptions"
-            [(ngModel)]="autoPauseMode"
+            [(ngModel)]="editingParams.autoPauseMode"
             optionLabel="label"
             optionValue="value"
           ></p-selectButton>
@@ -444,13 +445,20 @@
       </div>
 
       <ng-template #footer>
-        <button
-          pButton
-          label="Salvar"
-          icon="pi pi-check"
-          class="p-button-primary"
-          (click)="saveParameters()"
-        ></button>
+        <div class="flex justify-end gap-2">
+          <p-button
+            label="Cancelar"
+            (onClick)="cancelEditing()"
+            styleClass="p-button-text"
+          >
+          </p-button>
+          <p-button
+            label="Salvar"
+            (onClick)="saveParameters()"
+            [disabled]="editingParams.target > editingParams.maxTarget"
+          >
+          </p-button>
+        </div>
       </ng-template>
     </p-dialog>
   </div>

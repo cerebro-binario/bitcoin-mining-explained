@@ -133,6 +133,16 @@ export class DiceAnalogyComponent {
 
   private previousTarget: number = this.target;
 
+  // Variáveis temporárias para edição
+  editingParams = {
+    target: 1,
+    maxTarget: 6,
+    nBlocksToAdjust: 10,
+    miningTimeSeconds: 10,
+    miningInterval: 1,
+    autoPauseMode: 'none' as 'none' | 'block' | 'adjustment',
+  };
+
   ngOnInit() {
     let i;
     for (i = 0; i < 3; i++) {
@@ -144,9 +154,38 @@ export class DiceAnalogyComponent {
       this.increaseDice(c);
       this.increaseDice(c);
     });
+
+    this.resetEditingParams();
+  }
+
+  private resetEditingParams() {
+    this.editingParams = {
+      target: this.target,
+      maxTarget: this.maxTarget,
+      nBlocksToAdjust: this.nBlocksToAdjust,
+      miningTimeSeconds: this.miningTimeSeconds,
+      miningInterval: this.miningInterval,
+      autoPauseMode: this.autoPauseMode,
+    };
   }
 
   saveParameters() {
+    // Guarda o target anterior antes de atualizar
+    this.previousTarget = this.target;
+
+    // Atualiza todos os parâmetros de uma vez
+    this.target = this.editingParams.target;
+    this.maxTarget = this.editingParams.maxTarget;
+    this.nBlocksToAdjust = this.editingParams.nBlocksToAdjust;
+    this.miningTimeSeconds = this.editingParams.miningTimeSeconds;
+    this.miningInterval = this.editingParams.miningInterval;
+    this.autoPauseMode = this.editingParams.autoPauseMode;
+
+    this.isEditing = false;
+  }
+
+  cancelEditing() {
+    this.resetEditingParams();
     this.isEditing = false;
   }
 
