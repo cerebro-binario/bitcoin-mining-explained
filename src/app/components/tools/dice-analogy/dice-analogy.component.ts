@@ -85,6 +85,10 @@ interface Chain {
 })
 export class DiceAnalogyComponent {
   Math = Math;
+  difficultyVariation: { value: number; increased: boolean | null } = {
+    value: 0,
+    increased: null,
+  };
 
   // Quando o dialog for aberto, reseta os params de edição
   set isEditing(value: boolean) {
@@ -100,6 +104,8 @@ export class DiceAnalogyComponent {
 
   maxTarget: number = 6;
   target: number = this.maxTarget;
+  private previousTarget: number = this.maxTarget;
+  private previousMaxTarget: number = this.maxTarget;
   nBlocksToAdjust: number = 10;
   miningTimeSeconds: number = 10;
   realMiningTimeSeconds!: number;
@@ -141,8 +147,6 @@ export class DiceAnalogyComponent {
   currentMiningTime: number = 0;
   private pausedCurrentMiningTime: number = 0;
 
-  private previousTarget: number = this.target;
-
   // Variáveis temporárias para edição
   editingParams = {
     target: 1,
@@ -180,17 +184,20 @@ export class DiceAnalogyComponent {
   }
 
   saveParameters() {
-    // Guarda o target anterior antes de atualizar
-    this.previousTarget = this.target;
+    // Calcula a variação antes de atualizar os parâmetros
+    const currentProb =
+      this.editingParams.target / this.editingParams.maxTarget;
+    const previousProb = this.previousTarget / this.previousMaxTarget;
+    const variation = ((currentProb - previousProb) / previousProb) * 100;
+    this.difficultyVariation = {
+      value: Math.abs(variation),
+      increased: variation > 0,
+    };
 
-    // Atualiza todos os parâmetros de uma vez
+    this.previousTarget = this.target;
+    this.previousMaxTarget = this.maxTarget;
     this.target = this.editingParams.target;
     this.maxTarget = this.editingParams.maxTarget;
-    this.nBlocksToAdjust = this.editingParams.nBlocksToAdjust;
-    this.miningTimeSeconds = this.editingParams.miningTimeSeconds;
-    this.miningInterval = this.editingParams.miningInterval;
-    this.autoPauseMode = this.editingParams.autoPauseMode;
-
     this.isEditing = false;
   }
 
@@ -396,7 +403,7 @@ export class DiceAnalogyComponent {
     if (this.previousTarget === this.target)
       return { value: 0, increased: null };
     const currentProb = this.target / this.maxTarget;
-    const previousProb = this.previousTarget / this.maxTarget;
+    const previousProb = this.previousTarget / this.previousMaxTarget;
     const variation = ((previousProb - currentProb) / previousProb) * 100;
     return {
       value: Math.abs(variation),
