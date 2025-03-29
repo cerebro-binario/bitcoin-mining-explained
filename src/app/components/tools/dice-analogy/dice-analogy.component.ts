@@ -86,7 +86,17 @@ interface Chain {
 export class DiceAnalogyComponent {
   Math = Math;
 
-  isEditing = false; // Controla a visibilidade do modal
+  // Quando o dialog for aberto, reseta os params de edição
+  set isEditing(value: boolean) {
+    if (value === true) {
+      this.resetEditingParams();
+    }
+    this._isEditing = value;
+  }
+  get isEditing(): boolean {
+    return this._isEditing;
+  }
+  private _isEditing = false;
 
   maxTarget: number = 6;
   target: number = this.maxTarget;
