@@ -131,7 +131,7 @@ export class DiceAnalogyComponent {
   currentMiningTime: number = 0;
   private pausedCurrentMiningTime: number = 0;
 
-  private previousTarget: number = 1;
+  private previousTarget: number = this.target;
 
   ngOnInit() {
     let i;
