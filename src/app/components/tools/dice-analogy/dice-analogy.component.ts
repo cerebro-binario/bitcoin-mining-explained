@@ -198,6 +198,10 @@ export class DiceAnalogyComponent {
     this.previousMaxTarget = this.maxTarget;
     this.target = this.editingParams.target;
     this.maxTarget = this.editingParams.maxTarget;
+    this.nBlocksToAdjust = this.editingParams.nBlocksToAdjust;
+    this.miningTimeSeconds = this.editingParams.miningTimeSeconds;
+    this.miningInterval = this.editingParams.miningInterval;
+    this.autoPauseMode = this.editingParams.autoPauseMode;
     this.isEditing = false;
   }
 
