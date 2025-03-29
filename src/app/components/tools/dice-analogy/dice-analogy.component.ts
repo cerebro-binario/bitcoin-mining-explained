@@ -88,8 +88,8 @@ export class DiceAnalogyComponent {
 
   isEditing = false; // Controla a visibilidade do modal
 
-  target: number = 1;
   maxTarget: number = 6;
+  target: number = this.maxTarget;
   nBlocksToAdjust: number = 10;
   miningTimeSeconds: number = 10;
   realMiningTimeSeconds!: number;
