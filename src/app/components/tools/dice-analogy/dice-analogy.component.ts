@@ -85,7 +85,7 @@ interface Chain {
 })
 export class DiceAnalogyComponent {
   Math = Math;
-  difficultyVariation: { value: number; increased: boolean | null } = {
+  hitProbabilityVariation: { value: number; increased: boolean | null } = {
     value: 0,
     increased: null,
   };
@@ -104,8 +104,9 @@ export class DiceAnalogyComponent {
 
   maxTarget: number = 6;
   target: number = this.maxTarget;
-  private previousTarget: number = this.maxTarget;
+  private previousTarget: number = this.target;
   private previousMaxTarget: number = this.maxTarget;
+  hitProbability: string = '';
   nBlocksToAdjust: number = 10;
   miningTimeSeconds: number = 10;
   realMiningTimeSeconds!: number;
@@ -169,6 +170,8 @@ export class DiceAnalogyComponent {
       this.increaseDice(c);
     });
 
+    this.calcHitProbability();
+    this.calcHitProbabilityVariation();
     this.resetEditingParams();
   }
 
@@ -189,15 +192,15 @@ export class DiceAnalogyComponent {
       this.editingParams.target / this.editingParams.maxTarget;
     const previousProb = this.previousTarget / this.previousMaxTarget;
     const variation = ((currentProb - previousProb) / previousProb) * 100;
-    this.difficultyVariation = {
+    this.hitProbabilityVariation = {
       value: Math.abs(variation),
       increased: variation > 0,
     };
 
-    this.previousTarget = this.target;
-    this.previousMaxTarget = this.maxTarget;
     this.target = this.editingParams.target;
     this.maxTarget = this.editingParams.maxTarget;
+    this.previousTarget = this.target;
+    this.previousMaxTarget = this.maxTarget;
     this.nBlocksToAdjust = this.editingParams.nBlocksToAdjust;
     this.miningTimeSeconds = this.editingParams.miningTimeSeconds;
     this.miningInterval = this.editingParams.miningInterval;
@@ -344,8 +347,8 @@ export class DiceAnalogyComponent {
         });
       }
 
-      this.updateMiningTimeMetrics();
       this.adjustDifficulty();
+      this.updateMiningStats();
     }, this.rollAnimationDuration);
   }
 
@@ -356,7 +359,13 @@ export class DiceAnalogyComponent {
     return option?.label || 'Não';
   }
 
-  private updateMiningTimeMetrics() {
+  private updateMiningStats() {
+    this.calcMiningTime();
+    this.calcHitProbability();
+    this.calcHitProbabilityVariation();
+  }
+
+  private calcMiningTime() {
     // Reinicia o cronômetro para o próximo bloco
     this.miningStartTime = Date.now();
     this.currentMiningTime = 0;
@@ -399,17 +408,20 @@ export class DiceAnalogyComponent {
     this.target = newTarget;
   }
 
-  getDifficultyAsPercentage(): number {
-    return (this.target / this.maxTarget) * 100;
+  calcHitProbability() {
+    this.hitProbability = ((this.target / this.maxTarget) * 100).toFixed(1);
   }
 
-  getDifficultyVariation(): { value: number; increased: boolean | null } {
-    if (this.previousTarget === this.target)
-      return { value: 0, increased: null };
+  calcHitProbabilityVariation() {
+    if (this.previousTarget === this.target) {
+      this.hitProbabilityVariation = { value: 0, increased: null };
+      return;
+    }
+
     const currentProb = this.target / this.maxTarget;
     const previousProb = this.previousTarget / this.previousMaxTarget;
     const variation = ((previousProb - currentProb) / previousProb) * 100;
-    return {
+    this.hitProbabilityVariation = {
       value: Math.abs(variation),
       increased: variation > 0,
     };

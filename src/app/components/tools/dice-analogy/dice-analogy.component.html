@@ -201,12 +201,12 @@
               >
               <div class="flex items-center gap-1.5">
                 <span class="font-mono text-sm" [@difficultyChange]="target">
-                  {{ getDifficultyAsPercentage().toFixed(1) }}%
+                  {{ hitProbability }}%
                 </span>
-                <ng-container *ngIf="getDifficultyVariation().value > 0">
+                <ng-container *ngIf="hitProbabilityVariation.value > 0">
                   <div
                     [class]="
-                      getDifficultyVariation().increased
+                      hitProbabilityVariation.increased
                         ? 'text-red-500 bg-red-500/10'
                         : 'text-emerald-500 bg-emerald-500/10'
                     "
@@ -215,13 +215,13 @@
                     <i
                       [class]="
                         'pi ' +
-                        (getDifficultyVariation().increased
+                        (hitProbabilityVariation.increased
                           ? 'pi-arrow-down'
                           : 'pi-arrow-up')
                       "
                     ></i>
                     <span class="font-medium"
-                      >{{ getDifficultyVariation().value.toFixed(1) }}%</span
+                      >{{ hitProbabilityVariation.value.toFixed(1) }}%</span
                     >
                   </div>
                 </ng-container>
