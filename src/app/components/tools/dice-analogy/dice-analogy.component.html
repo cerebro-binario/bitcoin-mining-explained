@@ -55,7 +55,11 @@
           </td>
           <td>{{ competitor.name }}</td>
           <td class="font-mono">
-            {{ competitor.diceCount / miningInterval | number : "1.0-0" }}
+            {{
+              miningInterval === 0
+                ? competitor.empiricalThrowsPerSecond
+                : (competitor.diceCount / miningInterval | number : "1.0-0")
+            }}
           </td>
           <td>
             <div class="flex flex-wrap gap-5 items-center">

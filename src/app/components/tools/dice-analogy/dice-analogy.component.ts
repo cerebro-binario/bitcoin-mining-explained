@@ -24,6 +24,9 @@ interface Competitor {
   name: string;
   diceCount: number;
   dices: Subject<number>[];
+  empiricalThrowsPerSecond: number;
+  lastThrowTime: number;
+  throwCount: number;
 }
 
 export interface BlockWinner {
@@ -249,6 +252,16 @@ export class DiceAnalogyComponent {
       this.totalThrowsPerSecond = this.empiricalThrowsPerSecond = Math.round(
         this.throwCount / elapsedSeconds
       );
+
+      // Atualiza também os contadores individuais
+      this.competitors.forEach((competitor) => {
+        competitor.empiricalThrowsPerSecond = Math.round(
+          competitor.throwCount / elapsedSeconds
+        );
+        competitor.throwCount = 0;
+        competitor.lastThrowTime = now;
+      });
+
       this.throwCount = 0;
       this.lastThrowTime = now;
     }, 1000);
@@ -289,6 +302,9 @@ export class DiceAnalogyComponent {
       name: `Competidor ${this.nextCompetitorId}`,
       diceCount: 1,
       dices: [new Subject()],
+      empiricalThrowsPerSecond: 0,
+      lastThrowTime: Date.now(),
+      throwCount: 0,
     };
     this.competitors.push(newCompetitor);
     this.nextCompetitorId++;
@@ -374,6 +390,7 @@ export class DiceAnalogyComponent {
         // Incrementa o contador empírico se estiver ativo
         if (this.miningInterval === 0) {
           this.throwCount++;
+          competitor.throwCount++;
         }
         if (result <= this.target && !roundWinners.includes(competitor)) {
           roundWinners.push(competitor);
