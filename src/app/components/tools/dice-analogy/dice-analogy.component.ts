@@ -92,6 +92,7 @@ export class DiceAnalogyComponent {
     increased: null,
   };
   averageThrowsToHit: number = 1;
+  averageTimeToHit: number = 0;
 
   // Quando o dialog for aberto, reseta os params de edição
   set isEditing(value: boolean) {
@@ -426,8 +427,13 @@ export class DiceAnalogyComponent {
 
   calcHitProbability() {
     this.hitProbability = ((this.target / this.maxTarget) * 100).toFixed(1);
-    // Calcula o número médio de lançamentos necessários
-    this.averageThrowsToHit = this.maxTarget / this.target;
+    // Calcula o número médio de lançamentos necessários, arredondando para o próximo inteiro
+    this.averageThrowsToHit = Math.ceil(this.maxTarget / this.target);
+    // Calcula o tempo médio esperado para acertar
+    // Considerando que cada dado lança a cada miningInterval segundos
+    // e temos totalDices dados lançando simultaneamente
+    const throwsPerSecond = this.totalDices / this.miningInterval;
+    this.averageTimeToHit = this.averageThrowsToHit / throwsPerSecond;
   }
 
   calcHitProbabilityVariation() {

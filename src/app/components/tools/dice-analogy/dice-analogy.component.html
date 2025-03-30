@@ -245,8 +245,11 @@
                 </ng-container>
               </div>
               <span class="text-xs text-slate-400 mt-1">
-                Média de {{ averageThrowsToHit.toFixed(1) }} lançamentos para
-                acertar
+                Média de {{ averageThrowsToHit }} lançamentos para acertar
+              </span>
+              <span class="text-xs text-slate-400">
+                Tempo médio previsto:
+                {{ formatMiningTime(averageTimeToHit * 1000) }}
               </span>
             </div>
           </div>
