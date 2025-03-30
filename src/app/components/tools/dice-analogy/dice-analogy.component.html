@@ -155,6 +155,24 @@
         <h2 class="text-xl font-semibold">Histórico de Blocos</h2>
 
         <div class="flex items-center gap-4 bg-slate-800 rounded-lg px-4 py-2">
+          <!-- Total de Dados -->
+          <div class="flex items-center gap-2">
+            <i class="pi pi-box text-blue-500"></i>
+            <div class="flex flex-col">
+              <span class="text-xs text-slate-400">Total de Dados</span>
+              <span class="font-mono text-sm">{{ totalDices }}</span>
+            </div>
+          </div>
+
+          <!-- Total de Competidores -->
+          <div class="flex items-center gap-2">
+            <i class="pi pi-users text-blue-500"></i>
+            <div class="flex flex-col">
+              <span class="text-xs text-slate-400">Total de Competidores</span>
+              <span class="font-mono text-sm">{{ totalCompetitors }}</span>
+            </div>
+          </div>
+
           <!-- Época atual -->
           <div class="flex items-center gap-2">
             <i class="pi pi-history text-blue-500"></i>

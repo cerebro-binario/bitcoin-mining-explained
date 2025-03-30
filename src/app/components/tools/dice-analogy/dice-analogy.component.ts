@@ -85,6 +85,8 @@ interface Chain {
 })
 export class DiceAnalogyComponent {
   Math = Math;
+  totalDices: number = 0;
+  totalCompetitors: number = 0;
   hitProbabilityVariation: { value: number; increased: boolean | null } = {
     value: 0,
     increased: null,
@@ -173,6 +175,7 @@ export class DiceAnalogyComponent {
     this.calcHitProbability();
     this.calcHitProbabilityVariation();
     this.resetEditingParams();
+    this.updateStats();
   }
 
   private resetEditingParams() {
@@ -213,6 +216,14 @@ export class DiceAnalogyComponent {
     this.isEditing = false;
   }
 
+  private updateStats() {
+    this.totalDices = this.competitors.reduce(
+      (sum, comp) => sum + comp.diceCount,
+      0
+    );
+    this.totalCompetitors = this.competitors.length;
+  }
+
   // Adiciona um novo competidor (inicia com 1 dado e resultado null)
   addCompetitor() {
     const newCompetitor: Competitor = {
@@ -223,12 +234,14 @@ export class DiceAnalogyComponent {
     };
     this.competitors.push(newCompetitor);
     this.nextCompetitorId++;
+    this.updateStats();
   }
 
   // Incrementa a quantidade de dados e adiciona um novo elemento no array de resultados
   increaseDice(competitor: Competitor) {
     competitor.diceCount++;
     competitor.dices.push(new Subject());
+    this.updateStats();
   }
 
   // Decrementa a quantidade de dados, garantindo que fique pelo menos 1
@@ -236,12 +249,14 @@ export class DiceAnalogyComponent {
     if (competitor.diceCount > 1) {
       competitor.diceCount--;
       competitor.dices.pop();
+      this.updateStats();
     }
   }
 
   // Remove um competidor
   removeCompetitor(id: number) {
     this.competitors = this.competitors.filter((c) => c.id !== id);
+    this.updateStats();
   }
 
   // Função para gerar um número aleatório entre 1 e 6
