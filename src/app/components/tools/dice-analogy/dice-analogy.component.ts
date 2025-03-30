@@ -720,4 +720,10 @@ export class DiceAnalogyComponent {
   formatOrdinal(n: number): string {
     return n + 'ª';
   }
+
+  getThrowsMessage(): string {
+    return `Média de ${this.averageThrowsToHit} lançamento${
+      this.averageThrowsToHit > 1 ? 's' : ''
+    } para acertar`;
+  }
 }
