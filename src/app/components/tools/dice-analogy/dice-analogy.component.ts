@@ -498,8 +498,8 @@ export class DiceAnalogyComponent {
     this.previousTarget = this.target;
     let newTarget = Math.max(this.target * adjustRate, 1);
     newTarget = Math.min(newTarget, this.maxTarget);
-
-    this.target = newTarget;
+    // Fixa o número de casas decimais em 2
+    this.target = Number(newTarget.toFixed(2));
   }
 
   calcHitProbability() {
