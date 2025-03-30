@@ -224,6 +224,8 @@ export class DiceAnalogyComponent {
       0
     );
     this.totalCompetitors = this.competitors.length;
+    // Recalcula a probabilidade e tempo previsto quando mudar o número de dados
+    this.calcHitProbability();
   }
 
   // Adiciona um novo competidor (inicia com 1 dado e resultado null)
