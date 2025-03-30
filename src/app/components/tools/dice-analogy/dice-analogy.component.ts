@@ -503,7 +503,7 @@ export class DiceAnalogyComponent {
   }
 
   calcHitProbability() {
-    this.hitProbability = ((this.target / this.maxTarget) * 100).toFixed(1);
+    this.hitProbability = ((this.target / this.maxTarget) * 100).toFixed(8);
     // Calcula o número médio de lançamentos necessários, arredondando para o próximo inteiro
     this.averageThrowsToHit = Math.ceil(this.maxTarget / this.target);
     // Calcula o tempo médio esperado para acertar
