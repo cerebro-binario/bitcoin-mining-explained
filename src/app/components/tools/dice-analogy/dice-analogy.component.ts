@@ -87,6 +87,11 @@ export class DiceAnalogyComponent {
   Math = Math;
   totalDices: number = 0;
   totalCompetitors: number = 0;
+  totalThrowsPerSecond: number = 0;
+  empiricalThrowsPerSecond: number = 0;
+  private lastThrowTime: number = 0;
+  private throwCount: number = 0;
+  private empiricalCounterInterval: any = null;
   hitProbabilityVariation: { value: number; increased: boolean | null } = {
     value: 0,
     increased: null,
@@ -208,9 +213,53 @@ export class DiceAnalogyComponent {
     this.previousMaxTarget = this.maxTarget;
     this.nBlocksToAdjust = this.editingParams.nBlocksToAdjust;
     this.miningTimeSeconds = this.editingParams.miningTimeSeconds;
+
+    // Se está mudando para intervalo 0, inicia o contador empírico
+    if (this.editingParams.miningInterval === 0 && this.miningInterval !== 0) {
+      this.startEmpiricalCounter();
+    }
+    // Se está mudando de intervalo 0 para outro valor, para o contador empírico
+    else if (
+      this.editingParams.miningInterval !== 0 &&
+      this.miningInterval === 0
+    ) {
+      this.stopEmpiricalCounter();
+    }
+
     this.miningInterval = this.editingParams.miningInterval;
     this.autoPauseMode = this.editingParams.autoPauseMode;
     this.isEditing = false;
+    this.updateStats();
+  }
+
+  private startEmpiricalCounter() {
+    this.lastThrowTime = Date.now();
+    this.throwCount = 0;
+    this.empiricalThrowsPerSecond = 0;
+
+    // Limpa intervalo anterior se existir
+    if (this.empiricalCounterInterval) {
+      clearInterval(this.empiricalCounterInterval);
+    }
+
+    // Atualiza a contagem a cada segundo
+    this.empiricalCounterInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsedSeconds = (now - this.lastThrowTime) / 1000;
+      this.totalThrowsPerSecond = this.empiricalThrowsPerSecond = Math.round(
+        this.throwCount / elapsedSeconds
+      );
+      this.throwCount = 0;
+      this.lastThrowTime = now;
+    }, 1000);
+  }
+
+  private stopEmpiricalCounter() {
+    if (this.empiricalCounterInterval) {
+      clearInterval(this.empiricalCounterInterval);
+      this.empiricalCounterInterval = null;
+    }
+    this.empiricalThrowsPerSecond = 0;
   }
 
   cancelEditing() {
@@ -224,6 +273,11 @@ export class DiceAnalogyComponent {
       0
     );
     this.totalCompetitors = this.competitors.length;
+    // Calcula o total de lançamentos por segundo
+    this.totalThrowsPerSecond =
+      this.miningInterval === 0
+        ? this.empiricalThrowsPerSecond
+        : this.totalDices / this.miningInterval;
     // Recalcula a probabilidade e tempo previsto quando mudar o número de dados
     this.calcHitProbability();
   }
@@ -317,6 +371,10 @@ export class DiceAnalogyComponent {
       competitor.dices.forEach((dice) => {
         const result = this.rollDice();
         dice.next(result);
+        // Incrementa o contador empírico se estiver ativo
+        if (this.miningInterval === 0) {
+          this.throwCount++;
+        }
         if (result <= this.target && !roundWinners.includes(competitor)) {
           roundWinners.push(competitor);
         }
@@ -727,5 +785,9 @@ export class DiceAnalogyComponent {
     return `Média de ${this.averageThrowsToHit} lançamento${
       this.averageThrowsToHit > 1 ? 's' : ''
     } para acertar`;
+  }
+
+  ngOnDestroy() {
+    this.stopEmpiricalCounter();
   }
 }

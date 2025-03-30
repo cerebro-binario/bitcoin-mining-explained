@@ -165,6 +165,12 @@
             <div class="flex flex-col">
               <span class="text-xs text-slate-400">Total de Dados</span>
               <span class="font-mono text-sm">{{ totalDices }}</span>
+              <span class="text-xs text-slate-400"
+                >({{
+                  totalThrowsPerSecond | number : "1.0-0"
+                }}
+                lançamentos/s)</span
+              >
             </div>
           </div>
 
