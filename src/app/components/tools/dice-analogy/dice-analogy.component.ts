@@ -27,6 +27,8 @@ interface Competitor {
   empiricalThrowsPerSecond: number;
   lastThrowTime: number;
   throwCount: number;
+  confirmedSubsidy: number;
+  unconfirmedSubsidy: number;
 }
 
 export interface BlockWinner {
@@ -36,6 +38,8 @@ export interface BlockWinner {
   isDeadFork: boolean;
   timestamp: number;
   miningTime: number;
+  confirmedSubsidy: number;
+  unconfirmedSubsidy: number;
 }
 
 interface Chain {
@@ -101,6 +105,9 @@ export class DiceAnalogyComponent {
   };
   averageThrowsToHit: number = 1;
   averageTimeToHit: number = 0;
+  totalConfirmedSubsidy: number = 0;
+  totalUnconfirmedSubsidy: number = 0;
+  subsidyPerBlock: number = 50;
 
   // Quando o dialog for aberto, reseta os params de edição
   set isEditing(value: boolean) {
@@ -305,6 +312,8 @@ export class DiceAnalogyComponent {
       empiricalThrowsPerSecond: 0,
       lastThrowTime: Date.now(),
       throwCount: 0,
+      confirmedSubsidy: 0,
+      unconfirmedSubsidy: 0,
     };
     this.competitors.push(newCompetitor);
     this.nextCompetitorId++;
@@ -414,6 +423,8 @@ export class DiceAnalogyComponent {
       isDeadFork: false,
       timestamp: Date.now(),
       miningTime: this.currentMiningTime,
+      confirmedSubsidy: 0,
+      unconfirmedSubsidy: 0,
     }));
 
     this.isMoving = true;
@@ -443,6 +454,7 @@ export class DiceAnalogyComponent {
 
       this.adjustDifficulty();
       this.updateMiningStats();
+      this.updateSubsidyStats();
     }, this.rollAnimationDuration);
   }
 
@@ -806,5 +818,34 @@ export class DiceAnalogyComponent {
 
   ngOnDestroy() {
     this.stopEmpiricalCounter();
+  }
+
+  private updateSubsidyStats() {
+    this.totalConfirmedSubsidy = 0;
+    this.totalUnconfirmedSubsidy = 0;
+
+    // Reseta os subsídios dos competidores
+    this.competitors.forEach((competitor) => {
+      competitor.confirmedSubsidy = 0;
+      competitor.unconfirmedSubsidy = 0;
+    });
+
+    // Percorre a cadeia de blocos
+    this.chain.heights.forEach((blocks, height) => {
+      const isConfirmed = this.isHeightResolved(height);
+      const activeBlocks = blocks.filter((b) => !b.isDeadFork);
+
+      activeBlocks.forEach((block) => {
+        if (isConfirmed) {
+          // Bloco confirmado
+          this.totalConfirmedSubsidy += this.subsidyPerBlock;
+          block.winner.confirmedSubsidy += this.subsidyPerBlock;
+        } else {
+          // Bloco não confirmado
+          this.totalUnconfirmedSubsidy += this.subsidyPerBlock;
+          block.winner.unconfirmedSubsidy += this.subsidyPerBlock;
+        }
+      });
+    });
   }
 }
