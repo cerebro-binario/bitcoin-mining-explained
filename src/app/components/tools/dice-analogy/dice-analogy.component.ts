@@ -38,8 +38,7 @@ export interface BlockWinner {
   isDeadFork: boolean;
   timestamp: number;
   miningTime: number;
-  confirmedSubsidy: number;
-  unconfirmedSubsidy: number;
+  subsidy: number;
 }
 
 interface Chain {
@@ -129,6 +128,7 @@ export class DiceAnalogyComponent {
   nBlocksToAdjust: number = 10;
   miningTimeSeconds: number = 10;
   realMiningTimeSeconds!: number;
+  blocksUntilHalving: number = 100;
 
   competitors: Competitor[] = [];
   private nextCompetitorId: number = 1;
@@ -175,6 +175,7 @@ export class DiceAnalogyComponent {
     miningTimeSeconds: 10,
     miningInterval: 1,
     autoPauseMode: 'none' as 'none' | 'block' | 'adjustment',
+    blocksUntilHalving: 100,
   };
 
   ngOnInit() {
@@ -203,6 +204,7 @@ export class DiceAnalogyComponent {
       miningTimeSeconds: this.miningTimeSeconds,
       miningInterval: this.miningInterval,
       autoPauseMode: this.autoPauseMode,
+      blocksUntilHalving: this.blocksUntilHalving,
     };
   }
 
@@ -223,21 +225,9 @@ export class DiceAnalogyComponent {
     this.previousMaxTarget = this.maxTarget;
     this.nBlocksToAdjust = this.editingParams.nBlocksToAdjust;
     this.miningTimeSeconds = this.editingParams.miningTimeSeconds;
-
-    // Se está mudando para intervalo 0, inicia o contador empírico
-    if (this.editingParams.miningInterval === 0 && this.miningInterval !== 0) {
-      this.startEmpiricalCounter();
-    }
-    // Se está mudando de intervalo 0 para outro valor, para o contador empírico
-    else if (
-      this.editingParams.miningInterval !== 0 &&
-      this.miningInterval === 0
-    ) {
-      this.stopEmpiricalCounter();
-    }
-
     this.miningInterval = this.editingParams.miningInterval;
     this.autoPauseMode = this.editingParams.autoPauseMode;
+    this.blocksUntilHalving = this.editingParams.blocksUntilHalving;
     this.isEditing = false;
     this.updateStats();
   }
@@ -417,14 +407,14 @@ export class DiceAnalogyComponent {
 
   addNewBlocks(winners: Competitor[]) {
     const height = this.chain.heights.length;
+    const currentSubsidy = this.getCurrentSubsidy();
     const newBlocks: BlockWinner[] = winners.map((w) => ({
       winner: w,
       next: [],
       isDeadFork: false,
       timestamp: Date.now(),
       miningTime: this.currentMiningTime,
-      confirmedSubsidy: 0,
-      unconfirmedSubsidy: 0,
+      subsidy: currentSubsidy,
     }));
 
     this.isMoving = true;
@@ -838,14 +828,21 @@ export class DiceAnalogyComponent {
       activeBlocks.forEach((block) => {
         if (isConfirmed) {
           // Bloco confirmado
-          this.totalConfirmedSubsidy += this.subsidyPerBlock;
-          block.winner.confirmedSubsidy += this.subsidyPerBlock;
+          this.totalConfirmedSubsidy += block.subsidy;
+          block.winner.confirmedSubsidy += block.subsidy;
         } else {
           // Bloco não confirmado
-          this.totalUnconfirmedSubsidy += this.subsidyPerBlock;
-          block.winner.unconfirmedSubsidy += this.subsidyPerBlock;
+          this.totalUnconfirmedSubsidy += block.subsidy;
+          block.winner.unconfirmedSubsidy += block.subsidy;
         }
       });
     });
+  }
+
+  private getCurrentSubsidy(): number {
+    const halvings = Math.floor(
+      this.chain.heights.length / this.blocksUntilHalving
+    );
+    return this.subsidyPerBlock / Math.pow(2, halvings);
   }
 }

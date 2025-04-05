@@ -463,7 +463,6 @@
 
         <div class="flex items-center justify-between gap-2">
           <label for="miningInterval">Intervalo (s)</label>
-
           <p-selectbutton
             [options]="[
               { name: '0s', value: 0 },
@@ -474,6 +473,15 @@
             [(ngModel)]="editingParams.miningInterval"
             optionLabel="name"
             optionValue="value"
+          />
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <label for="blocksUntilHalving">Blocos até o próximo halving</label>
+          <p-inputnumber
+            inputId="blocksUntilHalving"
+            [(ngModel)]="editingParams.blocksUntilHalving"
+            inputStyleClass="p-inputtext"
           />
         </div>
 
