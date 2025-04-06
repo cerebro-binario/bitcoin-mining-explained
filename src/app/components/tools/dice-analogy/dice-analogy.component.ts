@@ -792,14 +792,6 @@ export class DiceAnalogyComponent {
     return `${(ms / 1000).toFixed(3)}s`;
   }
 
-  getCurrentEpoch(): number {
-    return Math.floor(this.chain.heights.length / this.nBlocksToAdjust) + 1;
-  }
-
-  formatOrdinal(n: number): string {
-    return n + 'ª';
-  }
-
   getThrowsMessage(): string {
     return `Média de ${this.averageThrowsToHit} lançamento${
       this.averageThrowsToHit > 1 ? 's' : ''

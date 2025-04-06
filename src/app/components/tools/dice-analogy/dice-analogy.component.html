@@ -215,17 +215,6 @@
             </div>
           </div>
 
-          <!-- Época atual -->
-          <div class="flex items-center gap-2">
-            <i class="pi pi-history text-blue-500"></i>
-            <div class="flex flex-col">
-              <span class="text-xs text-slate-400">Época</span>
-              <span class="font-mono text-sm">{{
-                formatOrdinal(getCurrentEpoch())
-              }}</span>
-            </div>
-          </div>
-
           <!-- Tempo do bloco atual -->
           <div class="flex items-center gap-2">
             <i class="pi pi-clock text-blue-500"></i>
@@ -316,25 +305,6 @@
           @let isResolved = isHeightResolved(height); @let h =
           chain.heights.length - height;
 
-          <!-- Separador vertical de época -->
-          <div *ngIf="h === 1" class="flex flex-col absolute -right-10 h-full">
-            <!-- Linha vertical gradiente -->
-            <div
-              class="absolute h-full w-[2px] bg-gradient-to-b from-transparent via-blue-500/50 to-transparent"
-            ></div>
-
-            <!-- Badge da época -->
-            <div
-              class="absolute z-10 px-3 py-1 rounded-full bg-slate-800/90 border border-blue-500/30 backdrop-blur-sm flex items-center gap-2 shadow-lg transform -translate-x-1/2"
-            >
-              <i class="pi pi-history text-blue-500 text-sm"></i>
-              <span class="text-sm font-medium text-slate-300">
-                {{ formatOrdinal(getCurrentEpoch()) }}
-                Época
-              </span>
-            </div>
-          </div>
-
           <div
             *ngIf="h % nBlocksToAdjust === 0"
             class="flex flex-col absolute -left-10 h-full"
@@ -349,10 +319,7 @@
               class="absolute z-10 px-3 py-1 rounded-full bg-slate-800/90 border border-blue-500/30 backdrop-blur-sm flex items-center gap-2 shadow-lg transform -translate-x-1/2"
             >
               <i class="pi pi-history text-blue-500 text-sm"></i>
-              <span class="text-sm font-medium text-slate-300">
-                {{ formatOrdinal(getCurrentEpoch()) }}
-                Época
-              </span>
+              <span class="text-sm font-medium text-slate-300"> Ajuste </span>
             </div>
           </div>
 
