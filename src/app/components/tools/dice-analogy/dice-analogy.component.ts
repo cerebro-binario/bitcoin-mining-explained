@@ -197,6 +197,41 @@ export class DiceAnalogyComponent {
     this.updateStats();
   }
 
+  resetSimulation() {
+    // Para a simulação se estiver rodando
+    if (this.isMining) {
+      this.pauseCompetition();
+    }
+
+    // Limpa os competidores
+    this.competitors = [];
+    this.nextCompetitorId = 1;
+
+    // Reseta a cadeia
+    this.chain = { heights: [] };
+
+    // Reseta contadores e estatísticas
+    this.totalDices = 0;
+    this.totalCompetitors = 0;
+    this.totalThrowsPerSecond = 0;
+    this.empiricalThrowsPerSecond = 0;
+    this.throwCount = 0;
+    this.currentHalving = 0;
+    this.totalConfirmedSubsidy = 0;
+    this.totalUnconfirmedSubsidy = 0;
+    this.currentMiningTime = 0;
+    this.pausedCurrentMiningTime = 0;
+    this.hitProbabilityVariation = { value: 0, increased: null };
+
+    // Reseta o target para o valor inicial
+    this.target = this.maxTarget;
+    this.previousTarget = this.target;
+    this.previousMaxTarget = this.maxTarget;
+
+    // Reinicializa os competidores iniciais
+    this.ngOnInit();
+  }
+
   private resetEditingParams() {
     this.editingParams = {
       target: this.target,
