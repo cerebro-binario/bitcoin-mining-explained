@@ -107,6 +107,7 @@ export class DiceAnalogyComponent {
   totalConfirmedSubsidy: number = 0;
   totalUnconfirmedSubsidy: number = 0;
   subsidyPerBlock: number = 50;
+  currentHalving: number = 0;
 
   // Quando o dialog for aberto, reseta os params de edição
   set isEditing(value: boolean) {
@@ -832,9 +833,9 @@ export class DiceAnalogyComponent {
   }
 
   private getCurrentSubsidy(): number {
-    const halvings = Math.floor(
+    this.currentHalving = Math.floor(
       this.chain.heights.length / this.blocksUntilHalving
     );
-    return this.subsidyPerBlock / Math.pow(2, halvings);
+    return this.subsidyPerBlock / Math.pow(2, this.currentHalving);
   }
 }
