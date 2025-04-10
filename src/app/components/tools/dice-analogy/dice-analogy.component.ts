@@ -16,7 +16,14 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
-import { interval, startWith, Subject, Subscription, takeWhile } from 'rxjs';
+import {
+  interval,
+  startWith,
+  Subject,
+  Subscription,
+  takeUntil,
+  takeWhile,
+} from 'rxjs';
 import { DiceComponent } from './dice/dice.component';
 
 interface Competitor {
@@ -108,6 +115,7 @@ export class DiceAnalogyComponent {
   totalUnconfirmedSubsidy: number = 0;
   subsidyPerBlock: number = 50;
   currentHalving: number = 0;
+  private destroy$ = new Subject<void>();
 
   // Quando o dialog for aberto, reseta os params de edição
   set isEditing(value: boolean) {
@@ -268,46 +276,6 @@ export class DiceAnalogyComponent {
     this.updateStats();
   }
 
-  private startEmpiricalCounter() {
-    this.lastThrowTime = Date.now();
-    this.throwCount = 0;
-    this.empiricalThrowsPerSecond = 0;
-
-    // Limpa intervalo anterior se existir
-    if (this.empiricalCounterInterval) {
-      clearInterval(this.empiricalCounterInterval);
-    }
-
-    // Atualiza a contagem a cada segundo
-    this.empiricalCounterInterval = setInterval(() => {
-      const now = Date.now();
-      const elapsedSeconds = (now - this.lastThrowTime) / 1000;
-      this.totalThrowsPerSecond = this.empiricalThrowsPerSecond = Math.round(
-        this.throwCount / elapsedSeconds
-      );
-
-      // Atualiza também os contadores individuais
-      this.competitors.forEach((competitor) => {
-        competitor.empiricalThrowsPerSecond = Math.round(
-          competitor.throwCount / elapsedSeconds
-        );
-        competitor.throwCount = 0;
-        competitor.lastThrowTime = now;
-      });
-
-      this.throwCount = 0;
-      this.lastThrowTime = now;
-    }, 1000);
-  }
-
-  private stopEmpiricalCounter() {
-    if (this.empiricalCounterInterval) {
-      clearInterval(this.empiricalCounterInterval);
-      this.empiricalCounterInterval = null;
-    }
-    this.empiricalThrowsPerSecond = 0;
-  }
-
   cancelEditing() {
     this.resetEditingParams();
     this.isEditing = false;
@@ -382,7 +350,8 @@ export class DiceAnalogyComponent {
     this.timerSubscription = interval(100)
       .pipe(
         startWith(0),
-        takeWhile(() => this.isMining && (rounds === undefined || rounds > 0))
+        takeWhile(() => this.isMining && (rounds === undefined || rounds > 0)),
+        takeUntil(this.destroy$)
       )
       .subscribe(() => {
         this.currentMiningTime = Date.now() - this.miningStartTime;
@@ -391,7 +360,8 @@ export class DiceAnalogyComponent {
     this.miningSubscription = interval(this.miningInterval * 1000)
       .pipe(
         startWith(0),
-        takeWhile(() => this.isMining && (rounds === undefined || rounds > 0))
+        takeWhile(() => this.isMining && (rounds === undefined || rounds > 0)),
+        takeUntil(this.destroy$)
       )
       .subscribe(() => {
         this.simulateMining();
@@ -834,10 +804,6 @@ export class DiceAnalogyComponent {
     } para acertar`;
   }
 
-  ngOnDestroy() {
-    this.stopEmpiricalCounter();
-  }
-
   private updateSubsidyStats() {
     this.totalConfirmedSubsidy = 0;
     this.totalUnconfirmedSubsidy = 0;
@@ -872,5 +838,10 @@ export class DiceAnalogyComponent {
       this.chain.heights.length / this.blocksUntilHalving
     );
     return this.subsidyPerBlock / Math.pow(2, this.currentHalving);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
