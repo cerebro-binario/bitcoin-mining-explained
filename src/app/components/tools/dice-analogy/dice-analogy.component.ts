@@ -198,21 +198,18 @@ export class DiceAnalogyComponent {
   }
 
   resetSimulation() {
-    // Para a simulação se estiver rodando
-    if (this.isMining) {
-      this.pauseCompetition();
-    }
+    this.pauseCompetition();
 
-    // Limpa os competidores
-    this.competitors = [];
-    this.nextCompetitorId = 1;
+    setTimeout(() => {
+      this.resetValues();
+    }, this.rollAnimationDuration + 100);
+  }
 
+  private resetValues() {
     // Reseta a cadeia
     this.chain = { heights: [] };
 
     // Reseta contadores e estatísticas
-    this.totalDices = 0;
-    this.totalCompetitors = 0;
     this.totalThrowsPerSecond = 0;
     this.empiricalThrowsPerSecond = 0;
     this.throwCount = 0;
@@ -223,13 +220,16 @@ export class DiceAnalogyComponent {
     this.pausedCurrentMiningTime = 0;
     this.hitProbabilityVariation = { value: 0, increased: null };
 
-    // Reseta o target para o valor inicial
-    this.target = this.maxTarget;
-    this.previousTarget = this.target;
-    this.previousMaxTarget = this.maxTarget;
+    // Reseta os subsídios dos competidores
+    this.competitors.forEach((competitor) => {
+      competitor.confirmedSubsidy = 0;
+      competitor.unconfirmedSubsidy = 0;
+      competitor.empiricalThrowsPerSecond = 0;
+      competitor.throwCount = 0;
+    });
 
-    // Reinicializa os competidores iniciais
-    this.ngOnInit();
+    // Atualiza as estatísticas
+    this.updateStats();
   }
 
   private resetEditingParams() {
@@ -442,21 +442,21 @@ export class DiceAnalogyComponent {
   }
 
   addNewBlocks(winners: Competitor[]) {
-    const height = this.chain.heights.length;
-    const currentSubsidy = this.getCurrentSubsidy();
-    const newBlocks: BlockWinner[] = winners.map((w) => ({
-      winner: w,
-      next: [],
-      isDeadFork: false,
-      timestamp: Date.now(),
-      miningTime: this.currentMiningTime,
-      subsidy: currentSubsidy,
-    }));
-
     this.isMoving = true;
 
     setTimeout(() => {
       this.isMoving = false;
+
+      const height = this.chain.heights.length;
+      const currentSubsidy = this.getCurrentSubsidy();
+      const newBlocks: BlockWinner[] = winners.map((w) => ({
+        winner: w,
+        next: [],
+        isDeadFork: false,
+        timestamp: Date.now(),
+        miningTime: this.currentMiningTime,
+        subsidy: currentSubsidy,
+      }));
 
       // Resolver possíveis forks
       if (height > 0) {
