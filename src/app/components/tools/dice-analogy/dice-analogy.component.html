@@ -485,6 +485,7 @@
             [(ngModel)]="editingParams.miningInterval"
             optionLabel="name"
             optionValue="value"
+            [allowEmpty]="false"
           />
         </div>
 
@@ -517,6 +518,7 @@
             [(ngModel)]="editingParams.miningTimeSeconds"
             optionLabel="name"
             optionValue="value"
+            [allowEmpty]="false"
           />
         </div>
 
@@ -527,6 +529,7 @@
             [(ngModel)]="editingParams.autoPauseMode"
             optionLabel="label"
             optionValue="value"
+            [allowEmpty]="false"
           ></p-selectButton>
         </div>
       </div>
