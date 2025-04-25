@@ -1,10 +1,102 @@
 <h1 class="text-3xl font-bold mb-6">Ferramentas</h1>
 
 <div class="flex flex-col gap-y-8">
-  <app-hexadecimal></app-hexadecimal>
-  <app-hash></app-hash>
-  <app-hashes-compared></app-hashes-compared>
-  <app-dice-analogy></app-dice-analogy>
-  <app-hash-target></app-hash-target>
-  <app-bitcoin-emission-chart></app-bitcoin-emission-chart>
+  <div class="relative" [class.fullscreen]="isFullscreen['hexadecimal']">
+    <button
+      class="absolute top-2 right-2 z-10 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-white transition-colors"
+      (click)="toggleFullscreen('hexadecimal')"
+      pTooltip="Expandir para tela cheia"
+      tooltipPosition="left"
+    >
+      <i
+        class="pi"
+        [class.pi-window-minimize]="isFullscreen['hexadecimal']"
+        [class.pi-window-maximize]="!isFullscreen['hexadecimal']"
+      ></i>
+    </button>
+    <app-hexadecimal></app-hexadecimal>
+  </div>
+
+  <div class="relative" [class.fullscreen]="isFullscreen['hash']">
+    <button
+      class="absolute top-2 right-2 z-10 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-white transition-colors"
+      (click)="toggleFullscreen('hash')"
+      pTooltip="Expandir para tela cheia"
+      tooltipPosition="left"
+    >
+      <i
+        class="pi"
+        [class.pi-window-minimize]="isFullscreen['hash']"
+        [class.pi-window-maximize]="!isFullscreen['hash']"
+      ></i>
+    </button>
+    <app-hash></app-hash>
+  </div>
+
+  <div class="relative" [class.fullscreen]="isFullscreen['hashes-compared']">
+    <button
+      class="absolute top-2 right-2 z-10 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-white transition-colors"
+      (click)="toggleFullscreen('hashes-compared')"
+      pTooltip="Expandir para tela cheia"
+      tooltipPosition="left"
+    >
+      <i
+        class="pi"
+        [class.pi-window-minimize]="isFullscreen['hashes-compared']"
+        [class.pi-window-maximize]="!isFullscreen['hashes-compared']"
+      ></i>
+    </button>
+    <app-hashes-compared></app-hashes-compared>
+  </div>
+
+  <div class="relative" [class.fullscreen]="isFullscreen['dice-analogy']">
+    <button
+      class="absolute top-2 right-2 z-10 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-white transition-colors"
+      (click)="toggleFullscreen('dice-analogy')"
+      pTooltip="Expandir para tela cheia"
+      tooltipPosition="left"
+    >
+      <i
+        class="pi"
+        [class.pi-window-minimize]="isFullscreen['dice-analogy']"
+        [class.pi-window-maximize]="!isFullscreen['dice-analogy']"
+      ></i>
+    </button>
+    <app-dice-analogy></app-dice-analogy>
+  </div>
+
+  <div class="relative" [class.fullscreen]="isFullscreen['hash-target']">
+    <button
+      class="absolute top-2 right-2 z-10 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-white transition-colors"
+      (click)="toggleFullscreen('hash-target')"
+      pTooltip="Expandir para tela cheia"
+      tooltipPosition="left"
+    >
+      <i
+        class="pi"
+        [class.pi-window-minimize]="isFullscreen['hash-target']"
+        [class.pi-window-maximize]="!isFullscreen['hash-target']"
+      ></i>
+    </button>
+    <app-hash-target></app-hash-target>
+  </div>
+
+  <div
+    class="relative"
+    [class.fullscreen]="isFullscreen['bitcoin-emission-chart']"
+  >
+    <button
+      class="absolute top-2 right-2 z-10 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-white transition-colors"
+      (click)="toggleFullscreen('bitcoin-emission-chart')"
+      pTooltip="Expandir para tela cheia"
+      tooltipPosition="left"
+    >
+      <i
+        class="pi"
+        [class.pi-window-minimize]="isFullscreen['bitcoin-emission-chart']"
+        [class.pi-window-maximize]="!isFullscreen['bitcoin-emission-chart']"
+      ></i>
+    </button>
+    <app-bitcoin-emission-chart></app-bitcoin-emission-chart>
+  </div>
 </div>
