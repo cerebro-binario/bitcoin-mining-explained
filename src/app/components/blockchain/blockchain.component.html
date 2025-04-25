@@ -1,37 +1,326 @@
-<p-button
-  label="Minerar Novo Bloco"
-  icon="pi pi-hammer"
-  [routerLink]="'mine-new-block'"
-/>
-<p-table
-  [value]="blocks"
-  [tableStyle]="{ 'min-width': '50rem' }"
-  styleClass="p-datatable-lg"
-  stripedRows
+<div class="grid gap-y-4">
+  <div class="col-12">
+    <p-card header="Transações Pendentes">
+      <div class="flex justify-content-between mb-3">
+        <p-button
+          label="Nova Transação"
+          icon="pi pi-plus"
+          (click)="generateNewTransaction()"
+        ></p-button>
+        <p-button
+          label="Minerar Bloco"
+          icon="pi pi-cog"
+          [loading]="mining"
+          (click)="mineBlock()"
+          [disabled]="pendingTransactions.length === 0"
+        ></p-button>
+      </div>
+      <p-table [value]="pendingTransactions" [paginator]="true" [rows]="5">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>ID</th>
+            <th>Entradas (₿)</th>
+            <th>Saídas (₿)</th>
+            <th>Taxa (₿)</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-transaction>
+          <tr>
+            <td>{{ transaction.id }}</td>
+            <td>{{ getInputsTotal(transaction) }}</td>
+            <td>{{ getOutputsTotal(transaction) }}</td>
+            <td>{{ transaction.fee }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+
+  <div class="col-12">
+    <p-card header="Blockchain">
+      <p-table [value]="blockchain" [paginator]="true" [rows]="5">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Altura</th>
+            <th>Hash</th>
+            <th>Hash Anterior</th>
+            <th>Transações</th>
+            <th>Data/Hora</th>
+            <th>Nonce</th>
+            <th>Dificuldade</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-block>
+          <tr>
+            <td>{{ block.height }}</td>
+            <td>{{ block.hash }}</td>
+            <td>{{ block.previousHash }}</td>
+            <td>{{ block.transactions.length }}</td>
+            <td>{{ block.timestamp | date : "medium" }}</td>
+            <td>{{ block.nonce }}</td>
+            <td>{{ block.difficulty }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+</div>
+
+<p-dialog
+  header="Adicionar essa transação na mempool?"
+  [(visible)]="showNewTransactionDialog"
+  [style]="{ width: '90vw', maxWidth: '1200px' }"
+  [modal]="true"
+  styleClass="p-0"
 >
-  <ng-template #caption>
-    <div class="flex items-center justify-between">
-      @if(blocks.length > 0) {
-      <h5 class="m-0">Blocos</h5>
-      }@else {
-      <h5 class="m-0">Nenhum bloco ainda. Minere o primeiro bloco.</h5>
-      }
+  <div class="flex flex-col gap-4 max-w-5xl mx-auto">
+    <h2 class="font-bold text-lg">Adicionar essa transação na mempool?</h2>
+
+    <div class="flex flex-col w-full">
+      <!-- Header -->
+      <div
+        class="p-2 lg:p-4 border-zinc-700 border"
+        [class.border-b-0]="!getTransactionError()"
+      >
+        <div class="text-sm font-bold text-zinc-300">
+          {{ getCurrentDateTime() }}
+        </div>
+        <div class="flex items-center gap-2">
+          <strong>Volume:</strong>
+          <span
+            [class.text-red-500]="
+              getTransactionError()?.includes('valor total')
+            "
+          >
+            {{ getInputsTotal(newTransaction) }} ₿
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <strong>Taxas:</strong>
+          <span [class.text-red-500]="newTransaction.fee < 0">
+            {{ newTransaction.fee }} ₿ ({{ getTransactionFeeRate() }} sats/vB)
+          </span>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div
+        *ngIf="getTransactionError()"
+        class="p-3 bg-red-500 text-white border border-zinc-700 border-t-0 border-b-0 flex items-center gap-2"
+      >
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ getTransactionError() }}</span>
+      </div>
+
+      <!-- Transaction container -->
+      <div class="flex flex-col lg:flex-row justify-between">
+        <!-- Inputs -->
+        <div
+          class="w-full p-2 lg:w-1/2 lg:p-4 border-zinc-700 border border-b-0 lg:border-b lg:border-r-0"
+        >
+          <div class="flex justify-between items-center mb-2 lg:mb-4">
+            <h3 class="text-lg font-bold">De</h3>
+            <p-button
+              *ngIf="isEditing"
+              icon="pi pi-plus"
+              severity="secondary"
+              size="small"
+              (click)="addInput()"
+              pTooltip="Adicionar entrada"
+              tooltipPosition="left"
+            ></p-button>
+          </div>
+          <div
+            *ngFor="let input of newTransaction.inputs; let i = index"
+            class="flex flex-col gap-2 py-2"
+          >
+            <div class="flex items-center gap-2">
+              <span
+                class="flex items-center justify-center w-7 h-7 bg-zinc-700 rounded-full text-sm"
+              >
+                {{ i + 1 }}
+              </span>
+              <ng-container *ngIf="isEditing">
+                <input
+                  pInputText
+                  [(ngModel)]="input.address"
+                  class="flex-1 font-mono text-sm"
+                  placeholder="Endereço"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  size="small"
+                  (click)="removeInput(i)"
+                  [disabled]="newTransaction.inputs.length === 1"
+                  pTooltip="Remover entrada"
+                  tooltipPosition="left"
+                ></p-button>
+              </ng-container>
+              <ng-container *ngIf="!isEditing">
+                <span class="flex-1 font-mono text-sm">{{
+                  input.address
+                }}</span>
+              </ng-container>
+            </div>
+            <div class="flex items-center gap-2 ml-9">
+              <ng-container *ngIf="isEditing">
+                <p-inputNumber
+                  [(ngModel)]="input.amount"
+                  mode="decimal"
+                  [minFractionDigits]="8"
+                  [maxFractionDigits]="8"
+                  (onInput)="calculateFee()"
+                  class="flex-1"
+                  placeholder="Valor"
+                ></p-inputNumber>
+              </ng-container>
+              <ng-container *ngIf="!isEditing">
+                <span class="flex-1">{{ input.amount }} ₿</span>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <!-- Outputs -->
+        <div class="w-full p-2 lg:w-1/2 lg:p-4 border-zinc-700 border">
+          <div class="flex justify-between items-center mb-2 lg:mb-4">
+            <h3 class="text-lg font-bold">Para</h3>
+            <p-button
+              *ngIf="isEditing"
+              icon="pi pi-plus"
+              severity="secondary"
+              size="small"
+              (click)="addOutput()"
+              pTooltip="Adicionar saída"
+              tooltipPosition="left"
+            ></p-button>
+          </div>
+          <div
+            *ngFor="let output of newTransaction.outputs; let i = index"
+            class="flex flex-col gap-2 py-2"
+          >
+            <div class="flex items-center gap-2">
+              <span
+                class="flex items-center justify-center w-7 h-7 bg-zinc-700 rounded-full text-sm"
+              >
+                {{ i + 1 }}
+              </span>
+              <ng-container *ngIf="isEditing">
+                <input
+                  pInputText
+                  [(ngModel)]="output.address"
+                  class="flex-1 font-mono text-sm"
+                  placeholder="Endereço"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  size="small"
+                  (click)="removeOutput(i)"
+                  [disabled]="newTransaction.outputs.length === 1"
+                  pTooltip="Remover saída"
+                  tooltipPosition="left"
+                ></p-button>
+              </ng-container>
+              <ng-container *ngIf="!isEditing">
+                <span class="flex-1 font-mono text-sm">{{
+                  output.address
+                }}</span>
+              </ng-container>
+            </div>
+            <div class="flex items-center gap-2 ml-9">
+              <ng-container *ngIf="isEditing">
+                <p-inputNumber
+                  [(ngModel)]="output.amount"
+                  mode="decimal"
+                  [minFractionDigits]="8"
+                  [maxFractionDigits]="8"
+                  (onInput)="calculateFee()"
+                  class="flex-1"
+                  placeholder="Valor"
+                ></p-inputNumber>
+              </ng-container>
+              <ng-container *ngIf="!isEditing">
+                <span class="flex-1">{{ output.amount }} ₿</span>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </ng-template>
-  <ng-template #header>
-    <tr>
-      <th pSortableColumn="height"># <p-sortIcon field="height" /></th>
-      <th>Nº de Transações</th>
-      <th>Volume (BTC)</th>
-      <th>Total de taxas (BTC)</th>
-    </tr>
-  </ng-template>
-  <ng-template #body let-block>
-    <tr>
-      <td>{{ block.height }}</td>
-      <td>{{ block.nTransactions }}</td>
-      <td>{{ block.btcVolume }}</td>
-      <td>{{ block.fees }}</td>
-    </tr>
-  </ng-template>
-</p-table>
+
+    <!-- Actions -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:justify-between">
+      <div class="flex gap-2 lg:gap-4 w-full">
+        <ng-container *ngIf="!isEditing">
+          <p-button
+            label="Editar"
+            severity="contrast"
+            variant="outlined"
+            raised="true"
+            class="w-full"
+            styleClass="w-full"
+            icon="pi pi-pencil"
+            (click)="editTransaction()"
+          />
+          <p-button
+            label="Recriar"
+            severity="contrast"
+            variant="outlined"
+            class="w-full"
+            styleClass="w-full"
+            icon="pi pi-replay"
+            (click)="generateNewTransaction()"
+          />
+        </ng-container>
+        <ng-container *ngIf="isEditing">
+          <p-button
+            label="Salvar Alterações"
+            [severity]="getTransactionError() ? 'danger' : 'success'"
+            class="w-full"
+            styleClass="w-full"
+            icon="pi pi-check"
+            (click)="isEditing = false"
+            [pTooltip]="getTransactionError() || undefined"
+            [tooltipDisabled]="!getTransactionError()"
+            tooltipPosition="top"
+          />
+          <p-button
+            label="Descartar Alterações"
+            severity="danger"
+            variant="outlined"
+            class="w-full"
+            styleClass="w-full"
+            icon="pi pi-times"
+            (click)="generateNewTransaction()"
+          />
+        </ng-container>
+      </div>
+      <div class="flex flex-col gap-2 lg:gap-4 lg:flex-row w-full">
+        <p-button
+          label="Confirmar Transação"
+          [severity]="getTransactionError() ? 'danger' : 'contrast'"
+          [raised]="!isEditing"
+          class="w-full"
+          styleClass="w-full"
+          icon="pi pi-check"
+          (click)="submitNewTransaction()"
+          [disabled]="!validateTransaction() || isEditing"
+          [pTooltip]="getTransactionError() || undefined"
+          [tooltipDisabled]="!getTransactionError()"
+          tooltipPosition="top"
+        />
+        <p-button
+          label="Cancelar Transação"
+          variant="outlined"
+          class="w-full"
+          styleClass="w-full"
+          icon="pi pi-times"
+          (click)="showNewTransactionDialog = false"
+          [disabled]="isEditing"
+        />
+      </div>
+    </div>
+  </div>
+</p-dialog>
