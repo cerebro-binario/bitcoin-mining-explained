@@ -8,27 +8,13 @@ import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
-
-interface TransactionInput {
-  address: string;
-  amount: number; // in BTC
-  utxoReference?: {
-    txid: string;
-    vout: number;
-  };
-}
-
-interface TransactionOutput {
-  address: string;
-  amount: number; // in BTC
-}
-
-interface Transaction {
-  id: string;
-  inputs: TransactionInput[];
-  outputs: TransactionOutput[];
-  fee: number; // in BTC
-}
+import {
+  Transaction,
+  TransactionInput,
+  TransactionOutput,
+  Block,
+  ValidationResult,
+} from '../../models/blockchain.model';
 
 interface UTXO {
   txid: string;
@@ -38,22 +24,6 @@ interface UTXO {
   blockHeight: number;
   spent: boolean;
   spentInMempool: boolean;
-}
-
-interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-}
-
-interface Block {
-  height: number;
-  hash: string;
-  previousHash: string;
-  transactions: Transaction[];
-  timestamp: Date;
-  nonce: number;
-  difficulty: number;
-  validationResult?: ValidationResult;
 }
 
 @Component({
@@ -74,17 +44,15 @@ interface Block {
   styleUrls: ['./blockchain.component.scss'],
 })
 export class BlockchainComponent implements OnInit {
-  blockchain: Block[] = [];
+  blocks: Block[] = [];
   pendingTransactions: Transaction[] = [];
+  currentBlock: Block | null = null;
   utxoSet: Map<string, UTXO> = new Map(); // key: txid:vout
   showNewTransactionDialog = false;
   isEditing = false;
-  newTransaction: Transaction = {
-    id: '',
-    inputs: [{ address: '', amount: 0 }],
-    outputs: [{ address: '', amount: 0 }],
-    fee: 0,
-  };
+  newTransaction!: Transaction;
+  transactions: Transaction[] = [];
+  usedUtxos: Set<string> = new Set();
   mining = false;
   currentDifficulty = 1;
   targetHash =
@@ -94,23 +62,31 @@ export class BlockchainComponent implements OnInit {
   private readonly VBYTES_OVERHEAD = 11;
   private readonly COINBASE_REWARD = 50; // Initial mining reward in BTC
 
-  ngOnInit() {
-    this.createGenesisBlock();
+  constructor() {
+    this.initializeNewTransaction();
   }
 
-  createGenesisBlock() {
+  ngOnInit() {}
+
+  createGenesisBlock(): void {
     const genesisBlock: Block = {
       height: 0,
+      version: 1,
       hash: '0000000000000000000000000000000000000000000000000000000000000000',
       previousHash:
         '0000000000000000000000000000000000000000000000000000000000000000',
-      transactions: [],
+      merkleRoot: '',
       timestamp: new Date(),
+      bits: 0x1d00ffff,
       nonce: 0,
-      difficulty: 1,
-      validationResult: { isValid: true, errors: [] },
+      transactions: [],
+      reward: 50,
+      validationResult: {
+        isValid: true,
+        errors: [],
+      },
     };
-    this.blockchain.push(genesisBlock);
+    this.blocks.push(genesisBlock);
   }
 
   private getUtxoKey(txid: string, vout: number): string {
@@ -169,7 +145,7 @@ export class BlockchainComponent implements OnInit {
           address: `14${randomAddress()}`,
           amount: randomAmount(),
           utxoReference: {
-            txid: this.generateTransactionId(),
+            txid: this.generateTransactionId(this.newTransaction),
             vout: 0,
           },
         }));
@@ -181,7 +157,14 @@ export class BlockchainComponent implements OnInit {
           amount: 0,
         }));
 
-      this.newTransaction = { id: '', inputs, outputs, fee: 0 };
+      this.newTransaction = {
+        id: '',
+        inputs,
+        outputs,
+        fees: 0,
+        volume: 0,
+        coinbaseMessage: '',
+      };
     } else {
       // Selecionar UTXOs aleatórios para usar como inputs
       const selectedUtxos = availableUtxos
@@ -204,7 +187,14 @@ export class BlockchainComponent implements OnInit {
           amount: 0,
         }));
 
-      this.newTransaction = { id: '', inputs, outputs, fee: 0 };
+      this.newTransaction = {
+        id: '',
+        inputs,
+        outputs,
+        fees: 0,
+        volume: 0,
+        coinbaseMessage: '',
+      };
     }
 
     // Calcular taxa baseada em sats/vByte
@@ -216,228 +206,164 @@ export class BlockchainComponent implements OnInit {
     const feeInSats = vBytes * satsPerVByte;
     // Converter para BTC (1 sat = 0.00000001 BTC)
     const feeInBtc = Number((feeInSats * 0.00000001).toFixed(8));
-    let remainingAmount = inputTotal - feeInBtc;
+    const remainingAmount =
+      this.getInputsTotal(this.newTransaction) -
+      this.getOutputsTotal(this.newTransaction) -
+      feeInBtc;
+    if (remainingAmount > 0) {
+      this.newTransaction.outputs[
+        this.newTransaction.outputs.length - 1
+      ].amount = Number(remainingAmount.toFixed(8));
+      this.newTransaction.fees = feeInBtc;
+      this.newTransaction.volume = this.getOutputsTotal(this.newTransaction);
 
-    // Distribuir valores aleatórios para cada output, exceto o último
-    for (let i = 0; i < this.newTransaction.outputs.length - 1; i++) {
-      const percentage = 0.01 + Math.random() * 0.59;
-      const amount = Number((remainingAmount * percentage).toFixed(8));
-      this.newTransaction.outputs[i].amount = amount;
-      remainingAmount -= amount;
-    }
-
-    // O último output recebe o valor restante
-    this.newTransaction.outputs[this.newTransaction.outputs.length - 1].amount =
-      Number(remainingAmount.toFixed(8));
-    this.newTransaction.fee = feeInBtc;
-
-    // Marcar UTXOs como usados na mempool
-    if (availableUtxos.length > 0) {
+      // Marcar UTXOs como usados na mempool
       this.newTransaction.inputs.forEach((input) => {
-        if (input.utxoReference) {
-          const utxoKey = this.getUtxoKey(
-            input.utxoReference.txid,
-            input.utxoReference.vout
-          );
-          const utxo = this.utxoSet.get(utxoKey);
-          if (utxo) {
-            utxo.spentInMempool = true;
-          }
-        }
+        this.usedUtxos.add(input.utxoReference.txid);
       });
+
+      this.transactions.push({ ...this.newTransaction });
+      this.initializeNewTransaction();
     }
 
     this.showNewTransactionDialog = true;
     this.isEditing = false;
   }
 
-  private validateTransactionInternal(
-    transaction: Transaction
-  ): ValidationResult {
-    const errors: string[] = [];
-    let inputTotal = 0;
-    let outputTotal = 0;
+  validateTransaction(transaction: Transaction): ValidationResult {
+    const result: ValidationResult = {
+      isValid: true,
+      errors: [],
+    };
 
-    // Validar inputs
-    for (const input of transaction.inputs) {
-      if (!input.utxoReference) {
-        errors.push(
-          `Input sem referência UTXO para o endereço ${input.address}`
-        );
-        continue;
-      }
-
-      const utxoKey = this.getUtxoKey(
-        input.utxoReference.txid,
-        input.utxoReference.vout
-      );
-      const utxo = this.utxoSet.get(utxoKey);
-
-      if (!utxo) {
-        errors.push(`UTXO não encontrado: ${utxoKey}`);
-        continue;
-      }
-
-      if (utxo.spent) {
-        errors.push(`UTXO já foi gasto: ${utxoKey}`);
-        continue;
-      }
-
-      if (utxo.spentInMempool) {
-        errors.push(
-          `UTXO já está sendo usado em outra transação pendente: ${utxoKey}`
-        );
-        continue;
-      }
-
-      if (utxo.address !== input.address) {
-        errors.push(`Endereço não autorizado para gastar UTXO: ${utxoKey}`);
-        continue;
-      }
-
-      inputTotal += utxo.amount;
+    // Validate inputs and outputs
+    if (!transaction.inputs || transaction.inputs.length === 0) {
+      result.errors.push('Transaction must have at least one input');
+    }
+    if (!transaction.outputs || transaction.outputs.length === 0) {
+      result.errors.push('Transaction must have at least one output');
     }
 
-    // Validar outputs
-    outputTotal = transaction.outputs.reduce(
+    // Calculate total input and output amounts
+    const totalInputs = transaction.inputs.reduce(
+      (sum, input) => sum + input.amount,
+      0
+    );
+    const totalOutputs = transaction.outputs.reduce(
       (sum, output) => sum + output.amount,
       0
     );
-    outputTotal += transaction.fee;
 
-    if (outputTotal > inputTotal) {
-      errors.push(
-        `Valor total de saída (${outputTotal} BTC) maior que entrada (${inputTotal} BTC)`
+    // Validate amounts
+    if (totalOutputs > totalInputs) {
+      result.errors.push(
+        'Total output amount cannot exceed total input amount'
       );
     }
 
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
+    // Set validation result
+    result.isValid = result.errors.length === 0;
+    return result;
   }
 
-  validateTransaction(): boolean {
-    const result = this.validateTransactionInternal(this.newTransaction);
-    return result.isValid;
-  }
-
-  getTransactionError(): string | null {
-    const result = this.validateTransactionInternal(this.newTransaction);
-    return result.errors.length > 0 ? result.errors[0] : null;
-  }
-
-  generateTransactionId(): string {
+  private generateTransactionId(transaction: Transaction): string {
     return Math.random().toString(36).substring(2, 15);
   }
 
-  submitNewTransaction() {
-    if (!this.validateTransaction()) {
-      return;
+  submitTransaction(transaction: Transaction): void {
+    const validation = this.validateTransaction(transaction);
+    if (validation.isValid) {
+      transaction.id = this.generateTransactionId(transaction);
+      transaction.fees =
+        transaction.inputs.reduce((sum, input) => sum + input.amount, 0) -
+        transaction.outputs.reduce((sum, output) => sum + output.amount, 0);
+      transaction.volume = transaction.outputs.reduce(
+        (sum, output) => sum + output.amount,
+        0
+      );
+      this.pendingTransactions.push(transaction);
     }
-    this.newTransaction.id = this.generateTransactionId();
-    this.pendingTransactions.push({ ...this.newTransaction });
-    this.resetNewTransaction();
-    this.showNewTransactionDialog = false;
-    this.isEditing = false;
   }
 
-  resetNewTransaction() {
-    this.newTransaction = {
-      id: '',
-      inputs: [{ address: '', amount: 0 }],
-      outputs: [{ address: '', amount: 0 }],
-      fee: 0,
-    };
-  }
-
-  generateBlockHash(block: Block): string {
-    const content = `${block.height}${block.previousHash}${JSON.stringify(
-      block.transactions
-    )}${block.timestamp}${block.nonce}`;
-    return this.hashSHA256(content);
-  }
-
-  hashSHA256(content: string): string {
-    // Placeholder for actual SHA-256 implementation
-    return '0000000000000000000000000000000000000000000000000000000000000000';
-  }
-
-  async mineBlock() {
-    if (this.mining || this.pendingTransactions.length === 0) {
-      return;
-    }
-
+  mineBlock(): void {
     this.mining = true;
-    const previousBlock = this.blockchain[this.blockchain.length - 1];
 
-    // Criar a coinbase transaction
-    const minerAddress = `1Miner${Math.random().toString(36).substring(2, 10)}`;
-    const coinbaseTransaction: Transaction = {
-      id: this.generateTransactionId(),
-      inputs: [], // Coinbase não tem inputs
-      outputs: [
-        {
-          address: minerAddress,
-          amount: this.COINBASE_REWARD,
-        },
-      ],
-      fee: 0,
-    };
+    try {
+      if (this.blocks.length === 0) {
+        // Create genesis block
+        const genesisBlock: Block = {
+          height: 0,
+          version: 1,
+          hash: '',
+          previousHash:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+          merkleRoot: '',
+          timestamp: new Date(),
+          bits: 0x1d00ffff,
+          nonce: 0,
+          transactions: [
+            {
+              id: 'coinbase',
+              inputs: [],
+              outputs: [
+                {
+                  address: 'miner',
+                  amount: this.COINBASE_REWARD,
+                },
+              ],
+              fees: 0,
+              volume: this.COINBASE_REWARD,
+              coinbaseMessage:
+                'The Times 03/Jan/2009 Chancellor on brink of second bailout for banks',
+            },
+          ],
+          reward: this.COINBASE_REWARD,
+          validationResult: {
+            isValid: true,
+            errors: [],
+          },
+        };
 
-    const newBlock: Block = {
-      height: previousBlock.height + 1,
-      previousHash: previousBlock.hash,
-      transactions: [coinbaseTransaction, ...this.pendingTransactions],
-      timestamp: new Date(),
-      nonce: 0,
-      difficulty: this.currentDifficulty,
-      hash: '',
-      validationResult: { isValid: true, errors: [] },
-    };
+        // Simple mining simulation
+        genesisBlock.hash = this.generateBlockHash(genesisBlock);
+        this.blocks.push(genesisBlock);
+      } else if (this.pendingTransactions.length > 0) {
+        // Create regular block with pending transactions
+        const newBlock: Block = {
+          height: this.blocks.length,
+          version: 1,
+          hash: '',
+          previousHash: this.blocks[this.blocks.length - 1].hash,
+          merkleRoot: this.calculateMerkleRoot(this.pendingTransactions),
+          timestamp: new Date(),
+          bits: 0x1d00ffff,
+          nonce: 0,
+          transactions: [...this.pendingTransactions],
+          reward: this.COINBASE_REWARD,
+          validationResult: {
+            isValid: true,
+            errors: [],
+          },
+        };
 
-    while (this.mining) {
-      newBlock.nonce++;
-      newBlock.hash = this.generateBlockHash(newBlock);
-
-      if (newBlock.hash < this.targetHash) {
-        // Adicionar UTXOs da coinbase transaction
-        this.addUtxo(coinbaseTransaction, newBlock.height);
-
-        // Processar UTXOs das transações normais
-        for (const tx of this.pendingTransactions) {
-          // Marcar UTXOs gastos
-          tx.inputs.forEach((input) => {
-            if (input.utxoReference) {
-              const utxoKey = this.getUtxoKey(
-                input.utxoReference.txid,
-                input.utxoReference.vout
-              );
-              const utxo = this.utxoSet.get(utxoKey);
-              if (utxo) {
-                utxo.spent = true;
-                utxo.spentInMempool = false;
-              }
-            }
-          });
-
-          // Adicionar novos UTXOs
-          this.addUtxo(tx, newBlock.height);
-        }
-
-        this.blockchain.push(newBlock);
+        // Simple mining simulation
+        newBlock.hash = this.generateBlockHash(newBlock);
+        this.blocks.push(newBlock);
         this.pendingTransactions = [];
-        this.mining = false;
-        break;
       }
-
-      // Prevent blocking the UI
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    } finally {
+      this.mining = false;
     }
   }
 
-  stopMining() {
-    this.mining = false;
+  private calculateMerkleRoot(transactions: Transaction[]): string {
+    // Simple implementation - in reality this would use proper Merkle tree
+    return transactions.map((t) => t.id).join('');
+  }
+
+  private generateBlockHash(block: Block): string {
+    // Simple implementation - in reality this would use proper SHA-256
+    return Math.random().toString(36).substring(2);
   }
 
   getCurrentDateTime(): string {
@@ -460,14 +386,17 @@ export class BlockchainComponent implements OnInit {
   getTransactionFeeRate(): number {
     const vBytes = this.calculateTransactionVSize();
     // Converter taxa de BTC para sats e dividir pelo tamanho
-    return Math.floor((this.newTransaction.fee * 100000000) / vBytes);
+    return Math.floor((this.newTransaction.fees * 100000000) / vBytes);
   }
 
   addInput() {
-    const randomAddress = () => Math.random().toString(36).substring(2, 15);
     this.newTransaction.inputs.push({
-      address: `14${randomAddress()}`,
+      address: '',
       amount: 0,
+      utxoReference: {
+        txid: '0000000000000000000000000000000000000000000000000000000000000000',
+        vout: 0,
+      },
     });
   }
 
@@ -494,6 +423,42 @@ export class BlockchainComponent implements OnInit {
   calculateFee() {
     const inputsTotal = this.getInputsTotal(this.newTransaction);
     const outputsTotal = this.getOutputsTotal(this.newTransaction);
-    this.newTransaction.fee = Number((inputsTotal - outputsTotal).toFixed(8));
+    this.newTransaction.fees = Number((inputsTotal - outputsTotal).toFixed(8));
+  }
+
+  getTransactionError(): string | null {
+    const validation = this.validateTransaction(this.newTransaction);
+    if (!validation.isValid) {
+      return validation.errors[0];
+    }
+    if (this.newTransaction.fees < 0) {
+      return 'O valor total das saídas excede o valor total das entradas';
+    }
+    return null;
+  }
+
+  private initializeNewTransaction(): void {
+    this.newTransaction = {
+      id: this.generateTransactionId(this.newTransaction),
+      inputs: [
+        {
+          address: '',
+          amount: 0,
+          utxoReference: {
+            txid: '',
+            vout: 0,
+          },
+        },
+      ],
+      outputs: [
+        {
+          address: '',
+          amount: 0,
+        },
+      ],
+      fees: 0,
+      volume: 0,
+      coinbaseMessage: '',
+    };
   }
 }
