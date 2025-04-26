@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import {
   Transaction,
   TransactionInput,
@@ -46,7 +46,7 @@ interface UTXO {
     InputTextModule,
     TooltipModule,
     SelectButtonModule,
-    DropdownModule,
+    SelectModule,
   ],
   templateUrl: './blockchain.component.html',
   styleUrls: ['./blockchain.component.scss'],
