@@ -94,6 +94,8 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   public currentDateTime: string = '';
   public isContinuousMining = false;
   private continuousMiningInterval: any;
+  showParamsDialog = false;
+  editingHashRate: number = this.hashRate;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -501,6 +503,13 @@ export class BlockchainComponent implements OnInit, OnDestroy {
     return this.cachedHashRate;
   }
 
+  getHashRateLabel(): string {
+    const option = this.hashRateOptions.find(
+      (opt) => opt.value === this.hashRate
+    );
+    return option ? option.label : `${this.hashRate} H/s`;
+  }
+
   private generateMinerAddress(): string {
     const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
     const prefix = 'bc1';
@@ -895,5 +904,20 @@ export class BlockchainComponent implements OnInit, OnDestroy {
       second: '2-digit',
       hour12: false,
     });
+  }
+
+  openParamsDialog() {
+    this.editingHashRate = this.hashRate;
+    this.showParamsDialog = true;
+  }
+
+  cancelParamsDialog() {
+    this.showParamsDialog = false;
+  }
+
+  saveParamsDialog() {
+    this.hashRate = this.editingHashRate;
+    this.updateHashRate();
+    this.showParamsDialog = false;
   }
 }
