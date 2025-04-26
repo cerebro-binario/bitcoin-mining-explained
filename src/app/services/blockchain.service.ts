@@ -1,109 +1,117 @@
 import { Injectable } from '@angular/core';
-import { Block, GENESIS_BLOCK } from '../models/block.model';
-import { Transaction } from '../models/transaction.model';
-import { hashSHA256 } from '../utils/tools';
-import { MempoolService } from './mempool.service';
+import { BehaviorSubject } from 'rxjs';
+import {
+  Block,
+  Transaction,
+  TransactionOutput,
+} from '../models/blockchain.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BlockchainService {
-  private blockchain: Block[] = []; // Lista de blocos minerados
-  private target =
-    '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'; // Target inicial
+  private blocksSubject = new BehaviorSubject<Block[]>([]);
+  private pendingTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
+  private utxoSetSubject = new BehaviorSubject<Map<string, any>>(new Map());
 
-  constructor(private mempoolService: MempoolService) {
-    let prevHash = this.getLatestBlockHash();
-    let height = this.getBlockchainHeight();
+  blocks$ = this.blocksSubject.asObservable();
+  pendingTransactions$ = this.pendingTransactionsSubject.asObservable();
+  utxoSet$ = this.utxoSetSubject.asObservable();
 
-    if (height === 0) {
-      this.initializeGenesisBlock();
-      prevHash = this.getLatestBlockHash();
-      height = this.getBlockchainHeight();
+  constructor() {
+    this.loadState();
+  }
+
+  private loadState() {
+    const savedState = localStorage.getItem('blockchainState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      this.blocksSubject.next(state.blocks);
+      this.pendingTransactionsSubject.next(state.pendingTransactions);
+      this.utxoSetSubject.next(new Map(Object.entries(state.utxoSet)));
+    }
+  }
+
+  private saveState() {
+    const state = {
+      blocks: this.blocksSubject.value,
+      pendingTransactions: this.pendingTransactionsSubject.value,
+      utxoSet: Object.fromEntries(this.utxoSetSubject.value),
+    };
+    localStorage.setItem('blockchainState', JSON.stringify(state));
+  }
+
+  addBlock(block: Block) {
+    const currentBlocks = this.blocksSubject.value;
+    const newBlocks = [...currentBlocks, block];
+    this.blocksSubject.next(newBlocks);
+
+    // Clear pending transactions if this is not the genesis block
+    if (newBlocks.length > 1) {
+      this.pendingTransactionsSubject.next([]);
     }
 
-    this.mempoolService.createCandidateBlock(prevHash, height);
+    this.updateUtxoSet(block);
+    this.saveState();
   }
 
-  // Retorna a lista de blocos minerados
-  getBlockchain(): Block[] {
-    return this.blockchain;
+  addPendingTransaction(transaction: Transaction) {
+    const currentTransactions = this.pendingTransactionsSubject.value;
+    this.pendingTransactionsSubject.next([...currentTransactions, transaction]);
+    this.saveState();
   }
 
-  // Retorna a lista de blocos minerados
-  getBlockchainHeight(): number {
-    return this.getBlockchain().length;
+  private updateUtxoSet(block: Block) {
+    const currentUtxoSet = this.utxoSetSubject.value;
+    const newUtxoSet = new Map(currentUtxoSet);
+
+    // Process transactions in the block
+    block.transactions.forEach((tx) => {
+      // Add new UTXOs
+      tx.outputs.forEach((output, index) => {
+        const utxoKey = `${tx.id}:${index}`;
+        newUtxoSet.set(utxoKey, {
+          txid: tx.id,
+          vout: index,
+          amount: output.amount,
+          address: output.address,
+          blockHeight: block.height,
+          spent: false,
+          spentInMempool: false,
+        });
+      });
+
+      // Mark inputs as spent
+      tx.inputs.forEach((input) => {
+        const utxoKey = `${input.txid}:${input.vout}`;
+        if (newUtxoSet.has(utxoKey)) {
+          newUtxoSet.delete(utxoKey);
+        }
+      });
+    });
+
+    this.utxoSetSubject.next(newUtxoSet);
   }
 
-  // Retorna o hash do último bloco
-  getLatestBlockHash(): string {
-    const latestBlock = this.blockchain[this.blockchain.length - 1];
-    return (
-      latestBlock?.hash ||
-      '0000000000000000000000000000000000000000000000000000000000000000'
-    );
+  getBlocks(): Block[] {
+    return this.blocksSubject.value;
   }
 
-  /**
-   * Inicializa o bloco gênesis
-   */
-  initializeGenesisBlock(): void {
-    const genesisBlock = GENESIS_BLOCK;
-
-    // Calcula o txid para cada transação
-    genesisBlock.transactions.forEach(
-      (tx) => (tx.txid = this.mempoolService.generateTxId(tx))
-    );
-
-    // Calcula o Merkle Root e ajusta o nonce para encontrar um hash válido
-    genesisBlock.merkleRoot = this.calculateMerkleRoot(
-      genesisBlock.transactions
-    );
-    this.mineBlock(genesisBlock);
-
-    this.blockchain.push(genesisBlock);
+  getPendingTransactions(): Transaction[] {
+    return this.pendingTransactionsSubject.value;
   }
 
-  /**
-   * Calcula o Merkle Root do bloco
-   */
-  calculateMerkleRoot(transactions: Transaction[]): string {
-    if (transactions.length === 0) return '0'.repeat(64);
+  getUtxoSet(): Map<string, any> {
+    return this.utxoSetSubject.value;
+  }
 
-    // Extrai os hashes (txid) das transações
-    let hashes = transactions.map((tx) => tx.txid);
-
-    // Combina hashes até chegar à raiz
-    while (hashes.length > 1) {
-      if (hashes.length % 2 !== 0) {
-        hashes.push(hashes[hashes.length - 1]); // Duplicar o último hash se ímpar
+  getAddressUtxos(address: string): TransactionOutput[] {
+    const utxos: TransactionOutput[] = [];
+    this.utxoSetSubject.value.forEach((utxo) => {
+      if (utxo.address === address) {
+        utxos.push(utxo);
       }
-
-      const newHashes: string[] = [];
-      for (let i = 0; i < hashes.length; i += 2) {
-        const concatenated = hashes[i] + hashes[i + 1];
-        const newHash = hashSHA256(concatenated);
-        newHashes.push(newHash);
-      }
-      hashes = newHashes;
-    }
-
-    return hashes[0]; // Retorna o Merkle Root
-  }
-
-  /**
-   * Ajusta o nonce até encontrar um hash válido
-   */
-  mineBlock(block: Block): void {
-    let nonce = block.nonce || 0;
-    let hash = '';
-
-    do {
-      block.nonce = nonce;
-      const blockData = `${block.previousHash}${block.merkleRoot}${block.timestamp}${block.nonce}`;
-      hash = hashSHA256(blockData);
-      block.hash = hash;
-      nonce++;
-    } while (hash >= this.target);
+    });
+    return utxos;
   }
 }

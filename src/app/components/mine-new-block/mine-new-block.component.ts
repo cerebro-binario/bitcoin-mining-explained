@@ -25,7 +25,7 @@ export class MineNewBlockComponent {
   ngOnInit() {
     // Recupera as transações da mempool do app
     // this.mempoolTransactions = this.blockchainService.getMempool();
-    this.blockHeader.previousHash = this.blockchainService.getLatestBlockHash();
+    // this.blockHeader.previousHash = this.blockchainService.getLatestBlockHash();
   }
 
   calculateMerkleRoot() {
