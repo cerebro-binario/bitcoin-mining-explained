@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CardModule } from 'primeng/card';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
@@ -86,7 +86,7 @@ export class BlockchainComponent implements OnInit {
   private cachedHashRate: string = '0';
   private lastHashRateUpdate: number = 0;
 
-  constructor() {
+  constructor(private cdr: ChangeDetectorRef) {
     this.initializeNewTransaction();
   }
 
@@ -339,7 +339,6 @@ export class BlockchainComponent implements OnInit {
             this.currentBlock = null;
             this.foundValidHash = false;
             this.blockToAdd = null;
-            this.winningNonce = null;
           }
           return;
         }
@@ -356,6 +355,7 @@ export class BlockchainComponent implements OnInit {
             this.foundValidHash = true;
             this.blockToAdd = blockToMine;
             this.winningNonce = this.currentNonce;
+            this.cdr.detectChanges();
             return;
           }
 
@@ -367,6 +367,7 @@ export class BlockchainComponent implements OnInit {
         // Update hash rate every 500ms
         if (Date.now() - this.lastHashRateUpdate >= 500) {
           this.updateHashRate();
+          this.cdr.detectChanges();
         }
       }, 0); // Run as fast as possible
     } else {
@@ -377,7 +378,6 @@ export class BlockchainComponent implements OnInit {
             this.currentBlock = null;
             this.foundValidHash = false;
             this.blockToAdd = null;
-            this.winningNonce = null;
           }
           return;
         }
@@ -392,6 +392,7 @@ export class BlockchainComponent implements OnInit {
           this.foundValidHash = true;
           this.blockToAdd = blockToMine;
           this.winningNonce = this.currentNonce;
+          this.cdr.detectChanges();
         }
 
         this.currentNonce++;
@@ -400,6 +401,7 @@ export class BlockchainComponent implements OnInit {
         // Update hash rate every 500ms
         if (Date.now() - this.lastHashRateUpdate >= 500) {
           this.updateHashRate();
+          this.cdr.detectChanges();
         }
       }, this.hashRate);
     }
@@ -424,6 +426,16 @@ export class BlockchainComponent implements OnInit {
 
   getHashRate(): string {
     return this.cachedHashRate;
+  }
+
+  private generateMinerAddress(): string {
+    const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    const prefix = 'bc1';
+    let address = prefix;
+    for (let i = 0; i < 42; i++) {
+      address += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return address;
   }
 
   async mineBlock(): Promise<void> {
@@ -472,7 +484,7 @@ export class BlockchainComponent implements OnInit {
               inputs: [],
               outputs: [
                 {
-                  address: 'miner',
+                  address: this.generateMinerAddress(),
                   amount: this.COINBASE_REWARD,
                 },
               ],
@@ -488,18 +500,39 @@ export class BlockchainComponent implements OnInit {
             errors: [],
           },
         };
+        // Calculate Merkle root for genesis block
+        blockToMine.merkleRoot = this.calculateMerkleRoot(
+          blockToMine.transactions
+        );
       } else if (this.pendingTransactions.length > 0) {
         // Create regular block with pending transactions
+        const transactions = [
+          {
+            id: 'coinbase',
+            inputs: [],
+            outputs: [
+              {
+                address: this.generateMinerAddress(),
+                amount: this.COINBASE_REWARD,
+              },
+            ],
+            fees: 0,
+            volume: this.COINBASE_REWARD,
+            coinbaseMessage: 'Miner reward',
+          },
+          ...this.pendingTransactions,
+        ];
+
         blockToMine = {
           height: this.blocks.length,
           version: 1,
           hash: '',
           previousHash: this.blocks[this.blocks.length - 1].hash,
-          merkleRoot: this.calculateMerkleRoot(this.pendingTransactions),
+          merkleRoot: this.calculateMerkleRoot(transactions),
           timestamp: new Date(),
           bits: 0x1d00ffff,
           nonce: 0,
-          transactions: [...this.pendingTransactions],
+          transactions,
           reward: this.COINBASE_REWARD,
           validationResult: {
             isValid: true,
@@ -526,8 +559,9 @@ export class BlockchainComponent implements OnInit {
     }
   }
 
-  private isHashValid(hash: string): boolean {
-    return BigInt(`0x${hash}`) <= BigInt(`0x${this.targetHash}`);
+  isHashValid(hash: string): boolean {
+    if (!hash || !this.targetHash) return false;
+    return hash.localeCompare(this.targetHash) <= 0;
   }
 
   private calculateMerkleRoot(transactions: Transaction[]): string {
@@ -536,7 +570,17 @@ export class BlockchainComponent implements OnInit {
     }
 
     // Get transaction hashes
-    let hashes = transactions.map((tx) => tx.id);
+    let hashes = transactions.map((tx) => {
+      if (tx.id === 'coinbase') {
+        // For coinbase transaction, use a deterministic hash based on its data
+        const coinbaseData = JSON.stringify({
+          outputs: tx.outputs,
+          timestamp: new Date().getTime(),
+        });
+        return this.sha256(Buffer.from(coinbaseData));
+      }
+      return tx.id;
+    });
 
     // If odd number of transactions, duplicate the last one
     if (hashes.length % 2 === 1) {
