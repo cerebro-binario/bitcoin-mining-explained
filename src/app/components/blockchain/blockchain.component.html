@@ -64,6 +64,12 @@
             {{ blocksToAdjust }}
           </span>
         </div>
+        <div class="flex flex-col gap-1 ml-8">
+          <span class="text-xs text-zinc-400">Parar Automaticamente</span>
+          <span class="font-mono text-base text-white">
+            {{ getAutoPauseModeLabel() }}
+          </span>
+        </div>
         <p-button
           label="Editar Parâmetros"
           icon="pi pi-cog"
@@ -150,6 +156,18 @@
               [showButtons]="true"
               inputStyleClass="w-12rem"
             ></p-inputNumber>
+          </div>
+          <div class="flex flex-col">
+            <label class="mb-1 text-sm text-zinc-300"
+              >Parar Automaticamente</label
+            >
+            <p-selectButton
+              [options]="autoPauseModeOptions"
+              [(ngModel)]="editingAutoPauseMode"
+              optionLabel="label"
+              optionValue="value"
+              [allowEmpty]="false"
+            ></p-selectButton>
           </div>
         </div>
         <ng-template #footer>
