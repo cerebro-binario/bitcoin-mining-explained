@@ -338,31 +338,28 @@ export class AddressesComponent implements OnInit, OnDestroy {
 
   private loadAddresses() {
     this.loading = true;
+    const addressesMap = new Map<string, AddressInfo>();
 
-    // Criar um mapa para agrupar UTXOs por endereço
-    const addressMap = new Map<string, AddressInfo>();
+    // Get all UTXOs from the blockchain service
+    const utxoSet = this.blockchainService.getUtxoSet();
 
-    // Obter os UTXOs do serviço
-    const utxos = this.blockchainService.getAddressUtxos('');
-
-    // Processar cada UTXO
-    utxos.forEach((utxo: TransactionOutput) => {
-      const address = utxo.address;
-      if (!addressMap.has(address)) {
-        addressMap.set(address, {
-          address,
+    // Process each UTXO to group by address
+    utxoSet.forEach((utxo) => {
+      if (!addressesMap.has(utxo.address)) {
+        addressesMap.set(utxo.address, {
+          address: utxo.address,
           balance: 0,
           utxos: [],
         });
       }
 
-      const addressInfo = addressMap.get(address)!;
+      const addressInfo = addressesMap.get(utxo.address)!;
       addressInfo.balance += utxo.amount;
       addressInfo.utxos.push(utxo);
     });
 
-    // Converter o mapa em array e ordenar por saldo
-    this.addresses = Array.from(addressMap.values()).sort(
+    // Convert map to array and sort by balance
+    this.addresses = Array.from(addressesMap.values()).sort(
       (a, b) => b.balance - a.balance
     );
 
