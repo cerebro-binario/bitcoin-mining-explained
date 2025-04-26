@@ -75,9 +75,14 @@ export class BlockchainComponent implements OnInit {
     { label: '1 hash/s', value: 1000 },
     { label: '10 hash/s', value: 100 },
     { label: '50 hash/s', value: 20 },
-    { label: '100 hash/s', value: 10 },
+    { label: 'Máximo', value: 0 },
   ];
   paused = false;
+  hashesProcessed = 0;
+  startTime: number = 0;
+  foundValidHash = false;
+  private blockToAdd: Block | null = null;
+  winningNonce: number | null = null;
 
   constructor() {
     this.initializeNewTransaction();
@@ -315,31 +320,77 @@ export class BlockchainComponent implements OnInit {
   private startMiningInterval(blockToMine: Block) {
     if (this.paused) return;
 
-    this.miningInterval = setInterval(() => {
-      if (!this.mining || this.paused) {
-        clearInterval(this.miningInterval);
-        if (!this.mining) {
-          this.currentBlock = null;
-        }
-        return;
-      }
+    // Reset stats
+    this.hashesProcessed = 0;
+    this.startTime = Date.now();
+    this.foundValidHash = false;
+    this.blockToAdd = null;
+    this.winningNonce = null;
 
-      blockToMine.nonce = this.currentNonce++;
-      this.currentHash = this.generateBlockHash(blockToMine);
-
-      if (this.isHashValid(this.currentHash)) {
-        // Found valid hash
-        clearInterval(this.miningInterval);
-        blockToMine.hash = this.currentHash;
-        this.blocks.push(blockToMine);
-        if (this.blocks.length > 1) {
-          this.pendingTransactions = [];
+    if (this.hashRate === 0) {
+      // Efficient mining mode
+      this.miningInterval = setInterval(() => {
+        if (!this.mining || this.paused) {
+          clearInterval(this.miningInterval);
+          if (!this.mining) {
+            this.currentBlock = null;
+            this.foundValidHash = false;
+            this.blockToAdd = null;
+            this.winningNonce = null;
+          }
+          return;
         }
-        this.mining = false;
-        this.paused = false;
-        this.currentBlock = null;
-      }
-    }, this.hashRate);
+
+        // Process multiple hashes in each interval
+        const batchSize = 10000;
+        for (let i = 0; i < batchSize && this.mining && !this.paused; i++) {
+          this.currentHash = this.generateBlockHash(blockToMine);
+          this.hashesProcessed++;
+
+          if (this.isHashValid(this.currentHash)) {
+            // Found valid hash
+            clearInterval(this.miningInterval);
+            blockToMine.hash = this.currentHash;
+            this.foundValidHash = true;
+            this.blockToAdd = blockToMine;
+            this.winningNonce = this.currentNonce;
+            return;
+          }
+
+          this.currentNonce++;
+          blockToMine.nonce = this.currentNonce;
+        }
+      }, 0); // Run as fast as possible
+    } else {
+      // Visual mining mode
+      this.miningInterval = setInterval(() => {
+        if (!this.mining || this.paused) {
+          clearInterval(this.miningInterval);
+          if (!this.mining) {
+            this.currentBlock = null;
+            this.foundValidHash = false;
+            this.blockToAdd = null;
+            this.winningNonce = null;
+          }
+          return;
+        }
+
+        this.currentHash = this.generateBlockHash(blockToMine);
+        this.hashesProcessed++;
+
+        if (this.isHashValid(this.currentHash)) {
+          // Found valid hash
+          clearInterval(this.miningInterval);
+          blockToMine.hash = this.currentHash;
+          this.foundValidHash = true;
+          this.blockToAdd = blockToMine;
+          this.winningNonce = this.currentNonce;
+        }
+
+        this.currentNonce++;
+        blockToMine.nonce = this.currentNonce;
+      }, this.hashRate);
+    }
   }
 
   async mineBlock(): Promise<void> {
@@ -631,5 +682,34 @@ export class BlockchainComponent implements OnInit {
       volume: 0,
       coinbaseMessage: '',
     };
+  }
+
+  getHashRate(): string {
+    if (!this.mining || this.paused || Date.now() === this.startTime) {
+      return '0';
+    }
+    const elapsedSeconds = (Date.now() - this.startTime) / 1000;
+    const rate = this.hashesProcessed / elapsedSeconds;
+    if (rate < 1000) {
+      return rate.toFixed(1);
+    } else if (rate < 1000000) {
+      return (rate / 1000).toFixed(1) + 'K';
+    } else {
+      return (rate / 1000000).toFixed(1) + 'M';
+    }
+  }
+
+  confirmBlock(): void {
+    if (this.blockToAdd) {
+      this.blocks.push(this.blockToAdd);
+      if (this.blocks.length > 1) {
+        this.pendingTransactions = [];
+      }
+      this.mining = false;
+      this.paused = false;
+      this.currentBlock = null;
+      this.foundValidHash = false;
+      this.blockToAdd = null;
+    }
   }
 }

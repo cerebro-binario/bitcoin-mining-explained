@@ -30,17 +30,31 @@
           <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
             <div class="flex items-center justify-between">
               <span class="text-sm text-zinc-400">Status:</span>
-              <span [class.text-yellow-500]="paused">{{
-                paused ? "Pausado" : "Minerando..."
-              }}</span>
+              <span
+                [class.text-yellow-500]="paused"
+                [class.text-green-500]="foundValidHash"
+                >{{
+                  paused
+                    ? "Pausado"
+                    : foundValidHash
+                    ? "Hash Válido Encontrado!"
+                    : "Minerando..."
+                }}</span
+              >
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-zinc-400">Nonce:</span>
-              <span class="font-mono">{{ currentNonce }}</span>
+              <span class="font-mono">{{
+                foundValidHash ? winningNonce : currentNonce
+              }}</span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-zinc-400">Hash Atual:</span>
-              <span class="font-mono break-all">{{ currentHash }}</span>
+              <span
+                class="font-mono break-all"
+                [class.text-green-500]="foundValidHash"
+                >{{ currentHash }}</span
+              >
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-zinc-400">Target:</span>
@@ -69,6 +83,32 @@
               <span class="font-mono">{{
                 hashesProcessed.toLocaleString()
               }}</span>
+            </div>
+            <div
+              *ngIf="foundValidHash"
+              class="mt-2 p-3 bg-green-500/20 rounded-lg border border-green-500"
+            >
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-check-circle text-green-500"></i>
+                  <span class="text-green-500 font-bold"
+                    >Hash Válido Encontrado!</span
+                  >
+                </div>
+                <p class="text-sm text-zinc-300">
+                  O hash encontrado é menor que o target, o que significa que
+                  este bloco é válido. Clique no botão abaixo para adicionar o
+                  bloco à blockchain.
+                </p>
+                <div class="flex justify-end mt-2">
+                  <p-button
+                    label="Confirmar Bloco"
+                    icon="pi pi-check"
+                    severity="success"
+                    (click)="confirmBlock()"
+                  ></p-button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -107,17 +147,31 @@
         <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Status:</span>
-            <span [class.text-yellow-500]="paused">{{
-              paused ? "Pausado" : "Minerando..."
-            }}</span>
+            <span
+              [class.text-yellow-500]="paused"
+              [class.text-green-500]="foundValidHash"
+              >{{
+                paused
+                  ? "Pausado"
+                  : foundValidHash
+                  ? "Hash Válido Encontrado!"
+                  : "Minerando..."
+              }}</span
+            >
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Nonce:</span>
-            <span class="font-mono">{{ currentNonce }}</span>
+            <span class="font-mono">{{
+              foundValidHash ? winningNonce : currentNonce
+            }}</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Hash Atual:</span>
-            <span class="font-mono break-all">{{ currentHash }}</span>
+            <span
+              class="font-mono break-all"
+              [class.text-green-500]="foundValidHash"
+              >{{ currentHash }}</span
+            >
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Target:</span>
@@ -143,6 +197,32 @@
             <span class="font-mono">{{
               hashesProcessed.toLocaleString()
             }}</span>
+          </div>
+          <div
+            *ngIf="foundValidHash"
+            class="mt-2 p-3 bg-green-500/20 rounded-lg border border-green-500"
+          >
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-check-circle text-green-500"></i>
+                <span class="text-green-500 font-bold"
+                  >Hash Válido Encontrado!</span
+                >
+              </div>
+              <p class="text-sm text-zinc-300">
+                O hash encontrado é menor que o target, o que significa que este
+                bloco é válido. Clique no botão abaixo para adicionar o bloco à
+                blockchain.
+              </p>
+              <div class="flex justify-end mt-2">
+                <p-button
+                  label="Confirmar Bloco"
+                  icon="pi pi-check"
+                  severity="success"
+                  (click)="confirmBlock()"
+                ></p-button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
