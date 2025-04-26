@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CardModule } from 'primeng/card';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
@@ -18,6 +18,8 @@ import {
 } from '../../models/blockchain.model';
 import { Buffer } from 'buffer';
 import * as crypto from 'crypto-js';
+import { BlockchainService } from '../../services/blockchain.service';
+import { Subscription } from 'rxjs';
 
 interface UTXO {
   txid: string;
@@ -47,7 +49,7 @@ interface UTXO {
   templateUrl: './blockchain.component.html',
   styleUrls: ['./blockchain.component.scss'],
 })
-export class BlockchainComponent implements OnInit {
+export class BlockchainComponent implements OnInit, OnDestroy {
   blocks: Block[] = [];
   pendingTransactions: Transaction[] = [];
   currentBlock: Block | null = null;
@@ -85,12 +87,40 @@ export class BlockchainComponent implements OnInit {
   winningNonce: number | null = null;
   private cachedHashRate: string = '0';
   private lastHashRateUpdate: number = 0;
+  private blocksSubscription: Subscription | null = null;
+  private pendingTransactionsSubscription: Subscription | null = null;
 
-  constructor(private cdr: ChangeDetectorRef) {
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private blockchainService: BlockchainService
+  ) {
     this.initializeNewTransaction();
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Subscribe to blockchain updates
+    this.blocksSubscription = this.blockchainService.blocks$.subscribe(
+      (blocks) => {
+        this.blocks = blocks;
+        this.cdr.detectChanges();
+      }
+    );
+
+    this.pendingTransactionsSubscription =
+      this.blockchainService.pendingTransactions$.subscribe((transactions) => {
+        this.pendingTransactions = transactions;
+        this.cdr.detectChanges();
+      });
+  }
+
+  ngOnDestroy() {
+    if (this.blocksSubscription) {
+      this.blocksSubscription.unsubscribe();
+    }
+    if (this.pendingTransactionsSubscription) {
+      this.pendingTransactionsSubscription.unsubscribe();
+    }
+  }
 
   createGenesisBlock(): void {
     const genesisBlock: Block = {
@@ -100,11 +130,28 @@ export class BlockchainComponent implements OnInit {
       previousHash:
         '0000000000000000000000000000000000000000000000000000000000000000',
       merkleRoot: '',
-      timestamp: new Date(),
+      timestamp: Math.floor(Date.now() / 1000),
       bits: 0x1d00ffff,
       nonce: 0,
-      transactions: [],
-      reward: 50,
+      transactions: [
+        {
+          id: 'coinbase',
+          timestamp: Math.floor(Date.now() / 1000),
+          inputs: [],
+          outputs: [
+            {
+              address: this.generateMinerAddress(),
+              amount: this.COINBASE_REWARD,
+              scriptPubKey: '',
+            },
+          ],
+          fees: 0,
+          volume: this.COINBASE_REWARD,
+          coinbaseMessage:
+            'The Times 03/Jan/2009 Chancellor on brink of second bailout for banks',
+        },
+      ],
+      reward: this.COINBASE_REWARD,
       validationResult: {
         isValid: true,
         errors: [],
@@ -166,6 +213,9 @@ export class BlockchainComponent implements OnInit {
       const inputs = Array(getRandomCount())
         .fill(null)
         .map(() => ({
+          txid: '',
+          vout: 0,
+          scriptSig: '',
           address: `14${randomAddress()}`,
           amount: randomAmount(),
           utxoReference: {
@@ -179,10 +229,12 @@ export class BlockchainComponent implements OnInit {
         .map(() => ({
           address: `bc${randomAddress()}`,
           amount: 0,
+          scriptPubKey: '',
         }));
 
       this.newTransaction = {
         id: '',
+        timestamp: Math.floor(Date.now() / 1000),
         inputs,
         outputs,
         fees: 0,
@@ -196,6 +248,9 @@ export class BlockchainComponent implements OnInit {
         .slice(0, getRandomCount());
 
       const inputs = selectedUtxos.map((utxo) => ({
+        txid: utxo.txid,
+        vout: utxo.vout,
+        scriptSig: '',
         address: utxo.address,
         amount: utxo.amount,
         utxoReference: {
@@ -209,10 +264,12 @@ export class BlockchainComponent implements OnInit {
         .map(() => ({
           address: `bc${randomAddress()}`,
           amount: 0,
+          scriptPubKey: '',
         }));
 
       this.newTransaction = {
         id: '',
+        timestamp: Math.floor(Date.now() / 1000),
         inputs,
         outputs,
         fees: 0,
@@ -243,7 +300,9 @@ export class BlockchainComponent implements OnInit {
 
       // Marcar UTXOs como usados na mempool
       this.newTransaction.inputs.forEach((input) => {
-        this.usedUtxos.add(input.utxoReference.txid);
+        if (input.utxoReference) {
+          this.usedUtxos.add(input.utxoReference.txid);
+        }
       });
 
       this.transactions.push({ ...this.newTransaction });
@@ -305,7 +364,7 @@ export class BlockchainComponent implements OnInit {
         (sum, output) => sum + output.amount,
         0
       );
-      this.pendingTransactions.push(transaction);
+      this.blockchainService.addPendingTransaction(transaction);
     }
   }
 
@@ -475,17 +534,19 @@ export class BlockchainComponent implements OnInit {
           previousHash:
             '0000000000000000000000000000000000000000000000000000000000000000',
           merkleRoot: '',
-          timestamp: new Date(),
+          timestamp: Math.floor(Date.now() / 1000),
           bits: 0x1d00ffff,
           nonce: 0,
           transactions: [
             {
               id: 'coinbase',
+              timestamp: Math.floor(Date.now() / 1000),
               inputs: [],
               outputs: [
                 {
                   address: this.generateMinerAddress(),
                   amount: this.COINBASE_REWARD,
+                  scriptPubKey: '',
                 },
               ],
               fees: 0,
@@ -509,11 +570,13 @@ export class BlockchainComponent implements OnInit {
         const transactions = [
           {
             id: 'coinbase',
+            timestamp: Math.floor(Date.now() / 1000),
             inputs: [],
             outputs: [
               {
                 address: this.generateMinerAddress(),
                 amount: this.COINBASE_REWARD,
+                scriptPubKey: '',
               },
             ],
             fees: 0,
@@ -529,7 +592,7 @@ export class BlockchainComponent implements OnInit {
           hash: '',
           previousHash: this.blocks[this.blocks.length - 1].hash,
           merkleRoot: this.calculateMerkleRoot(transactions),
-          timestamp: new Date(),
+          timestamp: Math.floor(Date.now() / 1000),
           bits: 0x1d00ffff,
           nonce: 0,
           transactions,
@@ -637,7 +700,7 @@ export class BlockchainComponent implements OnInit {
 
     // Convert timestamp to Unix timestamp (seconds) and to Buffer
     const timestamp = Buffer.alloc(4);
-    timestamp.writeUInt32LE(Math.floor(block.timestamp.getTime() / 1000));
+    timestamp.writeUInt32LE(Math.floor(block.timestamp / 1000));
 
     // Convert bits to Buffer
     const bits = Buffer.alloc(4);
@@ -690,6 +753,9 @@ export class BlockchainComponent implements OnInit {
 
   addInput() {
     this.newTransaction.inputs.push({
+      txid: '',
+      vout: 0,
+      scriptSig: '',
       address: '',
       amount: 0,
       utxoReference: {
@@ -710,6 +776,7 @@ export class BlockchainComponent implements OnInit {
     this.newTransaction.outputs.push({
       address: `bc${randomAddress()}`,
       amount: 0,
+      scriptPubKey: '',
     });
   }
 
@@ -739,8 +806,12 @@ export class BlockchainComponent implements OnInit {
   private initializeNewTransaction(): void {
     this.newTransaction = {
       id: this.generateTransactionId(this.newTransaction),
+      timestamp: Math.floor(Date.now() / 1000),
       inputs: [
         {
+          txid: '',
+          vout: 0,
+          scriptSig: '',
           address: '',
           amount: 0,
           utxoReference: {
@@ -753,6 +824,7 @@ export class BlockchainComponent implements OnInit {
         {
           address: '',
           amount: 0,
+          scriptPubKey: '',
         },
       ],
       fees: 0,
@@ -763,10 +835,7 @@ export class BlockchainComponent implements OnInit {
 
   confirmBlock(): void {
     if (this.blockToAdd) {
-      this.blocks.push(this.blockToAdd);
-      if (this.blocks.length > 1) {
-        this.pendingTransactions = [];
-      }
+      this.blockchainService.addBlock(this.blockToAdd);
       this.mining = false;
       this.paused = false;
       this.currentBlock = null;
