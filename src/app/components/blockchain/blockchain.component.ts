@@ -83,6 +83,8 @@ export class BlockchainComponent implements OnInit {
   foundValidHash = false;
   private blockToAdd: Block | null = null;
   winningNonce: number | null = null;
+  private cachedHashRate: string = '0';
+  private lastHashRateUpdate: number = 0;
 
   constructor() {
     this.initializeNewTransaction();
@@ -325,6 +327,8 @@ export class BlockchainComponent implements OnInit {
     this.foundValidHash = false;
     this.blockToAdd = null;
     this.winningNonce = null;
+    this.cachedHashRate = '0';
+    this.lastHashRateUpdate = Date.now();
 
     if (this.hashRate === 0) {
       // Efficient mining mode
@@ -359,9 +363,13 @@ export class BlockchainComponent implements OnInit {
           this.currentNonce++;
           blockToMine.nonce = this.currentNonce;
         }
+
+        // Update hash rate every 500ms
+        if (Date.now() - this.lastHashRateUpdate >= 500) {
+          this.updateHashRate();
+        }
       }, 0); // Run as fast as possible
     } else {
-      // Visual mining mode
       this.miningInterval = setInterval(() => {
         if (!this.mining || this.paused) {
           clearInterval(this.miningInterval);
@@ -388,8 +396,34 @@ export class BlockchainComponent implements OnInit {
 
         this.currentNonce++;
         blockToMine.nonce = this.currentNonce;
+
+        // Update hash rate every 500ms
+        if (Date.now() - this.lastHashRateUpdate >= 500) {
+          this.updateHashRate();
+        }
       }, this.hashRate);
     }
+  }
+
+  private updateHashRate(): void {
+    if (!this.mining || this.paused || Date.now() === this.startTime) {
+      this.cachedHashRate = '0';
+      return;
+    }
+    const elapsedSeconds = (Date.now() - this.startTime) / 1000;
+    const rate = this.hashesProcessed / elapsedSeconds;
+    if (rate < 1000) {
+      this.cachedHashRate = rate.toFixed(1);
+    } else if (rate < 1000000) {
+      this.cachedHashRate = (rate / 1000).toFixed(1) + 'K';
+    } else {
+      this.cachedHashRate = (rate / 1000000).toFixed(1) + 'M';
+    }
+    this.lastHashRateUpdate = Date.now();
+  }
+
+  getHashRate(): string {
+    return this.cachedHashRate;
   }
 
   async mineBlock(): Promise<void> {
@@ -681,21 +715,6 @@ export class BlockchainComponent implements OnInit {
       volume: 0,
       coinbaseMessage: '',
     };
-  }
-
-  getHashRate(): string {
-    if (!this.mining || this.paused || Date.now() === this.startTime) {
-      return '0';
-    }
-    const elapsedSeconds = (Date.now() - this.startTime) / 1000;
-    const rate = this.hashesProcessed / elapsedSeconds;
-    if (rate < 1000) {
-      return rate.toFixed(1);
-    } else if (rate < 1000000) {
-      return (rate / 1000).toFixed(1) + 'K';
-    } else {
-      return (rate / 1000000).toFixed(1) + 'M';
-    }
   }
 
   confirmBlock(): void {
