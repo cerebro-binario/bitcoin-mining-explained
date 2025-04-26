@@ -320,8 +320,7 @@ export class BlockchainComponent implements OnInit {
   private startMiningInterval(blockToMine: Block) {
     if (this.paused) return;
 
-    // Reset stats
-    this.hashesProcessed = 0;
+    // Only reset mining state, but keep hashesProcessed
     this.startTime = Date.now();
     this.foundValidHash = false;
     this.blockToAdd = null;
@@ -345,7 +344,6 @@ export class BlockchainComponent implements OnInit {
         const batchSize = 10000;
         for (let i = 0; i < batchSize && this.mining && !this.paused; i++) {
           this.currentHash = this.generateBlockHash(blockToMine);
-          this.hashesProcessed++;
 
           if (this.isHashValid(this.currentHash)) {
             // Found valid hash
@@ -357,6 +355,7 @@ export class BlockchainComponent implements OnInit {
             return;
           }
 
+          this.hashesProcessed++;
           this.currentNonce++;
           blockToMine.nonce = this.currentNonce;
         }
