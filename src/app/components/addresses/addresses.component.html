@@ -1,259 +1,87 @@
-<h1 class="text-2xl font-bold mb-4">Lista de Endereços Bitcoin</h1>
+<div class="addresses-container">
+  <div class="header">
+    <h1>Endereços</h1>
+    <p>Lista de endereços com saldos e UTXOs</p>
+  </div>
 
-<div
-  class="flex flex-col items-center md:flex-row gap-4 md:justify-between mb-4"
->
-  <div>
-    <div
-      *ngIf="keyPairs.length > rowsPerPage || !showOnlyWithBalance"
-      class="flex flex-row items-center"
-    >
-      <p-button
-        type="button"
-        icon="pi pi-chevron-left"
-        (click)="prev()"
-        [disabled]="isFirstPage()"
-        text
-      />
-      <p-button type="button" icon="pi pi-refresh" (click)="reset()" text />
-      <p-button
-        type="button"
-        icon="pi pi-chevron-right"
-        (click)="next()"
-        [disabled]="isLastPage()"
-        text
-      />
-      <div class="text-gray-600 dark:text-gray-300">
-        Página {{ currentPage + 1 }} de
-        <span
-          class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="totalPages.toString()"
-          tooltipPosition="top"
-        >
-          {{ shortenValue(totalPages.toString(), 4) }}
-        </span>
-      </div>
+  <p-table
+    [value]="addresses"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} endereços"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    styleClass="p-datatable-striped"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Endereço</th>
+        <th>Saldo</th>
+        <th>UTXOs</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-address>
+      <tr>
+        <td>
+          <div class="address-cell">
+            <span class="address-text">{{ address.address }}</span>
+            <button
+              pButton
+              icon="pi pi-copy"
+              class="p-button-rounded p-button-text"
+              pTooltip="Copiar endereço"
+              (click)="copyToClipboard(address.address)"
+            ></button>
+          </div>
+        </td>
+        <td>{{ formatBalance(address.balance) }}</td>
+        <td>{{ address.utxos.length }}</td>
+        <td>
+          <button
+            pButton
+            icon="pi pi-list"
+            class="p-button-rounded p-button-text"
+            pTooltip="Ver UTXOs"
+            (click)="showUtxos(address)"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4">Nenhum endereço encontrado</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-dialog
+    header="UTXOs do Endereço"
+    [(visible)]="showUtxosDialog"
+    [style]="{ width: '50vw' }"
+    [modal]="true"
+  >
+    <div *ngIf="selectedAddress">
+      <p-table [value]="selectedAddress.utxos">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Tx ID</th>
+            <th>Índice</th>
+            <th>Valor</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-utxo>
+          <tr>
+            <td>{{ utxo.txId }}</td>
+            <td>{{ utxo.index }}</td>
+            <td>{{ formatBalance(utxo.amount) }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
-  </div>
-  <div class="flex gap-4">
-    <!-- Selecionar formato de apresentação dos números das chaves -->
-    <p-selectButton
-      [options]="[
-        { label: 'Hexadecimal', value: true },
-        { label: 'Decimal', value: false }
-      ]"
-      [(ngModel)]="isHexFormat"
-      (ngModelChange)="toggleFormat()"
-      optionLabel="label"
-      optionValue="value"
-    />
-    <!-- Filtro para mostrar apenas endereços com saldo -->
-    <p-selectButton
-      [options]="[
-        { label: 'Apenas com saldo', value: true },
-        { label: 'Todos', value: false }
-      ]"
-      [(ngModel)]="showOnlyWithBalance"
-      (ngModelChange)="filterAddresses()"
-      optionLabel="label"
-      optionValue="value"
-    />
-  </div>
+  </p-dialog>
 </div>
-
-<!-- Tabela de chaves privadas e endereços -->
-<p-table
-  [value]="keyPairs"
-  [paginator]="showOnlyWithBalance && keyPairs.length > rowsPerPage"
-  [rows]="rowsPerPage"
-  paginatorPosition="both"
-  [totalRecords]="keyPairs.length"
-  [expandedRowKeys]="expandedRows"
-  (onPage)="onPageChange($event)"
-  dataKey="privateKey"
-  class="p-datatable-sm w-full"
->
-  <ng-template #caption>
-    <div class="flex gap-2 items-center text-gray-500">
-      <i class="pi pi-info-circle"></i>
-      <span>
-        @if(keyPairs.length > 0) {
-        {{ totalKeyPairs }} pares de chave pública/privada. } @else { Nenhum
-        endereço bitcoin com saldo ainda. Alterne para visualizar "Todos" ao
-        invés de "Apenas com saldo" ou minere o primeiro bloco para que um
-        endereço receba bitcoins. }
-      </span>
-    </div>
-  </ng-template>
-  <!-- Header -->
-  <ng-template pTemplate="header">
-    <tr>
-      <th style="width: 5%"></th>
-      <th style="width: 22%">Chave Privada</th>
-      <th style="width: 22%">Chave Pública</th>
-      <th style="width: 50%">Endereços Bitcoin</th>
-    </tr>
-  </ng-template>
-
-  <!-- Linhas principais -->
-  <ng-template pTemplate="body" let-item let-expanded="expanded">
-    <tr>
-      <td>
-        <button (click)="toggleRow(item)" class="p-button p-button-text">
-          <i
-            [ngClass]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-          ></i>
-        </button>
-      </td>
-
-      <!-- Chave privada com tooltip no hover -->
-      <td class="relative">
-        <span
-          class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="formatKey(item.privateKey)"
-          tooltipPosition="top"
-          [attr.title]="formatKey(item.privateKey)"
-          >{{ shortenValue(formatKey(item.privateKey)) }}</span
-        >
-        <button
-          class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-          (click)="copyToClipboard(formatKey(item.privateKey))"
-        >
-          <i class="pi pi-copy"></i>
-        </button>
-      </td>
-
-      <!-- Chave pública com tooltip no hover -->
-      <td class="relative">
-        <span
-          class="cursor-pointer underline decoration-dashed"
-          [pTooltip]="formatKey(item.publicKey)"
-          tooltipPosition="top"
-          [attr.title]="formatKey(item.publicKey)"
-        >
-          {{ shortenValue(formatKey(item.publicKey)) }}
-        </span>
-        <button
-          class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-          (click)="copyToClipboard(formatKey(item.publicKey))"
-        >
-          <i class="pi pi-copy"></i>
-        </button>
-      </td>
-
-      <!-- Coluna com a tabela aninhada para endereços e saldos -->
-      <td colspan="2">
-        <!-- Colspan une a célula com a coluna de saldo -->
-        <p-table
-          [value]="item.addresses | keyvalue"
-          class="p-datatable-sm w-full rounded-md"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th style="width: 33%">Tipo</th>
-              <th style="width: 33%">Endereço</th>
-              <th style="width: 33%">Saldo</th>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="body" let-addr>
-            <tr>
-              <!-- Tipo do Endereço -->
-              <td class="text-xs text-gray-500">{{ addr.value.type.name }}</td>
-
-              <!-- Endereço Bitcoin -->
-              <td class="truncate cursor-pointer underline decoration-dashed">
-                <span [pTooltip]="addr.value.address" tooltipPosition="top">
-                  {{ shortenValue(addr.value.address) }}
-                </span>
-                <button
-                  class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-                  (click)="copyToClipboard(addr.value.address)"
-                >
-                  <i class="pi pi-copy"></i>
-                </button>
-              </td>
-
-              <!-- Saldo Correspondente -->
-              <td>{{ formatBalance(addr.value.balance) }}</td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </td>
-    </tr>
-  </ng-template>
-
-  <!-- Linhas expandidas -->
-  <ng-template pTemplate="rowexpansion" let-item>
-    <tr>
-      <td colspan="5">
-        <div
-          class="p-4 bg-gray-100 dark:bg-gray-800 rounded-md shadow-md flex flex-col gap-2"
-        >
-          <h3 class="text-lg font-bold mb-2">Detalhes do Key Pair</h3>
-
-          <!-- Chave Privada -->
-          <div>
-            <strong>Chave Privada:</strong>
-            <span class="ml-2">{{ formatKey(item.privateKey) }}</span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(formatKey(item.privateKey))"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
-
-          <!-- Chave Pública -->
-          <div>
-            <strong>Chave Pública:</strong>
-            <span class="ml-2">{{ formatKey(item.publicKey) }}</span>
-            <button
-              class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-              (click)="copyToClipboard(formatKey(item.publicKey))"
-            >
-              <i class="pi pi-copy"></i>
-            </button>
-          </div>
-
-          <!-- Endereços Bitcoin -->
-          <p-table
-            [value]="item.addresses"
-            class="p-datatable-sm w-full rounded-md"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Tipo</th>
-                <th>Endereço</th>
-                <th>Saldo</th>
-              </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-addr>
-              <tr>
-                <!-- Tipo do Endereço -->
-                <td class="text-xs text-gray-500">{{ addr.type.name }}</td>
-
-                <!-- Endereço Bitcoin -->
-                <td class="truncate cursor-pointer underline decoration-dashed">
-                  <span [pTooltip]="addr.address" tooltipPosition="top">
-                    {{ shortenValue(addr.address) }}
-                  </span>
-                  <button
-                    class="ml-2 p-button p-button-icon-only p-button-sm p-button-text"
-                    (click)="copyToClipboard(addr.address)"
-                  >
-                    <i class="pi pi-copy"></i>
-                  </button>
-                </td>
-
-                <!-- Saldo Correspondente -->
-                <td>{{ formatBalance(addr.balance) }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </div>
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
