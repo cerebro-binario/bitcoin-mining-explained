@@ -8,6 +8,7 @@ import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import {
   Transaction,
   TransactionInput,
@@ -41,6 +42,7 @@ interface UTXO {
     FormsModule,
     InputTextModule,
     TooltipModule,
+    SelectButtonModule,
   ],
   templateUrl: './blockchain.component.html',
   styleUrls: ['./blockchain.component.scss'],
@@ -63,6 +65,18 @@ export class BlockchainComponent implements OnInit {
   private readonly VBYTES_PER_OUTPUT = 31;
   private readonly VBYTES_OVERHEAD = 11;
   private readonly COINBASE_REWARD = 50; // Initial mining reward in BTC
+
+  // Mining visualization
+  currentHash = '';
+  currentNonce = 0;
+  miningInterval: any;
+  hashRate = 1000; // default: 1 hash por segundo
+  hashRateOptions = [
+    { label: '1 hash/s', value: 1000 },
+    { label: '2 hash/s', value: 500 },
+    { label: '10 hash/s', value: 100 },
+    { label: '50 hash/s', value: 20 },
+  ];
 
   constructor() {
     this.initializeNewTransaction();
@@ -287,13 +301,58 @@ export class BlockchainComponent implements OnInit {
     }
   }
 
-  mineBlock(): void {
+  onHashRateChange() {
+    if (this.mining && this.miningInterval) {
+      // Clear current interval
+      clearInterval(this.miningInterval);
+
+      // Start new interval with updated rate
+      this.startMiningInterval(this.currentBlock!);
+    }
+  }
+
+  private startMiningInterval(blockToMine: Block) {
+    this.miningInterval = setInterval(() => {
+      if (!this.mining) {
+        clearInterval(this.miningInterval);
+        this.currentBlock = null;
+        return;
+      }
+
+      blockToMine.nonce = this.currentNonce++;
+      this.currentHash = this.generateBlockHash(blockToMine);
+
+      if (this.isHashValid(this.currentHash)) {
+        // Found valid hash
+        clearInterval(this.miningInterval);
+        blockToMine.hash = this.currentHash;
+        this.blocks.push(blockToMine);
+        if (this.blocks.length > 1) {
+          this.pendingTransactions = [];
+        }
+        this.mining = false;
+        this.currentBlock = null;
+      }
+    }, this.hashRate);
+  }
+
+  async mineBlock(): Promise<void> {
+    if (this.mining) {
+      // Cancel current mining
+      this.mining = false;
+      if (this.miningInterval) {
+        clearInterval(this.miningInterval);
+      }
+      return;
+    }
+
     this.mining = true;
+    let blockToMine: Block;
 
     try {
       if (this.blocks.length === 0) {
         // Create genesis block
-        const genesisBlock: Block = {
+        blockToMine = {
           height: 0,
           version: 1,
           hash: '',
@@ -325,24 +384,9 @@ export class BlockchainComponent implements OnInit {
             errors: [],
           },
         };
-
-        // Mine until we find a valid hash
-        let validHash = false;
-        while (!validHash && this.mining) {
-          genesisBlock.hash = this.generateBlockHash(genesisBlock);
-          validHash = this.isHashValid(genesisBlock.hash);
-          if (!validHash) {
-            genesisBlock.nonce++;
-          }
-        }
-
-        if (this.mining) {
-          // Only add if we didn't cancel
-          this.blocks.push(genesisBlock);
-        }
       } else if (this.pendingTransactions.length > 0) {
         // Create regular block with pending transactions
-        const newBlock: Block = {
+        blockToMine = {
           height: this.blocks.length,
           version: 1,
           hash: '',
@@ -358,25 +402,23 @@ export class BlockchainComponent implements OnInit {
             errors: [],
           },
         };
-
-        // Mine until we find a valid hash
-        let validHash = false;
-        while (!validHash && this.mining) {
-          newBlock.hash = this.generateBlockHash(newBlock);
-          validHash = this.isHashValid(newBlock.hash);
-          if (!validHash) {
-            newBlock.nonce++;
-          }
-        }
-
-        if (this.mining) {
-          // Only add if we didn't cancel
-          this.blocks.push(newBlock);
-          this.pendingTransactions = [];
-        }
+      } else {
+        return;
       }
-    } finally {
+
+      // Start mining visualization
+      this.currentBlock = blockToMine;
+      this.currentNonce = 0;
+      this.currentHash = '';
+
+      this.startMiningInterval(blockToMine);
+    } catch (error) {
+      console.error('Mining error:', error);
       this.mining = false;
+      this.currentBlock = null;
+      if (this.miningInterval) {
+        clearInterval(this.miningInterval);
+      }
     }
   }
 

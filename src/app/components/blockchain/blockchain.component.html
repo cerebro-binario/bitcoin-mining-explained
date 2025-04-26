@@ -10,12 +10,40 @@
           transaction.
         </p>
         <p-button
-          label="Minerar Bloco Gênesis"
-          icon="pi pi-bolt"
-          [loading]="mining"
+          [label]="mining ? 'Cancelar Mineração' : 'Minerar Bloco Gênesis'"
+          [icon]="mining ? 'pi pi-times' : 'pi pi-bolt'"
+          [loading]="false"
           (click)="mineBlock()"
-          severity="warn"
+          [severity]="mining ? 'danger' : 'warn'"
         ></p-button>
+
+        <!-- Mining Progress -->
+        <div *ngIf="mining && currentBlock" class="w-full max-w-2xl">
+          <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-zinc-400">Nonce:</span>
+              <span class="font-mono">{{ currentNonce }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-zinc-400">Hash Atual:</span>
+              <span class="font-mono break-all">{{ currentHash }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-zinc-400">Target:</span>
+              <span class="font-mono break-all">{{ targetHash }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-zinc-400">Hash Rate:</span>
+              <p-selectButton
+                [options]="hashRateOptions"
+                [(ngModel)]="hashRate"
+                optionLabel="label"
+                optionValue="value"
+                (onChange)="onHashRateChange()"
+              ></p-selectButton>
+            </div>
+          </div>
+        </div>
       </div>
     </p-card>
   </div>
@@ -29,13 +57,43 @@
           (click)="generateNewTransaction()"
         ></p-button>
         <p-button
-          label="Minerar Bloco"
-          icon="pi pi-cog"
-          [loading]="mining"
+          [label]="mining ? 'Cancelar Mineração' : 'Minerar Bloco'"
+          [icon]="mining ? 'pi pi-times' : 'pi pi-bolt'"
+          [loading]="false"
           (click)="mineBlock()"
           [disabled]="pendingTransactions.length === 0"
+          [severity]="mining ? 'danger' : 'primary'"
         ></p-button>
       </div>
+
+      <!-- Mining Progress -->
+      <div *ngIf="mining && currentBlock" class="mb-4">
+        <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-zinc-400">Nonce:</span>
+            <span class="font-mono">{{ currentNonce }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-zinc-400">Hash Atual:</span>
+            <span class="font-mono break-all">{{ currentHash }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-zinc-400">Target:</span>
+            <span class="font-mono break-all">{{ targetHash }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-zinc-400">Hash Rate:</span>
+            <p-selectButton
+              [options]="hashRateOptions"
+              [(ngModel)]="hashRate"
+              optionLabel="label"
+              optionValue="value"
+              (onChange)="onHashRateChange()"
+            ></p-selectButton>
+          </div>
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
         <p-table [value]="pendingTransactions" [paginator]="true" [rows]="5">
           <ng-template pTemplate="header">
