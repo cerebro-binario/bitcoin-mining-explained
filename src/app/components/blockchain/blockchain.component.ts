@@ -1,26 +1,24 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { CardModule } from 'primeng/card';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
-import { DialogModule } from 'primeng/dialog';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
-import { TooltipModule } from 'primeng/tooltip';
-import { SelectButtonModule } from 'primeng/selectbutton';
-import { SelectModule } from 'primeng/select';
-import {
-  Transaction,
-  TransactionInput,
-  TransactionOutput,
-  Block,
-  ValidationResult,
-} from '../../models/blockchain.model';
 import { Buffer } from 'buffer';
 import * as crypto from 'crypto-js';
-import { BlockchainService } from '../../services/blockchain.service';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { DialogModule } from 'primeng/dialog';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TableModule } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 import { Subscription } from 'rxjs';
+import {
+  Block,
+  Transaction,
+  ValidationResult,
+} from '../../models/blockchain.model';
+import { BlockchainService } from '../../services/blockchain.service';
 
 interface UTXO {
   txid: string;
@@ -104,6 +102,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   private pausedTime: number = 0;
   private lastPauseTime: number | null = null;
   private blockMiningTime: number = 0;
+  private pausedCurrentMiningTime: number = 0;
 
   public placeholderBlock = {
     version: 1,
@@ -132,6 +131,15 @@ export class BlockchainComponent implements OnInit, OnDestroy {
       },
     ],
   };
+
+  public autoPauseModeOptions = [
+    { label: 'Não', value: 'none' },
+    { label: 'Bloco', value: 'block' },
+    { label: 'Reajuste', value: 'adjustment' },
+  ];
+  public autoPauseMode: 'none' | 'block' | 'adjustment' = 'none';
+  public editingAutoPauseMode: 'none' | 'block' | 'adjustment' =
+    this.autoPauseMode;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -468,6 +476,11 @@ export class BlockchainComponent implements OnInit, OnDestroy {
             this.blockToAdd = blockToMine;
             this.winningNonce = this.currentNonce;
             this.cdr.detectChanges();
+
+            // Automatically confirm block if not in 'block' auto-pause mode
+            if (this.autoPauseMode !== 'block') {
+              this.confirmBlock();
+            }
             return;
           }
 
@@ -505,6 +518,11 @@ export class BlockchainComponent implements OnInit, OnDestroy {
           this.blockToAdd = blockToMine;
           this.winningNonce = this.currentNonce;
           this.cdr.detectChanges();
+
+          // Automatically confirm block if not in 'block' auto-pause mode
+          if (this.autoPauseMode !== 'block') {
+            this.confirmBlock();
+          }
         }
 
         this.currentNonce++;
@@ -587,7 +605,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
     }
   }
 
-  async mineBlock(): Promise<void> {
+  async mineBlock(isAuto = false): Promise<void> {
     if (this.mining) {
       if (this.paused) {
         // Resume mining
@@ -596,15 +614,17 @@ export class BlockchainComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // Pause or cancel mining
-      if (this.miningInterval) {
-        clearInterval(this.miningInterval);
-        if (this.currentBlock) {
-          // If we have a block, just pause
-          this.paused = true;
-        } else {
-          // If no block, cancel mining completely
-          this.mining = false;
+      // Só pausar/cancelar se NÃO for chamada automática
+      if (!isAuto) {
+        if (this.miningInterval) {
+          clearInterval(this.miningInterval);
+          if (this.currentBlock) {
+            // If we have a block, just pause
+            this.paused = true;
+          } else {
+            // If no block, cancel mining completely
+            this.mining = false;
+          }
         }
       }
       return;
@@ -929,20 +949,78 @@ export class BlockchainComponent implements OnInit, OnDestroy {
     };
   }
 
+  private shouldAutoPause(): boolean {
+    switch (this.autoPauseMode) {
+      case 'block':
+        return true;
+      case 'adjustment':
+        return this.blocks.length % this.blocksToAdjust === 0;
+      default:
+        return false;
+    }
+  }
+
+  private startNextBlockMining() {
+    const transactions = [
+      {
+        id: 'coinbase',
+        timestamp: Math.floor(Date.now() / 1000),
+        inputs: [],
+        outputs: [
+          {
+            address: this.generateMinerAddress(),
+            amount: this.COINBASE_REWARD,
+            scriptPubKey: '',
+          },
+        ],
+        fees: 0,
+        volume: this.COINBASE_REWARD,
+        coinbaseMessage: 'Miner reward',
+      },
+      ...this.pendingTransactions,
+    ];
+
+    const newBlock = {
+      height: this.blocks.length,
+      version: 1,
+      hash: '',
+      previousHash: this.blocks[this.blocks.length - 1].hash,
+      merkleRoot: this.calculateMerkleRoot(transactions),
+      timestamp: Math.floor(Date.now() / 1000),
+      bits: 0x1d00ffff,
+      nonce: 0,
+      transactions,
+      reward: this.COINBASE_REWARD,
+      validationResult: {
+        isValid: true,
+        errors: [],
+      },
+      miningTime: 0,
+    };
+
+    this.currentBlock = newBlock;
+    this.currentNonce = 0;
+    this.currentHash = '';
+    this.startMiningInterval(newBlock);
+  }
+
   confirmBlock(): void {
-    if (this.blockToAdd) {
-      // Adiciona o tempo de mineração ao bloco antes de confirmá-lo
-      this.blockToAdd.miningTime = this.blockMiningTime;
+    if (this.foundValidHash && this.blockToAdd) {
       this.blockchainService.addBlock(this.blockToAdd);
-      this.mining = false;
-      this.paused = false;
-      this.currentBlock = null;
-      this.foundValidHash = false;
       this.blockToAdd = null;
+      this.foundValidHash = false;
+      this.winningNonce = null;
+      this.currentNonce = 0;
+      this.hashesProcessed = 0;
       this.currentMiningTime = 0;
-      this.blockMiningTime = 0;
-      this.pausedTime = 0;
-      this.lastPauseTime = null;
+      this.pausedCurrentMiningTime = 0;
+
+      if (this.shouldAutoPause()) {
+        this.mining = false;
+        this.paused = false;
+      } else {
+        setTimeout(() => this.startNextBlockMining(), 0);
+      }
     }
   }
 
@@ -961,6 +1039,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   openParamsDialog() {
     this.editingHashRate = this.hashRate;
     this.editingBlocksToAdjust = this.blocksToAdjust;
+    this.editingAutoPauseMode = this.autoPauseMode;
     this.showParamsDialog = true;
   }
 
@@ -971,7 +1050,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   saveParamsDialog() {
     this.hashRate = this.editingHashRate;
     this.blocksToAdjust = this.editingBlocksToAdjust;
-    this.updateHashRate();
+    this.autoPauseMode = this.editingAutoPauseMode;
     this.showParamsDialog = false;
   }
 
@@ -1052,5 +1131,16 @@ export class BlockchainComponent implements OnInit, OnDestroy {
 
   public getCurrentBlockTransactionsLength() {
     return this.mining ? this.currentBlock?.transactions.length : 1;
+  }
+
+  getAutoPauseModeLabel(): string {
+    switch (this.autoPauseMode) {
+      case 'block':
+        return 'Bloco';
+      case 'adjustment':
+        return 'Reajuste';
+      default:
+        return 'Não';
+    }
   }
 }
