@@ -69,13 +69,13 @@ export class AddressesComponent implements OnInit, OnDestroy {
 
   private loadAddresses() {
     this.loading = true;
-    const utxoSet = this.blockchainService.utxoSet$.getValue();
+    const utxoSet = this.blockchainService.utxoSet$.value;
 
     // Criar um mapa para agrupar UTXOs por endereço
     const addressMap = new Map<string, AddressInfo>();
 
     // Processar cada UTXO
-    utxoSet.forEach((utxo: TransactionOutput) => {
+    utxoSet.forEach((utxo: TransactionOutput, key: string) => {
       const address = utxo.address;
       if (!addressMap.has(address)) {
         addressMap.set(address, {
