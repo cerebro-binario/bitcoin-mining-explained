@@ -10,30 +10,37 @@
           transaction.
         </p>
         <div class="mining-controls">
-          <p-button
-            label="{{
-              mining ? (paused ? 'Continuar' : 'Pausar') : 'Iniciar Mineração'
-            }}"
-            icon="pi pi-play"
-            (click)="mineBlock()"
-          ></p-button>
-          <p-button
-            label="{{
-              isContinuousMining ? 'Parar Simulação' : 'Iniciar Simulação'
-            }}"
-            icon="pi pi-sync"
-            severity="secondary"
-            (click)="toggleContinuousMining()"
-          ></p-button>
-          <p-dropdown
-            [options]="hashRateOptions"
-            [(ngModel)]="hashRate"
-            optionLabel="label"
-            optionValue="value"
-            (onChange)="updateHashRate()"
-            placeholder="Velocidade de Hash"
-            styleClass="w-12rem"
-          ></p-dropdown>
+          <div class="flex items-end gap-2 flex-wrap">
+            <p-button
+              label="{{
+                mining ? (paused ? 'Continuar' : 'Pausar') : 'Iniciar Mineração'
+              }}"
+              icon="pi pi-play"
+              (click)="mineBlock()"
+            ></p-button>
+            <p-button
+              label="{{
+                isContinuousMining ? 'Parar Simulação' : 'Iniciar Simulação'
+              }}"
+              icon="pi pi-sync"
+              severity="secondary"
+              (click)="toggleContinuousMining()"
+            ></p-button>
+            <div class="flex flex-col">
+              <label class="mb-1 text-sm text-zinc-300"
+                >Velocidade de Hash:</label
+              >
+              <p-select
+                [options]="hashRateOptions"
+                [(ngModel)]="hashRate"
+                optionLabel="label"
+                optionValue="value"
+                (onChange)="updateHashRate()"
+                placeholder="Selecione"
+                styleClass="w-12rem"
+              ></p-select>
+            </div>
+          </div>
         </div>
 
         <!-- Mining Progress -->
@@ -135,36 +142,91 @@
           icon="pi pi-plus"
           (click)="generateNewTransaction()"
         ></p-button>
-        <div class="mining-controls">
-          <p-button
-            label="{{
-              mining ? (paused ? 'Continuar' : 'Pausar') : 'Iniciar Mineração'
-            }}"
-            icon="pi pi-play"
-            (click)="mineBlock()"
-          ></p-button>
-          <p-button
-            label="{{
-              isContinuousMining ? 'Parar Simulação' : 'Iniciar Simulação'
-            }}"
-            icon="pi pi-sync"
-            severity="secondary"
-            (click)="toggleContinuousMining()"
-          ></p-button>
-          <p-dropdown
+      </div>
+
+      <div class="overflow-x-auto">
+        <p-table [value]="pendingTransactions" [paginator]="true" [rows]="5">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>ID</th>
+              <th>Entradas (₿)</th>
+              <th>Saídas (₿)</th>
+              <th>Taxa (₿)</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-transaction>
+            <tr>
+              <td class="break-all">{{ transaction.id }}</td>
+              <td>{{ getInputsTotal(transaction) }}</td>
+              <td>{{ getOutputsTotal(transaction) }}</td>
+              <td>{{ transaction.fee }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-card>
+  </div>
+
+  <div class="col-12">
+    <p-card header="Blockchain">
+      <div class="flex items-end gap-2 flex-wrap mb-8">
+        <p-button
+          label="{{
+            mining ? (paused ? 'Continuar' : 'Pausar') : 'Iniciar Mineração'
+          }}"
+          icon="pi pi-play"
+          (click)="mineBlock()"
+        ></p-button>
+        <p-button
+          label="{{
+            isContinuousMining ? 'Parar Simulação' : 'Iniciar Simulação'
+          }}"
+          icon="pi pi-sync"
+          severity="secondary"
+          (click)="toggleContinuousMining()"
+        ></p-button>
+        <div class="flex flex-col">
+          <label class="mb-1 text-sm text-zinc-300">Velocidade de Hash:</label>
+          <p-select
             [options]="hashRateOptions"
             [(ngModel)]="hashRate"
             optionLabel="label"
             optionValue="value"
             (onChange)="updateHashRate()"
-            placeholder="Velocidade de Hash"
+            placeholder="Selecione"
             styleClass="w-12rem"
-          ></p-dropdown>
+          ></p-select>
+        </div>
+      </div>
+      <div
+        class="flex gap-20 relative overflow-x-auto whitespace-nowrap w-full h-auto"
+      >
+        <!-- Blocos minerados -->
+        <div
+          *ngFor="let block of blocks; let i = index"
+          class="block-element relative flex flex-col p-4 text-white rounded-lg shadow-md justify-center items-center min-w-40 h-20"
+          [ngClass]="{
+            genesis: block.height === 0,
+            confirmed: block.height > 0 && i === 0,
+            pending: block.height > 0 && i > 0
+          }"
+        >
+          <span class="font-bold">#{{ block.height }}</span>
+          <span class="text-xs break-all"
+            >{{ block.hash.substring(0, 8) }}...</span
+          >
+          <span class="text-xs">{{
+            block.timestamp | date : "dd/MM/yyyy HH:mm:ss"
+          }}</span>
+          <div class="flex items-center gap-2 text-xs">
+            <i class="pi pi-hashtag"></i>
+            <span class="font-mono">{{ block.nonce }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Mining Progress -->
-      <div *ngIf="mining && currentBlock" class="mb-4">
+      <!-- Painel de progresso de mineração -->
+      <div *ngIf="mining && currentBlock" class="w-full max-w-2xl mx-auto my-8">
         <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Status:</span>
@@ -244,58 +306,6 @@
                 ></p-button>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="overflow-x-auto">
-        <p-table [value]="pendingTransactions" [paginator]="true" [rows]="5">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>ID</th>
-              <th>Entradas (₿)</th>
-              <th>Saídas (₿)</th>
-              <th>Taxa (₿)</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-transaction>
-            <tr>
-              <td class="break-all">{{ transaction.id }}</td>
-              <td>{{ getInputsTotal(transaction) }}</td>
-              <td>{{ getOutputsTotal(transaction) }}</td>
-              <td>{{ transaction.fee }}</td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    </p-card>
-  </div>
-
-  <div class="col-12">
-    <p-card header="Blockchain">
-      <div
-        class="flex gap-20 relative overflow-x-auto whitespace-nowrap w-full h-auto"
-      >
-        <!-- Blocos minerados -->
-        <div
-          *ngFor="let block of blocks; let i = index"
-          class="block-element relative flex flex-col p-4 text-white rounded-lg shadow-md justify-center items-center min-w-40 h-20"
-          [ngClass]="{
-            genesis: block.height === 0,
-            confirmed: block.height > 0 && i === 0,
-            pending: block.height > 0 && i > 0
-          }"
-        >
-          <span class="font-bold">#{{ block.height }}</span>
-          <span class="text-xs break-all"
-            >{{ block.hash.substring(0, 8) }}...</span
-          >
-          <span class="text-xs">{{
-            block.timestamp | date : "dd/MM/yyyy HH:mm:ss"
-          }}</span>
-          <div class="flex items-center gap-2 text-xs">
-            <i class="pi pi-hashtag"></i>
-            <span class="font-mono">{{ block.nonce }}</span>
           </div>
         </div>
       </div>
