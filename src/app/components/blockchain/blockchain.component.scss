@@ -20,3 +20,51 @@
     background-color: #f59e0b; // amber-500
   }
 }
+
+// Estilos para a visualização detalhada do bloco
+.block-details {
+  .block-header,
+  .previous-hash,
+  .merkle-root,
+  .transactions,
+  .block-hash {
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: rgba(63, 63, 70, 0.5);
+    }
+  }
+
+  .transactions {
+    .transaction-item {
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: rgba(63, 63, 70, 0.5);
+      }
+    }
+  }
+
+  // Estilos para a comparação de hash
+  .block-hash {
+    .hash-comparison {
+      transition: all 0.3s ease;
+      background-color: rgba(39, 39, 42, 0.5);
+      border: 1px solid rgba(63, 63, 70, 0.3);
+
+      &:hover {
+        background-color: rgba(63, 63, 70, 0.3);
+      }
+
+      .hash-value {
+        word-break: break-all;
+        font-family: monospace;
+      }
+
+      .comparison-icon {
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+      }
+    }
+  }
+}

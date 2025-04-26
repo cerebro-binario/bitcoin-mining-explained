@@ -278,6 +278,164 @@
           </div>
         </div>
       </div>
+
+      <!-- Visualização detalhada do bloco atual -->
+      <div *ngIf="currentBlock" class="mt-6">
+        <div class="block-details bg-zinc-800 rounded-lg p-4">
+          <h3 class="text-lg font-bold mb-4">Estrutura do Bloco</h3>
+
+          <!-- Cabeçalho do Bloco -->
+          <div class="block-header mb-4 p-3 bg-zinc-700/50 rounded-lg">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col">
+                <span class="text-sm text-zinc-400">Versão</span>
+                <span class="font-mono">{{ currentBlock.version }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm text-zinc-400">Timestamp</span>
+                <span class="font-mono">{{
+                  currentBlock.timestamp | date : "dd/MM/yyyy HH:mm:ss"
+                }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm text-zinc-400">Bits</span>
+                <span class="font-mono"
+                  >0x{{ currentBlock.bits.toString(16) }}</span
+                >
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm text-zinc-400">Nonce</span>
+                <span class="font-mono">{{ currentBlock.nonce }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hash do Bloco Anterior -->
+          <div class="previous-hash mb-4 p-3 bg-zinc-700/50 rounded-lg">
+            <span class="text-sm text-zinc-400">Hash do Bloco Anterior</span>
+            <div class="font-mono break-all mt-1">
+              {{ currentBlock.previousHash }}
+            </div>
+          </div>
+
+          <!-- Merkle Root -->
+          <div class="merkle-root mb-4 p-3 bg-zinc-700/50 rounded-lg">
+            <span class="text-sm text-zinc-400">Merkle Root</span>
+            <div class="font-mono break-all mt-1">
+              {{ currentBlock.merkleRoot || "Calculando..." }}
+            </div>
+          </div>
+
+          <!-- Transações -->
+          <div class="transactions mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm text-zinc-400">Transações</span>
+              <span class="text-xs text-zinc-500"
+                >{{ currentBlock.transactions.length }} transação{{
+                  currentBlock.transactions.length !== 1 ? "s" : ""
+                }}</span
+              >
+            </div>
+            <div class="space-y-2">
+              <div
+                *ngFor="let tx of currentBlock.transactions"
+                class="p-3 bg-zinc-700/50 rounded-lg"
+              >
+                <div class="flex justify-between items-center mb-2">
+                  <span class="font-mono text-sm"
+                    >{{
+                      tx.id === "coinbase" ? "Coinbase" : tx.id.substring(0, 8)
+                    }}...</span
+                  >
+                  <span
+                    class="text-xs"
+                    [class.text-green-500]="tx.id === 'coinbase'"
+                  >
+                    {{ tx.id === "coinbase" ? "Coinbase" : "Transação" }}
+                  </span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span class="text-zinc-400">Entradas:</span>
+                    <span class="font-mono ml-1">{{ tx.inputs.length }}</span>
+                  </div>
+                  <div>
+                    <span class="text-zinc-400">Saídas:</span>
+                    <span class="font-mono ml-1">{{ tx.outputs.length }}</span>
+                  </div>
+                </div>
+                <div *ngIf="tx.id === 'coinbase'" class="mt-2 text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="text-zinc-400">Endereço:</span>
+                    <span class="font-mono text-green-500">{{
+                      tx.outputs[0].address
+                    }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-zinc-400">Valor:</span>
+                    <span class="font-mono text-green-500"
+                      >{{ tx.outputs[0].amount }} ₿</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hash do Bloco -->
+          <div class="block-hash p-3 bg-zinc-700/50 rounded-lg">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm text-zinc-400">Hash do Bloco</span>
+              <span
+                class="text-xs"
+                [class.text-green-500]="isHashValid(currentHash)"
+                [class.text-red-500]="!isHashValid(currentHash)"
+              >
+                {{ isHashValid(currentHash) ? "Hash Válido" : "Hash Inválido" }}
+              </span>
+            </div>
+            <div class="font-mono break-all mt-1">
+              {{ currentHash || "Calculando..." }}
+            </div>
+
+            <!-- Comparação com Target -->
+            <div class="mt-3 p-2 bg-zinc-800/50 rounded">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-zinc-400">Target</span>
+                <span class="text-xs text-zinc-400">Hash Atual</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="font-mono text-xs break-all flex-1 mr-2">
+                  {{ targetHash }}
+                </div>
+                <div class="flex items-center gap-2">
+                  <i
+                    class="pi"
+                    [class.pi-arrow-right]="!isHashValid(currentHash)"
+                    [class.pi-check]="isHashValid(currentHash)"
+                    [class.text-red-500]="!isHashValid(currentHash)"
+                    [class.text-green-500]="isHashValid(currentHash)"
+                  ></i>
+                </div>
+                <div class="font-mono text-xs break-all flex-1 ml-2">
+                  {{ currentHash }}
+                </div>
+              </div>
+              <div class="mt-2 text-xs text-zinc-400">
+                O hash é válido quando é menor que o target.
+                <span *ngIf="!isHashValid(currentHash)">
+                  O hash atual é maior que o target, então precisamos continuar
+                  minerando.
+                </span>
+                <span *ngIf="isHashValid(currentHash)">
+                  O hash atual é menor que o target, então encontramos um hash
+                  válido!
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </p-card>
   </div>
 </div>
