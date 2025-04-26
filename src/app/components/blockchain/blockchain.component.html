@@ -179,6 +179,12 @@
             {{ getHashRateLabel() }}
           </span>
         </div>
+        <div class="flex flex-col gap-1 ml-8">
+          <span class="text-xs text-zinc-400">Blocos para Reajuste</span>
+          <span class="font-mono text-base text-white">
+            {{ blocksToAdjust }}
+          </span>
+        </div>
         <p-button
           label="Editar Parâmetros"
           icon="pi pi-cog"
@@ -187,6 +193,27 @@
         ></p-button>
       </div>
       <!-- Fim do painel de apresentação dos parâmetros -->
+
+      <!-- Painel de Stats -->
+      <div
+        class="flex flex-wrap gap-8 bg-zinc-900 rounded-lg px-6 py-4 mb-8 shadow items-center"
+      >
+        <div class="flex flex-col">
+          <span class="text-xs text-zinc-400">Tempo do Bloco Atual</span>
+          <span class="font-mono text-lg text-white">
+            {{ (currentMiningTime / 1000 | number : "1.2-2") + "s" }}
+          </span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs text-zinc-400"
+            >Tempo Médio ({{ blocksToAdjust }} blocos)</span
+          >
+          <span class="font-mono text-lg text-white">
+            {{ getAverageMiningTime() / 1000 | number : "1.2-2" }}s
+          </span>
+        </div>
+      </div>
+      <!-- Fim do painel de stats -->
 
       <div class="flex items-end gap-2 flex-wrap mb-8">
         <p-button
@@ -226,6 +253,18 @@
               styleClass="w-12rem"
               [appendTo]="'body'"
             ></p-select>
+          </div>
+          <div class="flex flex-col">
+            <label class="mb-1 text-sm text-zinc-300"
+              >Blocos para Reajuste</label
+            >
+            <p-inputNumber
+              [(ngModel)]="editingBlocksToAdjust"
+              [min]="1"
+              [max]="1000"
+              [showButtons]="true"
+              inputStyleClass="w-12rem"
+            ></p-inputNumber>
           </div>
         </div>
         <ng-template #footer>

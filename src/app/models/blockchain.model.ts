@@ -38,6 +38,7 @@ export interface Block {
   transactions: Transaction[];
   reward: number;
   validationResult?: ValidationResult;
+  miningTime: number;
 }
 
 export interface ValidationResult {

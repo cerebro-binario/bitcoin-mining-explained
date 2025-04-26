@@ -96,6 +96,14 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   private continuousMiningInterval: any;
   showParamsDialog = false;
   editingHashRate: number = this.hashRate;
+  blocksToAdjust = 10;
+  editingBlocksToAdjust: number = this.blocksToAdjust;
+  blockMiningTimes: number[] = [];
+  lastBlockStartTime: number | null = null;
+  currentMiningTime: number = 0;
+  private pausedTime: number = 0;
+  private lastPauseTime: number | null = null;
+  private blockMiningTime: number = 0;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -172,6 +180,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
         isValid: true,
         errors: [],
       },
+      miningTime: 0,
     };
     this.blocks.push(genesisBlock);
   }
@@ -577,6 +586,13 @@ export class BlockchainComponent implements OnInit, OnDestroy {
     this.paused = false;
     let blockToMine: Block;
 
+    // Início do tempo de mineração do bloco
+    this.lastBlockStartTime = Date.now();
+    this.currentMiningTime = 0;
+    this.pausedTime = 0;
+    this.lastPauseTime = null;
+    this.updateMiningTime();
+
     try {
       if (this.blocks.length === 0) {
         // Create genesis block
@@ -613,6 +629,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
             isValid: true,
             errors: [],
           },
+          miningTime: 0,
         };
         // Calculate Merkle root for genesis block
         blockToMine.merkleRoot = this.calculateMerkleRoot(
@@ -654,6 +671,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
             isValid: true,
             errors: [],
           },
+          miningTime: 0,
         };
       }
 
@@ -885,12 +903,18 @@ export class BlockchainComponent implements OnInit, OnDestroy {
 
   confirmBlock(): void {
     if (this.blockToAdd) {
+      // Adiciona o tempo de mineração ao bloco antes de confirmá-lo
+      this.blockToAdd.miningTime = this.blockMiningTime;
       this.blockchainService.addBlock(this.blockToAdd);
       this.mining = false;
       this.paused = false;
       this.currentBlock = null;
       this.foundValidHash = false;
       this.blockToAdd = null;
+      this.currentMiningTime = 0;
+      this.blockMiningTime = 0;
+      this.pausedTime = 0;
+      this.lastPauseTime = null;
     }
   }
 
@@ -908,6 +932,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
 
   openParamsDialog() {
     this.editingHashRate = this.hashRate;
+    this.editingBlocksToAdjust = this.blocksToAdjust;
     this.showParamsDialog = true;
   }
 
@@ -917,7 +942,42 @@ export class BlockchainComponent implements OnInit, OnDestroy {
 
   saveParamsDialog() {
     this.hashRate = this.editingHashRate;
+    this.blocksToAdjust = this.editingBlocksToAdjust;
     this.updateHashRate();
     this.showParamsDialog = false;
+  }
+
+  getCurrentBlockMiningTime(): number {
+    return this.currentMiningTime;
+  }
+
+  getAverageMiningTime(): number {
+    if (this.blocks.length === 0) return 0;
+
+    const window = this.blocks.slice(0, this.blocksToAdjust);
+    if (window.length === 0) return 0;
+
+    const sum = window.reduce((acc, block) => acc + (block.miningTime || 0), 0);
+    return sum / window.length;
+  }
+
+  private updateMiningTime() {
+    if (this.mining && this.lastBlockStartTime && !this.foundValidHash) {
+      if (this.paused) {
+        if (!this.lastPauseTime) {
+          this.lastPauseTime = Date.now();
+        }
+      } else {
+        if (this.lastPauseTime) {
+          const pauseDuration = Date.now() - this.lastPauseTime;
+          this.pausedTime += pauseDuration;
+          this.lastPauseTime = null;
+        }
+        this.currentMiningTime =
+          Date.now() - this.lastBlockStartTime - this.pausedTime;
+        this.blockMiningTime = this.currentMiningTime;
+      }
+      setTimeout(() => this.updateMiningTime(), 100);
+    }
   }
 }
