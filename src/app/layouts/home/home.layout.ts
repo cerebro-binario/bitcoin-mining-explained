@@ -22,6 +22,11 @@ export class HomeLayout {
   tabs = [
     { route: '/blockchain', icon: 'pi pi-home', label: 'Blockchain' },
     {
+      route: '/blockchain/v2',
+      icon: 'pi pi-home',
+      label: 'Blockchain v2',
+    },
+    {
       route: '/mempool',
       icon: 'pi pi-arrow-right-arrow-left',
       label: 'Transações',

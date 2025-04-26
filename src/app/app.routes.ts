@@ -10,6 +10,7 @@ import { BlockchainLayout } from './layouts/home/blockchain/blockchain.layout';
 import { HomeLayout } from './layouts/home/home.layout';
 import { MempoolLayout } from './layouts/home/mempool/mempool.layout';
 import { ToolsLayout } from './layouts/home/tools/tools.layout';
+import { BlockchainV2Component } from './components/blockchain-v2/blockchain-v2.component';
 
 export const routes: Routes = [
   {
@@ -21,6 +22,7 @@ export const routes: Routes = [
         component: BlockchainLayout,
         children: [
           { path: '', pathMatch: 'full', component: BlockchainComponent },
+          { path: 'v2', component: BlockchainV2Component },
           { path: 'mine-new-block', component: MineNewBlockComponent },
         ],
       },
