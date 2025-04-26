@@ -22,6 +22,13 @@ export class MinersPanelComponent {
     this.network.addNode(true, `Minerador ${count}`, 1000);
   }
 
+  removeMiner(index: number) {
+    const miner = this.miners[index];
+    if (miner) {
+      this.network.removeNode(miner.id!);
+    }
+  }
+
   onMinerChange() {
     this.network.save();
   }
