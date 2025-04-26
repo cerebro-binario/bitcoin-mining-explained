@@ -19,6 +19,12 @@
       <div class="flex items-center gap-2 mb-2">
         <span class="text-lg font-bold text-blue-400">{{ miner.name }}</span>
         <span class="ml-auto text-xs text-zinc-400">#{{ i + 1 }}</span>
+        <button
+          class="ml-2 px-2 py-1 rounded bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition"
+          (click)="removeMiner(i)"
+        >
+          Remover
+        </button>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-xs text-zinc-400">Hash Rate:</span>
