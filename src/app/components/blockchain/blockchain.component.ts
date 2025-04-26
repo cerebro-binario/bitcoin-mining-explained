@@ -15,6 +15,8 @@ import {
   Block,
   ValidationResult,
 } from '../../models/blockchain.model';
+import { Buffer } from 'buffer';
+import * as crypto from 'crypto-js';
 
 interface UTXO {
   txid: string;
@@ -324,9 +326,20 @@ export class BlockchainComponent implements OnInit {
           },
         };
 
-        // Simple mining simulation
-        genesisBlock.hash = this.generateBlockHash(genesisBlock);
-        this.blocks.push(genesisBlock);
+        // Mine until we find a valid hash
+        let validHash = false;
+        while (!validHash && this.mining) {
+          genesisBlock.hash = this.generateBlockHash(genesisBlock);
+          validHash = this.isHashValid(genesisBlock.hash);
+          if (!validHash) {
+            genesisBlock.nonce++;
+          }
+        }
+
+        if (this.mining) {
+          // Only add if we didn't cancel
+          this.blocks.push(genesisBlock);
+        }
       } else if (this.pendingTransactions.length > 0) {
         // Create regular block with pending transactions
         const newBlock: Block = {
@@ -346,24 +359,120 @@ export class BlockchainComponent implements OnInit {
           },
         };
 
-        // Simple mining simulation
-        newBlock.hash = this.generateBlockHash(newBlock);
-        this.blocks.push(newBlock);
-        this.pendingTransactions = [];
+        // Mine until we find a valid hash
+        let validHash = false;
+        while (!validHash && this.mining) {
+          newBlock.hash = this.generateBlockHash(newBlock);
+          validHash = this.isHashValid(newBlock.hash);
+          if (!validHash) {
+            newBlock.nonce++;
+          }
+        }
+
+        if (this.mining) {
+          // Only add if we didn't cancel
+          this.blocks.push(newBlock);
+          this.pendingTransactions = [];
+        }
       }
     } finally {
       this.mining = false;
     }
   }
 
+  private isHashValid(hash: string): boolean {
+    return BigInt(`0x${hash}`) <= BigInt(`0x${this.targetHash}`);
+  }
+
   private calculateMerkleRoot(transactions: Transaction[]): string {
-    // Simple implementation - in reality this would use proper Merkle tree
-    return transactions.map((t) => t.id).join('');
+    if (transactions.length === 0) {
+      return '0000000000000000000000000000000000000000000000000000000000000000';
+    }
+
+    // Get transaction hashes
+    let hashes = transactions.map((tx) => tx.id);
+
+    // If odd number of transactions, duplicate the last one
+    if (hashes.length % 2 === 1) {
+      hashes.push(hashes[hashes.length - 1]);
+    }
+
+    // Keep hashing pairs until we get to the root
+    while (hashes.length > 1) {
+      const newHashes: string[] = [];
+
+      // Process pairs
+      for (let i = 0; i < hashes.length; i += 2) {
+        const firstHash = Buffer.from(hashes[i], 'hex');
+        const secondHash = Buffer.from(hashes[i + 1], 'hex');
+
+        // Concatenate and double SHA256
+        const concat = Buffer.concat([firstHash, secondHash]);
+        const firstSHA = this.sha256(concat);
+        const secondSHA = this.sha256(Buffer.from(firstSHA, 'hex'));
+
+        newHashes.push(secondSHA);
+      }
+
+      hashes = newHashes;
+    }
+
+    return hashes[0];
+  }
+
+  private sha256(data: Buffer): string {
+    // Use CryptoJS instead of Node's crypto
+    const wordArray = crypto.lib.WordArray.create(data);
+    return crypto.SHA256(wordArray).toString();
+  }
+
+  private reverseHex(hex: string): string {
+    return hex.match(/.{2}/g)?.reverse().join('') || '';
   }
 
   private generateBlockHash(block: Block): string {
-    // Simple implementation - in reality this would use proper SHA-256
-    return Math.random().toString(36).substring(2);
+    // Convert block header fields to Buffer
+    const version = Buffer.alloc(4);
+    version.writeUInt32LE(block.version);
+
+    // Previous hash is already in hex, convert to Buffer
+    const previousHash = Buffer.from(block.previousHash, 'hex');
+
+    // Merkle root is in hex, convert to Buffer
+    const merkleRoot = Buffer.from(
+      block.merkleRoot ||
+        '0000000000000000000000000000000000000000000000000000000000000000',
+      'hex'
+    );
+
+    // Convert timestamp to Unix timestamp (seconds) and to Buffer
+    const timestamp = Buffer.alloc(4);
+    timestamp.writeUInt32LE(Math.floor(block.timestamp.getTime() / 1000));
+
+    // Convert bits to Buffer
+    const bits = Buffer.alloc(4);
+    bits.writeUInt32LE(block.bits);
+
+    // Convert nonce to Buffer
+    const nonce = Buffer.alloc(4);
+    nonce.writeUInt32LE(block.nonce);
+
+    // Concatenate all fields
+    const blockHeader = Buffer.concat([
+      version,
+      previousHash,
+      merkleRoot,
+      timestamp,
+      bits,
+      nonce,
+    ]);
+
+    // Perform double SHA256 using CryptoJS
+    const firstHash = this.sha256(blockHeader);
+    const secondHash = this.sha256(Buffer.from(firstHash, 'hex'));
+
+    // Return final hash in little-endian
+    return this.reverseHex(secondHash);
   }
 
   getCurrentDateTime(): string {
