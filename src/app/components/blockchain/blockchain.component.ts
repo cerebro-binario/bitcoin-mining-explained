@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { DropdownModule } from 'primeng/dropdown';
 import {
   Transaction,
   TransactionInput,
@@ -45,6 +46,7 @@ interface UTXO {
     InputTextModule,
     TooltipModule,
     SelectButtonModule,
+    DropdownModule,
   ],
   templateUrl: './blockchain.component.html',
   styleUrls: ['./blockchain.component.scss'],
@@ -90,6 +92,8 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   private blocksSubscription: Subscription | null = null;
   private pendingTransactionsSubscription: Subscription | null = null;
   public currentDateTime: string = '';
+  public isContinuousMining = false;
+  private continuousMiningInterval: any;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -126,6 +130,9 @@ export class BlockchainComponent implements OnInit, OnDestroy {
     }
     if (this.pendingTransactionsSubscription) {
       this.pendingTransactionsSubscription.unsubscribe();
+    }
+    if (this.continuousMiningInterval) {
+      clearInterval(this.continuousMiningInterval);
     }
   }
 
@@ -473,7 +480,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
     }
   }
 
-  private updateHashRate(): void {
+  public updateHashRate(): void {
     if (!this.mining || this.paused || Date.now() === this.startTime) {
       this.cachedHashRate = '0';
       return;
@@ -502,6 +509,36 @@ export class BlockchainComponent implements OnInit, OnDestroy {
       address += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return address;
+  }
+
+  toggleContinuousMining() {
+    this.isContinuousMining = !this.isContinuousMining;
+    if (this.isContinuousMining) {
+      this.startContinuousMining();
+    } else {
+      this.stopContinuousMining();
+    }
+  }
+
+  private startContinuousMining() {
+    if (this.blocks.length === 0) {
+      this.mineBlock();
+    } else {
+      this.continuousMiningInterval = setInterval(() => {
+        if (!this.mining && this.pendingTransactions.length > 0) {
+          this.mineBlock();
+        }
+      }, 1000);
+    }
+  }
+
+  private stopContinuousMining() {
+    if (this.continuousMiningInterval) {
+      clearInterval(this.continuousMiningInterval);
+    }
+    if (this.mining) {
+      this.paused = true;
+    }
   }
 
   async mineBlock(): Promise<void> {
@@ -572,7 +609,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
         blockToMine.merkleRoot = this.calculateMerkleRoot(
           blockToMine.transactions
         );
-      } else if (this.pendingTransactions.length > 0) {
+      } else {
         // Create regular block with pending transactions
         const transactions = [
           {
@@ -609,8 +646,6 @@ export class BlockchainComponent implements OnInit, OnDestroy {
             errors: [],
           },
         };
-      } else {
-        return;
       }
 
       // Start mining visualization

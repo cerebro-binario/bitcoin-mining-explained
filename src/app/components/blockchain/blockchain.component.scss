@@ -68,3 +68,20 @@
     }
   }
 }
+
+.mining-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+
+  > * {
+    margin: 0;
+  }
+}
+
+// Ajuste para alinhar o grupo inteiro com o botão de transação
+.flex.justify-content-between {
+  align-items: center;
+  gap: 1rem;
+}

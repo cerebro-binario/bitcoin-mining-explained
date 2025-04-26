@@ -9,21 +9,32 @@
           Este será o primeiro bloco da blockchain e conterá apenas a coinbase
           transaction.
         </p>
-        <p-button
-          [label]="
-            mining
-              ? paused
-                ? 'Continuar Mineração'
-                : 'Pausar Mineração'
-              : 'Minerar Bloco Gênesis'
-          "
-          [icon]="
-            mining ? (paused ? 'pi pi-play' : 'pi pi-pause') : 'pi pi-bolt'
-          "
-          [loading]="false"
-          (click)="mineBlock()"
-          [severity]="mining ? (paused ? 'success' : 'warn') : 'warn'"
-        ></p-button>
+        <div class="mining-controls">
+          <p-button
+            label="{{
+              mining ? (paused ? 'Continuar' : 'Pausar') : 'Iniciar Mineração'
+            }}"
+            icon="pi pi-play"
+            (click)="mineBlock()"
+          ></p-button>
+          <p-button
+            label="{{
+              isContinuousMining ? 'Parar Simulação' : 'Iniciar Simulação'
+            }}"
+            icon="pi pi-sync"
+            severity="secondary"
+            (click)="toggleContinuousMining()"
+          ></p-button>
+          <p-dropdown
+            [options]="hashRateOptions"
+            [(ngModel)]="hashRate"
+            optionLabel="label"
+            optionValue="value"
+            (onChange)="updateHashRate()"
+            placeholder="Velocidade de Hash"
+            styleClass="w-12rem"
+          ></p-dropdown>
+        </div>
 
         <!-- Mining Progress -->
         <div *ngIf="mining && currentBlock" class="w-full max-w-2xl">
@@ -124,22 +135,32 @@
           icon="pi pi-plus"
           (click)="generateNewTransaction()"
         ></p-button>
-        <p-button
-          [label]="
-            mining
-              ? paused
-                ? 'Continuar Mineração'
-                : 'Pausar Mineração'
-              : 'Minerar Bloco'
-          "
-          [icon]="
-            mining ? (paused ? 'pi pi-play' : 'pi pi-pause') : 'pi pi-bolt'
-          "
-          [loading]="false"
-          (click)="mineBlock()"
-          [disabled]="pendingTransactions.length === 0"
-          [severity]="mining ? (paused ? 'success' : 'warn') : 'primary'"
-        ></p-button>
+        <div class="mining-controls">
+          <p-button
+            label="{{
+              mining ? (paused ? 'Continuar' : 'Pausar') : 'Iniciar Mineração'
+            }}"
+            icon="pi pi-play"
+            (click)="mineBlock()"
+          ></p-button>
+          <p-button
+            label="{{
+              isContinuousMining ? 'Parar Simulação' : 'Iniciar Simulação'
+            }}"
+            icon="pi pi-sync"
+            severity="secondary"
+            (click)="toggleContinuousMining()"
+          ></p-button>
+          <p-dropdown
+            [options]="hashRateOptions"
+            [(ngModel)]="hashRate"
+            optionLabel="label"
+            optionValue="value"
+            (onChange)="updateHashRate()"
+            placeholder="Velocidade de Hash"
+            styleClass="w-12rem"
+          ></p-dropdown>
+        </div>
       </div>
 
       <!-- Mining Progress -->
