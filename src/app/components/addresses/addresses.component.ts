@@ -20,6 +20,7 @@ import { hexToDecimal, shortenValue } from '../../utils/tools';
 import { BlockchainService } from '../../services/blockchain.service';
 import { TransactionOutput } from '../../models/blockchain.model';
 import { Subscription } from 'rxjs';
+import { DialogModule } from 'primeng/dialog';
 
 interface AddressInfo {
   address: string;
@@ -29,6 +30,7 @@ interface AddressInfo {
 
 @Component({
   selector: 'app-addresses',
+  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -38,6 +40,7 @@ interface AddressInfo {
     TooltipModule,
     SelectButtonModule,
     ButtonModule,
+    DialogModule,
   ],
   templateUrl: './addresses.component.html',
   styleUrl: './addresses.component.scss',
