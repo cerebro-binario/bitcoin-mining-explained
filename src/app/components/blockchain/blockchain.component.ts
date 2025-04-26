@@ -73,9 +73,9 @@ export class BlockchainComponent implements OnInit {
   hashRate = 1000; // default: 1 hash por segundo
   hashRateOptions = [
     { label: '1 hash/s', value: 1000 },
-    { label: '2 hash/s', value: 500 },
     { label: '10 hash/s', value: 100 },
     { label: '50 hash/s', value: 20 },
+    { label: '100 hash/s', value: 10 },
   ];
 
   constructor() {
