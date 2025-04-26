@@ -89,12 +89,14 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   private lastHashRateUpdate: number = 0;
   private blocksSubscription: Subscription | null = null;
   private pendingTransactionsSubscription: Subscription | null = null;
+  public currentDateTime: string = '';
 
   constructor(
     private cdr: ChangeDetectorRef,
     private blockchainService: BlockchainService
   ) {
     this.initializeNewTransaction();
+    this.updateCurrentDateTime();
   }
 
   ngOnInit() {
@@ -111,6 +113,11 @@ export class BlockchainComponent implements OnInit, OnDestroy {
         this.pendingTransactions = transactions;
         this.cdr.detectChanges();
       });
+
+    setInterval(() => {
+      this.updateCurrentDateTime();
+      this.cdr.detectChanges();
+    }, 1000);
   }
 
   ngOnDestroy() {
@@ -729,8 +736,7 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   }
 
   getCurrentDateTime(): string {
-    const now = new Date();
-    return now.toLocaleString();
+    return this.currentDateTime;
   }
 
   editTransaction() {
@@ -842,5 +848,17 @@ export class BlockchainComponent implements OnInit, OnDestroy {
       this.foundValidHash = false;
       this.blockToAdd = null;
     }
+  }
+
+  private updateCurrentDateTime() {
+    this.currentDateTime = new Date().toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
   }
 }
