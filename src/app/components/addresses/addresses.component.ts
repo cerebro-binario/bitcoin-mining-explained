@@ -65,6 +65,7 @@ export class AddressesComponent implements OnInit, OnDestroy {
   showUtxosDialog = false;
   selectedAddress: AddressInfo | null = null;
   private subscription: Subscription | null = null;
+  private utxoSubscription: Subscription | null = null;
 
   constructor(
     private addressService: AddressService,
@@ -86,8 +87,11 @@ export class AddressesComponent implements OnInit, OnDestroy {
       this.saveStateToLocalStorage();
     });
 
-    this.loadAddresses();
     this.subscription = this.blockchainService.blocks$.subscribe(() => {
+      this.loadAddresses();
+    });
+
+    this.utxoSubscription = this.blockchainService.utxoSet$.subscribe(() => {
       this.loadAddresses();
     });
   }
@@ -95,6 +99,9 @@ export class AddressesComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.subscription) {
       this.subscription.unsubscribe();
+    }
+    if (this.utxoSubscription) {
+      this.utxoSubscription.unsubscribe();
     }
   }
 
@@ -331,13 +338,15 @@ export class AddressesComponent implements OnInit, OnDestroy {
 
   private loadAddresses() {
     this.loading = true;
-    const utxoSet = this.blockchainService.utxoSet$.getValue();
 
     // Criar um mapa para agrupar UTXOs por endereço
     const addressMap = new Map<string, AddressInfo>();
 
+    // Obter os UTXOs do serviço
+    const utxos = this.blockchainService.getAddressUtxos('');
+
     // Processar cada UTXO
-    utxoSet.forEach((utxo: TransactionOutput, key: string) => {
+    utxos.forEach((utxo: TransactionOutput) => {
       const address = utxo.address;
       if (!addressMap.has(address)) {
         addressMap.set(address, {
