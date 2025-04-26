@@ -105,6 +105,34 @@ export class BlockchainComponent implements OnInit, OnDestroy {
   private lastPauseTime: number | null = null;
   private blockMiningTime: number = 0;
 
+  public placeholderBlock = {
+    version: 1,
+    timestamp: Date.now(),
+    bits: 0x1d00ffff,
+    nonce: 0,
+    previousHash:
+      '0000000000000000000000000000000000000000000000000000000000000000',
+    merkleRoot:
+      '0000000000000000000000000000000000000000000000000000000000000000',
+    transactions: [
+      {
+        id: 'coinbase',
+        inputs: [],
+        outputs: [
+          {
+            address: '0000000000000000000000000000000000000000',
+            amount: 50,
+            scriptPubKey:
+              'OP_DUP OP_HASH160 0000000000000000000000000000000000000000 OP_EQUALVERIFY OP_CHECKSIG',
+          },
+        ],
+        fees: 0,
+        volume: 50,
+        timestamp: Date.now(),
+      },
+    ],
+  };
+
   constructor(
     private cdr: ChangeDetectorRef,
     private blockchainService: BlockchainService
@@ -1002,5 +1030,27 @@ export class BlockchainComponent implements OnInit, OnDestroy {
     this.lastPauseTime = null;
     this.lastBlockStartTime = null;
     this.blockchainService.resetBlockchain();
+  }
+
+  public getCurrentBlock() {
+    return this.mining ? this.currentBlock : this.placeholderBlock;
+  }
+
+  public getCurrentBlockTimestamp() {
+    return this.mining ? this.currentBlock?.timestamp : new Date();
+  }
+
+  public getCurrentBlockBits() {
+    return this.mining ? this.currentBlock?.bits : 0x1d00ffff;
+  }
+
+  public getCurrentBlockTransactions() {
+    return this.mining
+      ? this.currentBlock?.transactions
+      : this.placeholderBlock.transactions;
+  }
+
+  public getCurrentBlockTransactionsLength() {
+    return this.mining ? this.currentBlock?.transactions.length : 1;
   }
 }

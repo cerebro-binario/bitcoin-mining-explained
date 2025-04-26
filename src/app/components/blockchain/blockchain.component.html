@@ -309,29 +309,25 @@
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Versão</span>
                 <span class="font-mono" [class.text-zinc-400]="!mining">{{
-                  mining ? currentBlock?.version : "1"
+                  getCurrentBlock()?.version
                 }}</span>
               </div>
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Timestamp</span>
                 <span class="font-mono" [class.text-zinc-400]="!mining">{{
-                  mining
-                    ? (currentBlock?.timestamp | date : "dd/MM/yyyy HH:mm:ss")
-                    : (Date.now() | date : "dd/MM/yyyy HH:mm:ss")
+                  getCurrentBlockTimestamp() | date : "dd/MM/yyyy HH:mm:ss"
                 }}</span>
               </div>
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Bits</span>
                 <span class="font-mono" [class.text-zinc-400]="!mining"
-                  >0x{{
-                    mining ? currentBlock?.bits.toString(16) : "1d00ffff"
-                  }}</span
+                  >0x{{ getCurrentBlockBits()?.toString(16) || "0" }}</span
                 >
               </div>
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Nonce</span>
                 <span class="font-mono" [class.text-zinc-400]="!mining">{{
-                  mining ? currentBlock?.nonce : "0"
+                  getCurrentBlock()?.nonce
                 }}</span>
               </div>
             </div>
@@ -372,23 +368,14 @@
             <div class="flex justify-between items-center mb-2">
               <span class="text-sm text-zinc-400">Transações</span>
               <span class="text-xs text-zinc-500"
-                >{{
-                  mining ? currentBlock?.transactions.length : "1"
-                }}
-                transação{{
-                  (mining ? currentBlock?.transactions.length : 1) !== 1
-                    ? "s"
-                    : ""
+                >{{ getCurrentBlockTransactionsLength() }} transação{{
+                  getCurrentBlockTransactionsLength() !== 1 ? "s" : ""
                 }}</span
               >
             </div>
             <div class="space-y-2">
               <div
-                *ngFor="
-                  let tx of mining
-                    ? currentBlock?.transactions
-                    : [{ id: 'coinbase' }]
-                "
+                *ngFor="let tx of getCurrentBlockTransactions()"
                 class="p-3 bg-zinc-700/50 rounded-lg"
               >
                 <div class="flex justify-between items-center mb-2">
@@ -408,13 +395,13 @@
                   <div>
                     <span class="text-zinc-400">Entradas:</span>
                     <span class="font-mono ml-1">{{
-                      mining ? tx.inputs?.length : "0"
+                      mining ? tx.inputs.length : "0"
                     }}</span>
                   </div>
                   <div>
                     <span class="text-zinc-400">Saídas:</span>
                     <span class="font-mono ml-1">{{
-                      mining ? tx.outputs?.length : "1"
+                      mining ? tx.outputs.length : "1"
                     }}</span>
                   </div>
                 </div>
