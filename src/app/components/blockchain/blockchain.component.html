@@ -198,26 +198,29 @@
       </div>
 
       <!-- Painel de progresso de mineração -->
-      <div *ngIf="mining && currentBlock" class="w-full max-w-2xl mx-auto my-8">
+      <div class="w-full max-w-2xl mx-auto my-8">
         <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Status:</span>
             <span
               [class.text-yellow-500]="paused"
               [class.text-green-500]="foundValidHash"
+              [class.text-zinc-400]="!mining"
               >{{
-                paused
-                  ? "Pausado"
-                  : foundValidHash
-                  ? "Hash Válido Encontrado!"
-                  : "Minerando..."
+                mining
+                  ? paused
+                    ? "Pausado"
+                    : foundValidHash
+                    ? "Hash Válido Encontrado!"
+                    : "Minerando..."
+                  : "Aguardando início da mineração"
               }}</span
             >
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Nonce:</span>
-            <span class="font-mono">{{
-              foundValidHash ? winningNonce : currentNonce
+            <span class="font-mono" [class.text-zinc-400]="!mining">{{
+              mining ? (foundValidHash ? winningNonce : currentNonce) : "0"
             }}</span>
           </div>
           <div class="flex items-center justify-between">
@@ -225,12 +228,21 @@
             <span
               class="font-mono break-all"
               [class.text-green-500]="foundValidHash"
-              >{{ currentHash }}</span
+              [class.text-zinc-400]="!mining"
+              >{{
+                mining
+                  ? currentHash
+                  : "0000000000000000000000000000000000000000000000000000000000000000"
+              }}</span
             >
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Target:</span>
-            <span class="font-mono break-all">{{ targetHash }}</span>
+            <span class="font-mono break-all" [class.text-zinc-400]="!mining">{{
+              mining
+                ? targetHash
+                : "0000000000000000000000000000000000000000000000000000000000000000"
+            }}</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Hash Rate:</span>
@@ -242,15 +254,19 @@
                 optionValue="value"
                 (onChange)="onHashRateChange()"
               ></p-selectButton>
-              <span *ngIf="hashRate === 0" class="font-mono text-green-500"
-                >{{ getHashRate() }} H/s</span
+              <span
+                *ngIf="hashRate === 0"
+                class="font-mono"
+                [class.text-green-500]="mining"
+                [class.text-zinc-400]="!mining"
+                >{{ mining ? getHashRate() : "0" }} H/s</span
               >
             </div>
           </div>
           <div *ngIf="hashRate === 0" class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Total de Hashes:</span>
-            <span class="font-mono">{{
-              hashesProcessed.toLocaleString()
+            <span class="font-mono" [class.text-zinc-400]="!mining">{{
+              mining ? hashesProcessed.toLocaleString() : "0"
             }}</span>
           </div>
           <div
@@ -283,7 +299,7 @@
       </div>
 
       <!-- Visualização detalhada do bloco atual -->
-      <div *ngIf="currentBlock" class="mt-6">
+      <div class="mt-6">
         <div class="block-details bg-zinc-800 rounded-lg p-4">
           <h3 class="text-lg font-bold mb-4">Estrutura do Bloco</h3>
 
@@ -292,23 +308,31 @@
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Versão</span>
-                <span class="font-mono">{{ currentBlock.version }}</span>
+                <span class="font-mono" [class.text-zinc-400]="!mining">{{
+                  mining ? currentBlock?.version : "1"
+                }}</span>
               </div>
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Timestamp</span>
-                <span class="font-mono">{{
-                  currentBlock.timestamp | date : "dd/MM/yyyy HH:mm:ss"
+                <span class="font-mono" [class.text-zinc-400]="!mining">{{
+                  mining
+                    ? (currentBlock?.timestamp | date : "dd/MM/yyyy HH:mm:ss")
+                    : (Date.now() | date : "dd/MM/yyyy HH:mm:ss")
                 }}</span>
               </div>
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Bits</span>
-                <span class="font-mono"
-                  >0x{{ currentBlock.bits.toString(16) }}</span
+                <span class="font-mono" [class.text-zinc-400]="!mining"
+                  >0x{{
+                    mining ? currentBlock?.bits.toString(16) : "1d00ffff"
+                  }}</span
                 >
               </div>
               <div class="flex flex-col">
                 <span class="text-sm text-zinc-400">Nonce</span>
-                <span class="font-mono">{{ currentBlock.nonce }}</span>
+                <span class="font-mono" [class.text-zinc-400]="!mining">{{
+                  mining ? currentBlock?.nonce : "0"
+                }}</span>
               </div>
             </div>
           </div>
@@ -316,16 +340,30 @@
           <!-- Hash do Bloco Anterior -->
           <div class="previous-hash mb-4 p-3 bg-zinc-700/50 rounded-lg">
             <span class="text-sm text-zinc-400">Hash do Bloco Anterior</span>
-            <div class="font-mono break-all mt-1">
-              {{ currentBlock.previousHash }}
+            <div
+              class="font-mono break-all mt-1"
+              [class.text-zinc-400]="!mining"
+            >
+              {{
+                mining
+                  ? currentBlock?.previousHash
+                  : "0000000000000000000000000000000000000000000000000000000000000000"
+              }}
             </div>
           </div>
 
           <!-- Merkle Root -->
           <div class="merkle-root mb-4 p-3 bg-zinc-700/50 rounded-lg">
             <span class="text-sm text-zinc-400">Merkle Root</span>
-            <div class="font-mono break-all mt-1">
-              {{ currentBlock.merkleRoot || "Calculando..." }}
+            <div
+              class="font-mono break-all mt-1"
+              [class.text-zinc-400]="!mining"
+            >
+              {{
+                mining
+                  ? currentBlock?.merkleRoot || "Calculando..."
+                  : "0000000000000000000000000000000000000000000000000000000000000000"
+              }}
             </div>
           </div>
 
@@ -334,14 +372,23 @@
             <div class="flex justify-between items-center mb-2">
               <span class="text-sm text-zinc-400">Transações</span>
               <span class="text-xs text-zinc-500"
-                >{{ currentBlock.transactions.length }} transação{{
-                  currentBlock.transactions.length !== 1 ? "s" : ""
+                >{{
+                  mining ? currentBlock?.transactions.length : "1"
+                }}
+                transação{{
+                  (mining ? currentBlock?.transactions.length : 1) !== 1
+                    ? "s"
+                    : ""
                 }}</span
               >
             </div>
             <div class="space-y-2">
               <div
-                *ngFor="let tx of currentBlock.transactions"
+                *ngFor="
+                  let tx of mining
+                    ? currentBlock?.transactions
+                    : [{ id: 'coinbase' }]
+                "
                 class="p-3 bg-zinc-700/50 rounded-lg"
               >
                 <div class="flex justify-between items-center mb-2">
@@ -360,24 +407,41 @@
                 <div class="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span class="text-zinc-400">Entradas:</span>
-                    <span class="font-mono ml-1">{{ tx.inputs.length }}</span>
+                    <span class="font-mono ml-1">{{
+                      mining ? tx.inputs?.length : "0"
+                    }}</span>
                   </div>
                   <div>
                     <span class="text-zinc-400">Saídas:</span>
-                    <span class="font-mono ml-1">{{ tx.outputs.length }}</span>
+                    <span class="font-mono ml-1">{{
+                      mining ? tx.outputs?.length : "1"
+                    }}</span>
                   </div>
                 </div>
                 <div *ngIf="tx.id === 'coinbase'" class="mt-2 text-xs">
                   <div class="flex items-center gap-2">
                     <span class="text-zinc-400">Endereço:</span>
-                    <span class="font-mono text-green-500">{{
-                      tx.outputs[0].address
-                    }}</span>
+                    <span
+                      class="font-mono"
+                      [class.text-green-500]="mining"
+                      [class.text-zinc-400]="!mining"
+                      >{{
+                        mining
+                          ? tx.outputs[0].address
+                          : "0000000000000000000000000000000000000000"
+                      }}</span
+                    >
                   </div>
                   <div class="flex items-center gap-2">
                     <span class="text-zinc-400">Valor:</span>
-                    <span class="font-mono text-green-500"
-                      >{{ tx.outputs[0].amount }} ₿</span
+                    <span
+                      class="font-mono"
+                      [class.text-green-500]="mining"
+                      [class.text-zinc-400]="!mining"
+                      >{{
+                        mining ? tx.outputs[0].amount : "50.00000000"
+                      }}
+                      ₿</span
                     >
                   </div>
                 </div>
@@ -393,12 +457,26 @@
                 class="text-xs"
                 [class.text-green-500]="isHashValid(currentHash)"
                 [class.text-red-500]="!isHashValid(currentHash)"
+                [class.text-zinc-400]="!mining"
               >
-                {{ isHashValid(currentHash) ? "Hash Válido" : "Hash Inválido" }}
+                {{
+                  mining
+                    ? isHashValid(currentHash)
+                      ? "Hash Válido"
+                      : "Hash Inválido"
+                    : "Aguardando mineração"
+                }}
               </span>
             </div>
-            <div class="font-mono break-all mt-1">
-              {{ currentHash || "Calculando..." }}
+            <div
+              class="font-mono break-all mt-1"
+              [class.text-zinc-400]="!mining"
+            >
+              {{
+                mining
+                  ? currentHash || "Calculando..."
+                  : "0000000000000000000000000000000000000000000000000000000000000000"
+              }}
             </div>
 
             <!-- Comparação com Target -->
@@ -408,8 +486,15 @@
                 <span class="text-xs text-zinc-400">Hash Atual</span>
               </div>
               <div class="flex justify-between items-center">
-                <div class="font-mono text-xs break-all flex-1 mr-2">
-                  {{ targetHash }}
+                <div
+                  class="font-mono text-xs break-all flex-1 mr-2"
+                  [class.text-zinc-400]="!mining"
+                >
+                  {{
+                    mining
+                      ? targetHash
+                      : "0000000000000000000000000000000000000000000000000000000000000000"
+                  }}
                 </div>
                 <div class="flex items-center gap-2">
                   <i
@@ -418,21 +503,32 @@
                     [class.pi-check]="isHashValid(currentHash)"
                     [class.text-red-500]="!isHashValid(currentHash)"
                     [class.text-green-500]="isHashValid(currentHash)"
+                    [class.text-zinc-400]="!mining"
                   ></i>
                 </div>
-                <div class="font-mono text-xs break-all flex-1 ml-2">
-                  {{ currentHash }}
+                <div
+                  class="font-mono text-xs break-all flex-1 ml-2"
+                  [class.text-zinc-400]="!mining"
+                >
+                  {{
+                    mining
+                      ? currentHash
+                      : "0000000000000000000000000000000000000000000000000000000000000000"
+                  }}
                 </div>
               </div>
               <div class="mt-2 text-xs text-zinc-400">
                 O hash é válido quando é menor que o target.
-                <span *ngIf="!isHashValid(currentHash)">
+                <span *ngIf="mining && !isHashValid(currentHash)">
                   O hash atual é maior que o target, então precisamos continuar
                   minerando.
                 </span>
-                <span *ngIf="isHashValid(currentHash)">
+                <span *ngIf="mining && isHashValid(currentHash)">
                   O hash atual é menor que o target, então encontramos um hash
                   válido!
+                </span>
+                <span *ngIf="!mining">
+                  Aguardando início da mineração para verificar o hash.
                 </span>
               </div>
             </div>
