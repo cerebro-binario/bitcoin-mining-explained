@@ -31,6 +31,7 @@
             min="1"
             class="w-24 px-2 py-1 rounded bg-zinc-900 text-white border border-zinc-700 font-mono"
             [(ngModel)]="miner.hashRate"
+            (ngModelChange)="onMinerChange()"
           />
           <span class="text-xs text-zinc-400">H/s</span>
         </div>
@@ -41,6 +42,7 @@
             min="0"
             class="w-24 px-2 py-1 rounded bg-zinc-900 text-white border border-zinc-700 font-mono"
             [(ngModel)]="miner.distance"
+            (ngModelChange)="onMinerChange()"
           />
           <span class="text-xs text-zinc-400">ms</span>
         </div>
