@@ -48,13 +48,27 @@
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-zinc-400">Hash Rate:</span>
-              <p-selectButton
-                [options]="hashRateOptions"
-                [(ngModel)]="hashRate"
-                optionLabel="label"
-                optionValue="value"
-                (onChange)="onHashRateChange()"
-              ></p-selectButton>
+              <div class="flex items-center gap-2">
+                <p-selectButton
+                  [options]="hashRateOptions"
+                  [(ngModel)]="hashRate"
+                  optionLabel="label"
+                  optionValue="value"
+                  (onChange)="onHashRateChange()"
+                ></p-selectButton>
+                <span *ngIf="hashRate === 0" class="font-mono text-green-500"
+                  >{{ getHashRate() }} H/s</span
+                >
+              </div>
+            </div>
+            <div
+              *ngIf="hashRate === 0"
+              class="flex items-center justify-between"
+            >
+              <span class="text-sm text-zinc-400">Total de Hashes:</span>
+              <span class="font-mono">{{
+                hashesProcessed.toLocaleString()
+              }}</span>
             </div>
           </div>
         </div>
@@ -111,13 +125,24 @@
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Hash Rate:</span>
-            <p-selectButton
-              [options]="hashRateOptions"
-              [(ngModel)]="hashRate"
-              optionLabel="label"
-              optionValue="value"
-              (onChange)="onHashRateChange()"
-            ></p-selectButton>
+            <div class="flex items-center gap-2">
+              <p-selectButton
+                [options]="hashRateOptions"
+                [(ngModel)]="hashRate"
+                optionLabel="label"
+                optionValue="value"
+                (onChange)="onHashRateChange()"
+              ></p-selectButton>
+              <span *ngIf="hashRate === 0" class="font-mono text-green-500"
+                >{{ getHashRate() }} H/s</span
+              >
+            </div>
+          </div>
+          <div *ngIf="hashRate === 0" class="flex items-center justify-between">
+            <span class="text-sm text-zinc-400">Total de Hashes:</span>
+            <span class="font-mono">{{
+              hashesProcessed.toLocaleString()
+            }}</span>
           </div>
         </div>
       </div>
