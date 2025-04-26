@@ -1,13 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Node {
-  id: number;
-  distance: number;
-}
-
-const NODES_STORAGE_KEY = 'blockchain-v2-nodes';
+import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 
 @Component({
   selector: 'app-nodes-panel',
@@ -16,36 +10,25 @@ const NODES_STORAGE_KEY = 'blockchain-v2-nodes';
   templateUrl: './nodes-panel.component.html',
   styleUrls: ['./nodes-panel.component.scss'],
 })
-export class NodesPanelComponent implements OnInit {
-  nodes: Node[] = [];
-  private nextId = 1;
+export class NodesPanelComponent {
+  constructor(public network: BitcoinNetworkService) {}
 
-  ngOnInit() {
-    const saved = localStorage.getItem(NODES_STORAGE_KEY);
-    if (saved) {
-      this.nodes = JSON.parse(saved);
-      this.nextId =
-        this.nodes.length > 0
-          ? Math.max(...this.nodes.map((n) => n.id)) + 1
-          : 1;
-    }
+  get nodes() {
+    return this.network.nodes.filter((n) => !n.isMiner);
   }
 
   addNode() {
-    this.nodes.push({ id: this.nextId++, distance: 50 });
-    this.saveNodes();
+    this.network.addNode(false);
   }
 
   removeNode(index: number) {
-    this.nodes.splice(index, 1);
-    this.saveNodes();
-  }
-
-  saveNodes() {
-    localStorage.setItem(NODES_STORAGE_KEY, JSON.stringify(this.nodes));
+    const node = this.nodes[index];
+    if (node) {
+      this.network.removeNode(node.id!);
+    }
   }
 
   onNodeChange() {
-    this.saveNodes();
+    this.network.save();
   }
 }
