@@ -980,4 +980,27 @@ export class BlockchainComponent implements OnInit, OnDestroy {
       setTimeout(() => this.updateMiningTime(), 100);
     }
   }
+
+  resetBlockchain(): void {
+    this.blocks = [];
+    this.pendingTransactions = [];
+    this.currentBlock = null;
+    this.utxoSet = new Map();
+    this.usedUtxos = new Set();
+    this.mining = false;
+    this.paused = false;
+    this.currentDifficulty = 1;
+    this.currentHash = '';
+    this.currentNonce = 0;
+    this.hashesProcessed = 0;
+    this.foundValidHash = false;
+    this.blockToAdd = null;
+    this.winningNonce = null;
+    this.currentMiningTime = 0;
+    this.blockMiningTime = 0;
+    this.pausedTime = 0;
+    this.lastPauseTime = null;
+    this.lastBlockStartTime = null;
+    this.blockchainService.resetBlockchain();
+  }
 }

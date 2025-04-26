@@ -114,4 +114,11 @@ export class BlockchainService {
     });
     return utxos;
   }
+
+  resetBlockchain(): void {
+    this.blocksSubject.next([]);
+    this.pendingTransactionsSubject.next([]);
+    this.utxoSetSubject.next(new Map());
+    this.saveState();
+  }
 }
