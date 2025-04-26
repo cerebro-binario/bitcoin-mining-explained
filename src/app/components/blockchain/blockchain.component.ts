@@ -77,6 +77,7 @@ export class BlockchainComponent implements OnInit {
     { label: '50 hash/s', value: 20 },
     { label: '100 hash/s', value: 10 },
   ];
+  paused = false;
 
   constructor() {
     this.initializeNewTransaction();
@@ -312,10 +313,14 @@ export class BlockchainComponent implements OnInit {
   }
 
   private startMiningInterval(blockToMine: Block) {
+    if (this.paused) return;
+
     this.miningInterval = setInterval(() => {
-      if (!this.mining) {
+      if (!this.mining || this.paused) {
         clearInterval(this.miningInterval);
-        this.currentBlock = null;
+        if (!this.mining) {
+          this.currentBlock = null;
+        }
         return;
       }
 
@@ -331,6 +336,7 @@ export class BlockchainComponent implements OnInit {
           this.pendingTransactions = [];
         }
         this.mining = false;
+        this.paused = false;
         this.currentBlock = null;
       }
     }, this.hashRate);
@@ -338,15 +344,29 @@ export class BlockchainComponent implements OnInit {
 
   async mineBlock(): Promise<void> {
     if (this.mining) {
-      // Cancel current mining
-      this.mining = false;
+      if (this.paused) {
+        // Resume mining
+        this.paused = false;
+        this.startMiningInterval(this.currentBlock!);
+        return;
+      }
+
+      // Pause or cancel mining
       if (this.miningInterval) {
         clearInterval(this.miningInterval);
+        if (this.currentBlock) {
+          // If we have a block, just pause
+          this.paused = true;
+        } else {
+          // If no block, cancel mining completely
+          this.mining = false;
+        }
       }
       return;
     }
 
     this.mining = true;
+    this.paused = false;
     let blockToMine: Block;
 
     try {

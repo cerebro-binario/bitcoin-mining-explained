@@ -10,16 +10,30 @@
           transaction.
         </p>
         <p-button
-          [label]="mining ? 'Cancelar Mineração' : 'Minerar Bloco Gênesis'"
-          [icon]="mining ? 'pi pi-times' : 'pi pi-bolt'"
+          [label]="
+            mining
+              ? paused
+                ? 'Continuar Mineração'
+                : 'Pausar Mineração'
+              : 'Minerar Bloco Gênesis'
+          "
+          [icon]="
+            mining ? (paused ? 'pi pi-play' : 'pi pi-pause') : 'pi pi-bolt'
+          "
           [loading]="false"
           (click)="mineBlock()"
-          [severity]="mining ? 'danger' : 'warn'"
+          [severity]="mining ? (paused ? 'success' : 'warn') : 'warn'"
         ></p-button>
 
         <!-- Mining Progress -->
         <div *ngIf="mining && currentBlock" class="w-full max-w-2xl">
           <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-zinc-400">Status:</span>
+              <span [class.text-yellow-500]="paused">{{
+                paused ? "Pausado" : "Minerando..."
+              }}</span>
+            </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-zinc-400">Nonce:</span>
               <span class="font-mono">{{ currentNonce }}</span>
@@ -57,18 +71,32 @@
           (click)="generateNewTransaction()"
         ></p-button>
         <p-button
-          [label]="mining ? 'Cancelar Mineração' : 'Minerar Bloco'"
-          [icon]="mining ? 'pi pi-times' : 'pi pi-bolt'"
+          [label]="
+            mining
+              ? paused
+                ? 'Continuar Mineração'
+                : 'Pausar Mineração'
+              : 'Minerar Bloco'
+          "
+          [icon]="
+            mining ? (paused ? 'pi pi-play' : 'pi pi-pause') : 'pi pi-bolt'
+          "
           [loading]="false"
           (click)="mineBlock()"
           [disabled]="pendingTransactions.length === 0"
-          [severity]="mining ? 'danger' : 'primary'"
+          [severity]="mining ? (paused ? 'success' : 'warn') : 'primary'"
         ></p-button>
       </div>
 
       <!-- Mining Progress -->
       <div *ngIf="mining && currentBlock" class="mb-4">
         <div class="flex flex-col gap-2 p-4 bg-zinc-800 rounded-lg">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-zinc-400">Status:</span>
+            <span [class.text-yellow-500]="paused">{{
+              paused ? "Pausado" : "Minerando..."
+            }}</span>
+          </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-zinc-400">Nonce:</span>
             <span class="font-mono">{{ currentNonce }}</span>
