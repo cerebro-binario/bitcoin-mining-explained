@@ -6,9 +6,58 @@ export class Block {
   nonce: number = 0;
   transactions: Transaction[] = [];
   nBits: number = 0; // Compact representation of target
+  private _target: string = '0'; // Store target as string for JSON serialization
 
   constructor(init?: Partial<Block>) {
-    Object.assign(this, init);
+    if (init) {
+      // Handle target conversion if it exists in init
+      if (init.target !== undefined) {
+        this._target =
+          typeof init.target === 'bigint'
+            ? init.target.toString()
+            : String(init.target);
+        delete init.target; // Remove from init to avoid Object.assign issues
+      }
+
+      Object.assign(this, init);
+
+      // Calculate target from nBits if provided
+      if (init.nBits) {
+        this.calculateTarget();
+      }
+    }
+  }
+
+  get target(): bigint {
+    return BigInt(this._target);
+  }
+
+  set target(value: bigint) {
+    this._target = value.toString();
+  }
+
+  private calculateTarget(): void {
+    // Extract exponent and coefficient from nBits
+    const exponent = this.nBits >>> 24;
+    const coefficient = this.nBits & 0x007fffff;
+
+    // Calculate target: coefficient * 2^(8*(exponent-3))
+    // The coefficient is a 24-bit number, so we need to shift it appropriately
+    const shift = 8 * (exponent - 3);
+    this.target = BigInt(coefficient) << BigInt(shift);
+  }
+
+  setNBits(nBits: number): void {
+    this.nBits = nBits;
+    this.calculateTarget();
+  }
+
+  // Add toJSON method to ensure proper serialization
+  toJSON(): any {
+    return {
+      ...this,
+      target: this._target, // Use string representation for JSON
+    };
   }
 }
 
