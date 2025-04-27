@@ -1,5 +1,8 @@
+import { sha256 } from 'js-sha256';
+
 export class Block {
   id: number = 0;
+  height: number = 0;
   timestamp: number = Date.now();
   previousHash: string = '';
   hash: string = '';
@@ -36,15 +39,11 @@ export class Block {
     this._target = value.toString(16);
   }
 
-  private calculateTarget(): void {
-    // Extract exponent and coefficient from nBits
-    const exponent = this.nBits >>> 24;
-    const coefficient = this.nBits & 0x007fffff;
-
-    // Calculate target: coefficient * 2^(8*(exponent-3))
-    // The coefficient is a 24-bit number, so we need to shift it appropriately
-    const shift = 8 * (exponent - 3);
-    this.target = BigInt(coefficient) << BigInt(shift);
+  public calculateTarget(): void {
+    // Convert nBits to target
+    const exponent = this.nBits >> 24;
+    const mantissa = this.nBits & 0x00ffffff;
+    this.target = BigInt(mantissa) * BigInt(2) ** BigInt(8 * (exponent - 3));
   }
 
   setNBits(nBits: number): void {
@@ -58,6 +57,18 @@ export class Block {
       ...this,
       target: this._target, // Use string representation for JSON
     };
+  }
+
+  public calculateHash(): string {
+    const data = {
+      height: this.height,
+      timestamp: this.timestamp,
+      previousHash: this.previousHash,
+      transactions: this.transactions,
+      nonce: this.nonce,
+      nBits: this.nBits,
+    };
+    return sha256(JSON.stringify(data));
   }
 }
 
