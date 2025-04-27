@@ -18,7 +18,6 @@ export class BitcoinNetworkService {
       name,
       hashRate,
       neighbors: [],
-      distance: 50,
     });
     // Conexão automática a até 3 vizinhos aleatórios
     const N = Math.min(3, this.nodes.length);

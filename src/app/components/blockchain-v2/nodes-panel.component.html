@@ -29,17 +29,6 @@
         <span class="text-xs text-zinc-400">Identificador:</span>
         <span class="font-mono text-base text-green-400">{{ node.id }}</span>
       </div>
-      <div class="flex items-center gap-2 mt-2">
-        <span class="text-xs text-zinc-400">Distância Virtual:</span>
-        <input
-          type="number"
-          min="0"
-          class="w-24 px-2 py-1 rounded bg-zinc-900 text-white border border-zinc-700 font-mono"
-          [(ngModel)]="node.distance"
-          (ngModelChange)="onNodeChange()"
-        />
-        <span class="text-xs text-zinc-400">ms</span>
-      </div>
     </div>
   </div>
 </div>
