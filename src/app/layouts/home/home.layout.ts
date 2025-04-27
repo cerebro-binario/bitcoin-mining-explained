@@ -20,17 +20,17 @@ import { ThemeService } from '../../services/theme.service';
 })
 export class HomeLayout {
   tabs = [
-    { route: '/blockchain', icon: 'pi pi-home', label: 'Blockchain' },
+    // { route: '/blockchain', icon: 'pi pi-home', label: 'Blockchain' },
     {
-      route: '/blockchain/v2',
+      route: '/blockchain',
       icon: 'pi pi-home',
-      label: 'Blockchain v2',
+      label: 'Blockchain',
     },
-    {
-      route: '/mempool',
-      icon: 'pi pi-arrow-right-arrow-left',
-      label: 'Transações',
-    },
+    // {
+    //   route: '/mempool',
+    //   icon: 'pi pi-arrow-right-arrow-left',
+    //   label: 'Transações',
+    // },
     {
       route: '/addresses',
       icon: 'pi pi-wallet',

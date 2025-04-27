@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
 import {
-  BITCOIN_ADDRESS_TYPE_CODES,
-  COINBASE_ADDRESS,
-} from '../models/address.model';
-import {
   Block,
   INITIAL_SUBSIDY,
   N_BLOCKS_PER_HALVING,
@@ -17,7 +13,6 @@ import {
   hashSHA256,
 } from '../utils/tools';
 import { AddressService } from './address.service';
-import { MinerService } from './miner.service';
 
 @Injectable({
   providedIn: 'root',
@@ -25,10 +20,7 @@ import { MinerService } from './miner.service';
 export class MempoolService {
   private transactions: Transaction[] = [];
 
-  constructor(
-    private addressService: AddressService,
-    private minerService: MinerService
-  ) {
+  constructor(private addressService: AddressService) {
     this.load();
   }
 

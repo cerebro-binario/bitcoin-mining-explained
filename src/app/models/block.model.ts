@@ -1,6 +1,3 @@
-import { GENESIS_KEY_PAIR } from './address.model';
-// import { Transaction } from './transaction.model';
-
 export class Block {
   id: number = 0;
   timestamp: number = Date.now();
