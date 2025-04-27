@@ -63,10 +63,20 @@ export class Block {
 
 export interface Transaction {
   id: string;
-  from: string;
-  to: string;
-  amount: number;
+  inputs: TransactionInput[];
+  outputs: TransactionOutput[];
   signature: string;
+}
+
+export interface TransactionInput {
+  txid: string; // ID da transação que criou o UTXO
+  vout: number; // Índice do output na transação anterior
+  scriptSig: string; // Assinatura do input
+}
+
+export interface TransactionOutput {
+  value: number; // Valor em satoshis
+  scriptPubKey: string; // Script de bloqueio (endereço do destinatário)
 }
 
 // export const GENESIS_BLOCK: Block = {
