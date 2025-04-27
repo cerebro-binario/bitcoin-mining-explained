@@ -91,6 +91,7 @@ export class BitcoinNetworkService {
       this.nodes = (JSON.parse(saved) as any[]).map(
         (obj) => new BitcoinNode(obj)
       );
+      // Atualiza o nextId para o maior ID existente + 1
       this.nextId =
         this.nodes.length > 0
           ? Math.max(...this.nodes.map((n) => n.id ?? 0)) + 1
