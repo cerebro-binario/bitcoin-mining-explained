@@ -17,6 +17,7 @@ export class BitcoinNode {
   currentBlock?: Block;
   isMining: boolean = false;
   miningInterval?: any;
+  miningAddress: string = ''; // Endereço para receber recompensas de mineração
 
   constructor(init?: Partial<BitcoinNode>) {
     Object.assign(this, init);

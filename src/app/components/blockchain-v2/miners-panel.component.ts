@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
-import { MiningBlockComponent } from './mining-block/mining-block.component';
-import { BitcoinNode } from '../../models/bitcoin-node.model';
+import { AddressService } from '../../services/address.service';
 import { BlockchainService } from '../../services/blockchain.service';
+import { BitcoinNode } from '../../models/bitcoin-node.model';
 
 interface HashRateOption {
   label: string;
@@ -14,7 +13,7 @@ interface HashRateOption {
 @Component({
   selector: 'app-miners-panel',
   standalone: true,
-  imports: [FormsModule, CommonModule, MiningBlockComponent],
+  imports: [CommonModule],
   templateUrl: './miners-panel.component.html',
   styleUrls: ['./miners-panel.component.scss'],
 })
@@ -28,7 +27,8 @@ export class MinersPanelComponent {
 
   constructor(
     public network: BitcoinNetworkService,
-    private blockchain: BlockchainService
+    private blockchain: BlockchainService,
+    private addressService: AddressService
   ) {}
 
   get miners() {
@@ -38,6 +38,7 @@ export class MinersPanelComponent {
   addMiner() {
     const node = this.network.addNode(true, undefined, 1000);
     node.name = `Minerador ${node.id}`;
+    node.miningAddress = this.addressService.generateRandomAddress();
     this.network.save();
   }
 
