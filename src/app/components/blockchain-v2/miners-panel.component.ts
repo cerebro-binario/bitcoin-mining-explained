@@ -4,6 +4,7 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 import { AddressService } from '../../services/address.service';
 import { BlockchainService } from '../../services/blockchain.service';
 import { BitcoinNode } from '../../models/bitcoin-node.model';
+import { MiningBlockComponent } from './mining-block/mining-block.component';
 
 interface HashRateOption {
   label: string;
@@ -13,7 +14,7 @@ interface HashRateOption {
 @Component({
   selector: 'app-miners-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MiningBlockComponent],
   templateUrl: './miners-panel.component.html',
   styleUrls: ['./miners-panel.component.scss'],
 })
