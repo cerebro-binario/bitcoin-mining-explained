@@ -1,78 +1,44 @@
-export type BitcoinAddressTypeCode = 'P2PKH' | 'P2SH' | 'P2WPKH';
-
-export type BitcoinAddressType = {
-  code: BitcoinAddressTypeCode;
+export interface BitcoinAddressType {
+  code: string;
   name: string;
-};
+  description: string;
+}
 
-export type BitcoinAddresses = {
-  [type in BitcoinAddressTypeCode]: BitcoinAddressInfo;
-};
-
-export const BITCOIN_ADDRESS_TYPES: {
-  [code in BitcoinAddressTypeCode]: BitcoinAddressType;
-} = {
-  P2PKH: { code: 'P2PKH', name: 'P2PKH (Legacy)' },
-  P2SH: { code: 'P2SH', name: 'P2SH (Multisig)' },
-  P2WPKH: { code: 'P2WPKH', name: 'P2WPKH (SegWit - Bech32)' },
-};
-
-export const BITCOIN_ADDRESS_TYPE_CODES: BitcoinAddressTypeCode[] = [
-  'P2PKH',
-  'P2SH',
-  'P2WPKH',
-];
-
-export type BitcoinAddress = `1${string}` | `3${string}` | `bc1${string}`;
-
-export type BitcoinAddressInfo = {
+export interface BitcoinAddressInfo {
   type: BitcoinAddressType;
-  address: BitcoinAddress;
-  balance: number;
-};
+  address: string;
+  balance?: number;
+}
 
-export type KeyPair = {
+export interface BitcoinAddresses {
+  P2PKH: BitcoinAddressInfo;
+  P2SH: BitcoinAddressInfo;
+  P2WPKH: BitcoinAddressInfo;
+}
+
+export interface KeyPair {
   privateKey: string;
   publicKey: string;
   addresses: BitcoinAddresses;
-};
+}
 
-export type KeyPairByAddress = {
-  [address in BitcoinAddress]: KeyPair;
-};
-
-export type KeyPairByPrivateKey = {
-  [privateKey: string]: KeyPair;
-};
-
-export type CoinbaseAddress =
-  '0000000000000000000000000000000000000000000000000000000000000000';
-
-export const COINBASE_ADDRESS =
-  '0000000000000000000000000000000000000000000000000000000000000000';
-
-export const MAX_PRIVATE_KEY =
-  'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140';
-
-export const GENESIS_KEY_PAIR: KeyPair = {
-  privateKey: (0x01).toString(),
-  publicKey:
-    '0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8',
-  addresses: {
-    P2PKH: {
-      address: '1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm',
-      balance: 0,
-      type: BITCOIN_ADDRESS_TYPES['P2PKH'],
-    },
-    P2SH: {
-      address: '3EyPVdtVrtMJ1XwPT9oiBrQysGpRY8LE9K',
-      balance: 0,
-      type: BITCOIN_ADDRESS_TYPES['P2SH'],
-    },
-    P2WPKH: {
-      address: 'bc1qjxeyh7049zzn99s2c6r6hvp4zfa362997dpu0h',
-      balance: 0,
-      type: BITCOIN_ADDRESS_TYPES['P2WPKH'],
-    },
+export const BITCOIN_ADDRESS_TYPES: { [key: string]: BitcoinAddressType } = {
+  P2PKH: {
+    code: 'P2PKH',
+    name: 'Pay-to-Public-Key-Hash',
+    description: 'Endereço Bitcoin tradicional (começa com 1)',
+  },
+  P2SH: {
+    code: 'P2SH',
+    name: 'Pay-to-Script-Hash',
+    description: 'Endereço Bitcoin compatível com multisig (começa com 3)',
+  },
+  P2WPKH: {
+    code: 'P2WPKH',
+    name: 'Pay-to-Witness-Public-Key-Hash',
+    description: 'Endereço Bitcoin SegWit (começa com bc1)',
   },
 };
+
+export const MAX_PRIVATE_KEY =
+  'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141';

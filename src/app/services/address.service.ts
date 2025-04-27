@@ -11,6 +11,8 @@ import {
   BitcoinAddressTypeCode,
   KeyPair,
   KeyPairByAddress,
+  BitcoinAddresses,
+  MAX_PRIVATE_KEY,
 } from '../models/address.model';
 
 @Injectable({
@@ -232,5 +234,54 @@ export class AddressService {
     };
 
     return appKeyPair;
+  }
+
+  getKeyPairs(start: BigInt, end: BigInt): KeyPair[] {
+    const keyPairs: KeyPair[] = [];
+
+    for (let i = start; i < end; i++) {
+      const privateKey = this.formatPrivateKey(i);
+      const publicKey = this.generatePublicKey(privateKey);
+
+      const p2pkh = this.generateBitcoinAddress(publicKey, 'P2PKH');
+      const p2sh = this.generateBitcoinAddress(publicKey, 'P2SH');
+      const p2wpkh = this.generateBitcoinAddress(publicKey, 'P2WPKH');
+
+      const addresses: BitcoinAddresses = {
+        P2PKH: {
+          type: BITCOIN_ADDRESS_TYPES['P2PKH'],
+          address: p2pkh,
+        },
+        P2SH: {
+          type: BITCOIN_ADDRESS_TYPES['P2SH'],
+          address: p2sh,
+        },
+        P2WPKH: {
+          type: BITCOIN_ADDRESS_TYPES['P2WPKH'],
+          address: p2wpkh,
+        },
+      };
+
+      keyPairs.push({
+        privateKey,
+        publicKey,
+        addresses,
+      });
+    }
+
+    return keyPairs;
+  }
+
+  getTotalKeyPairs(): BigInt {
+    return BigInt('0x' + MAX_PRIVATE_KEY);
+  }
+
+  private formatPrivateKey(index: BigInt): string {
+    return index.toString(16).padStart(64, '0');
+  }
+
+  private generateBitcoinAddress(publicKey: string, type: string): string {
+    // TODO: Implementar geração real de endereço Bitcoin
+    return 'bc1' + publicKey.slice(2, 10);
   }
 }

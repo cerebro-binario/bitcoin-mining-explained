@@ -18,14 +18,14 @@ import {
 import { AddressService } from '../../services/address.service';
 import { hexToDecimal, shortenValue } from '../../utils/tools';
 import { BlockchainService } from '../../services/blockchain.service';
-import { TransactionOutput } from '../../models/blockchain.model';
+import { Transaction } from '../../models/block.model';
 import { Subscription } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 
 interface AddressInfo {
   address: string;
   balance: number;
-  utxos: TransactionOutput[];
+  utxos: Transaction[];
 }
 
 @Component({
@@ -252,116 +252,53 @@ export class AddressesComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Atualiza os parâmetros na URL
   private updateQueryParams(): void {
+    const queryParams = {
+      format: this.isHexFormat ? 'hex' : 'decimal',
+      filter: this.showOnlyWithBalance ? 'withBalance' : 'all',
+      page: this.currentPage + 1,
+    };
+
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: {
-        format: this.isHexFormat ? 'hex' : 'decimal',
-        filter: this.showOnlyWithBalance ? 'withBalance' : 'all',
-        page: this.currentPage + 1,
-      },
-      queryParamsHandling: 'merge', // Mantém os parâmetros existentes
+      queryParams,
+      queryParamsHandling: 'merge',
     });
   }
 
-  // Atualiza a lista de chaves privadas e endereços na página atual
   private updateAddressesList(): void {
-    if (this.showOnlyWithBalance) {
-      this.keyPairs = this.addressService.getAllKeyPairsWithBalance();
-      this.totalKeyPairs = BigInt(this.keyPairs.length);
-      return;
-    }
-
-    this.keyPairs = [];
-
     const start = BigInt(this.currentPage * this.rowsPerPage + 1);
     const end = start + BigInt(this.rowsPerPage);
 
-    for (let i = start; i < end; i++) {
-      const privateKey = this.formatPrivateKey(i);
-      const publicKey = this.addressService.generatePublicKey(privateKey);
+    this.keyPairs = this.addressService.getKeyPairs(start, end);
+    this.totalKeyPairs = this.addressService.getTotalKeyPairs();
 
-      const p2pkh = this.addressService.generateBitcoinAddress(
-        publicKey,
-        'P2PKH'
-      );
-      const p2sh = this.addressService.generateBitcoinAddress(
-        publicKey,
-        'P2SH'
-      );
-      const p2wpkh = this.addressService.generateBitcoinAddress(
-        publicKey,
-        'P2WPKH'
-      );
-
-      const addresses: BitcoinAddresses = {
-        P2PKH: {
-          type: BITCOIN_ADDRESS_TYPES['P2PKH'],
-          address: p2pkh,
-          balance: this.addressService.getBalance(p2pkh) || 0,
-        },
-        P2SH: {
-          type: BITCOIN_ADDRESS_TYPES['P2SH'],
-          address: p2sh,
-          balance: this.addressService.getBalance(p2sh) || 0,
-        },
-        P2WPKH: {
-          type: BITCOIN_ADDRESS_TYPES['P2WPKH'],
-          address: p2wpkh,
-          balance: this.addressService.getBalance(p2pkh) || 0,
-        },
-      };
-
-      this.keyPairs.push({
-        privateKey,
-        publicKey,
-        addresses,
-      });
-    }
-
-    this.totalKeyPairs = BigInt('0x' + MAX_PRIVATE_KEY);
+    // Atualizar a lista de endereços com saldos
+    this.loadAddresses();
   }
 
-  // Alterna entre mostrar apenas endereços com saldo e todas as chaves privadas
   private updatePageState(onFilterToggle: boolean = false): void {
-    const currentKey = this.showOnlyWithBalance ? 'withBalance' : 'all';
-    const prevKey = this.showOnlyWithBalance ? 'all' : 'withBalance';
-
-    if (onFilterToggle) {
-      this.pageState[prevKey] = this.currentPage;
-      this.currentPage = this.pageState[currentKey];
-    } else {
-      this.pageState[currentKey] = this.currentPage;
-    }
+    const filterKey = this.showOnlyWithBalance ? 'withBalance' : 'all';
+    this.pageState[filterKey] = this.currentPage;
   }
 
   private loadAddresses() {
     this.loading = true;
-    const addressesMap = new Map<string, AddressInfo>();
-
-    // Get all UTXOs from the blockchain service
     const utxoSet = this.blockchainService.getUtxoSet();
 
-    // Process each UTXO to group by address
-    utxoSet.forEach((utxo) => {
-      if (!addressesMap.has(utxo.address)) {
-        addressesMap.set(utxo.address, {
-          address: utxo.address,
-          balance: 0,
-          utxos: [],
-        });
-      }
+    this.addresses = this.keyPairs.map((keyPair) => {
+      const address = keyPair.addresses['P2PKH'].address;
+      const utxos = Array.from(utxoSet.values()).filter(
+        (utxo) => utxo.address === address
+      );
+      const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
 
-      const addressInfo = addressesMap.get(utxo.address)!;
-      addressInfo.balance += utxo.amount;
-      addressInfo.utxos.push(utxo);
+      return {
+        address,
+        balance,
+        utxos,
+      };
     });
-
-    // Convert map to array and sort by balance
-    this.addresses = Array.from(addressesMap.values()).sort(
-      (a, b) => b.balance - a.balance
-    );
 
     this.loading = false;
   }

@@ -8,7 +8,7 @@ import {
   INITIAL_SUBSIDY,
   N_BLOCKS_PER_HALVING,
 } from '../models/block.model';
-import { Transaction } from '../models/transaction.model';
+import { Transaction } from '../models/block.model';
 import {
   dupHashSHA256,
   getRandomAmount,
