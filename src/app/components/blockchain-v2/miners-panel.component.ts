@@ -67,7 +67,7 @@ export class MinersPanelComponent {
     }
 
     miner.isMining = true;
-    const hashRate = miner.hashRate || 1000;
+    const hashRate = miner.hashRate;
 
     // Variáveis para controle do batch
     let lastBatchTime = Date.now();
