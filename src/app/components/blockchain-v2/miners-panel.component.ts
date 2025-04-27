@@ -69,53 +69,77 @@ export class MinersPanelComponent {
     miner.isMining = true;
     const hashRate = miner.hashRate || 1000;
 
-    if (hashRate === null) {
-      // Modo máximo - sem intervalo
-      miner.miningInterval = setInterval(() => {
-        if (!miner.currentBlock) return;
+    // Variáveis para controle do batch
+    let lastBatchTime = Date.now();
+    let accumulatedTime = 0;
+    let batchStartTime = Date.now();
+    let hashesInCurrentBatch = 0;
 
-        // Incrementa o nonce e calcula o hash
-        miner.currentBlock.nonce++;
-        miner.currentBlock.hash = this.blockchain.calculateBlockHash(
-          miner.currentBlock
-        );
+    miner.miningInterval = setInterval(() => {
+      if (!miner.currentBlock) return;
 
-        // Verifica se encontrou um hash válido
-        if (this.blockchain.isValidBlock(miner.currentBlock)) {
-          // TODO: Propagar o bloco para a rede
-          console.log('Bloco minerado!', miner.currentBlock);
+      const now = Date.now();
+      const timeSinceLastBatch = now - lastBatchTime;
+      accumulatedTime += timeSinceLastBatch;
 
-          // Cria um novo bloco para continuar minerando
-          miner.currentBlock = this.blockchain.createNewBlock(
-            miner,
+      if (hashRate === null) {
+        // Modo máximo - processa o máximo possível
+        const BATCH_SIZE = 1000;
+        for (let i = 0; i < BATCH_SIZE; i++) {
+          miner.currentBlock.nonce++;
+          miner.currentBlock.hash = this.blockchain.calculateBlockHash(
             miner.currentBlock
           );
+          hashesInCurrentBatch++;
+
+          if (this.blockchain.isValidBlock(miner.currentBlock)) {
+            console.log('Bloco minerado!', miner.currentBlock);
+            miner.currentBlock = this.blockchain.createNewBlock(
+              miner,
+              miner.currentBlock
+            );
+            break;
+          }
         }
-      }, 0);
-    } else {
-      // Modo com intervalo controlado
-      miner.miningInterval = setInterval(() => {
-        if (!miner.currentBlock) return;
-
-        // Incrementa o nonce e calcula o hash
-        miner.currentBlock.nonce++;
-        miner.currentBlock.hash = this.blockchain.calculateBlockHash(
-          miner.currentBlock
-        );
-
-        // Verifica se encontrou um hash válido
-        if (this.blockchain.isValidBlock(miner.currentBlock)) {
-          // TODO: Propagar o bloco para a rede
-          console.log('Bloco minerado!', miner.currentBlock);
-
-          // Cria um novo bloco para continuar minerando
-          miner.currentBlock = this.blockchain.createNewBlock(
-            miner,
-            miner.currentBlock
+      } else {
+        // Modo com hash rate controlado
+        const timeNeededForOneHash = 1000 / hashRate; // tempo em ms para 1 hash
+        if (accumulatedTime >= timeNeededForOneHash) {
+          const hashesToProcess = Math.floor(
+            accumulatedTime / timeNeededForOneHash
           );
+
+          for (let i = 0; i < hashesToProcess; i++) {
+            miner.currentBlock.nonce++;
+            miner.currentBlock.hash = this.blockchain.calculateBlockHash(
+              miner.currentBlock
+            );
+            hashesInCurrentBatch++;
+
+            if (this.blockchain.isValidBlock(miner.currentBlock)) {
+              console.log('Bloco minerado!', miner.currentBlock);
+              miner.currentBlock = this.blockchain.createNewBlock(
+                miner,
+                miner.currentBlock
+              );
+              break;
+            }
+          }
+
+          accumulatedTime = accumulatedTime % timeNeededForOneHash;
         }
-      }, 1000 / hashRate);
-    }
+      }
+
+      // Atualiza o tempo do último batch
+      lastBatchTime = now;
+
+      // Atualiza o hash rate real a cada segundo
+      if (now - batchStartTime >= 1000) {
+        miner.currentHashRate = hashesInCurrentBatch;
+        batchStartTime = now;
+        hashesInCurrentBatch = 0;
+      }
+    }, 1); // Intervalo mínimo de 1ms
 
     this.network.save();
   }
