@@ -164,6 +164,11 @@ export class MinersPanelComponent {
 
           if (this.blockchain.isValidBlock(miner.currentBlock)) {
             console.log('Bloco minerado!', miner.currentBlock);
+
+            // Adiciona o bloco à blockchain local do minerador
+            miner.addBlock(miner.currentBlock);
+
+            // Cria um novo bloco para continuar minerando
             miner.currentBlock = this.blockchain.createNewBlock(
               miner,
               miner.currentBlock
@@ -188,6 +193,11 @@ export class MinersPanelComponent {
 
             if (this.blockchain.isValidBlock(miner.currentBlock)) {
               console.log('Bloco minerado!', miner.currentBlock);
+
+              // Adiciona o bloco à blockchain local do minerador
+              miner.addBlock(miner.currentBlock);
+
+              // Cria um novo bloco para continuar minerando
               miner.currentBlock = this.blockchain.createNewBlock(
                 miner,
                 miner.currentBlock
