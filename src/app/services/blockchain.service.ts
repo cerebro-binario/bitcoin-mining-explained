@@ -12,7 +12,7 @@ export class BlockchainService {
   private blocksSubject = new BehaviorSubject<Block[]>([]);
   private pendingTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
   private utxoSetSubject = new BehaviorSubject<Map<string, any>>(new Map());
-  private readonly INITIAL_NBITS = 0x1d00ffff; // Initial nBits value (similar to Bitcoin's genesis block)
+  private readonly INITIAL_NBITS = 0x1e9fffff; // Initial nBits value (similar to Bitcoin's genesis block)
   private readonly MAX_TRANSACTIONS_PER_BLOCK = 10;
 
   blocks$ = this.blocksSubject.asObservable();
