@@ -5,6 +5,11 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { BitcoinNode } from '../../models/bitcoin-node.model';
 
+interface HashRateOption {
+  label: string;
+  value: number | null;
+}
+
 @Component({
   selector: 'app-miners-panel',
   standalone: true,
@@ -13,6 +18,13 @@ import { BitcoinNode } from '../../models/bitcoin-node.model';
   styleUrls: ['./miners-panel.component.scss'],
 })
 export class MinersPanelComponent {
+  hashRateOptions: HashRateOption[] = [
+    { label: '1 H/s', value: 1 },
+    { label: '100 H/s', value: 100 },
+    { label: '1000 H/s', value: 1000 },
+    { label: 'Máximo', value: null },
+  ];
+
   constructor(public network: BitcoinNetworkService) {}
 
   get miners() {
@@ -33,21 +45,34 @@ export class MinersPanelComponent {
     }
   }
 
+  setHashRate(miner: BitcoinNode, rate: number | null) {
+    miner.hashRate = rate;
+    if (miner.isMining) {
+      this.stopMining(miner);
+      this.startMining(miner);
+    }
+    this.network.save();
+  }
+
   startMining(miner: BitcoinNode) {
     if (miner.isMining) return;
 
     miner.isMining = true;
     const hashRate = miner.hashRate || 1000;
 
-    miner.miningInterval = setInterval(() => {
-      if (!miner.currentBlock) return;
-
-      // Incrementa o nonce
-      miner.currentBlock.nonce++;
-
-      // TODO: Verificar se encontrou o hash válido
-      // Se encontrou, propagar o bloco para a rede
-    }, 1000 / hashRate);
+    if (hashRate === null) {
+      // Modo máximo - sem intervalo
+      miner.miningInterval = setInterval(() => {
+        if (!miner.currentBlock) return;
+        miner.currentBlock.nonce++;
+      }, 0);
+    } else {
+      // Modo com intervalo controlado
+      miner.miningInterval = setInterval(() => {
+        if (!miner.currentBlock) return;
+        miner.currentBlock.nonce++;
+      }, 1000 / hashRate);
+    }
 
     this.network.save();
   }

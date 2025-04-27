@@ -12,7 +12,7 @@ export class BitcoinNode {
   // Campos para minerador
   isMiner: boolean = false;
   name?: string;
-  hashRate?: number;
+  hashRate: number | null = 1000;
   currentBlock?: Block;
   isMining: boolean = false;
   miningInterval?: any;

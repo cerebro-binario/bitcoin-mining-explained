@@ -45,14 +45,21 @@
         <div class="space-y-4">
           <div class="flex items-center gap-2">
             <span class="text-xs text-zinc-400">Hash Rate:</span>
-            <input
-              type="number"
-              min="1"
-              class="w-24 px-2 py-1 rounded bg-zinc-900 text-white border border-zinc-700 font-mono"
-              [(ngModel)]="miner.hashRate"
-              (ngModelChange)="onMinerChange()"
-            />
-            <span class="text-xs text-zinc-400">H/s</span>
+            <div class="flex gap-1">
+              <button
+                *ngFor="let rate of hashRateOptions"
+                class="px-2 py-1 rounded text-xs font-semibold transition"
+                [ngClass]="{
+                  'bg-blue-600 text-white': miner.hashRate === rate.value,
+                  'bg-zinc-700 text-zinc-300 hover:bg-zinc-600':
+                    miner.hashRate !== rate.value
+                }"
+                (click)="setHashRate(miner, rate.value)"
+                [title]="rate.label"
+              >
+                {{ rate.label }}
+              </button>
+            </div>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-zinc-400">Assinatura:</span>
