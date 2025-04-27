@@ -11,7 +11,7 @@ export class BlockchainService {
   private blocksSubject = new BehaviorSubject<Block[]>([]);
   private pendingTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
   private utxoSetSubject = new BehaviorSubject<Map<string, any>>(new Map());
-  private readonly DIFFICULTY = 4; // Número de zeros no início do hash
+  private readonly INITIAL_NBITS = 0x1d00ffff; // Initial nBits value (similar to Bitcoin's genesis block)
   private readonly MAX_TRANSACTIONS_PER_BLOCK = 10;
 
   blocks$ = this.blocksSubject.asObservable();
@@ -26,14 +26,14 @@ export class BlockchainService {
     const previousHash =
       lastBlock?.hash ||
       '0000000000000000000000000000000000000000000000000000000000000000';
-    const difficulty = this.calculateDifficulty(lastBlock);
+    const nBits = this.calculateNBits(lastBlock);
 
     return new Block({
       id: (lastBlock?.id || 0) + 1,
       timestamp,
       previousHash,
       transactions,
-      difficulty,
+      nBits,
       nonce: 0,
       hash: '',
     });
@@ -55,29 +55,43 @@ export class BlockchainService {
     return transactions;
   }
 
-  private calculateDifficulty(lastBlock?: Block): number {
-    if (!lastBlock) return this.DIFFICULTY;
+  private calculateNBits(lastBlock?: Block): number {
+    if (!lastBlock) return this.INITIAL_NBITS;
 
-    // TODO: Implementar ajuste de dificuldade baseado no tempo de mineração do último bloco
-    return this.DIFFICULTY;
+    // TODO: Implementar ajuste de nBits baseado no tempo de mineração do último bloco
+    return this.INITIAL_NBITS;
   }
 
   isValidBlock(block: Block): boolean {
     if (!block.hash) return false;
 
-    // Verifica se o hash começa com o número correto de zeros
-    const hashPrefix = '0'.repeat(block.difficulty);
-    return block.hash.startsWith(hashPrefix);
+    // Convert nBits to target
+    const target = this.nBitsToTarget(block.nBits);
+    console.log('target', target);
+
+    // Convert hash to BigInt for comparison
+    const hashValue = BigInt('0x' + block.hash);
+
+    // Block is valid if hash is below target
+    return hashValue < target;
+  }
+
+  private nBitsToTarget(nBits: number): bigint {
+    // Extract exponent and coefficient from nBits
+    const exponent = nBits >>> 24;
+    const coefficient = nBits & 0x007fffff;
+
+    // Calculate target: coefficient * 2^(8*(exponent-3))
+    return BigInt(coefficient) * BigInt(2) ** BigInt(8 * (exponent - 3));
   }
 
   calculateBlockHash(block: Block): string {
-    const { id, timestamp, previousHash, transactions, nonce, difficulty } =
-      block;
+    const { id, timestamp, previousHash, transactions, nonce, nBits } = block;
 
     // Cria uma string com todos os dados do bloco
     const blockData = `${id}${timestamp}${previousHash}${JSON.stringify(
       transactions
-    )}${nonce}${difficulty}`;
+    )}${nonce}${nBits}`;
 
     // TODO: Implementar hash real usando SHA-256
     // Por enquanto, apenas um hash simples para demonstração

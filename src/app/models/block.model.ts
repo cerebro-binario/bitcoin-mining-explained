@@ -5,7 +5,7 @@ export class Block {
   hash: string = '';
   nonce: number = 0;
   transactions: Transaction[] = [];
-  difficulty: number = 0;
+  nBits: number = 0; // Compact representation of target
 
   constructor(init?: Partial<Block>) {
     Object.assign(this, init);
