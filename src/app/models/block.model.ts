@@ -29,11 +29,11 @@ export class Block {
   }
 
   get target(): bigint {
-    return BigInt(this._target);
+    return BigInt('0x' + this._target);
   }
 
   set target(value: bigint) {
-    this._target = value.toString();
+    this._target = value.toString(16);
   }
 
   private calculateTarget(): void {
