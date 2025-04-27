@@ -54,7 +54,7 @@ import { Block } from '../../../models/block.model';
         <div class="col-span-2">
           <span class="text-xs text-zinc-400">Transações:</span>
           <span class="font-mono text-sm text-white">{{
-            block?.transactions.length || 0
+            block?.transactions?.length || 0
           }}</span>
         </div>
       </div>

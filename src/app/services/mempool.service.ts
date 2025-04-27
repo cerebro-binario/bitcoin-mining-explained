@@ -31,48 +31,48 @@ export class MempoolService {
     private minerService: MinerService
   ) {}
 
-  createCandidateBlock(previousHash: string, height: number): void {
-    const subsidy = INITIAL_SUBSIDY >> (height / N_BLOCKS_PER_HALVING);
+  //   createCandidateBlock(previousHash: string, height: number): void {
+  //     const subsidy = INITIAL_SUBSIDY >> (height / N_BLOCKS_PER_HALVING);
 
-    this.candidateBlock = {
-      previousHash,
-      height,
-      transactions: [],
-      timestamp: new Date().getTime() / 1000,
-      hash: '',
-      merkleRoot: '',
-      nonce: 0,
-    };
+  //     this.candidateBlock = {
+  //       previousHash,
+  //       height,
+  //       transactions: [],
+  //       timestamp: new Date().getTime() / 1000,
+  //       hash: '',
+  //       merkleRoot: '',
+  //       nonce: 0,
+  //     };
 
-    // Pega um minerador aleatoriamente
-    const randomMiner = this.minerService.getRandomMiner();
+  //     // Pega um minerador aleatoriamente
+  //     const randomMiner = this.minerService.getRandomMiner();
 
-    // Sorteia aleatoriamente um dos endereços desse minerador para receber a recompensa
-    const randomCoinbaseAddressIdx = Math.floor(
-      Math.random() * BITCOIN_ADDRESS_TYPE_CODES.length
-    );
-    const randomCoinbaseAddressType =
-      BITCOIN_ADDRESS_TYPE_CODES[randomCoinbaseAddressIdx];
-    const randomCoinbaseAddress =
-      randomMiner.addresses[randomCoinbaseAddressType];
+  //     // Sorteia aleatoriamente um dos endereços desse minerador para receber a recompensa
+  //     const randomCoinbaseAddressIdx = Math.floor(
+  //       Math.random() * BITCOIN_ADDRESS_TYPE_CODES.length
+  //     );
+  //     const randomCoinbaseAddressType =
+  //       BITCOIN_ADDRESS_TYPE_CODES[randomCoinbaseAddressIdx];
+  //     const randomCoinbaseAddress =
+  //       randomMiner.addresses[randomCoinbaseAddressType];
 
-    // Adiciona a transação de coinbase
-    const coinbaseTx: Transaction = {
-      txid: '',
-      transfers: [
-        {
-          from: COINBASE_ADDRESS,
-          to: randomCoinbaseAddress.address,
-          amount: subsidy,
-        },
-      ],
-      fee: 0,
-    };
+  //     // Adiciona a transação de coinbase
+  //     const coinbaseTx: Transaction = {
+  //       txid: '',
+  //       transfers: [
+  //         {
+  //           from: COINBASE_ADDRESS,
+  //           to: randomCoinbaseAddress.address,
+  //           amount: subsidy,
+  //         },
+  //       ],
+  //       fee: 0,
+  //     };
 
-    this.candidateBlock.transactions.push(coinbaseTx);
+  //     this.candidateBlock.transactions.push(coinbaseTx);
 
-    // txid's, merkle root, nonce e hash serão calculados na mineração
-  }
+  //     // txid's, merkle root, nonce e hash serão calculados na mineração
+  //   }
 
   generateRandomTransaction() {
     const numInputs = getWeightedRandomInput();
@@ -123,32 +123,32 @@ export class MempoolService {
     return txid; // Retorna o TXID em formato hexadecimal
   }
 
-  generateMerkleRoot(): string {
-    if (!this.candidateBlock || this.candidateBlock.transactions.length === 0) {
-      throw new Error('There is no candidate block or transactions'); // Não há transações no bloco candidato
-    }
+  //   generateMerkleRoot(): string {
+  //     if (!this.candidateBlock || this.candidateBlock.transactions.length === 0) {
+  //       throw new Error('There is no candidate block or transactions'); // Não há transações no bloco candidato
+  //     }
 
-    // Calcula os hashes das transações
-    let transactionHashes = this.candidateBlock.transactions.map((tx) =>
-      hashSHA256(tx.txid)
-    );
+  //     // Calcula os hashes das transações
+  //     let transactionHashes = this.candidateBlock.transactions.map((tx) =>
+  //       hashSHA256(tx.txid)
+  //     );
 
-    // Gera o Merkle Root a partir dos hashes
-    while (transactionHashes.length > 1) {
-      const newLevel: string[] = [];
+  //     // Gera o Merkle Root a partir dos hashes
+  //     while (transactionHashes.length > 1) {
+  //       const newLevel: string[] = [];
 
-      for (let i = 0; i < transactionHashes.length; i += 2) {
-        // Se houver um número ímpar de hashes, repita o último
-        const hash1 = transactionHashes[i];
-        const hash2 = transactionHashes[i + 1] || hash1; // Usa o mesmo hash para completar o par
+  //       for (let i = 0; i < transactionHashes.length; i += 2) {
+  //         // Se houver um número ímpar de hashes, repita o último
+  //         const hash1 = transactionHashes[i];
+  //         const hash2 = transactionHashes[i + 1] || hash1; // Usa o mesmo hash para completar o par
 
-        // Concatena os dois hashes, calcula o SHA256, e adiciona ao próximo nível
-        newLevel.push(hashSHA256(hash1 + hash2));
-      }
+  //         // Concatena os dois hashes, calcula o SHA256, e adiciona ao próximo nível
+  //         newLevel.push(hashSHA256(hash1 + hash2));
+  //       }
 
-      transactionHashes = newLevel; // Atualiza o nível atual
-    }
+  //       transactionHashes = newLevel; // Atualiza o nível atual
+  //     }
 
-    return transactionHashes[0]; // O último hash é o Merkle Root
-  }
+  //     return transactionHashes[0]; // O último hash é o Merkle Root
+  //   }
 }
