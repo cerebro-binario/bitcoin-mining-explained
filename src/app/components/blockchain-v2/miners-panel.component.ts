@@ -5,6 +5,7 @@ import { AddressService } from '../../services/address.service';
 import { BlockchainService } from '../../services/blockchain.service';
 import { BitcoinNode } from '../../models/bitcoin-node.model';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
+import { Block } from '../../models/block.model';
 
 interface HashRateOption {
   label: string;
@@ -40,6 +41,17 @@ export class MinersPanelComponent {
     const node = this.network.addNode(true, undefined, 1000);
     node.name = `Minerador ${node.id}`;
     node.miningAddress = this.addressService.generateRandomAddress();
+
+    // Cria um template inicial do bloco
+    let lastBlock: Block | undefined;
+    this.blockchain.blocks$
+      .subscribe((blocks) => {
+        lastBlock = blocks[blocks.length - 1];
+      })
+      .unsubscribe();
+
+    node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
+
     this.network.save();
   }
 
