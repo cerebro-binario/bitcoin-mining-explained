@@ -5,7 +5,13 @@ import { AddressService } from '../../services/address.service';
 import { BlockchainService } from '../../services/blockchain.service';
 import { BitcoinNode } from '../../models/bitcoin-node.model';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
-import { Block } from '../../models/block.model';
+import {
+  Block,
+  Transaction,
+  TransactionInput,
+  TransactionOutput,
+} from '../../models/block.model';
+import * as CryptoJS from 'crypto-js';
 
 interface HashRateOption {
   label: string;
@@ -53,6 +59,56 @@ export class MinersPanelComponent {
     node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
 
     this.network.save();
+  }
+
+  createTransaction(miner: BitcoinNode) {
+    // Gera um endereço aleatório para o destinatário
+    const recipientAddress = this.addressService.generateRandomAddress();
+
+    // Cria uma nova transação
+    const tx: Transaction = {
+      id: CryptoJS.SHA256(Date.now().toString()).toString(),
+      inputs: [],
+      outputs: [
+        {
+          value: 1000000, // 0.01 BTC em satoshis
+          scriptPubKey: recipientAddress,
+        },
+      ],
+      signature: miner.name, // Usando o nome do miner como assinatura temporária
+    };
+
+    // Adiciona a transação à mempool do miner
+    this.blockchain.addTransactionToMempool(tx);
+
+    // Inicia a propagação da transação
+    this.propagateTransaction(tx, miner);
+  }
+
+  private propagateTransaction(tx: Transaction, sourceNode: BitcoinNode) {
+    // Ordena os vizinhos por latência
+    const sortedNeighbors = [...sourceNode.neighbors].sort(
+      (a, b) => a.latency - b.latency
+    );
+
+    // Propaga para cada vizinho com um delay baseado na latência
+    sortedNeighbors.forEach((neighbor) => {
+      const targetNode = this.network.nodes.find(
+        (n) => n.id === neighbor.nodeId
+      );
+      if (!targetNode) return;
+
+      // Simula o delay de propagação baseado na latência
+      setTimeout(() => {
+        // Adiciona a transação à mempool do nó vizinho
+        this.blockchain.addTransactionToMempool(tx);
+
+        // Se o nó vizinho não é a fonte, continua propagando
+        if (targetNode.id !== sourceNode.id) {
+          this.propagateTransaction(tx, targetNode);
+        }
+      }, neighbor.latency);
+    });
   }
 
   removeMiner(index: number) {

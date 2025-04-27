@@ -84,7 +84,7 @@ export class BlockchainService {
 
   private getTransactionsForBlock(): Transaction[] {
     const transactions: Transaction[] = [];
-    const mempoolTransactions = this.mempool.getTransactions();
+    const mempoolTransactions = this.pendingTransactionsSubject.value;
 
     // Adiciona transações até atingir o limite ou esgotar a mempool
     for (
@@ -93,6 +93,14 @@ export class BlockchainService {
       i++
     ) {
       transactions.push(mempoolTransactions[i]);
+    }
+
+    // Remove as transações selecionadas da mempool
+    if (transactions.length > 0) {
+      const remainingTransactions = mempoolTransactions.slice(
+        transactions.length
+      );
+      this.pendingTransactionsSubject.next(remainingTransactions);
     }
 
     return transactions;
@@ -167,5 +175,20 @@ export class BlockchainService {
       });
     });
     return balance;
+  }
+
+  addTransactionToMempool(tx: Transaction): void {
+    // Verifica se a transação já existe na mempool
+    const existingTx = this.pendingTransactionsSubject.value.find(
+      (t) => t.id === tx.id
+    );
+    if (existingTx) return;
+
+    // Adiciona a transação à mempool
+    const currentTransactions = this.pendingTransactionsSubject.value;
+    this.pendingTransactionsSubject.next([...currentTransactions, tx]);
+
+    // Notifica o mempool service
+    this.mempool.addTransaction(tx);
   }
 }
