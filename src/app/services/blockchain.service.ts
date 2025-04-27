@@ -68,7 +68,6 @@ export class BlockchainService {
 
     // Convert nBits to target
     const target = this.nBitsToTarget(block.nBits);
-    console.log('target', target);
 
     // Convert hash to BigInt for comparison
     const hashValue = BigInt('0x' + block.hash);
