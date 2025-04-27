@@ -66,23 +66,11 @@ export class BlockchainService {
   isValidBlock(block: Block): boolean {
     if (!block.hash) return false;
 
-    // Convert nBits to target
-    const target = this.nBitsToTarget(block.nBits);
-
     // Convert hash to BigInt for comparison
     const hashValue = BigInt('0x' + block.hash);
 
     // Block is valid if hash is below target
-    return hashValue < target;
-  }
-
-  private nBitsToTarget(nBits: number): bigint {
-    // Extract exponent and coefficient from nBits
-    const exponent = nBits >>> 24;
-    const coefficient = nBits & 0x007fffff;
-
-    // Calculate target: coefficient * 2^(8*(exponent-3))
-    return BigInt(coefficient) * BigInt(2) ** BigInt(8 * (exponent - 3));
+    return hashValue < block.target;
   }
 
   calculateBlockHash(block: Block): string {
