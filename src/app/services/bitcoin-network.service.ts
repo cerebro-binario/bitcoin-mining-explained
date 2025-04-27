@@ -26,7 +26,7 @@ export class BitcoinNetworkService {
       if (candidates.length === 0) break;
       const idx = Math.floor(Math.random() * candidates.length);
       const neighbor = candidates.splice(idx, 1)[0];
-      const latency = 30 + Math.floor(Math.random() * 71); // 30-100ms
+      const latency = 3000 + Math.floor(Math.random() * 7001); // 3000-10000ms (3-10 segundos)
       node.neighbors.push({ nodeId: neighbor.id!, latency });
       neighbor.neighbors.push({ nodeId: node.id!, latency }); // bidirecional
     }
