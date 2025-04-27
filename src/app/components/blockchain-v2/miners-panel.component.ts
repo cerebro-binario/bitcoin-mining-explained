@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
+import { MiningBlockComponent } from './mining-block/mining-block.component';
 
 @Component({
   selector: 'app-miners-panel',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, MiningBlockComponent],
   templateUrl: './miners-panel.component.html',
   styleUrls: ['./miners-panel.component.scss'],
 })

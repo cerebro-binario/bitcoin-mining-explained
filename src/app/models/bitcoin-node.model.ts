@@ -1,3 +1,5 @@
+import { Block } from './block.model';
+
 export interface Neighbor {
   nodeId: number;
   latency: number;
@@ -11,6 +13,7 @@ export class BitcoinNode {
   isMiner: boolean = false;
   name?: string;
   hashRate?: number;
+  currentBlock?: Block;
 
   constructor(init?: Partial<BitcoinNode>) {
     Object.assign(this, init);

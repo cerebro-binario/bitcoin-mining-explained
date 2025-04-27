@@ -1,14 +1,26 @@
 import { GENESIS_KEY_PAIR } from './address.model';
 import { Transaction } from './transaction.model';
 
-export interface Block {
-  previousHash: string;
-  height: number;
-  transactions: Transaction[];
-  timestamp: number;
-  merkleRoot: string;
-  nonce: number;
-  hash: string;
+export class Block {
+  id: number = 0;
+  timestamp: number = Date.now();
+  previousHash: string = '';
+  hash: string = '';
+  nonce: number = 0;
+  transactions: Transaction[] = [];
+  difficulty: number = 0;
+
+  constructor(init?: Partial<Block>) {
+    Object.assign(this, init);
+  }
+}
+
+export interface Transaction {
+  id: string;
+  from: string;
+  to: string;
+  amount: number;
+  signature: string;
 }
 
 export const GENESIS_BLOCK: Block = {

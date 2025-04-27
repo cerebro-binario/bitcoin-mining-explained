@@ -55,6 +55,8 @@
         <span class="text-xs text-zinc-400">Assinatura:</span>
         <span class="font-mono text-xs text-green-400">{{ miner.name }}</span>
       </div>
+
+      <app-mining-block [block]="miner.currentBlock"></app-mining-block>
     </div>
   </div>
 </div>
