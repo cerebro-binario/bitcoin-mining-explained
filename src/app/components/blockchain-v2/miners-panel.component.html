@@ -60,6 +60,32 @@
               miner.name
             }}</span>
           </div>
+
+          <div class="flex items-center gap-2 mt-4">
+            <button
+              *ngIf="!miner.isMining"
+              class="px-3 py-1 rounded bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition"
+              (click)="startMining(miner)"
+            >
+              Iniciar Mineração
+            </button>
+            <button
+              *ngIf="miner.isMining"
+              class="px-3 py-1 rounded bg-yellow-600 text-white text-sm font-semibold hover:bg-yellow-700 transition"
+              (click)="stopMining(miner)"
+            >
+              Pausar Mineração
+            </button>
+            <span
+              class="ml-2 px-2 py-1 rounded text-xs"
+              [ngClass]="{
+                'bg-green-900 text-green-400': miner.isMining,
+                'bg-zinc-900 text-zinc-400': !miner.isMining
+              }"
+            >
+              {{ miner.isMining ? "Minerando..." : "Parado" }}
+            </span>
+          </div>
         </div>
 
         <div>

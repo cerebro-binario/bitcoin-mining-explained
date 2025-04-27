@@ -14,6 +14,8 @@ export class BitcoinNode {
   name?: string;
   hashRate?: number;
   currentBlock?: Block;
+  isMining: boolean = false;
+  miningInterval?: any;
 
   constructor(init?: Partial<BitcoinNode>) {
     Object.assign(this, init);
