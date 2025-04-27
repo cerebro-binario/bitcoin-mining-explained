@@ -23,13 +23,14 @@ import { MinerService } from './miner.service';
   providedIn: 'root',
 })
 export class MempoolService {
-  candidateBlock: Block | null = null;
-  transactions: Transaction[] = [];
+  private transactions: Transaction[] = [];
 
   constructor(
     private addressService: AddressService,
     private minerService: MinerService
-  ) {}
+  ) {
+    this.load();
+  }
 
   //   createCandidateBlock(previousHash: string, height: number): void {
   //     const subsidy = INITIAL_SUBSIDY >> (height / N_BLOCKS_PER_HALVING);
@@ -109,8 +110,31 @@ export class MempoolService {
     return { inputs, outputs, btcVolume, timestamp, fees };
   }
 
-  addTransaction(transaction: any) {
+  addTransaction(transaction: Transaction) {
     this.transactions.push(transaction);
+    this.save();
+  }
+
+  getTransactions(): Transaction[] {
+    return [...this.transactions];
+  }
+
+  removeTransactions(transactions: Transaction[]) {
+    this.transactions = this.transactions.filter(
+      (tx) => !transactions.some((t) => t.id === tx.id)
+    );
+    this.save();
+  }
+
+  private save() {
+    localStorage.setItem('mempool', JSON.stringify(this.transactions));
+  }
+
+  private load() {
+    const saved = localStorage.getItem('mempool');
+    if (saved) {
+      this.transactions = JSON.parse(saved);
+    }
   }
 
   // Gera um TXID utilizando HASH256 (double-SHA256)
