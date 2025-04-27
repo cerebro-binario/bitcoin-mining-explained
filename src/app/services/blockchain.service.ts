@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Block, Transaction } from '../models/block.model';
 import { BitcoinNode } from '../models/bitcoin-node.model';
 import { MempoolService } from './mempool.service';
+import * as CryptoJS from 'crypto-js';
 
 @Injectable({
   providedIn: 'root',
@@ -88,23 +89,15 @@ export class BlockchainService {
   calculateBlockHash(block: Block): string {
     const { id, timestamp, previousHash, transactions, nonce, nBits } = block;
 
-    // Cria uma string com todos os dados do bloco
+    // Create a string with all block data
     const blockData = `${id}${timestamp}${previousHash}${JSON.stringify(
       transactions
     )}${nonce}${nBits}`;
 
-    // TODO: Implementar hash real usando SHA-256
-    // Por enquanto, apenas um hash simples para demonstração
-    return this.simpleHash(blockData);
-  }
+    // Calculate SHA-256 hash
+    const hash = CryptoJS.SHA256(blockData).toString();
 
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Converte para 32bit integer
-    }
-    return Math.abs(hash).toString(16).padStart(64, '0');
+    // Ensure the hash is 64 characters long (32 bytes in hex)
+    return hash.padStart(64, '0');
   }
 }
