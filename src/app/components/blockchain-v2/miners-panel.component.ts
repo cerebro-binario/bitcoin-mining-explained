@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 import { AddressService } from '../../services/address.service';
 import { BlockchainService } from '../../services/blockchain.service';
-import { BitcoinNode } from '../../models/bitcoin-node.model';
+import { BitcoinNode, BlockNode } from '../../models/bitcoin-node.model';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import {
   Block,
@@ -124,18 +124,19 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
         }
 
         // Se o vizinho tem blocos, usa a blockchain dele
-        if (neighborNode.chains[0] && neighborNode.chains[0].length > 0) {
-          // Simula o delay de propagação baseado na latência
+        if (neighborNode.genesis) {
           setTimeout(() => {
-            // Copia a cadeia principal do vizinho
-            node.chains = [[...neighborNode.chains[0]]];
-            // Usa o último bloco como referência para criar um novo bloco
-            const lastBlock = neighborNode.getLatestBlock();
-            node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
+            // Copia a árvore de blocos do vizinho
+            node.genesis = BlockNode.deserializeBlockNode(
+              BlockNode.serializeBlockNode(neighborNode.genesis as BlockNode)
+            );
+            // Usa o último bloco da main chain como referência para criar um novo bloco
+            node.currentBlock = this.blockchain.createNewBlock(
+              node,
+              neighborNode.getLatestBlock()
+            );
             this.network.save();
-            // Remove o nó da lista de sincronização
             this.network.stopNodeSync(node.id!);
-            // Marca a sincronização inicial como completa
             this.network.markInitialSyncComplete(node.id!);
           }, neighbor.latency);
           return true; // Download iniciado
@@ -440,5 +441,39 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     if (this.saveInterval) {
       clearInterval(this.saveInterval);
     }
+  }
+
+  // Calcula o deslocamento horizontal (em px) para alinhar o fork ao ponto de bifurcação
+  getForkOffsetPx(fork: any[], miner: any): number {
+    const main = miner.getMainChain();
+    if (!fork.length || !main.length) return 0;
+    // O fork diverge do main chain no primeiro bloco diferente (da direita para a esquerda)
+    let idx = 0;
+    while (
+      idx < fork.length &&
+      idx < main.length &&
+      fork[fork.length - 1 - idx].hash === main[main.length - 1 - idx].hash
+    ) {
+      idx++;
+    }
+    // O bloco de bifurcação está em main.length - idx
+    return idx * 272;
+  }
+
+  // Retorna o último BlockNode da main chain para renderização reversa
+  getLatestBlockNode(miner: BitcoinNode): BlockNode | undefined {
+    if (!miner.genesis) return undefined;
+    let node = miner.genesis;
+    while (node.children.length > 0) {
+      node = node.children[0];
+    }
+    return node;
+  }
+
+  getForks(node: BlockNode): BlockNode[] {
+    return (
+      node.parent?.children.filter((c) => c.block.hash !== node.block.hash) ||
+      []
+    );
   }
 }

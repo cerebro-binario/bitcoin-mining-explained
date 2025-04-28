@@ -5,6 +5,34 @@ export interface Neighbor {
   latency: number;
 }
 
+// Representa um nó na árvore de blocos
+export class BlockNode {
+  block: Block;
+  children: BlockNode[] = [];
+  parent?: BlockNode;
+  constructor(block: Block, parent?: BlockNode) {
+    this.block = block;
+    this.parent = parent;
+  }
+
+  // Serializa a árvore sem o campo parent
+  static serializeBlockNode(node: BlockNode): any {
+    return {
+      block: node.block,
+      children: node.children.map(BlockNode.serializeBlockNode),
+    };
+  }
+
+  // Desserializa a árvore e atribui parent
+  static deserializeBlockNode(data: any, parent?: BlockNode): BlockNode {
+    const node = new BlockNode(new Block(data.block), parent);
+    node.children = (data.children || []).map((child: any) =>
+      BlockNode.deserializeBlockNode(child, node)
+    );
+    return node;
+  }
+}
+
 export class BitcoinNode {
   id?: number;
   neighbors: Neighbor[] = [];
@@ -26,29 +54,25 @@ export class BitcoinNode {
 
   // Blockchain local do nó
   chains: Block[][] = [[]]; // chains[0] = cadeia principal, demais = forks alternativos
-  lastBlockReceived?: Block;
+  lastBlockReceived?: BlockNode;
   lastBlockPropagated?: Block;
+  genesis?: BlockNode; // raiz da árvore
 
   constructor(init?: Partial<BitcoinNode>) {
     Object.assign(this, init);
   }
 
-  // Adiciona um bloco à blockchain local, suportando forks
+  // Adiciona um bloco à árvore de blocos
   addBlock(block: Block): boolean {
-    // Não aceita blocos duplicados em nenhuma cadeia
-    if (this.chains.some((chain) => chain.some((b) => b.hash === block.hash))) {
-      return false;
-    }
-
     // Se for o bloco genesis
     if (block.height === 0) {
       if (
         block.previousHash ===
         '0000000000000000000000000000000000000000000000000000000000000000'
       ) {
-        if (this.chains[0].length === 0) {
-          this.chains[0].push(block);
-          this.lastBlockReceived = block;
+        if (!this.genesis) {
+          this.genesis = new BlockNode(block);
+          this.lastBlockReceived = this.genesis;
           return true;
         } else {
           // Genesis já existe
@@ -59,85 +83,121 @@ export class BitcoinNode {
       }
     }
 
-    // Tenta adicionar à cadeia principal
-    const mainChain = this.chains[0];
-    const latest = mainChain[mainChain.length - 1];
-    if (
-      latest &&
-      block.previousHash === latest.hash &&
-      block.height === latest.height + 1
-    ) {
-      mainChain.push(block);
-      this.lastBlockReceived = block;
-      return true;
-    }
+    // Procura o pai na árvore
+    const parent = this.findBlockNodeByHash(block.previousHash, this.genesis);
+    if (!parent) return false;
+    // Não aceita blocos duplicados
+    if (this.findBlockNodeByHash(block.hash, this.genesis)) return false;
+    // Adiciona como filho
+    const node = new BlockNode(block, parent);
+    parent.children.push(node);
+    this.lastBlockReceived = node;
+    // Reorganiza os filhos do pai para garantir que o mais longo fique no índice 0
+    this.reorderChildrenByLongestPath(parent);
+    return true;
+  }
 
-    // Tenta adicionar a um fork existente
-    for (let i = 1; i < this.chains.length; i++) {
-      const fork = this.chains[i];
-      const forkTip = fork[fork.length - 1];
-      if (
-        forkTip &&
-        block.previousHash === forkTip.hash &&
-        block.height === forkTip.height + 1
-      ) {
-        fork.push(block);
-        this.lastBlockReceived = block;
-        this.tryPromoteForks();
-        return true;
+  // Busca um nó pelo hash na árvore
+  findBlockNodeByHash(hash: string, node?: BlockNode): BlockNode | undefined {
+    if (!node) return undefined;
+    if (node.block.hash === hash) return node;
+    for (const child of node.children) {
+      const found = this.findBlockNodeByHash(hash, child);
+      if (found) return found;
+    }
+    return undefined;
+  }
+
+  // Retorna o caminho mais longo (main chain) da árvore
+  getMainChain(): Block[] {
+    if (!this.genesis) return [];
+    let maxPath: BlockNode[] = [];
+    function dfs(node: BlockNode, path: BlockNode[]) {
+      path.push(node);
+      if (node.children.length === 0) {
+        if (path.length > maxPath.length) {
+          maxPath = [...path];
+        }
+      } else {
+        for (const child of node.children) {
+          dfs(child, path);
+        }
       }
+      path.pop();
     }
-
-    // Tenta criar um novo fork a partir de um bloco existente
-    for (const chain of this.chains) {
-      const forkPoint = chain.find((b) => b.hash === block.previousHash);
-      if (forkPoint && block.height === forkPoint.height + 1) {
-        // Cria novo fork a partir do forkPoint
-        const fork = chain.slice(0, forkPoint.height + 1);
-        fork.push(block);
-        this.chains.push(fork);
-        this.lastBlockReceived = block;
-        this.tryPromoteForks();
-        return true;
-      }
-    }
-
-    // Não foi possível adicionar
-    return false;
+    dfs(this.genesis, []);
+    return maxPath.map((n) => n.block);
   }
 
-  // Promove um fork alternativo para cadeia principal se for mais longo
-  private tryPromoteForks() {
-    let maxLen = this.chains[0].length;
-    let mainIdx = 0;
-    for (let i = 1; i < this.chains.length; i++) {
-      if (this.chains[i].length > maxLen) {
-        maxLen = this.chains[i].length;
-        mainIdx = i;
-      }
-    }
-    if (mainIdx !== 0) {
-      // Troca a cadeia principal
-      const newMain = this.chains[mainIdx];
-      this.chains.splice(mainIdx, 1);
-      this.chains.unshift(newMain);
-    }
-  }
-
-  // Retorna o último bloco da cadeia principal
-  getLatestBlock(): Block | undefined {
-    const mainChain = this.chains[0];
-    return mainChain[mainChain.length - 1];
-  }
-
-  // Retorna o bloco com a altura especificada da cadeia principal
-  getBlockByHeight(height: number): Block | undefined {
-    const mainChain = this.chains[0];
-    return mainChain.find((block) => block.height === height);
-  }
-
-  // Retorna todos os forks alternativos
+  // Retorna todos os forks (caminhos não principais)
   getForks(): Block[][] {
-    return this.chains.slice(1);
+    if (!this.genesis) return [];
+    const mainChain = this.getMainChain().map((b) => b.hash);
+    const forks: Block[][] = [];
+    function dfs(node: BlockNode, path: BlockNode[]) {
+      path.push(node);
+      if (node.children.length === 0) {
+        // Se não é main chain, é fork
+        const hashes = path.map((n) => n.block.hash);
+        if (hashes.join('-') !== mainChain.join('-')) {
+          forks.push(path.map((n) => n.block));
+        }
+      } else {
+        for (const child of node.children) {
+          dfs(child, path);
+        }
+      }
+      path.pop();
+    }
+    dfs(this.genesis, []);
+    return forks;
+  }
+
+  // Retorna o último bloco da main chain
+  getLatestBlock(): Block | undefined {
+    const main = this.getMainChain();
+    return main[main.length - 1];
+  }
+
+  // Retorna o bloco com a altura especificada da main chain
+  getBlockByHeight(height: number): Block | undefined {
+    const main = this.getMainChain();
+    return main.find((block) => block.height === height);
+  }
+
+  // Serializa o nó para salvar no localStorage
+  serialize(): any {
+    const obj: any = { ...this };
+    if (this.genesis) {
+      obj.genesis = BlockNode.serializeBlockNode(this.genesis);
+    }
+    // Remove campos que não devem ser serializados
+    delete obj.lastBlockReceived;
+    delete obj.lastBlockPropagated;
+    return obj;
+  }
+
+  // Desserializa um nó a partir do objeto salvo
+  static deserialize(data: any): BitcoinNode {
+    const node = new BitcoinNode(data);
+    if (data.genesis) {
+      node.genesis = BlockNode.deserializeBlockNode(data.genesis);
+    }
+    return node;
+  }
+
+  // Reorganiza os filhos do nó para que o caminho mais longo fique no índice 0
+  private reorderChildrenByLongestPath(parent: BlockNode) {
+    parent.children.sort(
+      (a, b) => this.getPathLength(b) - this.getPathLength(a)
+    );
+  }
+
+  // Retorna o comprimento do caminho mais longo a partir deste nó
+  private getPathLength(node: BlockNode): number {
+    if (node.children.length === 0) return 1;
+    return (
+      1 + Math.max(...node.children.map((child) => this.getPathLength(child)))
+    );
   }
 }
