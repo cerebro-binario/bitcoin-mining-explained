@@ -13,6 +13,13 @@ import {
 } from '../../models/block.model';
 import * as CryptoJS from 'crypto-js';
 import { TooltipModule } from 'primeng/tooltip';
+import {
+  trigger,
+  state,
+  style,
+  transition,
+  animate,
+} from '@angular/animations';
 
 interface HashRateOption {
   label: string;
@@ -25,6 +32,25 @@ interface HashRateOption {
   imports: [CommonModule, MiningBlockComponent, TooltipModule],
   templateUrl: './miners-panel.component.html',
   styleUrls: ['./miners-panel.component.scss'],
+  animations: [
+    trigger('blockAnimation', [
+      state(
+        'void',
+        style({
+          opacity: 0,
+          transform: 'scale(0.95)',
+        })
+      ),
+      state(
+        '*',
+        style({
+          opacity: 1,
+          transform: 'scale(1)',
+        })
+      ),
+      transition('void => *', [animate('0.6s ease-out')]),
+    ]),
+  ],
 })
 export class MinersPanelComponent {
   hashRateOptions: HashRateOption[] = [
