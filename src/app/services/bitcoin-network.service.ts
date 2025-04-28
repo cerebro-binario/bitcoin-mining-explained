@@ -7,6 +7,7 @@ export class BitcoinNetworkService {
   private readonly STORAGE_KEY = 'bitcoin-v2-network';
   nodes: BitcoinNode[] = [];
   private nextId = 1;
+  syncingNodes = new Set<number>(); // IDs dos nós que estão sincronizando
 
   constructor() {
     this.load();
@@ -109,5 +110,17 @@ export class BitcoinNetworkService {
         this.nodes = [];
       }
     }
+  }
+
+  isNodeSyncing(nodeId: number): boolean {
+    return this.syncingNodes.has(nodeId);
+  }
+
+  startNodeSync(nodeId: number) {
+    this.syncingNodes.add(nodeId);
+  }
+
+  stopNodeSync(nodeId: number) {
+    this.syncingNodes.delete(nodeId);
   }
 }
