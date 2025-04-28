@@ -90,17 +90,37 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     node.name = `Minerador ${node.id}`;
     node.miningAddress = this.addressService.generateRandomAddress();
 
-    // Cria um template inicial do bloco
-    let lastBlock: Block | undefined;
-    this.blockchain.blocks$
-      .subscribe((blocks) => {
-        lastBlock = blocks[blocks.length - 1];
-      })
-      .unsubscribe();
+    // Simula o download da blockchain através dos vizinhos
+    // Ordena os vizinhos por latência (menor primeiro)
+    const sortedNeighbors = [...node.neighbors].sort(
+      (a, b) => a.latency - b.latency
+    );
 
-    node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
-
-    this.network.save();
+    // Tenta obter a blockchain do vizinho com menor latência
+    if (sortedNeighbors.length > 0) {
+      const fastestNeighbor = this.network.nodes.find(
+        (n) => n.id === sortedNeighbors[0].nodeId
+      );
+      if (fastestNeighbor && fastestNeighbor.blocks.length > 0) {
+        // Simula o delay de propagação baseado na latência
+        setTimeout(() => {
+          // Copia a blockchain do vizinho
+          node.blocks = [...fastestNeighbor.blocks];
+          // Usa o último bloco como referência para criar um novo bloco
+          const lastBlock = fastestNeighbor.getLatestBlock();
+          node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
+          this.network.save();
+        }, sortedNeighbors[0].latency);
+      } else {
+        // Se o vizinho não tiver blocos, cria um bloco genesis
+        node.currentBlock = this.blockchain.createNewBlock(node);
+        this.network.save();
+      }
+    } else {
+      // Se não houver vizinhos, cria um bloco genesis
+      node.currentBlock = this.blockchain.createNewBlock(node);
+      this.network.save();
+    }
   }
 
   createTransaction(miner: BitcoinNode) {
