@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 import { AddressService } from '../../services/address.service';
@@ -52,13 +52,16 @@ interface HashRateOption {
     ]),
   ],
 })
-export class MinersPanelComponent {
+export class MinersPanelComponent implements OnInit, OnDestroy {
   hashRateOptions: HashRateOption[] = [
     { label: '1 H/s', value: 1 },
     { label: '100 H/s', value: 100 },
     { label: '1000 H/s', value: 1000 },
     { label: 'Máximo', value: null },
   ];
+
+  private readonly SAVE_INTERVAL = 5000; // Salva a cada 5 segundos
+  private saveInterval?: any;
 
   constructor(
     public network: BitcoinNetworkService,
@@ -68,6 +71,18 @@ export class MinersPanelComponent {
 
   get miners() {
     return this.network.nodes.filter((n) => n.isMiner);
+  }
+
+  ngOnInit() {
+    // Reinicia a mineração para todos os mineradores que estavam minerando
+    this.miners.forEach((miner) => {
+      if (miner.isMining) {
+        // Para garantir que não haja intervalos residuais
+        this.stopMining(miner);
+        // Reinicia a mineração
+        this.startMining(miner);
+      }
+    });
   }
 
   addMiner() {
@@ -155,6 +170,10 @@ export class MinersPanelComponent {
     this.network.save();
   }
 
+  private saveMiningState() {
+    this.network.save();
+  }
+
   startMining(miner: BitcoinNode) {
     if (miner.isMining) return;
 
@@ -182,6 +201,14 @@ export class MinersPanelComponent {
         }
       }, 100);
     }
+
+    // Inicia o intervalo para salvar o estado periodicamente
+    if (this.saveInterval) {
+      clearInterval(this.saveInterval);
+    }
+    this.saveInterval = setInterval(() => {
+      this.saveMiningState();
+    }, this.SAVE_INTERVAL);
 
     // Variáveis para controle do batch
     let lastBatchTime = Date.now();
@@ -231,6 +258,9 @@ export class MinersPanelComponent {
                 }
               }, 100);
             }
+
+            // Salva o estado imediatamente após minerar um bloco
+            this.saveMiningState();
             break;
           }
         }
@@ -273,6 +303,9 @@ export class MinersPanelComponent {
                   }
                 }, 100);
               }
+
+              // Salva o estado imediatamente após minerar um bloco
+              this.saveMiningState();
               break;
             }
           }
@@ -292,7 +325,7 @@ export class MinersPanelComponent {
       }
     }, 1); // Intervalo mínimo de 1ms
 
-    this.network.save();
+    this.saveMiningState();
   }
 
   stopMining(miner: BitcoinNode) {
@@ -311,10 +344,23 @@ export class MinersPanelComponent {
       block.miningStartTime = null;
     }
 
-    this.network.save();
+    // Limpa o intervalo de salvamento
+    if (this.saveInterval) {
+      clearInterval(this.saveInterval);
+      this.saveInterval = undefined;
+    }
+
+    this.saveMiningState();
   }
 
   onMinerChange() {
     this.network.save();
+  }
+
+  ngOnDestroy() {
+    // Limpa os intervalos quando o componente é destruído
+    if (this.saveInterval) {
+      clearInterval(this.saveInterval);
+    }
   }
 }
