@@ -14,6 +14,36 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
         [attr.height]="height"
         class="bg-zinc-900 rounded shadow border border-zinc-700"
       >
+        <!-- Definir gradientes para as animações -->
+        <defs>
+          <linearGradient id="dataFlow" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0">
+              <animate
+                attributeName="offset"
+                values="0;1"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </stop>
+            <stop offset="50%" stop-color="#3b82f6" stop-opacity="1">
+              <animate
+                attributeName="offset"
+                values="0;1"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </stop>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0">
+              <animate
+                attributeName="offset"
+                values="0;1"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </stop>
+          </linearGradient>
+        </defs>
+
         <ng-container *ngFor="let node of network.nodes; let i = index">
           <!-- Draw edges -->
           <ng-container *ngFor="let neighbor of node.neighbors">
@@ -26,6 +56,17 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
               stroke="#888"
               stroke-width="2"
               [attr.opacity]="0.7"
+            />
+            <!-- Linha animada para tráfego de dados -->
+            <line
+              *ngIf="network.isNodeSyncing(node.id!)"
+              [attr.x1]="getX(getIndexById(neighbor.nodeId))"
+              [attr.y1]="getY(getIndexById(neighbor.nodeId))"
+              [attr.x2]="getX(i)"
+              [attr.y2]="getY(i)"
+              stroke="#3b82f6"
+              stroke-width="3"
+              class="data-flow"
             />
           </ng-container>
         </ng-container>
@@ -72,6 +113,20 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
         transform-box: fill-box;
         transform-origin: center;
         animation: rotate 2s linear infinite;
+      }
+
+      .data-flow {
+        stroke: #3b82f6;
+        stroke-width: 3;
+        stroke-dasharray: 10, 10;
+        stroke-dashoffset: 0;
+        animation: dashMove 1s linear infinite;
+      }
+
+      @keyframes dashMove {
+        to {
+          stroke-dashoffset: -20;
+        }
       }
 
       @keyframes rotate {
