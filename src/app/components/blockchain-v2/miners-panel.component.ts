@@ -62,6 +62,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
 
   private readonly SAVE_INTERVAL = 5000; // Salva a cada 5 segundos
   private saveInterval?: any;
+  private syncingNodes = new Set<number>(); // IDs dos nós que estão sincronizando
 
   constructor(
     public network: BitcoinNetworkService,
@@ -90,6 +91,9 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     node.name = `Minerador ${node.id}`;
     node.miningAddress = this.addressService.generateRandomAddress();
 
+    // Marca o nó como sincronizando
+    this.syncingNodes.add(node.id!);
+
     // Simula o download da blockchain através dos vizinhos
     // Ordena os vizinhos por latência (menor primeiro)
     const sortedNeighbors = [...node.neighbors].sort(
@@ -110,16 +114,22 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
           const lastBlock = fastestNeighbor.getLatestBlock();
           node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
           this.network.save();
+          // Remove o nó da lista de sincronização
+          this.syncingNodes.delete(node.id!);
         }, sortedNeighbors[0].latency);
       } else {
         // Se o vizinho não tiver blocos, cria um bloco genesis
         node.currentBlock = this.blockchain.createNewBlock(node);
         this.network.save();
+        // Remove o nó da lista de sincronização
+        this.syncingNodes.delete(node.id!);
       }
     } else {
       // Se não houver vizinhos, cria um bloco genesis
       node.currentBlock = this.blockchain.createNewBlock(node);
       this.network.save();
+      // Remove o nó da lista de sincronização
+      this.syncingNodes.delete(node.id!);
     }
   }
 
@@ -375,6 +385,10 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
 
   onMinerChange() {
     this.network.save();
+  }
+
+  isSyncing(node: BitcoinNode): boolean {
+    return this.syncingNodes.has(node.id!);
   }
 
   ngOnDestroy() {

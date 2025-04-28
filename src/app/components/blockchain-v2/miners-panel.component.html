@@ -99,10 +99,18 @@
               class="ml-2 px-2 py-1 rounded text-xs"
               [ngClass]="{
                 'bg-green-900 text-green-400': miner.isMining,
-                'bg-zinc-900 text-zinc-400': !miner.isMining
+                'bg-zinc-900 text-zinc-400':
+                  !miner.isMining && !isSyncing(miner),
+                'bg-blue-900 text-blue-400 animate-pulse': isSyncing(miner)
               }"
             >
-              {{ miner.isMining ? "Minerando..." : "Parado" }}
+              {{
+                miner.isMining
+                  ? "Minerando..."
+                  : isSyncing(miner)
+                  ? "Sincronizando..."
+                  : "Parado"
+              }}
             </span>
           </div>
         </div>
