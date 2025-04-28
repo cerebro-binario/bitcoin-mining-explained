@@ -271,6 +271,9 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
             // Adiciona o bloco à blockchain local do minerador
             miner.addBlock(block);
 
+            // Propaga o bloco para os vizinhos
+            this.network.propagateBlock(miner.id!, block);
+
             // Cria um novo bloco para continuar minerando
             miner.currentBlock = this.blockchain.createNewBlock(miner, block);
             // Reinicia o cronômetro para o novo bloco
@@ -315,6 +318,9 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
 
               // Adiciona o bloco à blockchain local do minerador
               miner.addBlock(block);
+
+              // Propaga o bloco para os vizinhos
+              this.network.propagateBlock(miner.id!, block);
 
               // Cria um novo bloco para continuar minerando
               miner.currentBlock = this.blockchain.createNewBlock(miner, block);
