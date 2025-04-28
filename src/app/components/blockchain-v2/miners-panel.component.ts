@@ -12,6 +12,7 @@ import {
   TransactionOutput,
 } from '../../models/block.model';
 import * as CryptoJS from 'crypto-js';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface HashRateOption {
   label: string;
@@ -21,7 +22,7 @@ interface HashRateOption {
 @Component({
   selector: 'app-miners-panel',
   standalone: true,
-  imports: [CommonModule, MiningBlockComponent],
+  imports: [CommonModule, MiningBlockComponent, TooltipModule],
   templateUrl: './miners-panel.component.html',
   styleUrls: ['./miners-panel.component.scss'],
 })
@@ -157,9 +158,7 @@ export class MinersPanelComponent {
         const BATCH_SIZE = 1000;
         for (let i = 0; i < BATCH_SIZE; i++) {
           miner.currentBlock.nonce++;
-          miner.currentBlock.hash = this.blockchain.calculateBlockHash(
-            miner.currentBlock
-          );
+          miner.currentBlock.hash = miner.currentBlock.calculateHash();
           hashesInCurrentBatch++;
 
           if (this.blockchain.isValidBlock(miner.currentBlock)) {
@@ -186,9 +185,7 @@ export class MinersPanelComponent {
 
           for (let i = 0; i < hashesToProcess; i++) {
             miner.currentBlock.nonce++;
-            miner.currentBlock.hash = this.blockchain.calculateBlockHash(
-              miner.currentBlock
-            );
+            miner.currentBlock.hash = miner.currentBlock.calculateHash();
             hashesInCurrentBatch++;
 
             if (this.blockchain.isValidBlock(miner.currentBlock)) {

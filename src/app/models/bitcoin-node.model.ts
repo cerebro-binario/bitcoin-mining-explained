@@ -32,11 +32,13 @@ export class BitcoinNode {
   addBlock(block: Block): boolean {
     // Verifica se o bloco é válido
     if (!this.isValidBlock(block)) {
+      console.log('Bloco inválido:', block);
       return false;
     }
 
     // Verifica se o bloco já existe
     if (this.blocks.some((b) => b.hash === block.hash)) {
+      console.log('Bloco já existe:', block);
       return false;
     }
 
@@ -50,6 +52,7 @@ export class BitcoinNode {
   private isValidBlock(block: Block): boolean {
     // Verifica se é o bloco genesis
     if (block.height === 0) {
+      console.log('Bloco genesis:', block);
       return (
         block.previousHash ===
         '0000000000000000000000000000000000000000000000000000000000000000'
@@ -61,17 +64,20 @@ export class BitcoinNode {
       (b) => b.hash === block.previousHash
     );
     if (!previousBlock) {
+      console.log('Bloco anterior não encontrado:', block);
       return false;
     }
 
     // Verifica se a altura está correta
     if (block.height !== previousBlock.height + 1) {
+      console.log('Altura incorreta:', block);
       return false;
     }
 
     // Verifica se o hash do bloco é válido
     const hash = block.calculateHash();
     if (block.hash !== hash) {
+      console.log('Hash inválido:', block, hash);
       return false;
     }
 

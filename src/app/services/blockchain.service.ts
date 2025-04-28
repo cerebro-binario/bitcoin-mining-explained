@@ -52,7 +52,7 @@ export class BlockchainService {
       lastBlock?.hash ||
       '0000000000000000000000000000000000000000000000000000000000000000';
     const nBits = this.calculateNBits(lastBlock);
-    const blockHeight = (lastBlock?.id || 0) + 1;
+    const blockHeight = lastBlock ? lastBlock.height + 1 : 0;
     const subsidy = this.calculateBlockSubsidy(blockHeight);
 
     // Cria a transação coinbase
@@ -73,6 +73,7 @@ export class BlockchainService {
 
     return new Block({
       id: blockHeight,
+      height: blockHeight,
       timestamp,
       previousHash,
       transactions,
@@ -121,21 +122,6 @@ export class BlockchainService {
 
     // Block is valid if hash is below target
     return hashValue < block.target;
-  }
-
-  calculateBlockHash(block: Block): string {
-    const { id, timestamp, previousHash, transactions, nonce, nBits } = block;
-
-    // Create a string with all block data
-    const blockData = `${id}${timestamp}${previousHash}${JSON.stringify(
-      transactions
-    )}${nonce}${nBits}`;
-
-    // Calculate SHA-256 hash
-    const hash = CryptoJS.SHA256(blockData).toString();
-
-    // Ensure the hash is 64 characters long (32 bytes in hex)
-    return hash.padStart(64, '0');
   }
 
   // Métodos para gerenciar UTXOs

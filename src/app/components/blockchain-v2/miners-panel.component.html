@@ -111,6 +111,96 @@
           <app-mining-block [block]="miner.currentBlock"></app-mining-block>
         </div>
       </div>
+
+      <!-- Blockchain Local -->
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-blue-400">Blockchain Local</h3>
+          <span class="text-xs text-zinc-400">
+            {{ miner.blocks.length }} blocos
+            <span *ngIf="miner.getLatestBlock()"
+              >(Último: #{{ miner.getLatestBlock()?.height }})</span
+            >
+          </span>
+        </div>
+
+        <div class="relative">
+          <!-- Container com scroll horizontal -->
+          <div class="overflow-x-auto pb-4">
+            <div class="relative min-w-max">
+              <!-- Linha horizontal conectando os blocos -->
+              <div class="absolute top-1/2 w-full h-0.5 bg-zinc-700"></div>
+
+              <!-- Cadeia de blocos -->
+              <div class="flex space-x-8 px-4">
+                <div *ngFor="let block of miner.blocks" class="relative">
+                  <!-- Conexão horizontal -->
+                  <div
+                    class="absolute top-1/2 w-8 h-0.5 bg-zinc-700 -left-4"
+                  ></div>
+
+                  <!-- Bloco -->
+                  <div class="relative py-2">
+                    <div
+                      class="bg-zinc-800 rounded-lg p-4 border border-zinc-600 w-64 shadow hover:scale-[1.03] transition-transform cursor-pointer group flex flex-col gap-1"
+                    >
+                      <!-- Cabeçalho do bloco -->
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="font-semibold text-blue-300 text-base"
+                          >#{{ block.height }}</span
+                        >
+                        <span class="text-xs text-zinc-400">{{
+                          block.timestamp | date : "shortTime"
+                        }}</span>
+                      </div>
+
+                      <div class="border-b border-zinc-700 my-1"></div>
+
+                      <!-- Hash do bloco (completo) -->
+                      <div class="mb-1">
+                        <span class="text-zinc-400">Hash:</span>
+                        <div class="font-mono text-xs text-zinc-300 break-all">
+                          {{ block.hash }}
+                        </div>
+                      </div>
+
+                      <!-- Hash anterior (completo) -->
+                      <div class="mb-1">
+                        <span class="text-zinc-400">Anterior:</span>
+                        <div class="font-mono text-xs text-zinc-500 break-all">
+                          {{ block.previousHash }}
+                        </div>
+                      </div>
+
+                      <div class="flex items-center justify-between mt-1">
+                        <!-- Número de transações -->
+                        <div class="flex items-center gap-1">
+                          <span class="text-zinc-400">Txs:</span>
+                          <span class="font-mono text-xs text-zinc-300">{{
+                            block.transactions.length
+                          }}</span>
+                        </div>
+                        <!-- Nonce -->
+                        <div class="flex items-center gap-1">
+                          <span class="text-zinc-400">Nonce:</span>
+                          <span class="font-mono text-xs text-zinc-300">{{
+                            block.nonce
+                          }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Conexão horizontal -->
+                      <div
+                        class="absolute -right-4 top-1/2 w-8 h-0.5 bg-zinc-700"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
