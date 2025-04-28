@@ -10,6 +10,7 @@ export class Block {
   transactions: Transaction[] = [];
   nBits: number = 0; // Compact representation of target
   private _target: string = '0'; // Store target as string for JSON serialization
+  minerId?: number; // ID do minerador que minerou o bloco
 
   // Cronômetro de mineração
   miningStartTime: number | null = null;

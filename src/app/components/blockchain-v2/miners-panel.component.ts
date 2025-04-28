@@ -305,7 +305,8 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
             if (block.miningTimer) clearInterval(block.miningTimer);
             block.miningStartTime = null;
 
-            // Adiciona o bloco à blockchain local do minerador
+            // Adiciona o bloco à blockchain do minerador
+            block.minerId = miner.id;
             miner.addBlock(block);
 
             // Propaga o bloco para os vizinhos
@@ -353,7 +354,8 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
               if (block.miningTimer) clearInterval(block.miningTimer);
               block.miningStartTime = null;
 
-              // Adiciona o bloco à blockchain local do minerador
+              // Adiciona o bloco à blockchain do minerador
+              block.minerId = miner.id;
               miner.addBlock(block);
 
               // Propaga o bloco para os vizinhos
