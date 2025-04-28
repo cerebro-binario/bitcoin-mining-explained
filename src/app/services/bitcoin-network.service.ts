@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BitcoinNode } from '../models/bitcoin-node.model';
 import { Block } from '../models/block.model';
+import { BlockchainService } from './blockchain.service';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
@@ -10,7 +11,7 @@ export class BitcoinNetworkService {
   syncingNodes = new Set<number>(); // IDs dos nós que estão sincronizando
   private blocksInSync = new Map<number, number>(); // nodeId -> quantidade de blocos em sincronização
 
-  constructor() {
+  constructor(private blockchain: BlockchainService) {
     this.load();
   }
 
@@ -148,6 +149,13 @@ export class BitcoinNetworkService {
       setTimeout(() => {
         // Adiciona o bloco ao nó vizinho
         targetNode.addBlock(block);
+
+        // Atualiza o bloco atual para o próximo bloco a ser minerado
+        targetNode.currentBlock = this.blockchain.createNewBlock(
+          targetNode,
+          block
+        );
+
         this.save();
 
         // Remove o nó da lista de sincronização
