@@ -115,6 +115,8 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
           this.network.save();
           // Remove o nó da lista de sincronização
           this.network.stopNodeSync(node.id!);
+          // Marca a sincronização inicial como completa
+          this.network.markInitialSyncComplete(node.id!);
         }, sortedNeighbors[0].latency);
       } else {
         // Se o vizinho não tiver blocos, cria um bloco genesis
@@ -122,6 +124,8 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
         this.network.save();
         // Remove o nó da lista de sincronização
         this.network.stopNodeSync(node.id!);
+        // Marca a sincronização inicial como completa
+        this.network.markInitialSyncComplete(node.id!);
       }
     } else {
       // Se não houver vizinhos, cria um bloco genesis
@@ -129,6 +133,8 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
       this.network.save();
       // Remove o nó da lista de sincronização
       this.network.stopNodeSync(node.id!);
+      // Marca a sincronização inicial como completa
+      this.network.markInitialSyncComplete(node.id!);
     }
   }
 
