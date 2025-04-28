@@ -31,6 +31,19 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
         </ng-container>
         <!-- Draw nodes -->
         <ng-container *ngFor="let node of network.nodes; let i = index">
+          <!-- Círculo externo para animação de sincronização -->
+          <circle
+            *ngIf="network.isNodeSyncing(node.id!)"
+            [attr.cx]="getX(i)"
+            [attr.cy]="getY(i)"
+            r="28"
+            fill="none"
+            stroke="#3b82f6"
+            stroke-width="2"
+            stroke-dasharray="4"
+            class="sync-circle"
+          />
+          <!-- Nó principal -->
           <circle
             [attr.cx]="getX(i)"
             [attr.cy]="getY(i)"
@@ -53,7 +66,24 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
       </svg>
     </div>
   `,
-  styleUrls: [],
+  styles: [
+    `
+      .sync-circle {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: rotate 2s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    `,
+  ],
 })
 export class GraphPlotComponent {
   width = 700;
