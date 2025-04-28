@@ -33,7 +33,20 @@ export class BlockchainService {
   }
 
   private loadBlockchain() {
-    // TODO: Carregar blockchain do localStorage
+    const savedBlocks = localStorage.getItem('blockchain');
+    if (savedBlocks) {
+      try {
+        const parsedBlocks = JSON.parse(savedBlocks);
+        // Reinstancia cada bloco para garantir que os métodos estejam disponíveis
+        const blocks = parsedBlocks.map(
+          (blockData: any) => new Block(blockData)
+        );
+        this.blocksSubject.next(blocks);
+      } catch (error) {
+        console.error('Erro ao carregar blockchain:', error);
+        this.blocksSubject.next([]);
+      }
+    }
   }
 
   private saveBlockchain() {

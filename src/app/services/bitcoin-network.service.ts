@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BitcoinNode } from '../models/bitcoin-node.model';
+import { Block } from '../models/block.model';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
@@ -86,16 +87,27 @@ export class BitcoinNetworkService {
   }
 
   load() {
-    const saved = localStorage.getItem(this.STORAGE_KEY);
-    if (saved) {
-      this.nodes = (JSON.parse(saved) as any[]).map(
-        (obj) => new BitcoinNode(obj)
-      );
-      // Atualiza o nextId para o maior ID existente + 1
-      this.nextId =
-        this.nodes.length > 0
-          ? Math.max(...this.nodes.map((n) => n.id ?? 0)) + 1
-          : 1;
+    const savedNodes = localStorage.getItem(this.STORAGE_KEY);
+    if (savedNodes) {
+      try {
+        const parsedNodes = JSON.parse(savedNodes);
+        // Reinstancia cada nó e seus blocos para garantir que os métodos estejam disponíveis
+        this.nodes = parsedNodes.map((nodeData: any) => {
+          const node = new BitcoinNode(nodeData);
+          if (node.blocks) {
+            node.blocks = node.blocks.map(
+              (blockData: any) => new Block(blockData)
+            );
+          }
+          if (node.currentBlock) {
+            node.currentBlock = new Block(node.currentBlock);
+          }
+          return node;
+        });
+      } catch (error) {
+        console.error('Erro ao carregar nós:', error);
+        this.nodes = [];
+      }
     }
   }
 }
