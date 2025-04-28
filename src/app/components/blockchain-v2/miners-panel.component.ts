@@ -90,6 +90,14 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     node.name = `Minerador ${node.id}`;
     node.miningAddress = this.addressService.generateRandomAddress();
 
+    // Se for o primeiro miner, cria o bloco genesis imediatamente
+    if (this.network.nodes.length === 1) {
+      node.currentBlock = this.blockchain.createNewBlock(node);
+      this.network.save();
+      this.network.markInitialSyncComplete(node.id!);
+      return;
+    }
+
     // Marca o nó como sincronizando
     this.network.startNodeSync(node.id!);
 
@@ -99,43 +107,66 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
       (a, b) => a.latency - b.latency
     );
 
-    // Tenta obter a blockchain do vizinho com menor latência
-    if (sortedNeighbors.length > 0) {
-      const fastestNeighbor = this.network.nodes.find(
-        (n) => n.id === sortedNeighbors[0].nodeId
-      );
-      if (fastestNeighbor && fastestNeighbor.blocks.length > 0) {
-        // Simula o delay de propagação baseado na latência
-        setTimeout(() => {
-          // Copia a blockchain do vizinho
-          node.blocks = [...fastestNeighbor.blocks];
-          // Usa o último bloco como referência para criar um novo bloco
-          const lastBlock = fastestNeighbor.getLatestBlock();
-          node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
-          this.network.save();
-          // Remove o nó da lista de sincronização
-          this.network.stopNodeSync(node.id!);
-          // Marca a sincronização inicial como completa
-          this.network.markInitialSyncComplete(node.id!);
-        }, sortedNeighbors[0].latency);
-      } else {
-        // Se o vizinho não tiver blocos, cria um bloco genesis
-        node.currentBlock = this.blockchain.createNewBlock(node);
-        this.network.save();
-        // Remove o nó da lista de sincronização
-        this.network.stopNodeSync(node.id!);
-        // Marca a sincronização inicial como completa
-        this.network.markInitialSyncComplete(node.id!);
+    // Função para verificar se algum vizinho completou o download
+    const checkNeighborsForDownload = () => {
+      // Tenta obter a blockchain do vizinho com menor latência que já completou o sync
+      for (const neighbor of sortedNeighbors) {
+        const neighborNode = this.network.nodes.find(
+          (n) => n.id === neighbor.nodeId
+        );
+
+        // Se o vizinho não existe ou ainda não completou seu sync inicial, pula
+        if (
+          !neighborNode ||
+          !this.network.isInitialSyncComplete(neighborNode.id!)
+        ) {
+          continue;
+        }
+
+        // Se o vizinho tem blocos, usa a blockchain dele
+        if (neighborNode.blocks.length > 0) {
+          // Simula o delay de propagação baseado na latência
+          setTimeout(() => {
+            // Copia a blockchain do vizinho
+            node.blocks = [...neighborNode.blocks];
+            // Usa o último bloco como referência para criar um novo bloco
+            const lastBlock = neighborNode.getLatestBlock();
+            node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);
+            this.network.save();
+            // Remove o nó da lista de sincronização
+            this.network.stopNodeSync(node.id!);
+            // Marca a sincronização inicial como completa
+            this.network.markInitialSyncComplete(node.id!);
+          }, neighbor.latency);
+          return true; // Download iniciado
+        }
       }
-    } else {
-      // Se não houver vizinhos, cria um bloco genesis
+      return false; // Nenhum vizinho pronto para download
+    };
+
+    // Tenta iniciar o download imediatamente
+    if (checkNeighborsForDownload()) {
+      return;
+    }
+
+    // Se não encontrou nenhum vizinho pronto, aguarda e tenta novamente
+    const checkInterval = setInterval(() => {
+      if (checkNeighborsForDownload()) {
+        clearInterval(checkInterval);
+      }
+    }, 1000); // Verifica a cada segundo
+
+    // Se após 30 segundos ainda não encontrou nenhum vizinho pronto, cria um bloco genesis
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      // Cria um bloco genesis
       node.currentBlock = this.blockchain.createNewBlock(node);
       this.network.save();
       // Remove o nó da lista de sincronização
       this.network.stopNodeSync(node.id!);
       // Marca a sincronização inicial como completa
       this.network.markInitialSyncComplete(node.id!);
-    }
+    }, 30000);
   }
 
   createTransaction(miner: BitcoinNode) {
