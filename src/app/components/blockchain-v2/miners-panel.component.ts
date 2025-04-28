@@ -124,11 +124,11 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
         }
 
         // Se o vizinho tem blocos, usa a blockchain dele
-        if (neighborNode.blocks.length > 0) {
+        if (neighborNode.chains[0] && neighborNode.chains[0].length > 0) {
           // Simula o delay de propagação baseado na latência
           setTimeout(() => {
-            // Copia a blockchain do vizinho
-            node.blocks = [...neighborNode.blocks];
+            // Copia a cadeia principal do vizinho
+            node.chains = [[...neighborNode.chains[0]]];
             // Usa o último bloco como referência para criar um novo bloco
             const lastBlock = neighborNode.getLatestBlock();
             node.currentBlock = this.blockchain.createNewBlock(node, lastBlock);

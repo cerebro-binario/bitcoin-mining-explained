@@ -100,10 +100,13 @@ export class BitcoinNetworkService {
         // Reinstancia cada nó e seus blocos para garantir que os métodos estejam disponíveis
         this.nodes = parsedNodes.map((nodeData: any) => {
           const node = new BitcoinNode(nodeData);
-          if (node.blocks) {
-            node.blocks = node.blocks.map(
-              (blockData: any) => new Block(blockData)
+          // Corrige chains para garantir que todos os blocos sejam instâncias de Block
+          if (node.chains) {
+            node.chains = node.chains.map((chain: any[]) =>
+              chain.map((blockData: any) => new Block(blockData))
             );
+          } else {
+            node.chains = [[]];
           }
           if (node.currentBlock) {
             node.currentBlock = new Block(node.currentBlock);
@@ -152,11 +155,11 @@ export class BitcoinNetworkService {
 
     const pending = this.pendingBlocks.get(nodeId) || [];
     pending.forEach((block) => {
-      node.addBlock(block);
-      node.currentBlock = this.blockchain.createNewBlock(node, block);
-
-      // Continua propagando os blocos pendentes
-      this.propagateBlock(nodeId, block);
+      if (node.addBlock(block)) {
+        node.currentBlock = this.blockchain.createNewBlock(node, block);
+        // Continua propagando os blocos pendentes
+        this.propagateBlock(nodeId, block);
+      }
     });
     this.pendingBlocks.delete(nodeId);
     this.save();

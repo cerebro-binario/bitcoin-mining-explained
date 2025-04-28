@@ -128,7 +128,7 @@
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-blue-400">Blockchain Local</h3>
           <span class="text-xs text-zinc-400">
-            {{ miner.blocks.length }} blocos
+            {{ miner.chains[0].length || 0 }} blocos
             <span *ngIf="miner.getLatestBlock()"
               >(Último: #{{ miner.getLatestBlock()?.height }})</span
             >
@@ -145,7 +145,9 @@
               <!-- Cadeia de blocos -->
               <div class="flex space-x-8 px-4">
                 <div
-                  *ngFor="let block of miner.blocks.slice().reverse()"
+                  *ngFor="
+                    let block of (miner.chains[0] || []).slice().reverse()
+                  "
                   class="relative"
                 >
                   <!-- Conexão horizontal -->
@@ -224,6 +226,75 @@
                       <div
                         class="absolute -right-4 top-1/2 w-8 h-0.5 bg-zinc-700"
                       ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Forks alternativos -->
+      <div *ngIf="miner.getForks().length > 0" class="mt-2">
+        <div
+          *ngFor="let fork of miner.getForks(); let fIdx = index"
+          class="mb-6"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs text-zinc-400">Fork #{{ fIdx + 1 }}</span>
+            <span class="text-xs text-zinc-500"
+              >(comprimento: {{ fork.length }})</span
+            >
+            <span class="text-xs text-zinc-500" *ngIf="fork.length > 0">
+              Diverge em altura #{{ fork[0].height }}
+            </span>
+          </div>
+          <div class="overflow-x-auto pb-2">
+            <div class="flex space-x-6 px-2">
+              <div
+                *ngFor="let block of fork.slice().reverse()"
+                class="relative"
+              >
+                <div class="relative py-2">
+                  <div
+                    class="bg-zinc-700/60 rounded-lg p-4 border border-zinc-500 w-56 shadow flex flex-col gap-1 opacity-80"
+                  >
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="font-semibold text-zinc-200 text-base"
+                        >#{{ block.height }}</span
+                      >
+                      <span
+                        *ngIf="block.minerId"
+                        class="text-xs text-blue-300 bg-blue-900/30 rounded px-2 py-0.5"
+                        >Miner {{ block.minerId }}</span
+                      >
+                    </div>
+                    <div class="border-b border-zinc-600 my-1"></div>
+                    <div class="mb-1">
+                      <span class="text-zinc-400">Hash:</span>
+                      <div class="font-mono text-xs text-zinc-300 break-all">
+                        {{ block.hash }}
+                      </div>
+                    </div>
+                    <div class="mb-1">
+                      <span class="text-zinc-400">Anterior:</span>
+                      <div class="font-mono text-xs text-zinc-500 break-all">
+                        {{ block.previousHash }}
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-zinc-400">Txs:</span>
+                        <span class="font-mono text-xs text-zinc-300">{{
+                          block.transactions.length
+                        }}</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-zinc-400">Nonce:</span>
+                        <span class="font-mono text-xs text-zinc-300">{{
+                          block.nonce
+                        }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
