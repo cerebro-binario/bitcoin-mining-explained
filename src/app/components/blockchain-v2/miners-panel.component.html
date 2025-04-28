@@ -149,9 +149,18 @@
                     >
                       <!-- Cabeçalho do bloco -->
                       <div class="flex items-center justify-between mb-1">
-                        <span class="font-semibold text-blue-300 text-base"
-                          >#{{ block.height }}</span
+                        <span
+                          class="font-semibold text-blue-300 text-base flex items-center gap-2"
                         >
+                          #{{ block.height }}
+                          <span
+                            *ngIf="block.miningElapsed !== undefined"
+                            class="text-xs text-zinc-400 bg-zinc-900 rounded px-2 py-0.5 ml-1"
+                            style="font-size: 0.95em"
+                          >
+                            ⏱️ {{ (block.miningElapsed / 1000).toFixed(1) }}s
+                          </span>
+                        </span>
                         <span class="text-xs text-zinc-400">{{
                           block.timestamp | date : "shortTime"
                         }}</span>
