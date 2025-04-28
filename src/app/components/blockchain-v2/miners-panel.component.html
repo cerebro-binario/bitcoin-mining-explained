@@ -136,7 +136,10 @@
 
               <!-- Cadeia de blocos -->
               <div class="flex space-x-8 px-4">
-                <div *ngFor="let block of miner.blocks" class="relative">
+                <div
+                  *ngFor="let block of miner.blocks.slice().reverse()"
+                  class="relative"
+                >
                   <!-- Conexão horizontal -->
                   <div
                     class="absolute top-1/2 w-8 h-0.5 bg-zinc-700 -left-4"
