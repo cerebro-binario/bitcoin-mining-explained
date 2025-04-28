@@ -11,6 +11,11 @@ export class Block {
   nBits: number = 0; // Compact representation of target
   private _target: string = '0'; // Store target as string for JSON serialization
 
+  // Cronômetro de mineração
+  miningStartTime: number | null = null;
+  miningElapsed: number = 0;
+  miningTimer?: any;
+
   constructor(init?: Partial<Block>) {
     if (init) {
       // Handle target conversion if it exists in init

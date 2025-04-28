@@ -140,6 +140,23 @@ export class MinersPanelComponent {
     miner.isMining = true;
     const hashRate = miner.hashRate;
 
+    // Cronômetro de mineração no bloco
+    const block = miner.currentBlock;
+    if (block) {
+      // Se for um novo bloco, zera o cronômetro
+      if (!block.miningStartTime && !block.miningElapsed) {
+        block.miningElapsed = 0;
+      }
+      block.miningStartTime = Date.now();
+      if (block.miningTimer) clearInterval(block.miningTimer);
+      block.miningTimer = setInterval(() => {
+        if (miner.isMining && block.miningStartTime) {
+          block.miningElapsed += Date.now() - block.miningStartTime;
+          block.miningStartTime = Date.now();
+        }
+      }, 100);
+    }
+
     // Variáveis para controle do batch
     let lastBatchTime = Date.now();
     let accumulatedTime = 0;
@@ -148,6 +165,7 @@ export class MinersPanelComponent {
 
     miner.miningInterval = setInterval(() => {
       if (!miner.currentBlock) return;
+      const block = miner.currentBlock;
 
       const now = Date.now();
       const timeSinceLastBatch = now - lastBatchTime;
@@ -157,21 +175,36 @@ export class MinersPanelComponent {
         // Modo máximo - processa o máximo possível
         const BATCH_SIZE = 1000;
         for (let i = 0; i < BATCH_SIZE; i++) {
-          miner.currentBlock.nonce++;
-          miner.currentBlock.hash = miner.currentBlock.calculateHash();
+          block.nonce++;
+          block.hash = block.calculateHash();
           hashesInCurrentBatch++;
 
-          if (this.blockchain.isValidBlock(miner.currentBlock)) {
-            console.log('Bloco minerado!', miner.currentBlock);
+          if (this.blockchain.isValidBlock(block)) {
+            console.log('Bloco minerado!', block);
+
+            // Para o cronômetro
+            if (block.miningTimer) clearInterval(block.miningTimer);
+            block.miningStartTime = null;
 
             // Adiciona o bloco à blockchain local do minerador
-            miner.addBlock(miner.currentBlock);
+            miner.addBlock(block);
 
             // Cria um novo bloco para continuar minerando
-            miner.currentBlock = this.blockchain.createNewBlock(
-              miner,
-              miner.currentBlock
-            );
+            miner.currentBlock = this.blockchain.createNewBlock(miner, block);
+            // Reinicia o cronômetro para o novo bloco
+            const newBlock = miner.currentBlock;
+            if (newBlock) {
+              newBlock.miningElapsed = 0;
+              newBlock.miningStartTime = Date.now();
+              if (newBlock.miningTimer) clearInterval(newBlock.miningTimer);
+              newBlock.miningTimer = setInterval(() => {
+                if (miner.isMining && newBlock.miningStartTime) {
+                  newBlock.miningElapsed +=
+                    Date.now() - newBlock.miningStartTime;
+                  newBlock.miningStartTime = Date.now();
+                }
+              }, 100);
+            }
             break;
           }
         }
@@ -184,21 +217,36 @@ export class MinersPanelComponent {
           );
 
           for (let i = 0; i < hashesToProcess; i++) {
-            miner.currentBlock.nonce++;
-            miner.currentBlock.hash = miner.currentBlock.calculateHash();
+            block.nonce++;
+            block.hash = block.calculateHash();
             hashesInCurrentBatch++;
 
-            if (this.blockchain.isValidBlock(miner.currentBlock)) {
-              console.log('Bloco minerado!', miner.currentBlock);
+            if (this.blockchain.isValidBlock(block)) {
+              console.log('Bloco minerado!', block);
+
+              // Para o cronômetro
+              if (block.miningTimer) clearInterval(block.miningTimer);
+              block.miningStartTime = null;
 
               // Adiciona o bloco à blockchain local do minerador
-              miner.addBlock(miner.currentBlock);
+              miner.addBlock(block);
 
               // Cria um novo bloco para continuar minerando
-              miner.currentBlock = this.blockchain.createNewBlock(
-                miner,
-                miner.currentBlock
-              );
+              miner.currentBlock = this.blockchain.createNewBlock(miner, block);
+              // Reinicia o cronômetro para o novo bloco
+              const newBlock = miner.currentBlock;
+              if (newBlock) {
+                newBlock.miningElapsed = 0;
+                newBlock.miningStartTime = Date.now();
+                if (newBlock.miningTimer) clearInterval(newBlock.miningTimer);
+                newBlock.miningTimer = setInterval(() => {
+                  if (miner.isMining && newBlock.miningStartTime) {
+                    newBlock.miningElapsed +=
+                      Date.now() - newBlock.miningStartTime;
+                    newBlock.miningStartTime = Date.now();
+                  }
+                }, 100);
+              }
               break;
             }
           }
@@ -228,6 +276,13 @@ export class MinersPanelComponent {
     if (miner.miningInterval) {
       clearInterval(miner.miningInterval);
       miner.miningInterval = undefined;
+    }
+    // Ao pausar, atualiza o tempo decorrido até agora no bloco
+    const block = miner.currentBlock;
+    if (block && block.miningStartTime) {
+      if (block.miningTimer) clearInterval(block.miningTimer);
+      block.miningElapsed += Date.now() - block.miningStartTime;
+      block.miningStartTime = null;
     }
 
     this.network.save();

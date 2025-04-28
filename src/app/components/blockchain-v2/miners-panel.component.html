@@ -108,7 +108,10 @@
         </div>
 
         <div>
-          <app-mining-block [block]="miner.currentBlock"></app-mining-block>
+          <app-mining-block
+            [block]="miner.currentBlock"
+            [miningElapsed]="miner.currentBlock?.miningElapsed"
+          ></app-mining-block>
         </div>
       </div>
 

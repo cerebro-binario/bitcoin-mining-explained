@@ -19,6 +19,11 @@ export class BitcoinNode {
   miningInterval?: any;
   miningAddress: string = ''; // Endereço para receber recompensas de mineração
 
+  // Cronômetro de mineração
+  miningStartTime: number | null = null;
+  miningElapsed: number = 0;
+  miningTimer?: any;
+
   // Blockchain local do nó
   blocks: Block[] = [];
   lastBlockReceived?: Block;

@@ -11,6 +11,7 @@ import { Block } from '../../../models/block.model';
 })
 export class MiningBlockComponent {
   @Input() block?: Block;
+  @Input() miningElapsed: number | undefined = 0;
 
   get target(): string {
     if (!this.block?.target) return '0';
