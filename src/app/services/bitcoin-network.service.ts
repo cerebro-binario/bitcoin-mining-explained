@@ -12,6 +12,7 @@ export class BitcoinNetworkService {
   private blocksInSync = new Map<number, number>(); // nodeId -> quantidade de blocos em sincronização
   private initialSyncComplete = new Set<number>(); // IDs dos nós que completaram a sincronização inicial
   private pendingBlocks = new Map<number, Block[]>(); // nodeId -> blocos pendentes
+  private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
 
   constructor(private blockchain: BlockchainService) {
     this.load();
@@ -153,25 +154,50 @@ export class BitcoinNetworkService {
     pending.forEach((block) => {
       node.addBlock(block);
       node.currentBlock = this.blockchain.createNewBlock(node, block);
+
+      // Continua propagando os blocos pendentes
+      this.propagateBlock(nodeId, block);
     });
     this.pendingBlocks.delete(nodeId);
     this.save();
+  }
+
+  private hasNodeReceivedBlock(nodeId: number, blockHash: string): boolean {
+    return this.propagatedBlocks.get(blockHash)?.has(nodeId) || false;
+  }
+
+  private markBlockAsReceived(nodeId: number, blockHash: string) {
+    if (!this.propagatedBlocks.has(blockHash)) {
+      this.propagatedBlocks.set(blockHash, new Set());
+    }
+    this.propagatedBlocks.get(blockHash)!.add(nodeId);
   }
 
   propagateBlock(sourceNodeId: number, block: Block) {
     const sourceNode = this.nodes.find((n) => n.id === sourceNodeId);
     if (!sourceNode) return;
 
+    // Marca o nó fonte como tendo recebido o bloco
+    this.markBlockAsReceived(sourceNodeId, block.hash);
+
     // Para cada vizinho do nó fonte
     sourceNode.neighbors.forEach((neighbor) => {
       const targetNode = this.nodes.find((n) => n.id === neighbor.nodeId);
       if (!targetNode) return;
+
+      // Se o nó já recebeu este bloco, ignora
+      if (this.hasNodeReceivedBlock(targetNode.id!, block.hash)) {
+        return;
+      }
 
       // Marca o nó como sincronizando
       this.startNodeSync(targetNode.id!);
 
       // Simula o delay de propagação baseado na latência
       setTimeout(() => {
+        // Marca o nó como tendo recebido o bloco
+        this.markBlockAsReceived(targetNode.id!, block.hash);
+
         if (this.isInitialSyncComplete(targetNode.id!)) {
           // Se já completou o sync inicial, adiciona o bloco diretamente
           targetNode.addBlock(block);
@@ -179,6 +205,9 @@ export class BitcoinNetworkService {
             targetNode,
             block
           );
+
+          // Continua propagando para os vizinhos do nó atual
+          this.propagateBlock(targetNode.id!, block);
         } else {
           // Se ainda não completou o sync inicial, adiciona à fila de pendentes
           const pending = this.pendingBlocks.get(targetNode.id!) || [];
