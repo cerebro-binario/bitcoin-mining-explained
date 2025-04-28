@@ -8,6 +8,7 @@ export class BitcoinNetworkService {
   nodes: BitcoinNode[] = [];
   private nextId = 1;
   syncingNodes = new Set<number>(); // IDs dos nós que estão sincronizando
+  private blocksInSync = new Map<number, number>(); // nodeId -> quantidade de blocos em sincronização
 
   constructor() {
     this.load();
@@ -118,9 +119,40 @@ export class BitcoinNetworkService {
 
   startNodeSync(nodeId: number) {
     this.syncingNodes.add(nodeId);
+    this.blocksInSync.set(nodeId, (this.blocksInSync.get(nodeId) || 0) + 1);
   }
 
   stopNodeSync(nodeId: number) {
-    this.syncingNodes.delete(nodeId);
+    const currentCount = this.blocksInSync.get(nodeId) || 0;
+    if (currentCount <= 1) {
+      this.syncingNodes.delete(nodeId);
+      this.blocksInSync.delete(nodeId);
+    } else {
+      this.blocksInSync.set(nodeId, currentCount - 1);
+    }
+  }
+
+  propagateBlock(sourceNodeId: number, block: Block) {
+    const sourceNode = this.nodes.find((n) => n.id === sourceNodeId);
+    if (!sourceNode) return;
+
+    // Para cada vizinho do nó fonte
+    sourceNode.neighbors.forEach((neighbor) => {
+      const targetNode = this.nodes.find((n) => n.id === neighbor.nodeId);
+      if (!targetNode) return;
+
+      // Marca o nó como sincronizando
+      this.startNodeSync(targetNode.id!);
+
+      // Simula o delay de propagação baseado na latência
+      setTimeout(() => {
+        // Adiciona o bloco ao nó vizinho
+        targetNode.addBlock(block);
+        this.save();
+
+        // Remove o nó da lista de sincronização
+        this.stopNodeSync(targetNode.id!);
+      }, neighbor.latency);
+    });
   }
 }
