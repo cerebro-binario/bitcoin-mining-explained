@@ -10,6 +10,8 @@ export class BitcoinNetworkService {
   private nextId = 1;
   syncingNodes = new Set<number>(); // IDs dos nós que estão sincronizando
   private blocksInSync = new Map<number, number>(); // nodeId -> quantidade de blocos em sincronização
+  private initialSyncComplete = new Set<number>(); // IDs dos nós que completaram a sincronização inicial
+  private pendingBlocks = new Map<number, Block[]>(); // nodeId -> blocos pendentes
 
   constructor(private blockchain: BlockchainService) {
     this.load();
@@ -133,6 +135,29 @@ export class BitcoinNetworkService {
     }
   }
 
+  isInitialSyncComplete(nodeId: number): boolean {
+    return this.initialSyncComplete.has(nodeId);
+  }
+
+  markInitialSyncComplete(nodeId: number) {
+    this.initialSyncComplete.add(nodeId);
+    // Processa os blocos pendentes
+    this.processPendingBlocks(nodeId);
+  }
+
+  private processPendingBlocks(nodeId: number) {
+    const node = this.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+
+    const pending = this.pendingBlocks.get(nodeId) || [];
+    pending.forEach((block) => {
+      node.addBlock(block);
+      node.currentBlock = this.blockchain.createNewBlock(node, block);
+    });
+    this.pendingBlocks.delete(nodeId);
+    this.save();
+  }
+
   propagateBlock(sourceNodeId: number, block: Block) {
     const sourceNode = this.nodes.find((n) => n.id === sourceNodeId);
     if (!sourceNode) return;
@@ -147,18 +172,21 @@ export class BitcoinNetworkService {
 
       // Simula o delay de propagação baseado na latência
       setTimeout(() => {
-        // Adiciona o bloco ao nó vizinho
-        targetNode.addBlock(block);
-
-        // Atualiza o bloco atual para o próximo bloco a ser minerado
-        targetNode.currentBlock = this.blockchain.createNewBlock(
-          targetNode,
-          block
-        );
+        if (this.isInitialSyncComplete(targetNode.id!)) {
+          // Se já completou o sync inicial, adiciona o bloco diretamente
+          targetNode.addBlock(block);
+          targetNode.currentBlock = this.blockchain.createNewBlock(
+            targetNode,
+            block
+          );
+        } else {
+          // Se ainda não completou o sync inicial, adiciona à fila de pendentes
+          const pending = this.pendingBlocks.get(targetNode.id!) || [];
+          pending.push(block);
+          this.pendingBlocks.set(targetNode.id!, pending);
+        }
 
         this.save();
-
-        // Remove o nó da lista de sincronização
         this.stopNodeSync(targetNode.id!);
       }, neighbor.latency);
     });
