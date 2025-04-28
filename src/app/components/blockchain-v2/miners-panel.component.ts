@@ -95,6 +95,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
       node.currentBlock = this.blockchain.createNewBlock(node);
       this.network.save();
       this.network.markInitialSyncComplete(node.id!);
+      node.organizeBlocksByHeight(); // Organiza os blocos em heights
       return;
     }
 
@@ -138,6 +139,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
             this.network.save();
             this.network.stopNodeSync(node.id!);
             this.network.markInitialSyncComplete(node.id!);
+            node.organizeBlocksByHeight(); // Organiza os blocos em heights
           }, neighbor.latency);
           return true; // Download iniciado
         }
@@ -167,6 +169,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
       this.network.stopNodeSync(node.id!);
       // Marca a sincronização inicial como completa
       this.network.markInitialSyncComplete(node.id!);
+      node.organizeBlocksByHeight(); // Organiza os blocos em heights
     }, 30000);
   }
 

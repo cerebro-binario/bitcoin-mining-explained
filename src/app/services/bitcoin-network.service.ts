@@ -190,14 +190,18 @@ export class BitcoinNetworkService {
         this.markBlockAsReceived(targetNode.id!, block.hash);
 
         if (this.isInitialSyncComplete(targetNode.id!)) {
-          // Se já completou o sync inicial, adiciona o bloco diretamente
+          // Adiciona o bloco primeiro (isso já reordena os forks)
           targetNode.addBlock(block);
-          targetNode.currentBlock = this.blockchain.createNewBlock(
-            targetNode,
-            block
-          );
 
-          // Continua propagando para os vizinhos do nó atual
+          // Verifica se o bloco mais recente agora é o que acabamos de adicionar
+          const latestBlock = targetNode.getLatestBlock();
+          if (latestBlock && latestBlock.hash === block.hash) {
+            targetNode.currentBlock = this.blockchain.createNewBlock(
+              targetNode,
+              block
+            );
+          }
+
           this.propagateBlock(targetNode.id!, block);
         } else {
           // Se ainda não completou o sync inicial, adiciona à fila de pendentes

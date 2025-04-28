@@ -138,166 +138,73 @@
           <div class="overflow-x-auto pb-4">
             <div class="relative min-w-max">
               @if(miner.genesis){
-              <!-- Renderização reversa da árvore: começa pelo bloco mais recente -->
-              <ng-container *ngIf="miner.genesis">
-                <ng-container *ngIf="miner.getMainChain().length > 0">
-                  <ng-container
-                    *ngTemplateOutlet="
-                      renderBlockNodeReversed;
-                      context: { node: getLatestBlockNode(miner) }
-                    "
-                  ></ng-container>
-                </ng-container>
-              </ng-container>
-              <ng-template #renderBlockNodeReversed let-node="node">
-                <div class="flex flex-row space-x-8 items-start">
-                  <!-- Bloco atual -->
-                  <div class="relative">
+              <div class="flex flex-row space-x-8 items-start">
+                <!-- Bloco atual -->
+                <div
+                  *ngFor="
+                    let nodes of miner.heights.slice().reverse();
+                    let height = index
+                  "
+                  class="relative"
+                >
+                  @let h = miner.heights.length - height - 1;
+                  <div
+                    class="relative py-2 flex flex-col space-y-4"
+                    [@blockAnimation]
+                  >
                     <div
-                      class="relative py-2 flex flex-col space-y-4"
-                      [@blockAnimation]
+                      *ngFor="let node of nodes"
+                      class="bg-zinc-800 rounded-lg p-4 border border-zinc-600 w-64 shadow hover:scale-[1.03] transition-transform cursor-pointer group flex flex-col gap-1"
                     >
-                      <div
-                        class="bg-zinc-800 rounded-lg p-4 border border-zinc-600 w-64 shadow hover:scale-[1.03] transition-transform cursor-pointer group flex flex-col gap-1"
-                      >
-                        <div class="flex items-center justify-between mb-1">
+                      <div class="flex items-center justify-between mb-1">
+                        <span
+                          class="font-semibold text-blue-300 text-base flex items-center gap-2"
+                        >
+                          #{{ h }}
+                        </span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs text-zinc-400">{{
+                            node.block.timestamp | date : "shortTime"
+                          }}</span>
                           <span
-                            class="font-semibold text-blue-300 text-base flex items-center gap-2"
+                            *ngIf="node.block.minerId"
+                            class="text-xs text-blue-400 bg-blue-900/50 rounded px-2 py-0.5"
+                            >Miner {{ node.block.minerId }}</span
                           >
-                            #{{ node.block.height }}
-                          </span>
-                          <div class="flex items-center gap-2">
-                            <span class="text-xs text-zinc-400">{{
-                              node.block.timestamp | date : "shortTime"
-                            }}</span>
-                            <span
-                              *ngIf="node.block.minerId"
-                              class="text-xs text-blue-400 bg-blue-900/50 rounded px-2 py-0.5"
-                              >Miner {{ node.block.minerId }}</span
-                            >
-                          </div>
-                        </div>
-                        <div class="border-b border-zinc-700 my-1"></div>
-                        <div class="mb-1">
-                          <span class="text-zinc-400">Hash:</span>
-                          <div
-                            class="font-mono text-xs text-zinc-300 break-all"
-                          >
-                            {{ node.block.hash }}
-                          </div>
-                        </div>
-                        <div class="mb-1">
-                          <span class="text-zinc-400">Anterior:</span>
-                          <div
-                            class="font-mono text-xs text-zinc-500 break-all"
-                          >
-                            {{ node.block.previousHash }}
-                          </div>
-                        </div>
-                        <div class="flex items-center justify-between mt-1">
-                          <div class="flex items-center gap-1">
-                            <span class="text-zinc-400">Txs:</span>
-                            <span class="font-mono text-xs text-zinc-300">{{
-                              node.block.transactions.length
-                            }}</span>
-                          </div>
-                          <div class="flex items-center gap-1">
-                            <span class="text-zinc-400">Nonce:</span>
-                            <span class="font-mono text-xs text-zinc-300">{{
-                              node.block.nonce
-                            }}</span>
-                          </div>
                         </div>
                       </div>
-                      @let forks = getForks(node);
-                      <div
-                        *ngFor="let f of forks"
-                        class="bg-zinc-800 rounded-lg p-4 border border-zinc-600 w-64 shadow hover:scale-[1.03] transition-transform cursor-pointer group flex flex-col gap-1"
-                      >
-                        <div class="flex items-center justify-between mb-1">
-                          <span
-                            class="font-semibold text-blue-300 text-base flex items-center gap-2"
-                          >
-                            #{{ f.block.height }}
-                          </span>
-                          <div class="flex items-center gap-2">
-                            <span class="text-xs text-zinc-400">{{
-                              f.block.timestamp | date : "shortTime"
-                            }}</span>
-                            <span
-                              *ngIf="f.block.minerId"
-                              class="text-xs text-blue-400 bg-blue-900/50 rounded px-2 py-0.5"
-                              >Miner {{ f.block.minerId }}</span
-                            >
-                          </div>
+                      <div class="border-b border-zinc-700 my-1"></div>
+                      <div class="mb-1">
+                        <span class="text-zinc-400">Hash:</span>
+                        <div class="font-mono text-xs text-zinc-300 break-all">
+                          {{ node.block.hash }}
                         </div>
-                        <div class="border-b border-zinc-700 my-1"></div>
-                        <div class="mb-1">
-                          <span class="text-zinc-400">Hash:</span>
-                          <div
-                            class="font-mono text-xs text-zinc-300 break-all"
-                          >
-                            {{ f.block.hash }}
-                          </div>
+                      </div>
+                      <div class="mb-1">
+                        <span class="text-zinc-400">Anterior:</span>
+                        <div class="font-mono text-xs text-zinc-500 break-all">
+                          {{ node.block.previousHash }}
                         </div>
-                        <div class="mb-1">
-                          <span class="text-zinc-400">Anterior:</span>
-                          <div
-                            class="font-mono text-xs text-zinc-500 break-all"
-                          >
-                            {{ f.block.previousHash }}
-                          </div>
+                      </div>
+                      <div class="flex items-center justify-between mt-1">
+                        <div class="flex items-center gap-1">
+                          <span class="text-zinc-400">Txs:</span>
+                          <span class="font-mono text-xs text-zinc-300">{{
+                            node.block.transactions.length
+                          }}</span>
                         </div>
-                        <div class="flex items-center justify-between mt-1">
-                          <div class="flex items-center gap-1">
-                            <span class="text-zinc-400">Txs:</span>
-                            <span class="font-mono text-xs text-zinc-300">{{
-                              f.block.transactions.length
-                            }}</span>
-                          </div>
-                          <div class="flex items-center gap-1">
-                            <span class="text-zinc-400">Nonce:</span>
-                            <span class="font-mono text-xs text-zinc-300">{{
-                              f.block.nonce
-                            }}</span>
-                          </div>
+                        <div class="flex items-center gap-1">
+                          <span class="text-zinc-400">Nonce:</span>
+                          <span class="font-mono text-xs text-zinc-300">{{
+                            node.block.nonce
+                          }}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <!-- Renderiza o pai (main chain para trás) -->
-                  <ng-container *ngIf="node.parent">
-                    <ng-container
-                      *ngTemplateOutlet="
-                        renderBlockNodeReversed;
-                        context: { node: node.parent }
-                      "
-                    ></ng-container>
-                  </ng-container>
                 </div>
-                <!-- Forks: filhos extras (do pai, exceto o nó atual) -->
-                <!-- <div
-                  *ngIf="node.parent && node.parent.children.length > 1"
-                  class="flex flex-row gap-8 items-start mt-4"
-                >
-                  <ng-container
-                    *ngFor="let fork of node.parent.children.slice(1)"
-                  >
-                    <ng-container *ngIf="fork !== node">
-                      <div class="flex flex-col items-center">
-                        <div class="w-0.5 h-8 bg-zinc-500 opacity-60"></div>
-                        <div class="w-8 h-0.5 bg-zinc-500 opacity-60"></div>
-                        <ng-container
-                          *ngTemplateOutlet="
-                            renderBlockNodeReversed;
-                            context: { node: fork }
-                          "
-                        ></ng-container>
-                      </div>
-                    </ng-container>
-                  </ng-container>
-                </div> -->
-              </ng-template>
+              </div>
+
               }
             </div>
           </div>
