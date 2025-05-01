@@ -1,4 +1,4 @@
-import { Block, Transaction } from './block.model';
+import { Block, BlockNode, Transaction } from './block.model';
 import * as CryptoJS from 'crypto-js';
 
 export interface Neighbor {
@@ -6,42 +6,7 @@ export interface Neighbor {
   latency: number;
 }
 
-export type BlockNodePosition = {
-  h: number;
-  f: number;
-};
-
-// Representa um nó na árvore de blocos
-export class BlockNode {
-  block: Block;
-  children: BlockNode[] = [];
-  parent?: BlockNode;
-  isActive: boolean = true; // Flag para indicar se o bloco faz parte de uma chain válida
-
-  constructor(block: Block, parent?: BlockNode) {
-    this.block = block;
-    this.parent = parent;
-  }
-
-  // Serializa a árvore sem o campo parent
-  static serializeBlockNode(node: BlockNode): any {
-    return {
-      block: node.block,
-      children: node.children.map(BlockNode.serializeBlockNode),
-    };
-  }
-
-  // Desserializa a árvore e atribui parent
-  static deserializeBlockNode(data: any, parent?: BlockNode): BlockNode {
-    const node = new BlockNode(new Block(data.block), parent);
-    node.children = (data.children || []).map((child: any) =>
-      BlockNode.deserializeBlockNode(child, node)
-    );
-    return node;
-  }
-}
-
-export class BitcoinNode {
+export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
   private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
@@ -77,7 +42,7 @@ export class BitcoinNode {
   // Estrutura para rastrear blocos em fork ativamente
   activeFork?: number; // height -> blocos em fork
 
-  constructor(init?: Partial<BitcoinNode>) {
+  constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }
 

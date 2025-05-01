@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { BitcoinNode, BlockNode } from '../../../models/bitcoin-node.model';
+import { Node, BlockNode } from '../../../models/node';
 import { Block, Transaction } from '../../../models/block.model';
 import { AddressService } from '../../../services/address.service';
 import { MiningBlockComponent } from '../mining-block/mining-block.component';
@@ -56,7 +56,7 @@ export class MinerComponent {
     },
   };
 
-  @Input() miner!: BitcoinNode;
+  @Input() miner!: Node;
   @Input() hashRateOptions: HashRateOption[] = [
     { label: '1 H/s', value: 1 },
     { label: '100 H/s', value: 100 },
@@ -96,7 +96,7 @@ export class MinerComponent {
     }
   }
 
-  removeMiner(miner: BitcoinNode) {
+  removeMiner(miner: Node) {
     this.stopMining(miner);
     this.minerRemoved.emit({ minerId: miner.id! });
   }
@@ -109,7 +109,7 @@ export class MinerComponent {
     }
   }
 
-  stopMining(miner: BitcoinNode) {
+  stopMining(miner: Node) {
     if (!miner.isMining) return;
 
     miner.isMining = false;
@@ -127,7 +127,7 @@ export class MinerComponent {
   }
 
   // Método para iniciar mineração
-  startMining(miner: BitcoinNode) {
+  startMining(miner: Node) {
     if (miner.isMining) return;
 
     // Cria um novo bloco se não houver um atual
@@ -277,7 +277,7 @@ export class MinerComponent {
     }, 100); // Intervalo mínimo de 1ms
   }
 
-  createTransaction(miner: BitcoinNode) {
+  createTransaction(miner: Node) {
     // Gera um endereço aleatório para o destinatário
     const recipientAddress = this.addressService.generateRandomAddress();
 
@@ -360,7 +360,7 @@ export class MinerComponent {
   }
 
   // Calcula o caminho curvo para a conexão
-  getCurvedPath(miner: BitcoinNode, node: BlockNode, height: number): string {
+  getCurvedPath(miner: Node, node: BlockNode, height: number): string {
     if (!this.hasCalculatedGaps) {
       this.calculateGaps();
       this.hasCalculatedGaps = true;

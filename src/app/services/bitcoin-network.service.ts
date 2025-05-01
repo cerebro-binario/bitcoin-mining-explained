@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
-import { BitcoinNode } from '../models/bitcoin-node.model';
+import { Node } from '../models/node';
 import { Block } from '../models/block.model';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
-  nodes: BitcoinNode[] = [];
+  nodes: Node[] = [];
   private nextId = 1;
   private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
 
-  addNode(isMiner: boolean, name?: string, hashRate?: number): BitcoinNode {
-    const node = new BitcoinNode({
+  addNode(isMiner: boolean, name?: string, hashRate?: number): Node {
+    const node = new Node({
       id: this.nextId++,
       isMiner,
       name,

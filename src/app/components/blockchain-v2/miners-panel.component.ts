@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
-import { BlockNode } from '../../models/bitcoin-node.model';
+import { BlockNode } from '../../models/node';
 import { Block } from '../../models/block.model';
 import { AddressService } from '../../services/address.service';
 import { BitcoinNetworkService } from '../../services/bitcoin-network.service';

@@ -106,29 +106,32 @@ export interface TransactionOutput {
   scriptPubKey: string; // Script de bloqueio (endereço do destinatário)
 }
 
-// export const GENESIS_BLOCK: Block = {
-//   previousHash:
-//     '0000000000000000000000000000000000000000000000000000000000000000',
-//   height: 0,
-//   transactions: [
-//     {
-//       txid: '54e39cc08806e3809f279abac25867ae3206c5892eb1df69ac51b7c5dbe11be0',
-//       fee: 0,
-//       transfers: [
-//         {
-//           amount: 50.0,
-//           to: GENESIS_KEY_PAIR.addresses['P2PKH'].address,
-//           from: '0000000000000000000000000000000000000000000000000000000000000000',
-//         },
-//       ],
-//     },
-//   ],
-//   timestamp: 1737069357,
-//   hash: '0000d590a982a9489b64e91cea5e8f81635c56718b1c459041bd3a3a189cf6aa',
-//   merkleRoot:
-//     '54e39cc08806e3809f279abac25867ae3206c5892eb1df69ac51b7c5dbe11be0',
-//   nonce: 346257,
-// };
+// Representa um nó na árvore de blocos
+export class BlockNode {
+  block: Block;
+  children: BlockNode[] = [];
+  parent?: BlockNode;
+  isActive: boolean = true; // Flag para indicar se o bloco faz parte de uma chain válida
 
-export const INITIAL_SUBSIDY = 50 * 100000000;
-export const N_BLOCKS_PER_HALVING = 210000;
+  constructor(block: Block, parent?: BlockNode) {
+    this.block = block;
+    this.parent = parent;
+  }
+
+  // Serializa a árvore sem o campo parent
+  static serializeBlockNode(node: BlockNode): any {
+    return {
+      block: node.block,
+      children: node.children.map(BlockNode.serializeBlockNode),
+    };
+  }
+
+  // Desserializa a árvore e atribui parent
+  static deserializeBlockNode(data: any, parent?: BlockNode): BlockNode {
+    const node = new BlockNode(new Block(data.block), parent);
+    node.children = (data.children || []).map((child: any) =>
+      BlockNode.deserializeBlockNode(child, node)
+    );
+    return node;
+  }
+}
