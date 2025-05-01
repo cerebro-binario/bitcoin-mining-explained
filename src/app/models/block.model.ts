@@ -76,6 +76,16 @@ export class Block {
     };
     return sha256(JSON.stringify(data));
   }
+
+  public isValid(): boolean {
+    if (!this.hash) return false;
+
+    // Convert hash to BigInt for comparison
+    const hashValue = BigInt('0x' + this.hash);
+
+    // Block is valid if hash is below target
+    return hashValue < this.target;
+  }
 }
 
 export interface Transaction {

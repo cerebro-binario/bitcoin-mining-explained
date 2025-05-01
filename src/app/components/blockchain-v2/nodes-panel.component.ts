@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 
@@ -26,9 +26,5 @@ export class NodesPanelComponent {
     if (node) {
       this.network.removeNode(node.id!);
     }
-  }
-
-  onNodeChange() {
-    this.network.save();
   }
 }

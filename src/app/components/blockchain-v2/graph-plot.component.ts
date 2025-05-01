@@ -59,7 +59,7 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
             />
             <!-- Linha animada para tráfego de dados -->
             <line
-              *ngIf="network.isNodeSyncing(node.id!)"
+              *ngIf="node.isSyncing"
               [attr.x1]="getX(getIndexById(neighbor.nodeId))"
               [attr.y1]="getY(getIndexById(neighbor.nodeId))"
               [attr.x2]="getX(i)"
@@ -74,7 +74,7 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
         <ng-container *ngFor="let node of network.nodes; let i = index">
           <!-- Círculo externo para animação de sincronização -->
           <circle
-            *ngIf="network.isNodeSyncing(node.id!)"
+            *ngIf="node.isSyncing"
             [attr.cx]="getX(i)"
             [attr.cy]="getY(i)"
             r="28"

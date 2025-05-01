@@ -1,22 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BitcoinNode } from '../models/bitcoin-node.model';
 import { Block } from '../models/block.model';
-import { BlockchainService } from './blockchain.service';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
-  private readonly STORAGE_KEY = 'bitcoin-v2-network';
   nodes: BitcoinNode[] = [];
   private nextId = 1;
-  syncingNodes = new Set<number>(); // IDs dos nós que estão sincronizando
-  private blocksInSync = new Map<number, number>(); // nodeId -> quantidade de blocos em sincronização
-  private initialSyncComplete = new Set<number>(); // IDs dos nós que completaram a sincronização inicial
-  private pendingBlocks = new Map<number, Block[]>(); // nodeId -> blocos pendentes
   private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
-
-  constructor(private blockchain: BlockchainService) {
-    this.load();
-  }
 
   addNode(isMiner: boolean, name?: string, hashRate?: number): BitcoinNode {
     const node = new BitcoinNode({
@@ -38,7 +28,6 @@ export class BitcoinNetworkService {
       neighbor.neighbors.push({ nodeId: node.id!, latency }); // bidirecional
     }
     this.nodes.push(node);
-    this.save();
     return node;
   }
 
@@ -47,7 +36,6 @@ export class BitcoinNetworkService {
     this.nodes.forEach((n) => {
       n.neighbors = n.neighbors.filter((nb) => nb.nodeId !== nodeId);
     });
-    this.save();
   }
 
   addConnection(nodeId: number, neighborId: number, latency: number = 50) {
@@ -60,7 +48,6 @@ export class BitcoinNetworkService {
     ) {
       node.neighbors.push({ nodeId: neighborId, latency });
       neighbor.neighbors.push({ nodeId: nodeId, latency });
-      this.save();
     }
   }
 
@@ -72,7 +59,6 @@ export class BitcoinNetworkService {
       neighbor.neighbors = neighbor.neighbors.filter(
         (n) => n.nodeId !== nodeId
       );
-      this.save();
     }
   }
 
@@ -84,73 +70,7 @@ export class BitcoinNetworkService {
       const n2 = neighbor.neighbors.find((n) => n.nodeId === nodeId);
       if (n1) n1.latency = latency;
       if (n2) n2.latency = latency;
-      this.save();
     }
-  }
-
-  save() {
-    // const serialized = this.nodes.map((node) => JSON.stringify(node));
-    // localStorage.setItem(this.STORAGE_KEY, JSON.stringify(serialized));
-  }
-
-  load() {
-    const savedNodes = localStorage.getItem(this.STORAGE_KEY);
-    if (savedNodes) {
-      try {
-        const parsedNodes = JSON.parse(savedNodes);
-        this.nodes = parsedNodes.map(
-          (nodeData: any) => new BitcoinNode(nodeData)
-        );
-      } catch (error) {
-        console.error('Erro ao carregar nós:', error);
-        this.nodes = [];
-      }
-    }
-  }
-
-  isNodeSyncing(nodeId: number): boolean {
-    return this.syncingNodes.has(nodeId);
-  }
-
-  startNodeSync(nodeId: number) {
-    this.syncingNodes.add(nodeId);
-    this.blocksInSync.set(nodeId, (this.blocksInSync.get(nodeId) || 0) + 1);
-  }
-
-  stopNodeSync(nodeId: number) {
-    const currentCount = this.blocksInSync.get(nodeId) || 0;
-    if (currentCount <= 1) {
-      this.syncingNodes.delete(nodeId);
-      this.blocksInSync.delete(nodeId);
-    } else {
-      this.blocksInSync.set(nodeId, currentCount - 1);
-    }
-  }
-
-  isInitialSyncComplete(nodeId: number): boolean {
-    return this.initialSyncComplete.has(nodeId);
-  }
-
-  markInitialSyncComplete(nodeId: number) {
-    this.initialSyncComplete.add(nodeId);
-    // Processa os blocos pendentes
-    this.processPendingBlocks(nodeId);
-  }
-
-  private processPendingBlocks(nodeId: number) {
-    const node = this.nodes.find((n) => n.id === nodeId);
-    if (!node) return;
-
-    const pending = this.pendingBlocks.get(nodeId) || [];
-    pending.forEach((block) => {
-      if (node.addBlock(block)) {
-        node.currentBlock = this.blockchain.createNewBlock(node, block);
-        // Continua propagando os blocos pendentes
-        this.propagateBlock(nodeId, block);
-      }
-    });
-    this.pendingBlocks.delete(nodeId);
-    this.save();
   }
 
   private hasNodeReceivedBlock(nodeId: number, blockHash: string): boolean {
@@ -181,36 +101,30 @@ export class BitcoinNetworkService {
       }
 
       // Marca o nó como sincronizando
-      this.startNodeSync(targetNode.id!);
+      targetNode.isSyncing = true;
 
       // Simula o delay de propagação baseado na latência
       setTimeout(() => {
         // Marca o nó como tendo recebido o bloco
         this.markBlockAsReceived(targetNode.id!, block.hash);
 
-        if (this.isInitialSyncComplete(targetNode.id!)) {
+        if (targetNode.initialSyncComplete) {
           // Adiciona o bloco primeiro (isso já reordena os forks)
           targetNode.addBlock(block);
 
           // Verifica se o bloco mais recente agora é o que acabamos de adicionar
           const latestBlock = targetNode.getLatestBlock();
           if (latestBlock && latestBlock.hash === block.hash) {
-            targetNode.currentBlock = this.blockchain.createNewBlock(
-              targetNode,
-              block
-            );
+            targetNode.initBlockTemplate(block);
           }
 
           this.propagateBlock(targetNode.id!, block);
         } else {
           // Se ainda não completou o sync inicial, adiciona à fila de pendentes
-          const pending = this.pendingBlocks.get(targetNode.id!) || [];
-          pending.push(block);
-          this.pendingBlocks.set(targetNode.id!, pending);
+          targetNode.pendingBlocks.push(block);
         }
 
-        this.save();
-        this.stopNodeSync(targetNode.id!);
+        targetNode.isSyncing = false;
       }, neighbor.latency);
     });
   }

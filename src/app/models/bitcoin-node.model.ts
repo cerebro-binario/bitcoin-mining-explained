@@ -1,4 +1,5 @@
-import { Block } from './block.model';
+import { Block, Transaction } from './block.model';
+import * as CryptoJS from 'crypto-js';
 
 export interface Neighbor {
   nodeId: number;
@@ -41,6 +42,14 @@ export class BlockNode {
 }
 
 export class BitcoinNode {
+  private readonly INITIAL_NBITS = 0x1e9fffff;
+  private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
+  private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
+
+  isSyncing: boolean = false;
+  initialSyncComplete: boolean = false;
+  pendingBlocks: Block[] = [];
+
   id?: number;
   neighbors: Neighbor[] = [];
 
@@ -70,6 +79,57 @@ export class BitcoinNode {
 
   constructor(init?: Partial<BitcoinNode>) {
     Object.assign(this, init);
+  }
+
+  initBlockTemplate(lastBlock?: Block): Block {
+    const timestamp = Date.now();
+    const previousHash =
+      lastBlock?.hash ||
+      '0000000000000000000000000000000000000000000000000000000000000000';
+    const nBits = this.calculateNBits(lastBlock);
+    const blockHeight = lastBlock ? lastBlock.height + 1 : 0;
+    const subsidy = this.calculateBlockSubsidy(blockHeight);
+
+    // Cria a transação coinbase
+    const coinbaseTx: Transaction = {
+      id: CryptoJS.SHA256(timestamp.toString()).toString(),
+      inputs: [], // Coinbase não tem inputs
+      outputs: [
+        {
+          value: subsidy,
+          scriptPubKey: this.miningAddress,
+        },
+      ],
+      signature: '', // Coinbase não precisa de assinatura
+    };
+
+    // Adiciona a coinbase como primeira transação
+    const transactions = [coinbaseTx];
+
+    this.currentBlock = new Block({
+      id: blockHeight,
+      height: blockHeight,
+      timestamp,
+      previousHash,
+      transactions,
+      nBits,
+      nonce: 0,
+      hash: '',
+    });
+
+    return this.currentBlock;
+  }
+
+  private calculateNBits(lastBlock?: Block): number {
+    if (!lastBlock) return this.INITIAL_NBITS;
+
+    // TODO: Implementar ajuste de nBits baseado no tempo de mineração do último bloco
+    return this.INITIAL_NBITS;
+  }
+
+  private calculateBlockSubsidy(blockHeight: number): number {
+    const halvings = Math.floor(blockHeight / this.HALVING_INTERVAL);
+    return Math.floor(this.SUBSIDY / Math.pow(2, halvings));
   }
 
   // Método para ordenar os blocos, movendo forks mortos para o final
