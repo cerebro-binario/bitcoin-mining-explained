@@ -61,10 +61,26 @@
       <div class="flex items-center gap-2 mt-4">
         <button
           *ngIf="!miner.isMining"
-          class="px-3 py-1 rounded bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition"
+          class="px-3 py-1 rounded text-white text-sm font-semibold transition"
+          [ngClass]="{
+            'bg-green-600 hover:bg-green-700':
+              !miner.isSyncing || miner.initialSyncComplete,
+            'bg-zinc-600 cursor-not-allowed':
+              miner.isSyncing && !miner.initialSyncComplete
+          }"
           (click)="startMining(miner)"
+          [disabled]="miner.isSyncing && !miner.initialSyncComplete"
+          [title]="
+            miner.isSyncing && !miner.initialSyncComplete
+              ? 'Aguarde o download inicial da blockchain'
+              : ''
+          "
         >
-          Iniciar Mineração
+          {{
+            miner.isSyncing && !miner.initialSyncComplete
+              ? "Aguardando Sincronização"
+              : "Iniciar Mineração"
+          }}
         </button>
         <button
           *ngIf="miner.isMining"
