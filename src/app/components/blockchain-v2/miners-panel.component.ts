@@ -1,25 +1,20 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
-import { AddressService } from '../../services/address.service';
-import { BlockchainService } from '../../services/blockchain.service';
-import { BitcoinNode, BlockNode } from '../../models/bitcoin-node.model';
-import { MiningBlockComponent } from './mining-block/mining-block.component';
 import {
-  Block,
-  Transaction,
-  TransactionInput,
-  TransactionOutput,
-} from '../../models/block.model';
-import * as CryptoJS from 'crypto-js';
-import { TooltipModule } from 'primeng/tooltip';
-import {
-  trigger,
+  animate,
   state,
   style,
   transition,
-  animate,
+  trigger,
 } from '@angular/animations';
+import { CommonModule } from '@angular/common';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import * as CryptoJS from 'crypto-js';
+import { TooltipModule } from 'primeng/tooltip';
+import { BitcoinNode, BlockNode } from '../../models/bitcoin-node.model';
+import { Transaction, Block } from '../../models/block.model';
+import { AddressService } from '../../services/address.service';
+import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
+import { BlockchainService } from '../../services/blockchain.service';
+import { MiningBlockComponent } from './mining-block/mining-block.component';
 
 interface HashRateOption {
   label: string;
@@ -34,25 +29,22 @@ interface HashRateOption {
   styleUrls: ['./miners-panel.component.scss'],
   animations: [
     trigger('blockAnimation', [
-      state(
-        'void',
-        style({
-          opacity: 0,
-          transform: 'scale(0.95)',
-        })
-      ),
-      state(
-        '*',
-        style({
-          opacity: 1,
-          transform: 'scale(1)',
-        })
-      ),
-      transition('void => *', [animate('0.6s ease-out')]),
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('0.5s ease-out', style({ opacity: 1 })),
+      ]),
+    ]),
+    trigger('slideRightAnimation', [
+      state('default', style({ transform: 'translateX(0)' })),
+      state('moved', style({ transform: '{{slideXValue}}' }), {
+        params: { slideXValue: 'translateX(100%)' },
+      }),
+      transition('default => moved', [animate('0.5s ease-out')]),
+      transition('moved => default', [animate('0s ease-out')]),
     ]),
   ],
 })
-export class MinersPanelComponent implements OnInit, OnDestroy {
+export class MinersPanelComponent implements OnInit, OnDestroy, AfterViewInit {
   hashRateOptions: HashRateOption[] = [
     { label: '1 H/s', value: 1 },
     { label: '100 H/s', value: 100 },
@@ -62,6 +54,22 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
 
   private readonly SAVE_INTERVAL = 5000; // Salva a cada 5 segundos
   private saveInterval?: any;
+
+  // Propriedades para o cálculo de gaps
+  connectorViewbox = { w: 100, h: 100 };
+  gap = {
+    x: {
+      value: 0,
+      percentage: 0,
+    },
+    y: {
+      value: 0,
+      percentage: 0,
+    },
+  };
+  private hasCalculatedGaps = false;
+  isMoving = new Set<number>();
+  slideXValue = 'translateX(100%)';
 
   constructor(
     public network: BitcoinNetworkService,
@@ -95,7 +103,6 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
       node.currentBlock = this.blockchain.createNewBlock(node);
       this.network.save();
       this.network.markInitialSyncComplete(node.id!);
-      node.organizeBlocksByHeight(); // Organiza os blocos em heights
       return;
     }
 
@@ -131,6 +138,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
             node.genesis = BlockNode.deserializeBlockNode(
               BlockNode.serializeBlockNode(neighborNode.genesis as BlockNode)
             );
+            node.heights = neighborNode.heights.slice();
             // Usa o último bloco da main chain como referência para criar um novo bloco
             node.currentBlock = this.blockchain.createNewBlock(
               node,
@@ -139,7 +147,6 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
             this.network.save();
             this.network.stopNodeSync(node.id!);
             this.network.markInitialSyncComplete(node.id!);
-            node.organizeBlocksByHeight(); // Organiza os blocos em heights
           }, neighbor.latency);
           return true; // Download iniciado
         }
@@ -169,7 +176,6 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
       this.network.stopNodeSync(node.id!);
       // Marca a sincronização inicial como completa
       this.network.markInitialSyncComplete(node.id!);
-      node.organizeBlocksByHeight(); // Organiza os blocos em heights
     }, 30000);
   }
 
@@ -244,7 +250,16 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     this.network.save();
   }
 
-  startMining(miner: BitcoinNode) {
+  // Método para adicionar um bloco
+  private async addBlock(miner: BitcoinNode, block: Block) {
+    this.isMoving.add(miner.id!);
+    await this.wait(600);
+    miner.addBlock(block);
+    this.isMoving.delete(miner.id!);
+  }
+
+  // Método para iniciar mineração
+  async startMining(miner: BitcoinNode) {
     if (miner.isMining) return;
 
     // Cria um novo bloco se não houver um atual
@@ -287,7 +302,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     let hashesInCurrentBatch = 0;
 
     miner.miningInterval = setInterval(() => {
-      if (!miner.currentBlock) return;
+      if (!miner.currentBlock || this.isMoving.has(miner.id!)) return;
       const block = miner.currentBlock;
 
       const now = Date.now();
@@ -303,18 +318,19 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
           hashesInCurrentBatch++;
 
           if (this.blockchain.isValidBlock(block)) {
-            console.log('Bloco minerado!', block);
-
             // Para o cronômetro
             if (block.miningTimer) clearInterval(block.miningTimer);
             block.miningStartTime = null;
 
-            // Adiciona o bloco à blockchain do minerador
             block.minerId = miner.id;
-            miner.addBlock(block);
+            this.isMoving.add(miner.id!);
 
-            // Propaga o bloco para os vizinhos
-            this.network.propagateBlock(miner.id!, block);
+            setTimeout(() => {
+              miner.addBlock(block);
+              this.isMoving.delete(miner.id!);
+              // Propaga o bloco para os vizinhos
+              this.network.propagateBlock(miner.id!, block);
+            }, 600);
 
             // Cria um novo bloco para continuar minerando
             miner.currentBlock = this.blockchain.createNewBlock(miner, block);
@@ -352,18 +368,21 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
             hashesInCurrentBatch++;
 
             if (this.blockchain.isValidBlock(block)) {
-              console.log('Bloco minerado!', block);
-
               // Para o cronômetro
               if (block.miningTimer) clearInterval(block.miningTimer);
               block.miningStartTime = null;
 
               // Adiciona o bloco à blockchain do minerador
               block.minerId = miner.id;
-              miner.addBlock(block);
 
-              // Propaga o bloco para os vizinhos
-              this.network.propagateBlock(miner.id!, block);
+              this.isMoving.add(miner.id!);
+
+              setTimeout(() => {
+                miner.addBlock(block);
+                this.isMoving.delete(miner.id!);
+                // Propaga o bloco para os vizinhos
+                this.network.propagateBlock(miner.id!, block);
+              }, 600);
 
               // Cria um novo bloco para continuar minerando
               miner.currentBlock = this.blockchain.createNewBlock(miner, block);
@@ -401,7 +420,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
         batchStartTime = now;
         hashesInCurrentBatch = 0;
       }
-    }, 1); // Intervalo mínimo de 1ms
+    }, 100); // Intervalo mínimo de 1ms
 
     this.saveMiningState();
   }
@@ -431,10 +450,6 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     this.saveMiningState();
   }
 
-  onMinerChange() {
-    this.network.save();
-  }
-
   isSyncing(node: BitcoinNode): boolean {
     return this.network.isNodeSyncing(node.id!);
   }
@@ -446,37 +461,139 @@ export class MinersPanelComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Calcula o deslocamento horizontal (em px) para alinhar o fork ao ponto de bifurcação
-  getForkOffsetPx(fork: any[], miner: any): number {
-    const main = miner.getMainChain();
-    if (!fork.length || !main.length) return 0;
-    // O fork diverge do main chain no primeiro bloco diferente (da direita para a esquerda)
-    let idx = 0;
-    while (
-      idx < fork.length &&
-      idx < main.length &&
-      fork[fork.length - 1 - idx].hash === main[main.length - 1 - idx].hash
-    ) {
-      idx++;
-    }
-    // O bloco de bifurcação está em main.length - idx
-    return idx * 272;
+  // Verifica se a altura está resolvida (todos os blocos da altura estão na main chain)
+  isHeightResolved(miner: BitcoinNode, height: number): boolean {
+    const blocks = miner.heights[height];
+    const activeBlocks = blocks.filter((b) => b.isActive).length; // Conta apenas blocos ativos
+    return activeBlocks === 1;
   }
 
-  // Retorna o último BlockNode da main chain para renderização reversa
-  getLatestBlockNode(miner: BitcoinNode): BlockNode | undefined {
-    if (!miner.genesis) return undefined;
-    let node = miner.genesis;
-    while (node.children.length > 0) {
-      node = node.children[0];
-    }
-    return node;
+  // Calcula o valor dinâmico para o topo da conexão
+  getDynamicTopValue(total: number, index: number): number {
+    return (100 / (total + 1)) * (index + 1);
   }
 
-  getForks(node: BlockNode): BlockNode[] {
-    return (
-      node.parent?.children.filter((c) => c.block.hash !== node.block.hash) ||
-      []
+  // Calcula o caminho curvo para a conexão
+  getCurvedPath(miner: BitcoinNode, node: BlockNode, height: number): string {
+    if (!this.hasCalculatedGaps) {
+      this.calculateGaps();
+      this.hasCalculatedGaps = true;
+    }
+
+    const parent = node.parent;
+    if (!parent) return '';
+
+    const hTotal = parent.children.length;
+    const h = parent.children.findIndex(
+      (c) => c.block.hash === node.block.hash
     );
+    const prevPosition = miner.heights[height + 1]?.findIndex(
+      (b) => b.block.hash === parent.block.hash
+    );
+    const currPosition = miner.heights[height]?.findIndex(
+      (b) => b.block.hash === node.block.hash
+    );
+    const startX = this.connectorViewbox.w;
+    const startY = this.connectorViewbox.h / 2;
+
+    // Calcula a posição final do bloco filho
+    const endX = this.connectorViewbox.w + this.gap.x.value;
+    const endY =
+      (this.getDynamicTopValue(hTotal, h) / 100) * this.connectorViewbox.h +
+      (this.connectorViewbox.h + this.gap.y.value) *
+        (prevPosition - currPosition);
+    // Ponto de controle para a curva
+    const midX = (startX + endX) / 2; // Ponto no meio do caminho horizontalmente
+
+    // **AUMENTAMOS** a distância dos pontos de controle para criar uma curva mais acentuada
+    const controlX1 = startX + (midX - startX) * 1.15; // Puxa mais a curva na 1ª metade
+    const controlX2 = endX + (midX - endX) * 1.15; // Puxa mais a curva na 2ª metade
+
+    const controlY1 = startY;
+    const controlY2 = endY;
+
+    return `M ${startX},${startY} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${endX},${endY}`;
+  }
+
+  // Retorna a cor da conexão
+  getConnectionStrokeColor(node: BlockNode, isResolved: boolean): string {
+    if (isResolved) return '#4b5563'; // cinza neutro para main chain
+    if (!node.isActive) return '#6b7280'; // cinza mais claro para dead forks
+    return '#4b5563'; // cinza neutro para conexões em andamento
+  }
+
+  // Método para obter a cor de fundo do bloco
+  getBlockBackgroundColor(node: BlockNode): string {
+    if (!node.isActive) return 'bg-zinc-700/50'; // fundo mais escuro para dead forks
+    return 'bg-zinc-800'; // fundo padrão para main chain
+  }
+
+  // Método para obter a cor da borda do bloco
+  getBlockBorderColor(node: BlockNode): string {
+    if (!node.isActive) return 'border-zinc-600/50'; // borda mais clara para dead forks
+    return 'border-zinc-600'; // borda padrão para main chain
+  }
+
+  // Método para calcular os gaps
+  calculateGaps() {
+    const container = document.querySelector(
+      '#miners-panel-container'
+    ) as HTMLElement;
+    if (!container) return;
+
+    const containerComputedStyle = window.getComputedStyle(container);
+
+    this.gap.x.value =
+      parseFloat(containerComputedStyle.getPropertyValue('gap')) || 0;
+
+    // Calcular gap vertical
+    const heightContainer = document.querySelector(
+      '.height-element-container'
+    ) as HTMLElement;
+
+    const heightComputedStyle = window.getComputedStyle(heightContainer);
+    this.gap.y.value =
+      parseFloat(heightComputedStyle.getPropertyValue('gap')) || 0;
+
+    const heightElement = document.querySelector(
+      '.height-element'
+    ) as HTMLElement;
+    const blockElement = document.querySelector(
+      '.block-element'
+    ) as HTMLElement;
+
+    const heightWidth = heightElement.getBoundingClientRect().width;
+    const blockWidth = blockElement.getBoundingClientRect().width;
+    const blockHeight = blockElement.getBoundingClientRect().height;
+
+    this.gap.x.percentage = (this.gap.x.value / heightWidth) * 100;
+    this.gap.y.percentage = (this.gap.y.value / blockHeight) * 100;
+
+    requestAnimationFrame(() => {
+      this.slideXValue = `translateX(calc(100% + ${this.gap.x.value}px))`;
+    });
+
+    this.connectorViewbox = { w: blockWidth, h: blockHeight };
+  }
+
+  // Método chamado após a view ser inicializada
+  ngAfterViewInit() {
+    // Verifica se existe algum bloco minerado
+    const hasBlocks = this.miners.some((miner) => miner.heights.length > 0);
+    if (hasBlocks) {
+      requestAnimationFrame(() => {
+        this.calculateGaps();
+      });
+    }
+  }
+
+  // Método para trackBy no *ngFor
+  trackByBlockHash(index: number, node: BlockNode): string {
+    return node.block.hash;
+  }
+
+  // Função auxiliar para esperar um tempo
+  private async wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

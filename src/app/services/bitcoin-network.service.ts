@@ -89,8 +89,8 @@ export class BitcoinNetworkService {
   }
 
   save() {
-    const serialized = this.nodes.map((node) => node.serialize());
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(serialized));
+    // const serialized = this.nodes.map((node) => JSON.stringify(node));
+    // localStorage.setItem(this.STORAGE_KEY, JSON.stringify(serialized));
   }
 
   load() {
@@ -98,8 +98,8 @@ export class BitcoinNetworkService {
     if (savedNodes) {
       try {
         const parsedNodes = JSON.parse(savedNodes);
-        this.nodes = parsedNodes.map((nodeData: any) =>
-          BitcoinNode.deserialize(nodeData)
+        this.nodes = parsedNodes.map(
+          (nodeData: any) => new BitcoinNode(nodeData)
         );
       } catch (error) {
         console.error('Erro ao carregar nós:', error);
@@ -176,7 +176,6 @@ export class BitcoinNetworkService {
       const targetNode = this.nodes.find((n) => n.id === neighbor.nodeId);
       if (!targetNode) return;
 
-      // Se o nó já recebeu este bloco, ignora
       if (this.hasNodeReceivedBlock(targetNode.id!, block.hash)) {
         return;
       }

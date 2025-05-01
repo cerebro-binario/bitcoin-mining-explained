@@ -5,11 +5,18 @@ export interface Neighbor {
   latency: number;
 }
 
+export type BlockNodePosition = {
+  h: number;
+  f: number;
+};
+
 // Representa um nó na árvore de blocos
 export class BlockNode {
   block: Block;
   children: BlockNode[] = [];
   parent?: BlockNode;
+  isActive: boolean = true; // Flag para indicar se o bloco faz parte de uma chain válida
+
   constructor(block: Block, parent?: BlockNode) {
     this.block = block;
     this.parent = parent;
@@ -53,28 +60,107 @@ export class BitcoinNode {
   miningTimer?: any;
 
   // Blockchain local do nó
-  chains: Block[][] = [[]]; // chains[0] = cadeia principal, demais = forks alternativos
-  lastBlockReceived?: BlockNode;
-  lastBlockPropagated?: Block;
-  genesis?: BlockNode; // raiz da árvore
+  genesis?: BlockNode;
 
   // Estrutura para organizar blocos por altura
   heights: BlockNode[][] = [];
+
+  // Estrutura para rastrear blocos em fork ativamente
+  activeFork?: number; // height -> blocos em fork
 
   constructor(init?: Partial<BitcoinNode>) {
     Object.assign(this, init);
   }
 
-  // Método para atualizar heights com um novo bloco
-  updateHeights(node: BlockNode, height: number) {
-    if (!this.heights[height]) this.heights[height] = [];
-    this.heights[height].push(node);
+  // Método para ordenar os blocos, movendo forks mortos para o final
+  private sortBlocks(a: BlockNode, b: BlockNode): number {
+    // 1. Prioriza forks ativos
+    if (a.isActive !== b.isActive) {
+      return !a.isActive ? 1 : -1;
+    }
 
-    this.organizeBlocksByHeight();
+    // 2. Se ambos são forks ativos ou ambos são dead forks, compara latência
+    const aMinerId = a.block.minerId;
+    const bMinerId = b.block.minerId;
+    let latencyA = Number.POSITIVE_INFINITY;
+    let latencyB = Number.POSITIVE_INFINITY;
+
+    // Se o minerId for igual ao do próprio nó, latência é 0 (prioriza a própria chain)
+    if (
+      aMinerId !== undefined &&
+      this.id !== undefined &&
+      aMinerId === this.id
+    ) {
+      latencyA = 0;
+    } else if (this.id !== undefined && aMinerId !== undefined) {
+      const neighbor = this.neighbors.find((n) => n.nodeId === aMinerId);
+      if (neighbor) latencyA = neighbor.latency;
+    }
+
+    if (
+      bMinerId !== undefined &&
+      this.id !== undefined &&
+      bMinerId === this.id
+    ) {
+      latencyB = 0;
+    } else if (this.id !== undefined && bMinerId !== undefined) {
+      const neighbor = this.neighbors.find((n) => n.nodeId === bMinerId);
+      if (neighbor) latencyB = neighbor.latency;
+    }
+
+    if (latencyA !== latencyB) {
+      return latencyA - latencyB;
+    }
+
+    // 3. Se ainda empatar, prioriza o minerId igual ao do próprio nó
+    if (aMinerId === this.id && bMinerId !== this.id) return -1;
+    if (bMinerId === this.id && aMinerId !== this.id) return 1;
+
+    // 4. Se ainda empatar, mantém a ordem original
+    return 0;
   }
 
-  // Adiciona um bloco à árvore de blocos
+  checkForksAndSort() {
+    if (this.heights.length === 0) return;
+
+    const heightsToReorder = new Set<number>();
+
+    this.heights.forEach((height, heightIndex) => {
+      if (heightIndex === 0) return;
+
+      height.forEach((block) => {
+        if (
+          block.children.length === 0 ||
+          block.children.every((c) => !c.isActive)
+        ) {
+          block.isActive = false;
+          heightsToReorder.add(heightIndex);
+          //   this.markAsDeadFork(block, heightsToReorder, heightIndex);
+        } else {
+          block.isActive = true;
+        }
+      });
+    });
+
+    // Passo 2: Reordenar todos os heights afetados
+    heightsToReorder.forEach((height) => {
+      this.heights[height] = this.heights[height].sort(
+        this.sortBlocks.bind(this)
+      );
+    });
+
+    // Passo 3: Reordenar também os arrays `next[]` dentro de cada bloco
+    this.heights.forEach((blocks) => {
+      blocks.forEach((block) => {
+        block.children.sort(this.sortBlocks.bind(this));
+      });
+    });
+  }
+
+  // Adiciona um bloco à estrutura heights e atualiza activeForks
   addBlock(block: Block): boolean {
+    const blockNode = new BlockNode(block);
+
     // Se for o bloco genesis
     if (block.height === 0) {
       if (
@@ -82,250 +168,71 @@ export class BitcoinNode {
         '0000000000000000000000000000000000000000000000000000000000000000'
       ) {
         if (!this.genesis) {
-          this.genesis = new BlockNode(block);
-          this.lastBlockReceived = this.genesis;
-          this.updateHeights(this.genesis, block.height);
+          this.genesis = blockNode;
+          this.heights = [[blockNode]];
           return true;
-        } else {
-          // Genesis já existe
-          return false;
         }
-      } else {
-        return false;
+        return false; // Genesis já existe
       }
+      return false; // Hash anterior inválido
     }
 
-    // Procura o pai na árvore
-    const parent = this.findBlockNodeByHash(block.previousHash, this.genesis);
+    // Encontra a altura correta para inserir
+    const heightIndex = this.heights.length - block.height - 1;
+
+    // Procura o pai
+    const parent = this.findBlockNode(block.previousHash);
     if (!parent) return false;
-    // Não aceita blocos duplicados
-    if (this.findBlockNodeByHash(block.hash, this.genesis)) return false;
+
+    if (
+      this.heights[heightIndex]?.find(
+        (n) => n.block.hash === blockNode.block.hash
+      )
+    ) {
+      return false;
+    }
+
+    blockNode.parent = parent;
+
     // Adiciona como filho
-    const node = new BlockNode(block, parent);
-    parent.children.push(node);
-    this.lastBlockReceived = node;
-    // Reorganiza os filhos do pai para garantir que o mais longo fique no índice 0
-    this.reorderChildrenByLongestPath(parent);
-    this.updateHeights(node, block.height);
+    if (!parent.children.find((n) => n.block.hash === blockNode.block.hash)) {
+      parent.children.push(blockNode);
+    }
+
+    // Se a altura não existe, cria um novo array
+    if (heightIndex < 0) {
+      this.heights.unshift([blockNode]);
+    } else if (!this.heights[heightIndex]) {
+      this.heights[heightIndex] = [blockNode];
+    } else {
+      this.heights[heightIndex].push(blockNode);
+    }
+
+    this.checkForksAndSort();
     return true;
   }
 
-  // Busca um nó pelo hash na árvore
-  findBlockNodeByHash(hash: string, node?: BlockNode): BlockNode | undefined {
-    if (!node) return undefined;
-    if (node.block.hash === hash) return node;
-    for (const child of node.children) {
-      const found = this.findBlockNodeByHash(hash, child);
-      if (found) return found;
+  // Encontra um bloco na estrutura heights pelo hash
+  private findBlockNode(hash: string) {
+    for (const height of this.heights) {
+      const blockNode = height.find((node) => node.block.hash === hash);
+      if (blockNode) return blockNode;
     }
     return undefined;
   }
 
-  // Retorna o caminho mais longo (main chain) da árvore
-  getMainChain(): Block[] {
-    if (!this.genesis) return [];
-    let maxPath: BlockNode[] = [];
-    function dfs(node: BlockNode, path: BlockNode[]) {
-      path.push(node);
-      if (node.children.length === 0) {
-        if (path.length > maxPath.length) {
-          maxPath = [...path];
-        }
-      } else {
-        for (const child of node.children) {
-          dfs(child, path);
-        }
-      }
-      path.pop();
-    }
-    dfs(this.genesis, []);
-    return maxPath.map((n) => n.block);
-  }
-
-  // Retorna todos os forks (caminhos não principais)
-  getForks(): Block[][] {
-    if (!this.genesis) return [];
-    const mainChain = this.getMainChain().map((b) => b.hash);
-    const forks: Block[][] = [];
-    function dfs(node: BlockNode, path: BlockNode[]) {
-      path.push(node);
-      if (node.children.length === 0) {
-        // Se não é main chain, é fork
-        const hashes = path.map((n) => n.block.hash);
-        if (hashes.join('-') !== mainChain.join('-')) {
-          forks.push(path.map((n) => n.block));
-        }
-      } else {
-        for (const child of node.children) {
-          dfs(child, path);
-        }
-      }
-      path.pop();
-    }
-    dfs(this.genesis, []);
-    return forks;
-  }
-
-  // Retorna o bloco mais avançado (maior altura) e, em caso de empate, o de menor latência
+  // Retorna o bloco mais recente usando a estrutura heights
   getLatestBlock(): Block | undefined {
-    if (!this.genesis) return undefined;
+    if (!this.heights.length) return undefined;
 
-    // Percorre todos os caminhos até as folhas
-    let maxHeight = -1;
-    let candidates: BlockNode[] = [];
-    const dfs = (node: BlockNode, height: number) => {
-      if (node.children.length === 0) {
-        if (height > maxHeight) {
-          maxHeight = height;
-          candidates = [node];
-        } else if (height === maxHeight) {
-          candidates.push(node);
-        }
-      } else {
-        node.children.forEach((child) => dfs(child, height + 1));
+    // Percorre as alturas da mais alta para a mais baixa
+    for (const height of this.heights) {
+      if (height.length > 0) {
+        // Retorna o primeiro bloco da altura mais alta
+        return height[0].block;
       }
-    };
-    dfs(this.genesis, 0);
-
-    if (candidates.length === 0) return undefined;
-    // Se houver empate, retorna o de menor latência, que é sempre o primeiro
-    return candidates[0].block;
-  }
-
-  // Retorna o bloco com a altura especificada da main chain
-  getBlockByHeight(height: number): Block | undefined {
-    const main = this.getMainChain();
-    return main.find((block) => block.height === height);
-  }
-
-  // Serializa o nó para salvar no localStorage
-  serialize(): any {
-    const obj: any = { ...this };
-    if (this.genesis) {
-      obj.genesis = BlockNode.serializeBlockNode(this.genesis);
     }
-    // Remove campos que não devem ser serializados
-    delete obj.lastBlockReceived;
-    delete obj.lastBlockPropagated;
-    delete obj.heights; // Não serializa heights
-    return obj;
-  }
 
-  // Desserializa um nó a partir do objeto salvo
-  static deserialize(data: any): BitcoinNode {
-    const node = new BitcoinNode(data);
-    if (data.genesis) {
-      node.genesis = BlockNode.deserializeBlockNode(data.genesis);
-      // Recria a estrutura heights após desserializar
-      node.organizeBlocksByHeight();
-    }
-    return node;
-  }
-
-  // Reorganiza os filhos do nó para que o caminho mais longo fique no índice 0
-  private reorderChildrenByLongestPath(parent: BlockNode) {
-    parent.children.sort((a, b) => {
-      const lenA = this.getPathLength(a);
-      const lenB = this.getPathLength(b);
-      if (lenB !== lenA) return lenB - lenA;
-
-      // Se empatar, prioriza menor latência em relação ao próprio nó (this)
-      const aMinerId = a.block.minerId;
-      const bMinerId = b.block.minerId;
-      let latencyA = Number.POSITIVE_INFINITY;
-      let latencyB = Number.POSITIVE_INFINITY;
-      // Se o minerId for igual ao do próprio nó, latência é 0 (prioriza a própria chain)
-      if (
-        aMinerId !== undefined &&
-        this.id !== undefined &&
-        aMinerId === this.id
-      ) {
-        latencyA = 0;
-      } else if (this.id !== undefined && aMinerId !== undefined) {
-        const neighbor = this.neighbors.find((n) => n.nodeId === aMinerId);
-        if (neighbor) latencyA = neighbor.latency;
-      }
-      if (
-        bMinerId !== undefined &&
-        this.id !== undefined &&
-        bMinerId === this.id
-      ) {
-        latencyB = 0;
-      } else if (this.id !== undefined && bMinerId !== undefined) {
-        const neighbor = this.neighbors.find((n) => n.nodeId === bMinerId);
-        if (neighbor) latencyB = neighbor.latency;
-      }
-      if (latencyA !== latencyB) return latencyA - latencyB;
-      // Se ainda empatar, prioriza o minerId igual ao do próprio nó
-      if (aMinerId === this.id && bMinerId !== this.id) return -1;
-      if (bMinerId === this.id && aMinerId !== this.id) return 1;
-      // Se ainda empatar, mantém a ordem
-      return 0;
-    });
-  }
-
-  // Retorna o comprimento do caminho mais longo a partir deste nó
-  private getPathLength(node: BlockNode): number {
-    if (node.children.length === 0) return 1;
-    return (
-      1 + Math.max(...node.children.map((child) => this.getPathLength(child)))
-    );
-  }
-
-  // Método para organizar os blocos por altura
-  organizeBlocksByHeight() {
-    this.heights = [];
-    if (!this.genesis) return;
-
-    // Função recursiva para percorrer a árvore e organizar por altura
-    const dfs = (node: BlockNode, height: number) => {
-      if (!this.heights[height]) this.heights[height] = [];
-      this.heights[height].push(node);
-      node.children.forEach((child) => dfs(child, height + 1));
-    };
-
-    dfs(this.genesis, 0);
-
-    // Ordena cada altura usando a mesma lógica de reorderChildrenByLongestPath
-    this.heights.forEach((height) => {
-      height.sort((a, b) => {
-        const lenA = this.getPathLength(a);
-        const lenB = this.getPathLength(b);
-        if (lenB !== lenA) return lenB - lenA;
-
-        // Se empatar, prioriza menor latência em relação ao próprio nó (this)
-        const aMinerId = a.block.minerId;
-        const bMinerId = b.block.minerId;
-        let latencyA = Number.POSITIVE_INFINITY;
-        let latencyB = Number.POSITIVE_INFINITY;
-        // Se o minerId for igual ao do próprio nó, latência é 0 (prioriza a própria chain)
-        if (
-          aMinerId !== undefined &&
-          this.id !== undefined &&
-          aMinerId === this.id
-        ) {
-          latencyA = 0;
-        } else if (this.id !== undefined && aMinerId !== undefined) {
-          const neighbor = this.neighbors.find((n) => n.nodeId === aMinerId);
-          if (neighbor) latencyA = neighbor.latency;
-        }
-        if (
-          bMinerId !== undefined &&
-          this.id !== undefined &&
-          bMinerId === this.id
-        ) {
-          latencyB = 0;
-        } else if (this.id !== undefined && bMinerId !== undefined) {
-          const neighbor = this.neighbors.find((n) => n.nodeId === bMinerId);
-          if (neighbor) latencyB = neighbor.latency;
-        }
-        if (latencyA !== latencyB) return latencyA - latencyB;
-        // Se ainda empatar, prioriza o minerId igual ao do próprio nó
-        if (aMinerId === this.id && bMinerId !== this.id) return -1;
-        if (bMinerId === this.id && aMinerId !== this.id) return 1;
-        // Se ainda empatar, mantém a ordem
-        return 0;
-      });
-    });
+    return undefined;
   }
 }
