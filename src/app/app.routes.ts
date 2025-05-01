@@ -5,7 +5,7 @@ import { BlockchainLayout } from './layouts/home/blockchain/blockchain.layout';
 import { HomeLayout } from './layouts/home/home.layout';
 import { MempoolLayout } from './layouts/home/mempool/mempool.layout';
 import { ToolsLayout } from './layouts/home/tools/tools.layout';
-import { BlockchainV2Component } from './components/blockchain-v2/blockchain-v2.component';
+import { BlockchainComponent } from './components/blockchain/blockchain.component';
 
 export const routes: Routes = [
   {
@@ -15,7 +15,7 @@ export const routes: Routes = [
       {
         path: 'blockchain',
         component: BlockchainLayout,
-        children: [{ path: '', component: BlockchainV2Component }],
+        children: [{ path: '', component: BlockchainComponent }],
       },
       {
         path: 'mempool',

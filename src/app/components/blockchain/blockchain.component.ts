@@ -5,7 +5,7 @@ import { NodesPanelComponent } from './nodes-panel/nodes-panel.component';
 import { GraphPlotComponent } from './graph-plot/graph-plot.component';
 
 @Component({
-  selector: 'app-blockchain-v2',
+  selector: 'app-blockchain',
   standalone: true,
   imports: [
     CommonModule,
@@ -13,7 +13,7 @@ import { GraphPlotComponent } from './graph-plot/graph-plot.component';
     NodesPanelComponent,
     GraphPlotComponent,
   ],
-  templateUrl: './blockchain-v2.component.html',
-  styleUrls: ['./blockchain-v2.component.scss'],
+  templateUrl: './blockchain.component.html',
+  styleUrls: ['./blockchain.component.scss'],
 })
-export class BlockchainV2Component {}
+export class BlockchainComponent {}
