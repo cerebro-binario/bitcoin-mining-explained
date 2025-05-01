@@ -1,13 +1,16 @@
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Node, BlockNode } from '../../../models/node';
-import { Block, Transaction } from '../../../models/block.model';
-import { AddressService } from '../../../services/address.service';
-import { MiningBlockComponent } from '../mining-block/mining-block.component';
-import { trigger } from '@angular/animations';
-import { animate } from '@angular/animations';
-import { style } from '@angular/animations';
-import { state, transition } from '@angular/animations';
+import { Block, BlockNode, Transaction } from '../../../../models/block.model';
+import { Node } from '../../../../models/node';
+import { AddressService } from '../../../../services/address.service';
+import { MiningBlockComponent } from './mining-block/mining-block.component';
 
 interface HashRateOption {
   label: string;

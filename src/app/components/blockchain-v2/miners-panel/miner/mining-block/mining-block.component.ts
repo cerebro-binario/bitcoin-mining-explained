@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Block } from '../../../models/block.model';
+import { Component, Input } from '@angular/core';
+import { Block } from '../../../../../models/block.model';
 
 @Component({
   selector: 'app-mining-block',

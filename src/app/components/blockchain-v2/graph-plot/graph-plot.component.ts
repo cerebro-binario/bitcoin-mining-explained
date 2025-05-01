@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
+import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 
 @Component({
   selector: 'app-graph-plot',
