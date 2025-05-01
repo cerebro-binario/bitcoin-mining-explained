@@ -125,18 +125,46 @@
 
       <!-- Blockchain Local -->
       <div class="mt-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-blue-400">Blockchain Local</h3>
-          <span class="text-xs text-zinc-400">
-            {{ miner.heights.length || 0 }} blocos
-            <span *ngIf="miner.getLatestBlock()"
-              >(Último: #{{ miner.getLatestBlock()?.height }})</span
-            >
-          </span>
+        <div
+          class="flex items-center justify-between mb-4 cursor-pointer hover:bg-zinc-700/50 p-2 rounded transition-colors"
+          (click)="toggleBlockchainVisibility(miner)"
+        >
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg font-semibold text-blue-400">
+              Blockchain Local
+            </h3>
+            <span class="text-xs text-zinc-400">
+              {{ miner.heights.length || 0 }} blocos
+              <span *ngIf="miner.getLatestBlock()"
+                >(Último: #{{ miner.getLatestBlock()?.height }})</span
+              >
+            </span>
+          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-zinc-400 transition-transform"
+            [ngClass]="{ 'rotate-180': !isBlockchainVisibleFor(miner) }"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
         </div>
-        <div class="relative">
-          <div class="overflow-x-auto pb-4">
-            <div class="relative min-w-max">
+        <div
+          class="overflow-hidden transition-all duration-300 ease-in-out"
+          [ngStyle]="{
+            'max-height': isBlockchainVisibleFor(miner) ? '1000px' : '0px',
+            opacity: isBlockchainVisibleFor(miner) ? '1' : '0'
+          }"
+        >
+          <div class="relative">
+            <div class="overflow-x-auto pb-4">
               <div
                 id="miners-panel-container"
                 class="flex flex-row gap-16 items-start"

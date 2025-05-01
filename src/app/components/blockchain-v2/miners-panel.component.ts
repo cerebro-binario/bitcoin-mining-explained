@@ -70,6 +70,7 @@ export class MinersPanelComponent implements OnInit, OnDestroy, AfterViewInit {
   private hasCalculatedGaps = false;
   isMoving = new Set<number>();
   slideXValue = 'translateX(100%)';
+  isBlockchainVisible = new Map<number, boolean>(); // nodeId -> isVisible
 
   constructor(
     public network: BitcoinNetworkService,
@@ -595,5 +596,14 @@ export class MinersPanelComponent implements OnInit, OnDestroy, AfterViewInit {
   // Função auxiliar para esperar um tempo
   private async wait(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  toggleBlockchainVisibility(miner: BitcoinNode) {
+    const current = this.isBlockchainVisible.get(miner.id!) ?? true;
+    this.isBlockchainVisible.set(miner.id!, !current);
+  }
+
+  isBlockchainVisibleFor(miner: BitcoinNode): boolean {
+    return this.isBlockchainVisible.get(miner.id!) ?? true;
   }
 }
