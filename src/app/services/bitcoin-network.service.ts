@@ -149,36 +149,68 @@ export class BitcoinNetworkService {
 
     // Função para verificar se algum vizinho completou o download
     const checkNeighborsForDownload = () => {
-      // Tenta obter a blockchain do vizinho com menor latência que já completou o sync
-      for (const neighbor of sortedNeighbors) {
-        const neighborNode = this.nodes.find((n) => n.id === neighbor.nodeId);
+      // Coleta as blockchains de todos os vizinhos válidos
+      const validNeighbors = sortedNeighbors
+        .map((neighbor) => this.nodes.find((n) => n.id === neighbor.nodeId))
+        .filter(
+          (neighborNode) =>
+            neighborNode &&
+            neighborNode.initialSyncComplete &&
+            neighborNode.genesis
+        );
 
-        // Se o vizinho não existe ou ainda não completou seu sync inicial, pula
-        if (!neighborNode || !neighborNode.initialSyncComplete) {
-          continue;
-        }
-
-        // Se o vizinho tem blocos, usa a blockchain dele
-        if (neighborNode.genesis) {
-          setTimeout(() => {
-            // Copia a árvore de blocos do vizinho
-            node.genesis = BlockNode.deserializeBlockNode(
-              BlockNode.serializeBlockNode(neighborNode.genesis as BlockNode)
-            );
-            node.heights = neighborNode.heights.slice();
-
-            // Se for um minerador, inicializa o template para o próximo bloco
-            if (node.isMiner) {
-              node.initBlockTemplate(neighborNode.getLatestBlock());
-            }
-
-            node.isSyncing = false;
-            node.initialSyncComplete = true;
-          }, neighbor.latency);
-          return true; // Download iniciado
-        }
+      if (validNeighbors.length === 0) {
+        return false;
       }
-      return false; // Nenhum vizinho pronto para download
+
+      // Obtém as blockchains de todos os vizinhos válidos
+      const blockchains = validNeighbors.map((neighborNode) => ({
+        node: neighborNode,
+        blockchain: BlockNode.deserializeBlockNode(
+          BlockNode.serializeBlockNode(neighborNode?.genesis as BlockNode)
+        ),
+      }));
+
+      // Valida cada blockchain
+      const validBlockchains = blockchains
+        .map(({ node: neighborNode, blockchain }) => ({
+          neighborNode,
+          blockchain,
+          isValid: this.validateBlockchain(blockchain),
+          work: this.calculateChainWork(blockchain),
+        }))
+        .filter((result) => result.isValid)
+        .sort((a, b) => b.work - a.work); // Ordena por maior trabalho acumulado
+
+      if (validBlockchains.length === 0) {
+        console.warn(`Nó ${node.id} não encontrou nenhuma blockchain válida`);
+        return false;
+      }
+
+      // Usa a blockchain com maior trabalho acumulado
+      const bestBlockchain = validBlockchains[0];
+
+      if (!bestBlockchain?.neighborNode) {
+        console.warn(`Nó ${node.id} não encontrou um vizinho válido`);
+        return false;
+      }
+
+      const validNeighborNode = bestBlockchain.neighborNode;
+
+      setTimeout(() => {
+        node.genesis = bestBlockchain.blockchain;
+        node.heights = validNeighborNode.heights.slice();
+
+        // Se for um minerador, inicializa o template para o próximo bloco
+        if (node.isMiner) {
+          node.initBlockTemplate(validNeighborNode.getLatestBlock());
+        }
+
+        node.isSyncing = false;
+        node.initialSyncComplete = true;
+      }, sortedNeighbors[0].latency);
+
+      return true;
     };
 
     // Tenta iniciar o download imediatamente
@@ -190,5 +222,162 @@ export class BitcoinNetworkService {
         }
       }, 1000);
     }
+  }
+
+  // Calcula o trabalho acumulado de uma blockchain
+  private calculateChainWork(blockchain: BlockNode): number {
+    let work = 0;
+    let current: BlockNode | undefined = blockchain;
+
+    while (current) {
+      // O trabalho é inversamente proporcional ao target
+      work += 1 / Number(current.block.target);
+      current = current.children[0];
+    }
+
+    return work;
+  }
+
+  // Método para validar um bloco individual
+  private validateBlock(
+    block: Block,
+    height: number,
+    previousBlock?: Block
+  ): boolean {
+    // 1. Verifica se o hash do bloco é válido
+    if (block.hash !== block.calculateHash()) {
+      console.warn(`Bloco ${height} tem hash inválido`);
+      return false;
+    }
+
+    // 2. Verifica se o hash atinge o target
+    if (!block.isValid()) {
+      console.warn(`Bloco ${height} não atinge o target de dificuldade`);
+      return false;
+    }
+
+    // 3. Verifica se o bloco anterior existe e tem o hash correto
+    if (height > 0) {
+      if (!previousBlock || previousBlock.hash !== block.previousHash) {
+        console.warn(`Bloco ${height} tem hash anterior inválido`);
+        return false;
+      }
+    }
+
+    // 4. Verifica se o timestamp é razoável
+    const now = Date.now();
+    if (block.timestamp > now + 7200000) {
+      // 2 horas no futuro
+      console.warn(`Bloco ${height} tem timestamp no futuro`);
+      return false;
+    }
+
+    // 5. Verifica se o timestamp é posterior ao bloco anterior
+    if (previousBlock && block.timestamp <= previousBlock.timestamp) {
+      console.warn(`Bloco ${height} tem timestamp anterior ao bloco anterior`);
+      return false;
+    }
+
+    // 6. Verifica se a dificuldade (nBits) está correta
+    if (height > 0) {
+      const expectedNBits = this.calculateExpectedNBits(
+        previousBlock!,
+        block.timestamp
+      );
+      if (block.nBits !== expectedNBits) {
+        console.warn(
+          `Bloco ${height} tem nBits incorreto. Esperado: ${expectedNBits}, Recebido: ${block.nBits}`
+        );
+        return false;
+      }
+    }
+
+    // 7. Verifica se o subsídio está correto
+    const expectedSubsidy = this.calculateBlockSubsidy(height);
+    const actualSubsidy = block.transactions[0].outputs[0].value; // Coinbase é sempre a primeira transação
+    if (actualSubsidy !== expectedSubsidy) {
+      console.warn(
+        `Bloco ${height} tem subsídio incorreto. Esperado: ${expectedSubsidy}, Recebido: ${actualSubsidy}`
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  // Método para validar uma blockchain inteira
+  private validateBlockchain(blockchain: BlockNode): boolean {
+    let current: BlockNode | undefined = blockchain;
+    let previousBlock: Block | undefined;
+    let height = 0;
+
+    while (current) {
+      const block = current.block;
+
+      if (!this.validateBlock(block, height, previousBlock)) {
+        return false;
+      }
+
+      previousBlock = block;
+      current = current.children[0]; // Pega o primeiro filho (main chain)
+      height++;
+    }
+
+    return true;
+  }
+
+  // Calcula o nBits esperado para o próximo bloco
+  private calculateExpectedNBits(
+    previousBlock: Block,
+    currentTimestamp: number
+  ): number {
+    // Ajuste de dificuldade a cada 2016 blocos
+    const DIFFICULTY_ADJUSTMENT_INTERVAL = 2016;
+    const TARGET_TIMESPAN = 14 * 24 * 60 * 60 * 1000; // 2 semanas em milissegundos
+
+    // Se não é um bloco de ajuste de dificuldade, mantém o mesmo nBits
+    if (previousBlock.height % DIFFICULTY_ADJUSTMENT_INTERVAL !== 0) {
+      return previousBlock.nBits;
+    }
+
+    // Encontra o bloco do último ajuste
+    let lastAdjustmentBlock = previousBlock;
+    for (let i = 0; i < DIFFICULTY_ADJUSTMENT_INTERVAL - 1; i++) {
+      const parent = this.findBlockByHash(lastAdjustmentBlock.previousHash);
+      if (!parent) return previousBlock.nBits; // Se não encontrou, mantém o mesmo
+      lastAdjustmentBlock = parent;
+    }
+
+    // Calcula o tempo real que levou para minerar os últimos 2016 blocos
+    const actualTimespan = currentTimestamp - lastAdjustmentBlock.timestamp;
+
+    // Limita o ajuste a um fator de 4
+    let adjustment = actualTimespan / TARGET_TIMESPAN;
+    adjustment = Math.max(0.25, Math.min(4, adjustment));
+
+    // Ajusta o nBits
+    const newTarget = Number(previousBlock.target) * adjustment;
+    return this.targetToNBits(newTarget);
+  }
+
+  // Converte um target para nBits
+  private targetToNBits(target: number): number {
+    // Implementação simplificada - na prática é mais complexo
+    return Math.floor(target);
+  }
+
+  // Calcula o subsídio do bloco baseado na altura
+  private calculateBlockSubsidy(height: number): number {
+    const INITIAL_SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
+    const HALVING_INTERVAL = 210000; // Blocos até próximo halving
+
+    const halvings = Math.floor(height / HALVING_INTERVAL);
+    return Math.floor(INITIAL_SUBSIDY / Math.pow(2, halvings));
+  }
+
+  // Encontra um bloco pelo hash
+  private findBlockByHash(hash: string): Block | undefined {
+    // Implementação simplificada - na prática precisaria percorrer a blockchain
+    return undefined;
   }
 }
