@@ -116,17 +116,9 @@ export class MinerComponent {
     if (!miner.isMining) return;
 
     miner.isMining = false;
-    if (miner.miningInterval) {
-      clearInterval(miner.miningInterval);
-      miner.miningInterval = undefined;
-    }
+
     // Ao pausar, atualiza o tempo decorrido até agora no bloco
-    const block = miner.currentBlock;
-    if (block && block.miningStartTime) {
-      if (block.miningTimer) clearInterval(block.miningTimer);
-      block.miningElapsed += Date.now() - block.miningStartTime;
-      block.miningStartTime = null;
-    }
+    miner.miningLastTickTime = null;
   }
 
   // Método para iniciar mineração
@@ -139,13 +131,7 @@ export class MinerComponent {
     }
 
     miner.isMining = true;
-
-    // Inicializa o cronômetro do bloco
-    const block = miner.currentBlock;
-    if (block) {
-      block.miningElapsed = 0;
-      block.miningStartTime = Date.now();
-    }
+    miner.miningLastTickTime = Date.now();
   }
 
   // Processa um tick de mineração
@@ -156,11 +142,13 @@ export class MinerComponent {
     const hashRate = miner.hashRate;
 
     // Atualiza o tempo decorrido
-    if (block.miningStartTime) {
-      block.miningElapsed = now - block.miningStartTime;
-    } else {
-      block.miningStartTime = now;
+    if (!miner.miningLastTickTime) {
+      miner.miningLastTickTime = now;
     }
+
+    const tickTime = now - miner.miningLastTickTime;
+    block.miningElapsed += tickTime;
+    miner.miningLastTickTime = now;
 
     if (hashRate === null) {
       // Modo máximo - processa o batch size adaptativo
@@ -174,11 +162,23 @@ export class MinerComponent {
         }
       }
     } else {
+      if (miner.miningLastHashTime === null) {
+        miner.miningLastHashTime = 0;
+      }
+
+      miner.miningLastHashTime += tickTime;
+
       // Modo com hash rate controlado
       const timeNeededForOneHash = 1000 / hashRate; // tempo em ms para 1 hash
-      const hashesToProcess = Math.floor(
-        block.miningElapsed / timeNeededForOneHash
-      );
+      const hashesToProcess =
+        miner.miningLastHashTime >= timeNeededForOneHash
+          ? Math.floor(miner.miningLastHashTime / timeNeededForOneHash)
+          : 0;
+
+      // Se houver hashes para processar, atualiza o tempo restante
+      if (hashesToProcess > 0) {
+        miner.miningLastHashTime -= timeNeededForOneHash * hashesToProcess;
+      }
 
       for (let i = 0; i < hashesToProcess; i++) {
         block.nonce++;
@@ -209,7 +209,6 @@ export class MinerComponent {
     const newBlock = miner.currentBlock;
     if (newBlock) {
       newBlock.miningElapsed = 0;
-      newBlock.miningStartTime = Date.now();
     }
   }
 

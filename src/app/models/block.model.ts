@@ -13,9 +13,7 @@ export class Block {
   minerId?: number; // ID do minerador que minerou o bloco
 
   // Cronômetro de mineração
-  miningStartTime: number | null = null;
   miningElapsed: number = 0;
-  miningTimer?: any;
 
   constructor(init?: Partial<Block>) {
     if (init) {

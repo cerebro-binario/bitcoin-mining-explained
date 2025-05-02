@@ -43,13 +43,12 @@ export class Node {
   currentHashRate: number = 0; // Hash rate real sendo alcançado
   currentBlock?: Block;
   isMining: boolean = false;
-  miningInterval?: any;
   miningAddress: string = ''; // Endereço para receber recompensas de mineração
 
   // Cronômetro de mineração
-  miningStartTime: number | null = null;
+  miningLastHashTime: number | null = null;
+  miningLastTickTime: number | null = null;
   miningElapsed: number = 0;
-  miningTimer?: any;
 
   // Blockchain local do nó
   genesis?: BlockNode;
@@ -99,7 +98,6 @@ export class Node {
       nonce: 0,
       hash: '',
       miningElapsed: 0,
-      miningStartTime: null,
     });
 
     return this.currentBlock;
