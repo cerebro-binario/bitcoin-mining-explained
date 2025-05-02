@@ -120,8 +120,8 @@ export class BitcoinNetworkService {
 
         if (targetNode.initialSyncComplete) {
           // Tenta adicionar o bloco (validação)
-          const added = targetNode.addBlock(block);
-          if (added) {
+          const result = targetNode.addBlock(block);
+          if (result.success) {
             targetNode.eventLog.unshift({
               type: 'block-validated',
               blockHash: block.hash,
@@ -132,6 +132,7 @@ export class BitcoinNetworkService {
               type: 'block-rejected',
               blockHash: block.hash,
               timestamp: Date.now(),
+              reason: result.reason,
             });
           }
           if (targetNode.eventLog.length > 10) targetNode.eventLog.pop();

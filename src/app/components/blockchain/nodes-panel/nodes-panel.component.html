@@ -98,9 +98,25 @@
               <span *ngSwitchCase="'block-validated'" class="text-green-400"
                 >✅ Bloco validado</span
               >
-              <span *ngSwitchCase="'block-rejected'" class="text-red-400"
-                >❌ Bloco rejeitado</span
-              >
+              <span *ngSwitchCase="'block-rejected'" class="text-red-400">
+                ❌ Bloco rejeitado
+                <span *ngIf="event.reason === 'duplicate'">(duplicado)</span>
+                <span *ngIf="event.reason === 'invalid-parent'"
+                  >(pai inválido)</span
+                >
+                <span *ngIf="event.reason === 'genesis-exists'"
+                  >(gênesis já existe)</span
+                >
+                <span
+                  *ngIf="
+                    event.reason &&
+                    event.reason !== 'duplicate' &&
+                    event.reason !== 'invalid-parent' &&
+                    event.reason !== 'genesis-exists'
+                  "
+                  >({{ event.reason }})</span
+                >
+              </span>
             </span>
             <span class="text-zinc-500 font-mono">{{
               event.timestamp | date : "HH:mm:ss"

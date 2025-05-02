@@ -30,6 +30,7 @@ export class Node {
     from?: number;
     blockHash: string;
     timestamp: number;
+    reason?: string;
   }[] = [];
 
   id?: number;
@@ -200,7 +201,7 @@ export class Node {
   }
 
   // Adiciona um bloco à estrutura heights e atualiza activeForks
-  addBlock(block: Block): boolean {
+  addBlock(block: Block): { success: boolean; reason?: string } {
     const blockNode = new BlockNode(block);
 
     // Se for o bloco genesis
@@ -212,11 +213,11 @@ export class Node {
         if (!this.genesis) {
           this.genesis = blockNode;
           this.heights = [[blockNode]];
-          return true;
+          return { success: true };
         }
-        return false; // Genesis já existe
+        return { success: false, reason: 'genesis-exists' }; // Genesis já existe
       }
-      return false; // Hash anterior inválido
+      return { success: false, reason: 'invalid-parent' }; // Hash anterior inválido
     }
 
     // Encontra a altura correta para inserir
@@ -224,14 +225,14 @@ export class Node {
 
     // Procura o pai
     const parent = this.findBlockNode(block.previousHash);
-    if (!parent) return false;
+    if (!parent) return { success: false, reason: 'invalid-parent' };
 
     if (
       this.heights[heightIndex]?.find(
         (n) => n.block.hash === blockNode.block.hash
       )
     ) {
-      return false;
+      return { success: false, reason: 'duplicate' };
     }
 
     blockNode.parent = parent;
@@ -251,7 +252,7 @@ export class Node {
     }
 
     this.checkForksAndSort();
-    return true;
+    return { success: true };
   }
 
   // Encontra um bloco na estrutura heights pelo hash
