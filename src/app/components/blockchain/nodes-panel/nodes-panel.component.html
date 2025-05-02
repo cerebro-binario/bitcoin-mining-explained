@@ -57,6 +57,57 @@
           node.heights.length || 0
         }}</span>
       </div>
+
+      <!-- Seção de peers durante sincronização -->
+      <div *ngIf="node.isSyncing" class="w-full mt-4">
+        <div class="text-xs text-zinc-400 mb-2">Peers:</div>
+        <div class="space-y-2">
+          <div
+            *ngFor="let peer of node.syncPeers"
+            class="flex items-center justify-between text-xs"
+          >
+            <span class="text-zinc-300">Nó #{{ peer.nodeId }}</span>
+            <span
+              [ngClass]="{
+                'text-yellow-400': peer.status === 'validating',
+                'text-green-400': peer.status === 'valid',
+                'text-red-400': peer.status === 'invalid',
+                'text-zinc-400': peer.status === 'pending'
+              }"
+            >
+              {{ getPeerStatusText(peer) }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <!-- Log de eventos de propagação/validação de blocos -->
+      <div class="w-full mt-2">
+        <div class="text-xs text-zinc-400 mb-1">Eventos recentes:</div>
+        <div class="space-y-1">
+          <div
+            *ngFor="let event of node.eventLog"
+            class="flex items-center gap-2 text-xs"
+          >
+            <span [ngSwitch]="event.type">
+              <span *ngSwitchCase="'block-received'" class="text-blue-400"
+                >⛓️ Recebeu bloco de Nó #{{ event.from }}</span
+              >
+              <span *ngSwitchCase="'block-validated'" class="text-green-400"
+                >✅ Bloco validado</span
+              >
+              <span *ngSwitchCase="'block-rejected'" class="text-red-400"
+                >❌ Bloco rejeitado</span
+              >
+            </span>
+            <span class="text-zinc-500 font-mono">{{
+              event.timestamp | date : "HH:mm:ss"
+            }}</span>
+            <span class="truncate text-zinc-600" style="max-width: 80px"
+              >{{ event.blockHash | slice : 0 : 8 }}...</span
+            >
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

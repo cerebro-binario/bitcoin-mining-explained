@@ -109,9 +109,32 @@ export class BitcoinNetworkService {
         // Marca o nó como tendo recebido o bloco
         this.markBlockAsReceived(targetNode.id!, block.hash);
 
+        // Log de recebimento do bloco
+        targetNode.eventLog.unshift({
+          type: 'block-received',
+          from: sourceNodeId,
+          blockHash: block.hash,
+          timestamp: Date.now(),
+        });
+        if (targetNode.eventLog.length > 10) targetNode.eventLog.pop();
+
         if (targetNode.initialSyncComplete) {
-          // Adiciona o bloco primeiro (isso já reordena os forks)
-          targetNode.addBlock(block);
+          // Tenta adicionar o bloco (validação)
+          const added = targetNode.addBlock(block);
+          if (added) {
+            targetNode.eventLog.unshift({
+              type: 'block-validated',
+              blockHash: block.hash,
+              timestamp: Date.now(),
+            });
+          } else {
+            targetNode.eventLog.unshift({
+              type: 'block-rejected',
+              blockHash: block.hash,
+              timestamp: Date.now(),
+            });
+          }
+          if (targetNode.eventLog.length > 10) targetNode.eventLog.pop();
 
           // Verifica se o bloco mais recente agora é o que acabamos de adicionar
           const latestBlock = targetNode.getLatestBlock();
@@ -130,6 +153,19 @@ export class BitcoinNetworkService {
     });
   }
 
+  // Método para contar o número total de blocos em uma blockchain
+  private countBlocks(blockchain: BlockNode): number {
+    let count = 0;
+    let current: BlockNode | undefined = blockchain;
+
+    while (current) {
+      count++;
+      current = current.children[0]; // Pega o primeiro filho (main chain)
+    }
+
+    return count;
+  }
+
   // Método para inicializar um nó (minerador ou não)
   initializeNode(node: Node) {
     // Se for o primeiro nó, não precisa sincronizar
@@ -140,6 +176,13 @@ export class BitcoinNetworkService {
 
     // Marca o nó como sincronizando
     node.isSyncing = true;
+
+    // Inicializa o rastreamento de peers
+    node.syncPeers = node.neighbors.map((neighbor) => ({
+      nodeId: neighbor.nodeId,
+      latency: neighbor.latency,
+      status: 'pending',
+    }));
 
     // Simula o download da blockchain através dos vizinhos
     // Ordena os vizinhos por latência (menor primeiro)
@@ -164,21 +207,44 @@ export class BitcoinNetworkService {
       }
 
       // Obtém as blockchains de todos os vizinhos válidos
-      const blockchains = validNeighbors.map((neighborNode) => ({
-        node: neighborNode,
-        blockchain: BlockNode.deserializeBlockNode(
-          BlockNode.serializeBlockNode(neighborNode?.genesis as BlockNode)
-        ),
-      }));
+      const blockchains = validNeighbors.map((neighborNode) => {
+        // Atualiza o status do peer para validando
+        const peer = node.syncPeers.find((p) => p.nodeId === neighborNode?.id);
+        if (peer) {
+          peer.status = 'validating';
+        }
+
+        return {
+          node: neighborNode,
+          blockchain: BlockNode.deserializeBlockNode(
+            BlockNode.serializeBlockNode(neighborNode?.genesis as BlockNode)
+          ),
+        };
+      });
 
       // Valida cada blockchain
       const validBlockchains = blockchains
-        .map(({ node: neighborNode, blockchain }) => ({
-          neighborNode,
-          blockchain,
-          isValid: this.validateBlockchain(blockchain),
-          work: this.calculateChainWork(blockchain),
-        }))
+        .map(({ node: neighborNode, blockchain }) => {
+          const work = this.calculateChainWork(blockchain);
+          const isValid = this.validateBlockchain(blockchain);
+
+          // Atualiza o status do peer
+          const peer = node.syncPeers.find(
+            (p) => p.nodeId === neighborNode?.id
+          );
+          if (peer) {
+            peer.status = isValid ? 'valid' : 'invalid';
+            peer.blockchainLength = this.countBlocks(blockchain);
+            peer.work = work;
+          }
+
+          return {
+            neighborNode,
+            blockchain,
+            isValid,
+            work,
+          };
+        })
         .filter((result) => result.isValid)
         .sort((a, b) => b.work - a.work); // Ordena por maior trabalho acumulado
 
@@ -199,7 +265,7 @@ export class BitcoinNetworkService {
 
       setTimeout(() => {
         node.genesis = bestBlockchain.blockchain;
-        node.heights = validNeighborNode.heights.slice();
+        node.rebuildHeightsFromGenesis();
 
         // Se for um minerador, inicializa o template para o próximo bloco
         if (node.isMiner) {

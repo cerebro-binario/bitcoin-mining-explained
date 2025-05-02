@@ -18,6 +18,21 @@ export class NodesPanelComponent {
     return this.network.nodes.filter((n) => !n.isMiner);
   }
 
+  getPeerStatusText(peer: any): string {
+    switch (peer.status) {
+      case 'pending':
+        return 'Aguardando...';
+      case 'validating':
+        return 'Validando...';
+      case 'valid':
+        return peer.blockchainLength + ' blocos';
+      case 'invalid':
+        return 'Inválido';
+      default:
+        return '';
+    }
+  }
+
   addNode() {
     const node = this.network.addNode(false);
     this.network.initializeNode(node);

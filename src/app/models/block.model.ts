@@ -123,12 +123,14 @@ export class BlockNode {
     return {
       block: node.block,
       children: node.children.map(BlockNode.serializeBlockNode),
+      isActive: node.isActive,
     };
   }
 
   // Desserializa a árvore e atribui parent
   static deserializeBlockNode(data: any, parent?: BlockNode): BlockNode {
     const node = new BlockNode(new Block(data.block), parent);
+    node.isActive = data.isActive;
     node.children = (data.children || []).map((child: any) =>
       BlockNode.deserializeBlockNode(child, node)
     );

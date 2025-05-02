@@ -15,6 +15,23 @@ export class Node {
   initialSyncComplete: boolean = false;
   pendingBlocks: Block[] = [];
 
+  // Rastreamento de peers durante o sync inicial
+  syncPeers: {
+    nodeId: number;
+    latency: number;
+    status: 'pending' | 'validating' | 'valid' | 'invalid';
+    blockchainLength?: number;
+    work?: number;
+  }[] = [];
+
+  // Log de eventos de propagação/validação de blocos
+  eventLog: {
+    type: 'block-received' | 'block-validated' | 'block-rejected';
+    from?: number;
+    blockHash: string;
+    timestamp: number;
+  }[] = [];
+
   id?: number;
   neighbors: Neighbor[] = [];
 
@@ -259,5 +276,25 @@ export class Node {
     }
 
     return undefined;
+  }
+
+  // Reconstrói o array heights a partir do gênesis
+  rebuildHeightsFromGenesis() {
+    if (!this.genesis) {
+      this.heights = [];
+      return;
+    }
+    // Percorre a main chain do gênesis até o topo
+    const heights: BlockNode[][] = [];
+    let height: BlockNode[] = [this.genesis];
+    while (height.length > 0) {
+      heights.unshift(height);
+      height.forEach((block) => {
+        block.children = block.children.filter((child) => child.isActive);
+      });
+      // Avança para o próximo bloco na main chain (primeiro filho)
+      height = height.flatMap((block) => block.children);
+    }
+    this.heights = heights;
   }
 }
