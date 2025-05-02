@@ -98,6 +98,8 @@ export class Node {
       nBits,
       nonce: 0,
       hash: '',
+      miningElapsed: 0,
+      miningStartTime: null,
     });
 
     return this.currentBlock;

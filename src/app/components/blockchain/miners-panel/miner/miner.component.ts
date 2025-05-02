@@ -158,6 +158,8 @@ export class MinerComponent {
     // Atualiza o tempo decorrido
     if (block.miningStartTime) {
       block.miningElapsed = now - block.miningStartTime;
+    } else {
+      block.miningStartTime = now;
     }
 
     if (hashRate === null) {
