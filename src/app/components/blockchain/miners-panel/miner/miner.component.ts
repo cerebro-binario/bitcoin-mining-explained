@@ -139,145 +139,77 @@ export class MinerComponent {
     }
 
     miner.isMining = true;
-    const hashRate = miner.hashRate;
 
-    // Cronômetro de mineração no bloco
+    // Inicializa o cronômetro do bloco
     const block = miner.currentBlock;
     if (block) {
-      // Se for um novo bloco, zera o cronômetro
-      if (!block.miningStartTime && !block.miningElapsed) {
-        block.miningElapsed = 0;
-      }
+      block.miningElapsed = 0;
       block.miningStartTime = Date.now();
-      if (block.miningTimer) clearInterval(block.miningTimer);
-      block.miningTimer = setInterval(() => {
-        if (miner.isMining && block.miningStartTime) {
-          block.miningElapsed += Date.now() - block.miningStartTime;
-          block.miningStartTime = Date.now();
-        }
-      }, 100);
+    }
+  }
+
+  // Processa um tick de mineração
+  processMiningTick(miner: Node, now: number) {
+    if (!miner.isMining || !miner.currentBlock || this.isMoving) return;
+
+    const block = miner.currentBlock;
+    const hashRate = miner.hashRate;
+
+    // Atualiza o tempo decorrido
+    if (block.miningStartTime) {
+      block.miningElapsed = now - block.miningStartTime;
     }
 
-    // Variáveis para controle do batch
-    let lastBatchTime = Date.now();
-    let accumulatedTime = 0;
-    let batchStartTime = Date.now();
-    let hashesInCurrentBatch = 0;
+    if (hashRate === null) {
+      // Modo máximo - processa o máximo possível
+      const BATCH_SIZE = 1000;
+      for (let i = 0; i < BATCH_SIZE; i++) {
+        block.nonce++;
+        block.hash = block.calculateHash();
 
-    miner.miningInterval = setInterval(() => {
-      if (!miner.currentBlock || this.isMoving) return;
-      const block = miner.currentBlock;
-
-      const now = Date.now();
-      const timeSinceLastBatch = now - lastBatchTime;
-      accumulatedTime += timeSinceLastBatch;
-
-      if (hashRate === null) {
-        // Modo máximo - processa o máximo possível
-        const BATCH_SIZE = 1000;
-        for (let i = 0; i < BATCH_SIZE; i++) {
-          block.nonce++;
-          block.hash = block.calculateHash();
-          hashesInCurrentBatch++;
-
-          if (block.isValid()) {
-            // Para o cronômetro
-            if (block.miningTimer) clearInterval(block.miningTimer);
-            block.miningStartTime = null;
-
-            block.minerId = miner.id;
-            this.isMoving = true;
-
-            setTimeout(() => {
-              miner.addBlock(block);
-              this.isMoving = false;
-              // Emite evento para propagar o bloco
-              this.blockBroadcasted.emit({ minerId: miner.id!, block });
-            }, 600);
-
-            // Cria um novo bloco para continuar minerando
-            miner.initBlockTemplate(block);
-            // Reinicia o cronômetro para o novo bloco
-            const newBlock = miner.currentBlock;
-            if (newBlock) {
-              newBlock.miningElapsed = 0;
-              newBlock.miningStartTime = Date.now();
-              if (newBlock.miningTimer) clearInterval(newBlock.miningTimer);
-              newBlock.miningTimer = setInterval(() => {
-                if (miner.isMining && newBlock.miningStartTime) {
-                  newBlock.miningElapsed +=
-                    Date.now() - newBlock.miningStartTime;
-                  newBlock.miningStartTime = Date.now();
-                }
-              }, 100);
-            }
-            break;
-          }
-        }
-      } else {
-        // Modo com hash rate controlado
-        const timeNeededForOneHash = 1000 / hashRate; // tempo em ms para 1 hash
-        if (accumulatedTime >= timeNeededForOneHash) {
-          const hashesToProcess = Math.floor(
-            accumulatedTime / timeNeededForOneHash
-          );
-
-          for (let i = 0; i < hashesToProcess; i++) {
-            block.nonce++;
-            block.hash = block.calculateHash();
-            hashesInCurrentBatch++;
-
-            if (block.isValid()) {
-              // Para o cronômetro
-              if (block.miningTimer) clearInterval(block.miningTimer);
-              block.miningStartTime = null;
-
-              // Adiciona o bloco à blockchain do minerador
-              block.minerId = miner.id;
-
-              this.isMoving = true;
-
-              setTimeout(() => {
-                miner.addBlock(block);
-                this.isMoving = false;
-                // Emite evento para propagar o bloco
-                this.blockBroadcasted.emit({ minerId: miner.id!, block });
-              }, 600);
-
-              // Cria um novo bloco para continuar minerando
-              miner.initBlockTemplate(block);
-              // Reinicia o cronômetro para o novo bloco
-              const newBlock = miner.currentBlock;
-              if (newBlock) {
-                newBlock.miningElapsed = 0;
-                newBlock.miningStartTime = Date.now();
-                if (newBlock.miningTimer) clearInterval(newBlock.miningTimer);
-                newBlock.miningTimer = setInterval(() => {
-                  if (miner.isMining && newBlock.miningStartTime) {
-                    newBlock.miningElapsed +=
-                      Date.now() - newBlock.miningStartTime;
-                    newBlock.miningStartTime = Date.now();
-                  }
-                }, 100);
-              }
-              break;
-            }
-          }
-
-          accumulatedTime = accumulatedTime % timeNeededForOneHash;
+        if (block.isValid()) {
+          this.handleValidBlock(miner, block);
+          break;
         }
       }
+    } else {
+      // Modo com hash rate controlado
+      const timeNeededForOneHash = 1000 / hashRate; // tempo em ms para 1 hash
+      const hashesToProcess = Math.floor(
+        block.miningElapsed / timeNeededForOneHash
+      );
 
-      // Atualiza o tempo do último batch
-      lastBatchTime = now;
+      for (let i = 0; i < hashesToProcess; i++) {
+        block.nonce++;
+        block.hash = block.calculateHash();
 
-      // Atualiza o hash rate real a cada segundo
-      if (now - batchStartTime >= 1000) {
-        miner.currentHashRate = hashesInCurrentBatch;
-        batchStartTime = now;
-        hashesInCurrentBatch = 0;
+        if (block.isValid()) {
+          this.handleValidBlock(miner, block);
+          break;
+        }
       }
-    }, 100); // Intervalo mínimo de 1ms
+    }
+  }
+
+  private handleValidBlock(miner: Node, block: Block) {
+    block.minerId = miner.id;
+    this.isMoving = true;
+
+    setTimeout(() => {
+      miner.addBlock(block);
+      this.isMoving = false;
+      // Emite evento para propagar o bloco
+      this.blockBroadcasted.emit({ minerId: miner.id!, block });
+    }, 600);
+
+    // Cria um novo bloco para continuar minerando
+    miner.initBlockTemplate(block);
+    // Reinicia o cronômetro para o novo bloco
+    const newBlock = miner.currentBlock;
+    if (newBlock) {
+      newBlock.miningElapsed = 0;
+      newBlock.miningStartTime = Date.now();
+    }
   }
 
   createTransaction(miner: Node) {

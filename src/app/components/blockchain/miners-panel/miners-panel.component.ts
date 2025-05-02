@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, QueryList, ViewChildren } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { Block } from '../../../models/block.model';
 import { AddressService } from '../../../services/address.service';
@@ -14,15 +14,41 @@ import { MinerComponent } from './miner/miner.component';
   styleUrls: ['./miners-panel.component.scss'],
 })
 export class MinersPanelComponent implements OnDestroy {
-  private saveInterval?: any;
+  private miningInterval?: any;
+  private readonly MINING_INTERVAL = 1; // ms
+
+  @ViewChildren('minerComponent') minerComponents!: QueryList<MinerComponent>;
 
   constructor(
     public network: BitcoinNetworkService,
     private addressService: AddressService
-  ) {}
+  ) {
+    this.startMiningInterval();
+  }
 
   get miners() {
     return this.network.nodes.filter((n) => n.isMiner);
+  }
+
+  private startMiningInterval() {
+    this.miningInterval = setInterval(() => {
+      const now = Date.now();
+      this.miners.forEach((miner) => {
+        if (miner.isMining) {
+          const minerComponent = this.getMinerComponent(miner.id);
+          if (minerComponent) {
+            minerComponent.processMiningTick(miner, now);
+          }
+        }
+      });
+    }, this.MINING_INTERVAL);
+  }
+
+  private getMinerComponent(
+    minerId: number | undefined
+  ): MinerComponent | null {
+    if (minerId === undefined) return null;
+    return this.minerComponents.find((c) => c.miner.id === minerId) || null;
   }
 
   addMiner() {
@@ -41,9 +67,8 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    // Limpa os intervalos quando o componente é destruído
-    if (this.saveInterval) {
-      clearInterval(this.saveInterval);
+    if (this.miningInterval) {
+      clearInterval(this.miningInterval);
     }
   }
 }
