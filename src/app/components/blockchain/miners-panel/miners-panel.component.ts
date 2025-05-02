@@ -129,6 +129,18 @@ export class MinersPanelComponent implements OnDestroy {
     this.network.removeNode(event.minerId);
   }
 
+  startAllMiners() {
+    this.minerComponents.forEach((minerComponent) => {
+      minerComponent.startMining(minerComponent.miner);
+    });
+  }
+
+  pauseAllMiners() {
+    this.minerComponents.forEach((minerComponent) => {
+      minerComponent.stopMining(minerComponent.miner);
+    });
+  }
+
   ngOnDestroy() {
     if (this.miningInterval) {
       clearInterval(this.miningInterval);

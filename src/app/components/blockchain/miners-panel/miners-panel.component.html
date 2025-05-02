@@ -1,3 +1,17 @@
+<div class="mb-6 flex gap-4 items-center">
+  <button
+    class="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+    (click)="startAllMiners()"
+  >
+    Iniciar Todos
+  </button>
+  <button
+    class="px-4 py-2 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition"
+    (click)="pauseAllMiners()"
+  >
+    Pausar Todos
+  </button>
+</div>
 <div class="mb-12">
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-2xl font-semibold">Mineradores</h2>
