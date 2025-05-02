@@ -1,16 +1,35 @@
-<div class="mb-6 flex gap-4 items-center">
-  <button
-    class="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
-    (click)="startAllMiners()"
-  >
-    Iniciar Todos
-  </button>
-  <button
-    class="px-4 py-2 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition"
-    (click)="pauseAllMiners()"
-  >
-    Pausar Todos
-  </button>
+<div class="mb-6 flex flex-col md:flex-row md:items-center gap-4">
+  <div class="flex gap-4">
+    <button
+      class="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+      (click)="startAllMiners()"
+    >
+      Iniciar Todos
+    </button>
+    <button
+      class="px-4 py-2 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition"
+      (click)="pauseAllMiners()"
+    >
+      Pausar Todos
+    </button>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="text-xs text-zinc-400">Hash Rate Global:</span>
+    <ng-container *ngFor="let rate of hashRateOptions">
+      <button
+        class="px-2 py-1 rounded text-xs font-semibold transition"
+        [ngClass]="{
+          'bg-blue-600 text-white': globalHashRate === rate.value,
+          'bg-zinc-700 text-zinc-300 hover:bg-zinc-600':
+            globalHashRate !== rate.value
+        }"
+        (click)="setGlobalHashRate(rate.value)"
+        [title]="rate.label"
+      >
+        {{ rate.label }}
+      </button>
+    </ng-container>
+  </div>
 </div>
 <div class="mb-12">
   <div class="flex items-center justify-between mb-4">

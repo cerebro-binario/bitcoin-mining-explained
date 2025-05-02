@@ -27,6 +27,13 @@ export class MinersPanelComponent implements OnDestroy {
 
   @ViewChildren('minerComponent') minerComponents!: QueryList<MinerComponent>;
 
+  hashRateOptions = [
+    { value: 1, label: '1 H/s' },
+    { value: 100, label: '100 H/s' },
+    { value: 1000, label: '1000 H/s' },
+    { value: null, label: 'Máximo' },
+  ];
+
   constructor(
     public network: BitcoinNetworkService,
     private addressService: AddressService
@@ -36,6 +43,13 @@ export class MinersPanelComponent implements OnDestroy {
 
   get miners() {
     return this.network.nodes.filter((n) => n.isMiner);
+  }
+
+  get globalHashRate(): number | null {
+    const rates = this.miners.map((m) => m.hashRate);
+    return rates.length > 0 && rates.every((r) => r === rates[0])
+      ? rates[0]
+      : null;
   }
 
   private startMiningInterval() {
@@ -138,6 +152,12 @@ export class MinersPanelComponent implements OnDestroy {
   pauseAllMiners() {
     this.minerComponents.forEach((minerComponent) => {
       minerComponent.stopMining(minerComponent.miner);
+    });
+  }
+
+  setGlobalHashRate(value: number | null) {
+    this.minerComponents.forEach((minerComponent) => {
+      minerComponent.setHashRate(value);
     });
   }
 
