@@ -16,6 +16,14 @@ import { MinerComponent } from './miner/miner.component';
 export class MinersPanelComponent implements OnDestroy {
   private miningInterval?: any;
   private readonly MINING_INTERVAL = 1; // ms
+  private readonly TARGET_FRAME_TIME = 16; // ms (60 FPS)
+  private readonly MIN_BATCH_SIZE = 100;
+  private readonly MAX_BATCH_SIZE = 10000;
+  private readonly ADJUSTMENT_INTERVAL = 1000; // ms
+  private lastAdjustmentTime = 0;
+  private currentBatchSize = 1000;
+  private frameTimes: number[] = [];
+  private readonly FRAME_TIME_HISTORY_SIZE = 10;
 
   @ViewChildren('minerComponent') minerComponents!: QueryList<MinerComponent>;
 
@@ -32,16 +40,71 @@ export class MinersPanelComponent implements OnDestroy {
 
   private startMiningInterval() {
     this.miningInterval = setInterval(() => {
+      const startTime = performance.now();
       const now = Date.now();
+
+      // Calcula o batch size adaptativo
+      const adaptiveBatchSize = this.calculateAdaptiveBatchSize();
+
       this.miners.forEach((miner) => {
         if (miner.isMining) {
           const minerComponent = this.getMinerComponent(miner.id);
           if (minerComponent) {
-            minerComponent.processMiningTick(miner, now);
+            minerComponent.processMiningTick(miner, now, adaptiveBatchSize);
           }
         }
       });
+
+      // Mede o tempo de execução do frame
+      const frameTime = performance.now() - startTime;
+      this.updateFrameTime(frameTime);
     }, this.MINING_INTERVAL);
+  }
+
+  private calculateAdaptiveBatchSize(): number {
+    const now = Date.now();
+
+    // Ajusta o batch size periodicamente
+    if (now - this.lastAdjustmentTime >= this.ADJUSTMENT_INTERVAL) {
+      this.lastAdjustmentTime = now;
+
+      // Calcula a média dos últimos tempos de frame
+      const avgFrameTime =
+        this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+
+      // Ajusta o batch size baseado no tempo médio de frame
+      if (avgFrameTime > this.TARGET_FRAME_TIME) {
+        // Reduz o batch size se estiver muito lento
+        this.currentBatchSize = Math.max(
+          this.MIN_BATCH_SIZE,
+          Math.floor(this.currentBatchSize * 0.8)
+        );
+      } else if (avgFrameTime < this.TARGET_FRAME_TIME * 0.8) {
+        // Aumenta o batch size se estiver muito rápido
+        this.currentBatchSize = Math.min(
+          this.MAX_BATCH_SIZE,
+          Math.floor(this.currentBatchSize * 1.2)
+        );
+      }
+
+      // Limpa o histórico de tempos
+      this.frameTimes = [];
+    }
+
+    // Ajusta o batch size baseado no número de miners
+    const activeMiners = this.miners.filter((m) => m.isMining).length;
+    const minerAdjustedBatchSize = Math.floor(
+      this.currentBatchSize / Math.max(1, activeMiners)
+    );
+
+    return Math.max(this.MIN_BATCH_SIZE, minerAdjustedBatchSize);
+  }
+
+  private updateFrameTime(frameTime: number) {
+    this.frameTimes.push(frameTime);
+    if (this.frameTimes.length > this.FRAME_TIME_HISTORY_SIZE) {
+      this.frameTimes.shift();
+    }
   }
 
   private getMinerComponent(

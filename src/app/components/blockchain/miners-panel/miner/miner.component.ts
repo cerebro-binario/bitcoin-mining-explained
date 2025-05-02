@@ -149,7 +149,7 @@ export class MinerComponent {
   }
 
   // Processa um tick de mineração
-  processMiningTick(miner: Node, now: number) {
+  processMiningTick(miner: Node, now: number, batchSize: number) {
     if (!miner.isMining || !miner.currentBlock || this.isMoving) return;
 
     const block = miner.currentBlock;
@@ -161,9 +161,8 @@ export class MinerComponent {
     }
 
     if (hashRate === null) {
-      // Modo máximo - processa o máximo possível
-      const BATCH_SIZE = 1000;
-      for (let i = 0; i < BATCH_SIZE; i++) {
+      // Modo máximo - processa o batch size adaptativo
+      for (let i = 0; i < batchSize + 1; i++) {
         block.nonce++;
         block.hash = block.calculateHash();
 
