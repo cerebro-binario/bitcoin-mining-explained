@@ -182,22 +182,24 @@
               >
                 <div
                   *ngFor="let node of nodes"
-                  class="relative block-element rounded-lg p-4 border w-64 shadow transition-transform cursor-pointer group flex flex-col"
+                  class="relative block-element rounded-lg p-4 border w-72 shadow transition-transform cursor-pointer group flex flex-col"
                   [ngClass]="[
                     getBlockBackgroundColor(node),
                     getBlockBorderColor(node)
                   ]"
                 >
                   <div class="flex items-center justify-between mb-1">
-                    <span
-                      class="font-semibold text-blue-300 text-base flex items-center gap-2"
-                    >
-                      #{{ h }}
-                    </span>
                     <div class="flex items-center gap-2">
+                      <span
+                        class="font-semibold text-blue-300 text-base flex items-center gap-2"
+                      >
+                        #{{ h }}
+                      </span>
                       <span class="text-xs text-zinc-400">{{
                         node.block.timestamp | date : "shortTime"
                       }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
                       <span
                         *ngIf="node.block.miningElapsed"
                         class="text-xs text-zinc-400 bg-zinc-900/50 rounded px-2 py-0.5"
