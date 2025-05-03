@@ -60,6 +60,13 @@ export class MinersPanelComponent implements OnDestroy {
     return this.miners.length;
   }
 
+  get networkHashRate(): number {
+    // Soma apenas dos mineradores ativos (isMining)
+    return this.miners
+      .filter((m) => m.isMining && m.hashRate != null)
+      .reduce((sum, m) => sum + (m.hashRate || 0), 0);
+  }
+
   private startMiningInterval() {
     this.miningInterval = setInterval(() => {
       const startTime = performance.now();
