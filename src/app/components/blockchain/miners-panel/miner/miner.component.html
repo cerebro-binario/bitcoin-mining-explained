@@ -8,20 +8,53 @@
     <!-- Mining Controls in Header -->
     <ng-container *ngIf="miner">
       <span
-        class="ml-2 px-2 py-1 rounded text-xs"
+        class="ml-2 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center min-w-[120px] transition-colors"
         [ngClass]="{
           'bg-green-900 text-green-400': miner.isMining,
           'bg-zinc-900 text-zinc-400': !miner.isMining && !miner.isSyncing,
           'bg-blue-900 text-blue-400 animate-pulse': miner.isSyncing
         }"
-      >
-        {{
+        [title]="
           miner.isMining
-            ? "Minerando..."
+            ? 'Minerando'
             : miner.isSyncing
-            ? "Sincronizando..."
-            : "Parado"
-        }}
+            ? 'Sincronizando blockchain'
+            : 'Parado'
+        "
+      >
+        <ng-container *ngIf="miner.isMining">
+          <svg
+            class="inline h-3 w-3 mr-1"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path d="M6 4h2v12H6V4zm6 0h2v12h-2V4z" />
+          </svg>
+          Minerando
+        </ng-container>
+        <ng-container *ngIf="!miner.isMining && miner.isSyncing">
+          <svg
+            class="inline h-3 w-3 mr-1 animate-spin"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" />
+            <path class="opacity-75" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
+          Sincronizando
+        </ng-container>
+        <ng-container *ngIf="!miner.isMining && !miner.isSyncing">
+          <svg
+            class="inline h-3 w-3 mr-1"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <circle cx="10" cy="10" r="5" />
+          </svg>
+          Parado
+        </ng-container>
       </span>
       <button
         *ngIf="!miner.isMining"
