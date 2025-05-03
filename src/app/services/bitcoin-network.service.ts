@@ -207,8 +207,11 @@ export class BitcoinNetworkService {
             neighborNode.genesis
         );
 
+      // NOVO: Se não há vizinhos com blockchain válida, libera para minerar genesis
       if (validNeighbors.length === 0) {
-        return false;
+        node.isSyncing = false;
+        node.initialSyncComplete = true;
+        return true;
       }
 
       // Obtém as blockchains de todos os vizinhos válidos

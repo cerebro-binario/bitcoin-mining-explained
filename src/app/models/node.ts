@@ -215,9 +215,18 @@ export class Node {
           this.heights = [[blockNode]];
           return { success: true };
         }
-        return { success: false, reason: 'genesis-exists' }; // Genesis já existe
+        // Permitir forks no genesis: se já existe, adicione como fork
+        // Verifica se já existe esse hash na altura 0
+        const exists = this.heights[0].some(
+          (n) => n.block.hash === blockNode.block.hash
+        );
+        if (!exists) {
+          this.heights[0].push(blockNode);
+          return { success: true };
+        }
+        return { success: false, reason: 'duplicate-genesis' };
       }
-      return { success: false, reason: 'invalid-parent' }; // Hash anterior inválido
+      return { success: false, reason: 'invalid-parent' };
     }
 
     // Encontra a altura correta para inserir
