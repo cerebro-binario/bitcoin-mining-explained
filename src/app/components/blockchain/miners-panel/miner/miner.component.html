@@ -3,24 +3,27 @@
   class="bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700 space-y-4"
 >
   <div class="flex items-center gap-2">
-    <span class="text-lg font-bold text-blue-400">{{ miner.name }}</span>
+    <span class="text-lg font-bold text-blue-400 flex items-center gap-2">
+      {{ miner.name }}
+      <span
+        class="inline-block w-3 h-3 rounded-full border border-zinc-700"
+        [ngClass]="{
+          'bg-blue-500 animate-pulse': miner.isSyncing,
+          'bg-green-500': !miner.isSyncing
+        }"
+        [title]="miner.isSyncing ? 'Sincronizando com peers' : 'Conectado'"
+      ></span>
+    </span>
 
     <!-- Mining Controls in Header -->
     <ng-container *ngIf="miner">
       <span
-        class="ml-2 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center min-w-[120px] transition-colors"
+        class="ml-2 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center min-w-[110px] transition-colors"
         [ngClass]="{
           'bg-green-900 text-green-400': miner.isMining,
-          'bg-zinc-900 text-zinc-400': !miner.isMining && !miner.isSyncing,
-          'bg-blue-900 text-blue-400 animate-pulse': miner.isSyncing
+          'bg-zinc-900 text-zinc-400': !miner.isMining
         }"
-        [title]="
-          miner.isMining
-            ? 'Minerando'
-            : miner.isSyncing
-            ? 'Sincronizando blockchain'
-            : 'Parado'
-        "
+        [title]="miner.isMining ? 'Minerando' : 'Parado'"
       >
         <ng-container *ngIf="miner.isMining">
           <svg
@@ -32,20 +35,7 @@
           </svg>
           Minerando
         </ng-container>
-        <ng-container *ngIf="!miner.isMining && miner.isSyncing">
-          <svg
-            class="inline h-3 w-3 mr-1 animate-spin"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" />
-            <path class="opacity-75" d="M4 12a8 8 0 018-8v8z" />
-          </svg>
-          Sincronizando
-        </ng-container>
-        <ng-container *ngIf="!miner.isMining && !miner.isSyncing">
+        <ng-container *ngIf="!miner.isMining">
           <svg
             class="inline h-3 w-3 mr-1"
             fill="currentColor"
