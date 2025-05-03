@@ -7,6 +7,22 @@
 
     <!-- Mining Controls in Header -->
     <ng-container *ngIf="miner">
+      <span
+        class="ml-2 px-2 py-1 rounded text-xs"
+        [ngClass]="{
+          'bg-green-900 text-green-400': miner.isMining,
+          'bg-zinc-900 text-zinc-400': !miner.isMining && !miner.isSyncing,
+          'bg-blue-900 text-blue-400 animate-pulse': miner.isSyncing
+        }"
+      >
+        {{
+          miner.isMining
+            ? "Minerando..."
+            : miner.isSyncing
+            ? "Sincronizando..."
+            : "Parado"
+        }}
+      </span>
       <button
         *ngIf="!miner.isMining"
         class="ml-4 px-3 py-1 rounded text-white text-sm font-semibold transition"
@@ -43,22 +59,6 @@
       >
         Nova Transação
       </button>
-      <span
-        class="ml-2 px-2 py-1 rounded text-xs"
-        [ngClass]="{
-          'bg-green-900 text-green-400': miner.isMining,
-          'bg-zinc-900 text-zinc-400': !miner.isMining && !miner.isSyncing,
-          'bg-blue-900 text-blue-400 animate-pulse': miner.isSyncing
-        }"
-      >
-        {{
-          miner.isMining
-            ? "Minerando..."
-            : miner.isSyncing
-            ? "Sincronizando..."
-            : "Parado"
-        }}
-      </span>
     </ng-container>
 
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
