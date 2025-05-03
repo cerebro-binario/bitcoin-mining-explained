@@ -221,18 +221,38 @@ export class Node {
         block.previousHash ===
         '0000000000000000000000000000000000000000000000000000000000000000'
       ) {
-        if (!this.genesis) {
-          this.genesis = blockNode;
-          this.heights = [[blockNode]];
-          return { success: true };
+        // Se não existe bloco falso de origem, crie
+        if (!this.heights.length || this.heights[0][0]?.block.height !== -1) {
+          const originBlock = new Block({
+            id: -1,
+            height: -1,
+            timestamp: 0,
+            previousHash: '',
+            hash: '0000000000000000000000000000000000000000000000000000000000000000',
+            transactions: [],
+            nBits: 0,
+            nonce: 0,
+            miningElapsed: 0,
+            minerId: this.id,
+          });
+          const originNode = new BlockNode(originBlock);
+          this.heights.unshift([originNode]);
         }
-        // Permitir forks no genesis: se já existe, adicione como fork
-        // Verifica se já existe esse hash na altura 0
-        const exists = this.heights[this.getHeightIndex(0)].some(
+        // Adicione o bloco genesis na altura 1
+        if (!this.heights[1]) this.heights[1] = [];
+        // Verifica se já existe esse hash na altura 1
+        const exists = this.heights[1].some(
           (n) => n.block.hash === blockNode.block.hash
         );
         if (!exists) {
-          this.heights[this.getHeightIndex(0)].push(blockNode);
+          // Parent do genesis aponta para o bloco falso
+          blockNode.parent = this.heights[0][0];
+          this.heights[1].push(blockNode);
+          if (!this.genesis) this.genesis = blockNode;
+        }
+        // Atualiza os children do bloco falso para apontar para todos os genesis
+        this.heights[0][0].children = this.heights[1];
+        if (!exists) {
           return { success: true };
         }
         return { success: false, reason: 'duplicate-genesis' };
