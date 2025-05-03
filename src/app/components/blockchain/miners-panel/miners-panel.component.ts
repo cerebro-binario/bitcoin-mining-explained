@@ -52,6 +52,14 @@ export class MinersPanelComponent implements OnDestroy {
       : null;
   }
 
+  get minersMining(): number {
+    return this.miners.filter((m) => m.isMining).length;
+  }
+
+  get minersTotal(): number {
+    return this.miners.length;
+  }
+
   private startMiningInterval() {
     this.miningInterval = setInterval(() => {
       const startTime = performance.now();
