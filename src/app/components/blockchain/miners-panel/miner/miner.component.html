@@ -255,7 +255,7 @@
                 params: { slideXValue }
               }"
             >
-              @let h = miner.heights.length - height - 1;
+              @let h = miner.getHeightIndex(height);
               <div
                 class="relative py-2 flex flex-col gap-4 height-element-container"
               >

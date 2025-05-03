@@ -200,7 +200,18 @@ export class Node {
     });
   }
 
-  // Adiciona um bloco à estrutura heights e atualiza activeForks
+  // Método centralizado para calcular o índice na estrutura heights (ordem inversa)
+  getHeightIndex(height: number): number {
+    const lastIndex = this.heights.length - 1;
+    if (
+      this.heights.length > 0 &&
+      this.heights[lastIndex][0]?.block.height === -1
+    ) {
+      return this.heights.length - height - 2;
+    }
+    return this.heights.length - height - 1;
+  }
+
   addBlock(block: Block): { success: boolean; reason?: string } {
     const blockNode = new BlockNode(block);
 
@@ -217,11 +228,11 @@ export class Node {
         }
         // Permitir forks no genesis: se já existe, adicione como fork
         // Verifica se já existe esse hash na altura 0
-        const exists = this.heights[0].some(
+        const exists = this.heights[this.getHeightIndex(0)].some(
           (n) => n.block.hash === blockNode.block.hash
         );
         if (!exists) {
-          this.heights[0].push(blockNode);
+          this.heights[this.getHeightIndex(0)].push(blockNode);
           return { success: true };
         }
         return { success: false, reason: 'duplicate-genesis' };
@@ -230,7 +241,7 @@ export class Node {
     }
 
     // Encontra a altura correta para inserir
-    const heightIndex = this.heights.length - block.height - 1;
+    const heightIndex = this.getHeightIndex(block.height);
 
     // Procura o pai
     const parent = this.findBlockNode(block.previousHash);
