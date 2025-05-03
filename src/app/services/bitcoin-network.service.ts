@@ -9,7 +9,11 @@ export class BitcoinNetworkService {
   private nextId = 1;
   private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
 
-  addNode(isMiner: boolean, name?: string, hashRate?: number): Node {
+  addNode(
+    isMiner: boolean,
+    name?: string,
+    hashRate: number | null = null
+  ): Node {
     const node = new Node({
       id: this.nextId++,
       isMiner,

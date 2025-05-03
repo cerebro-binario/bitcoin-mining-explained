@@ -24,6 +24,7 @@ export class MinersPanelComponent implements OnDestroy {
   private currentBatchSize = 1000;
   private frameTimes: number[] = [];
   private readonly FRAME_TIME_HISTORY_SIZE = 10;
+  private _defaultHashRate: number | null = 1000;
 
   @ViewChildren('minerComponent') minerComponents!: QueryList<MinerComponent>;
 
@@ -45,11 +46,11 @@ export class MinersPanelComponent implements OnDestroy {
     return this.network.nodes.filter((n) => n.isMiner);
   }
 
-  get globalHashRate(): number | null {
+  get defaultHashRate(): number | null | undefined {
     const rates = this.miners.map((m) => m.hashRate);
     return rates.length > 0 && rates.every((r) => r === rates[0])
       ? rates[0]
-      : null;
+      : this._defaultHashRate;
   }
 
   get minersMining(): number {
@@ -144,7 +145,9 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   addMiner() {
-    const miner = this.network.addNode(true, undefined, 1000);
+    const hashRate =
+      this.defaultHashRate === undefined ? 1000 : this.defaultHashRate;
+    const miner = this.network.addNode(true, undefined, hashRate);
     miner.name = `Minerador ${miner.id}`;
     miner.miningAddress = this.addressService.generateRandomAddress();
     this.network.initializeNode(miner);
@@ -170,7 +173,8 @@ export class MinersPanelComponent implements OnDestroy {
     });
   }
 
-  setGlobalHashRate(value: number | null) {
+  setDefaultHashRate(value: number | null) {
+    this._defaultHashRate = value;
     this.minerComponents.forEach((minerComponent) => {
       minerComponent.setHashRate(value);
     });

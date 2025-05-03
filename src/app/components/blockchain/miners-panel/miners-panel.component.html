@@ -14,16 +14,16 @@
     </button>
   </div>
   <div class="flex items-center gap-2">
-    <span class="text-xs text-zinc-400">Hash Rate Global:</span>
+    <span class="text-xs text-zinc-400">Hash Rate Padrão:</span>
     <ng-container *ngFor="let rate of hashRateOptions">
       <button
         class="px-2 py-1 rounded text-xs font-semibold transition"
         [ngClass]="{
-          'bg-blue-600 text-white': globalHashRate === rate.value,
+          'bg-blue-600 text-white': defaultHashRate === rate.value,
           'bg-zinc-700 text-zinc-300 hover:bg-zinc-600':
-            globalHashRate !== rate.value
+            defaultHashRate !== rate.value
         }"
-        (click)="setGlobalHashRate(rate.value)"
+        (click)="setDefaultHashRate(rate.value)"
         [title]="rate.label"
       >
         {{ rate.label }}
