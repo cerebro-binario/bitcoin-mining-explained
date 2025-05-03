@@ -44,6 +44,7 @@ export class MinerComponent {
   isMoving = false;
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
+  showAllLogs = false;
 
   // Propriedades para o cálculo de gaps
   private hasCalculatedGaps = false;

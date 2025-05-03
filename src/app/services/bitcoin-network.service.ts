@@ -116,7 +116,7 @@ export class BitcoinNetworkService {
           blockHash: block.hash,
           timestamp: Date.now(),
         });
-        if (targetNode.eventLog.length > 10) targetNode.eventLog.pop();
+        // if (targetNode.eventLog.length > 10) targetNode.eventLog.pop();
 
         if (targetNode.initialSyncComplete) {
           // Tenta adicionar o bloco (validação)
