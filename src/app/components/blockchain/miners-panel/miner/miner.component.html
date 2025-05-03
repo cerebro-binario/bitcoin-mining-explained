@@ -4,6 +4,63 @@
 >
   <div class="flex items-center gap-2">
     <span class="text-lg font-bold text-blue-400">{{ miner.name }}</span>
+
+    <!-- Mining Controls in Header -->
+    <ng-container *ngIf="miner">
+      <button
+        *ngIf="!miner.isMining"
+        class="ml-4 px-3 py-1 rounded text-white text-sm font-semibold transition"
+        [ngClass]="{
+          'bg-green-600 hover:bg-green-700':
+            !miner.isSyncing || miner.initialSyncComplete,
+          'bg-zinc-600 cursor-not-allowed':
+            miner.isSyncing && !miner.initialSyncComplete
+        }"
+        (click)="startMining(miner)"
+        [disabled]="miner.isSyncing && !miner.initialSyncComplete"
+        [title]="
+          miner.isSyncing && !miner.initialSyncComplete
+            ? 'Aguarde o download inicial da blockchain'
+            : ''
+        "
+      >
+        {{
+          miner.isSyncing && !miner.initialSyncComplete
+            ? "Aguardando Sincronização"
+            : "Iniciar Mineração"
+        }}
+      </button>
+      <button
+        *ngIf="miner.isMining"
+        class="ml-4 px-3 py-1 rounded bg-yellow-600 text-white text-sm font-semibold hover:bg-yellow-700 transition"
+        (click)="stopMining(miner)"
+      >
+        Pausar Mineração
+      </button>
+      <button
+        class="ml-2 px-3 py-1 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
+        (click)="createTransaction(miner)"
+      >
+        Nova Transação
+      </button>
+      <span
+        class="ml-2 px-2 py-1 rounded text-xs"
+        [ngClass]="{
+          'bg-green-900 text-green-400': miner.isMining,
+          'bg-zinc-900 text-zinc-400': !miner.isMining && !miner.isSyncing,
+          'bg-blue-900 text-blue-400 animate-pulse': miner.isSyncing
+        }"
+      >
+        {{
+          miner.isMining
+            ? "Minerando..."
+            : miner.isSyncing
+            ? "Sincronizando..."
+            : "Parado"
+        }}
+      </span>
+    </ng-container>
+
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
     <button
       class="ml-2 p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition"
@@ -27,25 +84,7 @@
     </button>
   </div>
 
-  <div class="space-y-4">
-    <div class="flex items-center gap-2">
-      <span class="text-xs text-zinc-400">Hash Rate:</span>
-      <div class="flex gap-1">
-        <button
-          *ngFor="let rate of hashRateOptions"
-          class="px-2 py-1 rounded text-xs font-semibold transition"
-          [ngClass]="{
-            'bg-blue-600 text-white': miner.hashRate === rate.value,
-            'bg-zinc-700 text-zinc-300 hover:bg-zinc-600':
-              miner.hashRate !== rate.value
-          }"
-          (click)="setHashRate(rate.value)"
-          [title]="rate.label"
-        >
-          {{ rate.label }}
-        </button>
-      </div>
-    </div>
+  <div class="space-y-5">
     <div class="flex items-center gap-2">
       <span class="text-xs text-zinc-400">Endereço:</span>
       <span class="font-mono text-xs text-green-400 break-all">{{
@@ -57,59 +96,27 @@
       <span class="font-mono text-xs text-green-400">{{ miner.name }}</span>
     </div>
 
-    <div class="flex items-center gap-2 mt-4">
-      <button
-        *ngIf="!miner.isMining"
-        class="px-3 py-1 rounded text-white text-sm font-semibold transition"
-        [ngClass]="{
-          'bg-green-600 hover:bg-green-700':
-            !miner.isSyncing || miner.initialSyncComplete,
-          'bg-zinc-600 cursor-not-allowed':
-            miner.isSyncing && !miner.initialSyncComplete
-        }"
-        (click)="startMining(miner)"
-        [disabled]="miner.isSyncing && !miner.initialSyncComplete"
-        [title]="
-          miner.isSyncing && !miner.initialSyncComplete
-            ? 'Aguarde o download inicial da blockchain'
-            : ''
-        "
-      >
-        {{
-          miner.isSyncing && !miner.initialSyncComplete
-            ? "Aguardando Sincronização"
-            : "Iniciar Mineração"
-        }}
-      </button>
-      <button
-        *ngIf="miner.isMining"
-        class="px-3 py-1 rounded bg-yellow-600 text-white text-sm font-semibold hover:bg-yellow-700 transition"
-        (click)="stopMining(miner)"
-      >
-        Pausar Mineração
-      </button>
-      <button
-        class="px-3 py-1 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
-        (click)="createTransaction(miner)"
-      >
-        Nova Transação
-      </button>
-      <span
-        class="ml-2 px-2 py-1 rounded text-xs"
-        [ngClass]="{
-          'bg-green-900 text-green-400': miner.isMining,
-          'bg-zinc-900 text-zinc-400': !miner.isMining && !miner.isSyncing,
-          'bg-blue-900 text-blue-400 animate-pulse': miner.isSyncing
-        }"
-      >
-        {{
-          miner.isMining
-            ? "Minerando..."
-            : miner.isSyncing
-            ? "Sincronizando..."
-            : "Parado"
-        }}
-      </span>
+    <!-- Hash Rate Minimalista (agora realmente fora do header) -->
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-zinc-400">Hash Rate:</span>
+      <div class="flex justify-between items-center gap-1">
+        <ng-container *ngFor="let rate of hashRateOptions">
+          <button
+            class="px-2 py-1 rounded border text-xs font-semibold transition min-w-[3.5rem]"
+            [ngClass]="{
+              'border-blue-500 bg-blue-600/10 text-blue-400 font-bold':
+                miner.hashRate === rate.value,
+              'border-zinc-600 bg-transparent text-zinc-300 hover:border-blue-400 hover:text-blue-300':
+                miner.hashRate !== rate.value
+            }"
+            (click)="setHashRate(rate.value)"
+            [disabled]="miner.isMining"
+            [title]="rate.label"
+          >
+            {{ rate.label }}
+          </button>
+        </ng-container>
+      </div>
     </div>
   </div>
 

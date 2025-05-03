@@ -355,4 +355,17 @@ export class MinerComponent {
     const activeBlocks = blocks.filter((b) => b.isActive).length; // Conta apenas blocos ativos
     return activeBlocks === 1;
   }
+
+  getHashRateIndex(): number {
+    return this.hashRateOptions.findIndex(
+      (option) => option.value === this.miner.hashRate
+    );
+  }
+
+  onHashRateChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const index = parseInt(input.value);
+    const selectedOption = this.hashRateOptions[index];
+    this.setHashRate(selectedOption.value);
+  }
 }
