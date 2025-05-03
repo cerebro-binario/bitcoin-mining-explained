@@ -133,7 +133,6 @@
                 miner.hashRate !== rate.value
             }"
             (click)="setHashRate(rate.value)"
-            [disabled]="miner.isMining"
             [title]="rate.label"
           >
             {{ rate.label }}
