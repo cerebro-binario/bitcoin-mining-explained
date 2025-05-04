@@ -429,4 +429,17 @@ export class MinerComponent {
     }
     return blocks;
   }
+
+  // Retorna as alturas dos forks ativos entre os últimos 5 blocos
+  get activeForkHeights() {
+    const forkHeights: number[] = [];
+    for (const nodes of this.miner.heights) {
+      const activeBlocks = nodes.filter((n) => n.isActive);
+      if (activeBlocks.length > 1) {
+        const height = nodes[0].block.height;
+        if (height >= 0) forkHeights.push(height);
+      }
+    }
+    return forkHeights;
+  }
 }
