@@ -550,9 +550,11 @@
   <ng-template [ngIf]="isBlockchainFullscreen">
     <div
       class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center !m-0 backdrop-blur"
+      (click)="isBlockchainFullscreen = false"
     >
       <div
         class="relative bg-zinc-900 rounded-lg shadow-2xl border border-zinc-800 w-full h-full max-w-[90vw] max-h-[90vh] flex flex-col m-8"
+        (click)="$event.stopPropagation()"
       >
         <div
           class="w-full flex items-center justify-between p-4 border-b border-zinc-800"
