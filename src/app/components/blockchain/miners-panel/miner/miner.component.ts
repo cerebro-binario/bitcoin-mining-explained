@@ -45,6 +45,9 @@ export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
   showAllLogs = false;
+  realHashRate = 0;
+  private lastHashRateUpdate = 0;
+  private hashCount = 0;
 
   // Propriedades para o cálculo de gaps
   private hasCalculatedGaps = false;
@@ -151,11 +154,15 @@ export class MinerComponent {
     block.miningElapsed += tickTime;
     miner.miningLastTickTime = now;
 
+    // Atualiza o hash rate real
+    this.updateRealHashRate(now);
+
     if (hashRate === null) {
       // Modo máximo - processa o batch size adaptativo
       for (let i = 0; i < batchSize + 1; i++) {
         block.nonce++;
         block.hash = block.calculateHash();
+        this.hashCount++;
 
         if (block.isValid()) {
           this.handleValidBlock(miner, block);
@@ -184,12 +191,22 @@ export class MinerComponent {
       for (let i = 0; i < hashesToProcess; i++) {
         block.nonce++;
         block.hash = block.calculateHash();
+        this.hashCount++;
 
         if (block.isValid()) {
           this.handleValidBlock(miner, block);
           break;
         }
       }
+    }
+  }
+
+  private updateRealHashRate(now: number) {
+    // Atualiza o hash rate real a cada segundo
+    if (now - this.lastHashRateUpdate >= 1000) {
+      this.realHashRate = this.hashCount;
+      this.hashCount = 0;
+      this.lastHashRateUpdate = now;
     }
   }
 
