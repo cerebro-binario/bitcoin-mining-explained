@@ -411,4 +411,22 @@ export class MinerComponent {
 
     return 'translate(' + translateX + 'px, ' + translateY + 'px)';
   }
+
+  // Retorna os últimos 5 blocos da main chain (excluindo o origin fake block)
+  get lastMainBlocks() {
+    const blocks = [];
+    let current = this.miner.getLatestBlock();
+    let count = 0;
+    while (current && current.height >= 0 && count < 5) {
+      blocks.unshift(current);
+      // Encontra o bloco anterior na main chain
+      const prevHash = current.previousHash;
+      const prevNode = this.miner.heights
+        .flat()
+        .find((n) => n.block.hash === prevHash);
+      current = prevNode?.block;
+      count++;
+    }
+    return blocks;
+  }
 }

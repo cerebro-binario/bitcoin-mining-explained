@@ -141,6 +141,47 @@
     </button>
   </div>
 
+  <!-- Mini-chain dos últimos 5 blocos -->
+  <div
+    *ngIf="!isMinerDetailsVisible"
+    class="flex items-center gap-2 px-4 py-2"
+    style="min-height: 32px"
+  >
+    <ng-container *ngFor="let block of lastMainBlocks; let i = index">
+      <div
+        class="flex flex-col items-center justify-center"
+        [ngClass]="{
+          'bg-blue-700 border-blue-400 text-white':
+            i === lastMainBlocks.length - 1,
+          'bg-zinc-700 border-zinc-500 text-zinc-200':
+            i !== lastMainBlocks.length - 1
+        }"
+        style="
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          border-width: 2px;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: background 0.2s, border 0.2s;
+        "
+        [title]="
+          'Bloco #' +
+          block.height +
+          '\nHash: ' +
+          block.hash +
+          '\nMiner: ' +
+          (block.minerId ?? '-') +
+          '\nTxs: ' +
+          block.transactions.length
+        "
+      >
+        <span>{{ block.height }}</span>
+      </div>
+      <span *ngIf="i < lastMainBlocks.length - 1" class="text-zinc-500">→</span>
+    </ng-container>
+  </div>
+
   <div
     class="overflow-hidden transition-all duration-300 ease-in-out"
     [ngStyle]="{
