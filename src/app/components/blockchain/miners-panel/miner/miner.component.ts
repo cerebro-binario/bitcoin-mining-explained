@@ -44,6 +44,7 @@ export class MinerComponent {
   isMoving = false;
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
+  isMinerDetailsVisible = true;
   showAllLogs = false;
   realHashRate = 0;
   private lastHashRateUpdate = 0;
@@ -253,6 +254,10 @@ export class MinerComponent {
 
   toggleBlockchainVisibility() {
     this.isBlockchainVisible = !this.isBlockchainVisible;
+  }
+
+  toggleMinerDetailsVisibility() {
+    this.isMinerDetailsVisible = !this.isMinerDetailsVisible;
   }
 
   // Método para calcular os gaps
