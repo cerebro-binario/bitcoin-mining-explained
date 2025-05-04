@@ -68,6 +68,13 @@ export class MinersPanelComponent implements OnDestroy {
       .reduce((sum, m) => sum + (m.hashRate || 0), 0);
   }
 
+  get realNetworkHashRate(): number {
+    // Soma dos hash rates reais de todos os mineradores ativos
+    return this.miners
+      .filter((m) => m.isMining)
+      .reduce((sum, m) => sum + m.currentHashRate, 0);
+  }
+
   private startMiningInterval() {
     this.miningInterval = setInterval(() => {
       const startTime = performance.now();

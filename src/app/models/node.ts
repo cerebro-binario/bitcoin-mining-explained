@@ -41,6 +41,8 @@ export class Node {
   name: string = '';
   hashRate: number | null = null;
   currentHashRate: number = 0; // Hash rate real sendo alcançado
+  private hashCount: number = 0;
+  private lastHashRateUpdate: number = 0;
   currentBlock?: Block;
   isMining: boolean = false;
   miningAddress: string = ''; // Endereço para receber recompensas de mineração
@@ -311,5 +313,21 @@ export class Node {
       height = height.flatMap((block) => block.children);
     }
     this.heights = heights;
+  }
+
+  // Método para incrementar o contador de hashes
+  incrementHashCount() {
+    this.hashCount++;
+    this.updateCurrentHashRate();
+  }
+
+  // Método para atualizar o hash rate real
+  private updateCurrentHashRate() {
+    const now = Date.now();
+    if (now - this.lastHashRateUpdate >= 1000) {
+      this.currentHashRate = this.hashCount;
+      this.hashCount = 0;
+      this.lastHashRateUpdate = now;
+    }
   }
 }
