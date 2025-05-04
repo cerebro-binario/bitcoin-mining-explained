@@ -26,7 +26,7 @@ export class MinersPanelComponent implements OnDestroy {
   private readonly FRAME_TIME_HISTORY_SIZE = 10;
   private _defaultHashRate: number | null = 1000;
 
-  @ViewChildren('minerComponent') minerComponents!: QueryList<MinerComponent>;
+  @ViewChildren(MinerComponent) minerComponents!: QueryList<MinerComponent>;
 
   hashRateOptions = [
     { value: 1, label: '1 H/s' },
@@ -34,6 +34,8 @@ export class MinersPanelComponent implements OnDestroy {
     { value: 1000, label: '1000 H/s' },
     { value: null, label: 'Máximo' },
   ];
+
+  allMinersCollapsed = false;
 
   constructor(
     public network: BitcoinNetworkService,
@@ -73,6 +75,13 @@ export class MinersPanelComponent implements OnDestroy {
     return this.miners
       .filter((m) => m.isMining)
       .reduce((sum, m) => sum + m.currentHashRate, 0);
+  }
+
+  checkAllMinersCollapsed() {
+    this.allMinersCollapsed =
+      this.minerComponents && this.minerComponents.length > 0
+        ? this.minerComponents.toArray().every((m) => m.isCollapsed)
+        : false;
   }
 
   private startMiningInterval() {
@@ -190,6 +199,18 @@ export class MinersPanelComponent implements OnDestroy {
     this.minerComponents.forEach((minerComponent) => {
       minerComponent.setHashRate(value);
     });
+  }
+
+  toggleAllMinersCollapse() {
+    if (!this.minerComponents) return;
+    this.minerComponents.forEach(
+      (m) => (m.isCollapsed = !this.allMinersCollapsed)
+    );
+    this.allMinersCollapsed = !this.allMinersCollapsed;
+  }
+
+  onMinerCollapsed(collapsed: boolean) {
+    this.checkAllMinersCollapsed();
   }
 
   ngOnDestroy() {

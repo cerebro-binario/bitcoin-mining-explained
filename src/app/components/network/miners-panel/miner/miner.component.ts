@@ -28,7 +28,7 @@ interface HashRateOption {
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
-  isMinerDetailsVisible = true;
+  isCollapsed = false;
   showAllLogs = false;
   realHashRate = 0;
   private lastHashRateUpdate = 0;
@@ -42,6 +42,7 @@ export class MinerComponent {
     { label: '1000 H/s', value: 1000 },
     { label: 'Máximo', value: null },
   ];
+  @Input() collapseOnInit = false;
   @Output() minerRemoved = new EventEmitter<{ minerId: number }>();
   @Output() blockBroadcasted = new EventEmitter<{
     minerId: number;
@@ -51,6 +52,7 @@ export class MinerComponent {
     minerId: number;
     transaction: Transaction;
   }>();
+  @Output() minerCollapsed = new EventEmitter<boolean>();
 
   isCollapsedHashRateSelectorOpen = false;
 
@@ -60,6 +62,8 @@ export class MinerComponent {
   ) {}
 
   ngOnInit() {
+    this.isCollapsed = this.collapseOnInit;
+
     // Reinicia a mineração caso estivesse minerando
     if (this.miner.isMining) {
       // Para garantir que não haja intervalos residuais
@@ -212,8 +216,9 @@ export class MinerComponent {
     this.isBlockchainVisible = !this.isBlockchainVisible;
   }
 
-  toggleMinerDetailsVisibility() {
-    this.isMinerDetailsVisible = !this.isMinerDetailsVisible;
+  toggleCollapsed() {
+    this.isCollapsed = !this.isCollapsed;
+    this.minerCollapsed.emit(this.isCollapsed);
   }
 
   getHashRateIndex(): number {
