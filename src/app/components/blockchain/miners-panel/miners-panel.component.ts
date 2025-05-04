@@ -170,7 +170,12 @@ export class MinersPanelComponent implements OnDestroy {
 
   startAllMiners() {
     this.minerComponents.forEach((minerComponent) => {
-      minerComponent.startMining(minerComponent.miner);
+      if (
+        !minerComponent.miner.isSyncing ||
+        minerComponent.miner.initialSyncComplete
+      ) {
+        minerComponent.startMining(minerComponent.miner);
+      }
     });
   }
 
