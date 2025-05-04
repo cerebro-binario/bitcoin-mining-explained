@@ -215,6 +215,27 @@
       </div>
       <span *ngIf="i < lastMainBlocks.length - 1" class="text-zinc-500">→</span>
     </ng-container>
+    <span class="mx-2 text-zinc-600">|</span>
+    <span
+      class="flex items-center gap-1 text-xs font-mono"
+      [ngClass]="miner.isMining ? 'text-green-400' : 'text-zinc-400'"
+      [title]="'Hash rate real'"
+    >
+      <svg
+        class="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 20 20"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M4 13h1v-2H4v2zm3 0h1v-6H7v6zm3 0h1V7h-1v6zm3 0h1v-4h-1v4z"
+        />
+      </svg>
+      {{ miner.currentHashRate | number : "1.0-0" }} H/s
+    </span>
   </div>
 
   <div
