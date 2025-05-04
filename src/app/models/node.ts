@@ -14,6 +14,7 @@ export class Node {
   isSyncing: boolean = false;
   initialSyncComplete: boolean = false;
   pendingBlocks: Block[] = [];
+  isAddingBlock: boolean = false;
 
   // Rastreamento de peers durante o sync inicial
   syncPeers: {
