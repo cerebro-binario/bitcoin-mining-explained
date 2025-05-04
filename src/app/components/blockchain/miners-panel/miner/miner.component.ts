@@ -276,11 +276,11 @@ export class MinerComponent {
     this.gap.x.percentage = (this.gap.x.value / heightWidth) * 100;
     this.gap.y.percentage = (this.gap.y.value / blockHeight) * 100;
 
-    requestAnimationFrame(() => {
-      this.slideXValue = `translateX(calc(100% + ${this.gap.x.value}px))`;
-    });
-
     this.connectorViewbox = { w: blockWidth, h: blockHeight };
+
+    requestAnimationFrame(() => {
+      this.slideXValue = `translateX(calc(${this.connectorViewbox.w}px + ${this.gap.x.value}px))`;
+    });
   }
 
   // Método para obter a cor de fundo do bloco
@@ -305,10 +305,9 @@ export class MinerComponent {
     const parent = node.parent;
     if (!parent) return '';
 
-    const hTotal = parent.children.length;
-    const h = parent.children.findIndex(
-      (c) => c.block.hash === node.block.hash
-    );
+    let hTotal = parent.children.length;
+    let h = parent.children.findIndex((c) => c.block.hash === node.block.hash);
+
     const prevPosition = miner.heights[height + 1]?.findIndex(
       (b) => b.block.hash === parent.block.hash
     );
@@ -320,10 +319,19 @@ export class MinerComponent {
 
     // Calcula a posição final do bloco filho
     const endX = this.connectorViewbox.w + this.gap.x.value;
-    const endY =
+    let endY =
       (this.getDynamicTopValue(hTotal, h) / 100) * this.connectorViewbox.h +
       (this.connectorViewbox.h + this.gap.y.value) *
         (prevPosition - currPosition);
+
+    // Caso o pai seja o origin block (fake) e tenha um fork logo no genesis
+    if (parent.block.height === -1 && hTotal > 1) {
+      endY =
+        ((50 * hTotal) / 100) * this.connectorViewbox.h +
+        (this.connectorViewbox.h + this.gap.y.value) *
+          (prevPosition - currPosition) +
+        (this.gap.y.value / 2) * (hTotal - 1);
+    }
     // Ponto de controle para a curva
     const midX = (startX + endX) / 2; // Ponto no meio do caminho horizontalmente
 
@@ -367,5 +375,21 @@ export class MinerComponent {
     const index = parseInt(input.value);
     const selectedOption = this.hashRateOptions[index];
     this.setHashRate(selectedOption.value);
+  }
+
+  getOriginBlockTransform(childrenLength: number): string {
+    const originBlock = document.querySelector(
+      `#originBlock-${this.miner.id}`
+    ) as HTMLElement;
+    const { width, height } = originBlock.getBoundingClientRect();
+
+    const translateX = Math.round((width / 2) * -1);
+    const translateY = Math.round(
+      (this.connectorViewbox.h * childrenLength) / 2 -
+        height / 2 +
+        (this.gap.y.value / 2) * childrenLength
+    );
+
+    return 'translate(' + translateX + 'px, ' + translateY + 'px)';
   }
 }

@@ -318,6 +318,10 @@ export class BitcoinNetworkService {
     height: number,
     previousBlock?: Block
   ): boolean {
+    if (height === -1) {
+      return true;
+    }
+
     // 1. Verifica se o hash do bloco é válido
     if (block.hash !== block.calculateHash()) {
       console.warn(`Bloco ${height} tem hash inválido`);
@@ -383,7 +387,7 @@ export class BitcoinNetworkService {
   private validateBlockchain(blockchain: BlockNode): boolean {
     let current: BlockNode | undefined = blockchain;
     let previousBlock: Block | undefined;
-    let height = 0;
+    let height = -1;
 
     while (current) {
       const block = current.block;
