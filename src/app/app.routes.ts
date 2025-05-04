@@ -2,9 +2,9 @@ import { Routes } from '@angular/router';
 import { NetworkComponent } from './components/network/network.component';
 import { ToolsComponent } from './components/tools/tools.component';
 import { AddressesLayout } from './layouts/home/addresses/addresses.layout';
-import { BlockchainLayout } from './layouts/home/blockchain/blockchain.layout';
 import { HomeLayout } from './layouts/home/home.layout';
 import { MempoolLayout } from './layouts/home/mempool/mempool.layout';
+import { NetworkLayout } from './layouts/home/network/network.layout';
 import { ToolsLayout } from './layouts/home/tools/tools.layout';
 
 export const routes: Routes = [
@@ -13,8 +13,8 @@ export const routes: Routes = [
     component: HomeLayout,
     children: [
       {
-        path: 'blockchain',
-        component: BlockchainLayout,
+        path: 'network',
+        component: NetworkLayout,
         children: [{ path: '', component: NetworkComponent }],
       },
       {
@@ -32,7 +32,7 @@ export const routes: Routes = [
         component: ToolsLayout,
         children: [{ path: '', pathMatch: 'full', component: ToolsComponent }],
       },
-      { path: '', pathMatch: 'full', redirectTo: '/blockchain' },
+      { path: '', pathMatch: 'full', redirectTo: '/network' },
     ],
   },
 ];

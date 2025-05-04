@@ -22,9 +22,9 @@ export class HomeLayout {
   tabs = [
     // { route: '/blockchain', icon: 'pi pi-home', label: 'Blockchain' },
     {
-      route: '/blockchain',
+      route: '/network',
       icon: 'pi pi-home',
-      label: 'Blockchain',
+      label: 'Rede Bitcoin',
     },
     // {
     //   route: '/mempool',
