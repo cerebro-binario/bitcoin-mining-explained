@@ -207,11 +207,23 @@ export class BitcoinNetworkService {
             neighborNode.genesis
         );
 
-      // NOVO: Se não há vizinhos com blockchain válida, libera para minerar genesis
+      // Se não há vizinhos com blockchain válida, verifica se há peers com chain mais longa
       if (validNeighbors.length === 0) {
-        node.isSyncing = false;
-        node.initialSyncComplete = true;
-        return true;
+        // Procura por peers que tenham uma chain mais longa
+        const peersWithLongerChain = sortedNeighbors
+          .map((neighbor) => this.nodes.find((n) => n.id === neighbor.nodeId))
+          .filter(
+            (neighborNode) =>
+              neighborNode &&
+              neighborNode.heights.length > (node.heights.length || 0)
+          );
+
+        // Se não há peers com chain mais longa, libera para minerar genesis
+        if (peersWithLongerChain.length === 0) {
+          node.isSyncing = false;
+          node.initialSyncComplete = true;
+          return true;
+        }
       }
 
       // Obtém as blockchains de todos os vizinhos válidos
