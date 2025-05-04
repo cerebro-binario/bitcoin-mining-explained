@@ -216,21 +216,26 @@
           >
         </span>
       </div>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 text-zinc-400 transition-transform"
-        [ngClass]="{ 'rotate-180': !isBlockchainVisible }"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M19 9l-7 7-7-7"
-        />
-      </svg>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-400">{{
+          isBlockchainVisible ? "Recolher" : "Expandir"
+        }}</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-zinc-400 transition-transform"
+          [ngClass]="{ 'rotate-180': isBlockchainVisible }"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
     </div>
     <div
       class="overflow-hidden transition-all duration-300 ease-in-out"
