@@ -177,6 +177,14 @@
         "
       >
         <span>{{ block.height }}</span>
+        <span
+          class="text-[0.65em] mt-[-2px]"
+          [ngClass]="{
+            'text-green-400 font-bold': block.minerId === miner.id,
+            'text-zinc-300': block.minerId !== miner.id
+          }"
+          >M{{ block.minerId ?? "-" }}</span
+        >
       </div>
       <span *ngIf="i < lastMainBlocks.length - 1" class="text-zinc-500">→</span>
     </ng-container>
