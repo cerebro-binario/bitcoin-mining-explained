@@ -139,6 +139,26 @@
         />
       </svg>
     </button>
+    <button
+      class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
+      (click)="isBlockchainFullscreen = true"
+      title="Visualizar blockchain em tela cheia"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-4 w-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 8V4h4M20 8V4h-4M4 16v4h4m12-4v4h-4"
+        />
+      </svg>
+    </button>
   </div>
 
   <!-- Mini-chain dos últimos 5 blocos -->
@@ -522,6 +542,39 @@
             >
           </li>
         </ul>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Dialog da blockchain -->
+  <ng-template [ngIf]="isBlockchainFullscreen">
+    <div
+      class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center"
+    >
+      <div
+        class="relative bg-zinc-900 rounded-lg shadow-2xl border border-zinc-800 w-full h-full max-w-[90vw] max-h-[90vh] flex flex-col m-8"
+      >
+        <div
+          class="w-full flex items-center justify-between p-4 border-b border-zinc-800"
+        >
+          <span class="text-lg font-bold text-blue-400"
+            >Blockchain do Minerador #{{ miner.id }}</span
+          >
+          <button
+            (click)="isBlockchainFullscreen = false"
+            class="text-zinc-400 hover:text-red-400 text-2xl"
+          >
+            &times;
+          </button>
+        </div>
+        <div
+          class="flex-1 flex flex-col justify-center items-center px-0 py-8 p-8 overflow-y-auto"
+        >
+          <app-blockchain
+            [miner]="miner"
+            class="w-full h-full"
+          ></app-blockchain>
+        </div>
       </div>
     </div>
   </ng-template>

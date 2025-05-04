@@ -1,6 +1,9 @@
 <div class="relative">
   <div class="overflow-x-auto pb-4">
-    <div id="miners-panel-container" class="flex flex-row gap-16 items-stretch">
+    <div
+      id="miners-panel-container"
+      class="flex flex-row gap-16 items-stretch px-16"
+    >
       <!-- Bloco atual -->
       <ng-container *ngFor="let nodes of miner.heights; let height = index">
         @if(nodes[0].block.height === -1) { @let nChains =

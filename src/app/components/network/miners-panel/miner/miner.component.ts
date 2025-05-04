@@ -33,6 +33,7 @@ export class MinerComponent {
   realHashRate = 0;
   private lastHashRateUpdate = 0;
   private hashCount = 0;
+  isBlockchainFullscreen = false;
 
   @Input() miner!: Node;
   @Input() hashRateOptions: HashRateOption[] = [
