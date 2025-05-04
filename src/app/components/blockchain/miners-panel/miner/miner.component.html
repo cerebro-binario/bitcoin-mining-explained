@@ -213,7 +213,7 @@
       <div class="flex items-center gap-2">
         <h3 class="text-lg font-semibold text-blue-400">Blockchain Local</h3>
         <span class="text-xs text-zinc-400">
-          {{ miner.heights.length || 0 }} blocos
+          {{ miner.heights.length > 0 ? miner.heights.length - 1 : 0 }} blocos
           <span *ngIf="miner.getLatestBlock()"
             >(Último: #{{ miner.getLatestBlock()?.height }})</span
           >

@@ -286,8 +286,8 @@ export class Node {
 
     // Percorre as alturas da mais alta para a mais baixa
     for (const height of this.heights) {
-      if (height.length > 0) {
-        // Retorna o primeiro bloco da altura mais alta
+      if (height.length > 0 && height[0].block.height !== -1) {
+        // Retorna o primeiro bloco da altura mais alta, ignorando o origin block
         return height[0].block;
       }
     }
