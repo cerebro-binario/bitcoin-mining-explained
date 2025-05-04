@@ -84,6 +84,17 @@
       </button>
     </ng-container>
 
+    <div class="flex items-center gap-2 ml-4">
+      <span class="text-xs text-zinc-400">Chain:</span>
+      <span class="text-xs text-blue-400">{{
+        miner.heights.length > 0 ? miner.heights.length - 1 : 0
+      }}</span>
+      <span class="text-xs text-zinc-400">blocos</span>
+      <span *ngIf="miner.getLatestBlock()" class="text-xs text-blue-400"
+        >(#{{ miner.getLatestBlock()?.height }})</span
+      >
+    </div>
+
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
     <button
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
