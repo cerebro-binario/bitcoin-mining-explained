@@ -6,7 +6,14 @@ import {
   trigger,
 } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  ElementRef,
+  HostListener,
+} from '@angular/core';
 import { Block, BlockNode, Transaction } from '../../../../models/block.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
@@ -81,7 +88,12 @@ export class MinerComponent {
     transaction: Transaction;
   }>();
 
-  constructor(private addressService: AddressService) {}
+  isCollapsedHashRateSelectorOpen = false;
+
+  constructor(
+    private addressService: AddressService,
+    private elRef: ElementRef
+  ) {}
 
   ngOnInit() {
     // Reinicia a mineração caso estivesse minerando
@@ -441,5 +453,16 @@ export class MinerComponent {
       }
     }
     return forkHeights;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (
+      this.isCollapsedHashRateSelectorOpen &&
+      this.elRef &&
+      !this.elRef.nativeElement.contains(event.target)
+    ) {
+      this.isCollapsedHashRateSelectorOpen = false;
+    }
   }
 }

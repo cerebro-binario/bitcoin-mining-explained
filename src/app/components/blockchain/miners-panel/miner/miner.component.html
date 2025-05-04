@@ -217,7 +217,7 @@
     </ng-container>
     <span class="mx-2 text-zinc-600">|</span>
     <span
-      class="flex items-center gap-1 text-xs font-mono"
+      class="flex items-center gap-1 text-xs font-mono group relative"
       [ngClass]="miner.isMining ? 'text-green-400' : 'text-zinc-400'"
       [title]="'Hash rate real'"
     >
@@ -235,6 +235,49 @@
         />
       </svg>
       {{ miner.currentHashRate | number : "1.0-0" }} H/s
+      <button
+        class="ml-1 p-0.5 rounded hover:bg-zinc-700 transition hidden group-hover:inline-block"
+        style="vertical-align: middle"
+        (click)="
+          $event.stopPropagation();
+          isCollapsedHashRateSelectorOpen = !isCollapsedHashRateSelectorOpen
+        "
+        tabindex="-1"
+        [title]="'Alterar Hash Rate'"
+      >
+        <svg
+          class="w-3.5 h-3.5 text-zinc-400"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 20 20"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15.232 5.232l-10 10M16.5 7.5l-4-4a2.121 2.121 0 00-3 3l4 4a2.121 2.121 0 003-3z"
+          />
+        </svg>
+      </button>
+      <div
+        *ngIf="isCollapsedHashRateSelectorOpen"
+        class="absolute z-20 top-6 left-0 bg-zinc-800 border border-zinc-700 rounded shadow p-1 flex flex-col min-w-[6rem]"
+      >
+        <button
+          *ngFor="let rate of hashRateOptions"
+          class="px-2 py-1 text-xs rounded text-left hover:bg-blue-700/30 transition"
+          [ngClass]="{
+            'bg-blue-700/40 text-blue-300 font-bold':
+              miner.hashRate === rate.value,
+            'text-zinc-200': miner.hashRate !== rate.value
+          }"
+          (click)="
+            setHashRate(rate.value); isCollapsedHashRateSelectorOpen = false
+          "
+        >
+          {{ rate.label }}
+        </button>
+      </div>
     </span>
   </div>
 
