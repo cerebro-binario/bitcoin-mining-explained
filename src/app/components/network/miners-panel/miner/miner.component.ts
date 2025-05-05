@@ -12,6 +12,7 @@ import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
+import { EventLogsComponent } from '../../event-logs/event-logs.component';
 
 interface HashRateOption {
   label: string;
@@ -21,7 +22,12 @@ interface HashRateOption {
 @Component({
   selector: 'app-miner',
   standalone: true,
-  imports: [CommonModule, MiningBlockComponent, BlockchainComponent],
+  imports: [
+    CommonModule,
+    MiningBlockComponent,
+    BlockchainComponent,
+    EventLogsComponent,
+  ],
   templateUrl: './miner.component.html',
   //   styleUrls: ['./miner.component.scss'],
 })
@@ -29,7 +35,6 @@ export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
   isCollapsed = false;
-  showAllLogs = false;
   realHashRate = 0;
   private lastHashRateUpdate = 0;
   private hashCount = 0;

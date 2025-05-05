@@ -2,20 +2,16 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
-import { BlockNode } from '../../../models/block.model';
-import { Node } from '../../../models/node';
+import { EventLogsComponent } from '../event-logs/event-logs.component';
 
 @Component({
   selector: 'app-nodes-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EventLogsComponent],
   templateUrl: './nodes-panel.component.html',
   styleUrls: ['./nodes-panel.component.scss'],
 })
 export class NodesPanelComponent {
-  showAllLogs = false;
-  selectedNodeForLogs?: Node;
-
   constructor(public network: BitcoinNetworkService) {}
 
   get nodes() {
@@ -49,13 +45,7 @@ export class NodesPanelComponent {
     }
   }
 
-  showNodeLogs(node: Node) {
-    this.selectedNodeForLogs = node;
-    this.showAllLogs = true;
-  }
+  showLogs() {}
 
-  closeLogs() {
-    this.showAllLogs = false;
-    this.selectedNodeForLogs = undefined;
-  }
+  closeLogs() {}
 }
