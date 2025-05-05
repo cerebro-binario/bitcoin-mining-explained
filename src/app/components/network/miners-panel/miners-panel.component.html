@@ -90,13 +90,13 @@
       (click)="maximizedMiner = undefined"
     >
       <div
-        class="relative bg-zinc-900 rounded-lg shadow-2xl border border-zinc-800 w-full h-full max-w-[90vw] max-h-[90vh] flex flex-col m-8"
+        class="relative bg-zinc-900 rounded-lg shadow-2xl border border-zinc-800 w-full h-full max-w-[90vw] max-h-[90vh] flex flex-col m-8 overflow-y-auto"
         (click)="$event.stopPropagation()"
       >
         <app-miner
           [miner]="maximizedMiner"
           [maximized]="true"
-          class="w-full flex-1 overflow-y-auto"
+          class="w-full flex-1"
           (minerMinimized)="onMinerMinimized($event)"
         ></app-miner>
       </div>

@@ -1,8 +1,16 @@
 <div
   *ngIf="miner"
-  class="bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700 space-y-4 h-full overflow-y-auto"
+  class="bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700 space-y-4 h-full"
+  [ngClass]="maximized ? 'pt-0' : ''"
 >
-  <div class="flex items-center gap-2">
+  <div
+    class="flex items-center gap-2"
+    [ngClass]="
+      maximized
+        ? 'sticky top-0 z-20 bg-zinc-800 border-b border-zinc-700 py-6'
+        : ''
+    "
+  >
     <span class="text-lg font-bold text-blue-400 flex items-center gap-2">
       {{ miner.name }}
       <span
@@ -97,6 +105,7 @@
 
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
     <button
+      *ngIf="!maximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
       (click)="toggleCollapsed()"
       [title]="isCollapsed ? 'Expandir minerador' : 'Recolher minerador'"
@@ -118,6 +127,7 @@
       </svg>
     </button>
     <button
+      *ngIf="!maximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition"
       (click)="removeMiner(miner)"
       title="Remover minerador"
@@ -344,7 +354,7 @@
   </div>
 
   <div
-    class="overflow-hidden transition-all duration-300 ease-in-out"
+    class="transition-all duration-300 ease-in-out"
     [ngStyle]="{
       'max-height': isCollapsed ? '0px' : null,
       opacity: isCollapsed ? '0' : '1'
@@ -482,10 +492,11 @@
         </div>
       </div>
       <div
-        class="overflow-hidden transition-all duration-300 ease-in-out"
+        class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
         [ngStyle]="{
           'max-height': !isBlockchainVisible ? '0px' : null,
-          opacity: isBlockchainVisible ? '1' : '0'
+          opacity: isBlockchainVisible ? '1' : '0',
+          overflow: isBlockchainVisible ? 'visible' : 'hidden',
         }"
       >
         <app-blockchain [miner]="miner"></app-blockchain>
