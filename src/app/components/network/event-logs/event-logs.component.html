@@ -1,0 +1,94 @@
+<div class="w-full mt-2">
+  <div class="font-semibold text-blue-400 mb-2 flex items-center gap-2">
+    <span>Eventos</span>
+    <span class="text-xs text-zinc-400">({{ node.eventLog.length }})</span>
+  </div>
+  <div
+    class="relative overflow-hidden bg-zinc-900 border border-zinc-800 rounded-lg p-4"
+  >
+    <ul class="space-y-1 text-xs pr-1">
+      <li
+        *ngFor="let event of node.eventLog | slice : 0 : 15"
+        [ngClass]="{
+          'text-green-400': event.type === 'block-validated',
+          'text-red-400': event.type === 'block-rejected',
+          'text-blue-400': event.type === 'block-received'
+        }"
+      >
+        <span class="font-mono">{{
+          event.timestamp | date : "shortTime"
+        }}</span>
+        <span *ngIf="event.type === 'block-validated'">✔️</span>
+        <span *ngIf="event.type === 'block-rejected'">❌</span>
+        <span *ngIf="event.type === 'block-received'">⬇️</span>
+        <span class="ml-1">{{ event.type.replace("block-", "") }}</span>
+        <span class="ml-1 text-zinc-400"
+          >({{ event.blockHash | slice : 0 : 8 }}...)</span
+        >
+        <span *ngIf="event.reason" class="ml-1 text-red-300"
+          >({{ event.reason }})</span
+        >
+      </li>
+      <li *ngIf="node.eventLog.length === 0" class="text-zinc-500 italic">
+        Nenhum evento ainda.
+      </li>
+    </ul>
+    <!-- Fade and button will go here -->
+    <div
+      *ngIf="node.eventLog.length > 8"
+      class="absolute left-0 right-0 bottom-0 h-1/4 pointer-events-none bg-gradient-to-t from-zinc-900 to-transparent"
+    ></div>
+    <button
+      *ngIf="node.eventLog.length > 8"
+      (click)="showNodeLogs()"
+      class="absolute right-3 bottom-3 z-10 px-2 py-1 text-xs rounded bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition pointer-events-auto backdrop-blur-sm"
+    >
+      Ver tudo
+    </button>
+  </div>
+</div>
+
+<!-- Dialog de todos os logs -->
+<ng-template [ngIf]="showAllLogs && node">
+  <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div
+      class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <span class="font-semibold text-blue-400"
+          >Eventos do Nó #{{ node.id }}</span
+        >
+        <button
+          (click)="closeLogs()"
+          class="text-zinc-400 hover:text-red-400 text-xl"
+        >
+          &times;
+        </button>
+      </div>
+      <ul class="flex-1 overflow-y-auto space-y-1 text-xs pr-1">
+        <li
+          *ngFor="let event of node.eventLog"
+          [ngClass]="{
+            'text-green-400': event.type === 'block-validated',
+            'text-red-400': event.type === 'block-rejected',
+            'text-blue-400': event.type === 'block-received'
+          }"
+        >
+          <span class="font-mono">{{
+            event.timestamp | date : "shortTime"
+          }}</span>
+          <span *ngIf="event.type === 'block-validated'">✔️</span>
+          <span *ngIf="event.type === 'block-rejected'">❌</span>
+          <span *ngIf="event.type === 'block-received'">⬇️</span>
+          <span class="ml-1">{{ event.type.replace("block-", "") }}</span>
+          <span class="ml-1 text-zinc-400"
+            >({{ event.blockHash | slice : 0 : 8 }}...)</span
+          >
+          <span *ngIf="event.reason" class="ml-1 text-red-300"
+            >({{ event.reason }})</span
+          >
+        </li>
+      </ul>
+    </div>
+  </div>
+</ng-template>
