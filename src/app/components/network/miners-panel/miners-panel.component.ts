@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, QueryList, ViewChildren } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  QueryList,
+  ViewChildren,
+  AfterViewInit,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { Block } from '../../../models/block.model';
 import { Node } from '../../../models/node';
@@ -14,7 +21,7 @@ import { MinerComponent } from './miner/miner.component';
   templateUrl: './miners-panel.component.html',
   styleUrls: ['./miners-panel.component.scss'],
 })
-export class MinersPanelComponent implements OnDestroy {
+export class MinersPanelComponent implements OnDestroy, AfterViewInit {
   private miningInterval?: any;
   private readonly MINING_INTERVAL = 1; // ms
   private readonly TARGET_FRAME_TIME = 16; // ms (60 FPS)
@@ -38,10 +45,13 @@ export class MinersPanelComponent implements OnDestroy {
 
   allMinersCollapsed = false;
   maximizedMiner?: Node;
+  minersToExpandCount = 0;
+  minersToCollapseCount = 0;
 
   constructor(
     public network: BitcoinNetworkService,
-    private addressService: AddressService
+    private addressService: AddressService,
+    private cdr: ChangeDetectorRef
   ) {
     this.startMiningInterval();
   }
@@ -77,6 +87,16 @@ export class MinersPanelComponent implements OnDestroy {
     return this.miners
       .filter((m) => m.isMining)
       .reduce((sum, m) => sum + m.currentHashRate, 0);
+  }
+
+  get minersToStartCount(): number {
+    return this.miners.filter(
+      (m) => !m.isMining && (!m.isSyncing || m.initialSyncComplete)
+    ).length;
+  }
+
+  get minersToPauseCount(): number {
+    return this.miners.filter((m) => m.isMining).length;
   }
 
   checkAllMinersCollapsed() {
@@ -209,10 +229,12 @@ export class MinersPanelComponent implements OnDestroy {
       (m) => (m.isCollapsed = !this.allMinersCollapsed)
     );
     this.allMinersCollapsed = !this.allMinersCollapsed;
+    this.updateMinersCollapseCounts();
   }
 
   onMinerCollapsed(collapsed: boolean) {
     this.checkAllMinersCollapsed();
+    this.updateMinersCollapseCounts();
   }
 
   onMinerMaximized(miner: Node) {
@@ -226,6 +248,25 @@ export class MinersPanelComponent implements OnDestroy {
   ngOnDestroy() {
     if (this.miningInterval) {
       clearInterval(this.miningInterval);
+    }
+  }
+
+  ngAfterViewInit() {
+    this.updateMinersCollapseCounts();
+    this.minerComponents.changes.subscribe(() => {
+      this.updateMinersCollapseCounts();
+      this.cdr.detectChanges();
+    });
+  }
+
+  updateMinersCollapseCounts() {
+    if (this.minerComponents) {
+      this.minersToExpandCount = this.minerComponents
+        .toArray()
+        .filter((m) => m.isCollapsed).length;
+      this.minersToCollapseCount = this.minerComponents
+        .toArray()
+        .filter((m) => !m.isCollapsed).length;
     }
   }
 }

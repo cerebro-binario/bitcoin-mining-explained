@@ -9,13 +9,13 @@
         class="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
         (click)="startAllMiners()"
       >
-        Iniciar Todos
+        Iniciar Todos ({{ minersToStartCount }})
       </button>
       <button
         class="px-4 py-2 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition"
         (click)="pauseAllMiners()"
       >
-        Pausar Todos
+        Pausar Todos ({{ minersToPauseCount }})
       </button>
       <button
         *ngIf="miners.length > 0"
@@ -23,6 +23,7 @@
         (click)="toggleAllMinersCollapse()"
       >
         {{ allMinersCollapsed ? "Expandir Todos" : "Colapsar Todos" }}
+        ({{ allMinersCollapsed ? minersToExpandCount : minersToCollapseCount }})
       </button>
     </div>
     <div class="flex items-center gap-2">
