@@ -11,8 +11,8 @@ import { Block, Transaction } from '../../../../models/block.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
-import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
+import { MiningBlockComponent } from './mining-block/mining-block.component';
 
 interface HashRateOption {
   label: string;
@@ -60,6 +60,8 @@ export class MinerComponent {
   @Output() minerCollapsed = new EventEmitter<boolean>();
   @Output() minerMaximized = new EventEmitter<Node>();
   @Output() minerMinimized = new EventEmitter<Node>();
+  @Output() logsMaximized = new EventEmitter<void>();
+  @Output() logsMinimized = new EventEmitter<void>();
 
   isCollapsedHashRateSelectorOpen = false;
 
@@ -278,6 +280,14 @@ export class MinerComponent {
 
   minimizeMiner() {
     this.minerMinimized.emit(this.miner);
+  }
+
+  showLogs() {
+    this.logsMaximized.emit();
+  }
+
+  closeLogs() {
+    this.logsMinimized.emit();
   }
 
   @HostListener('document:click', ['$event'])

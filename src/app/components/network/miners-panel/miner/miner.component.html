@@ -410,7 +410,12 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-      <app-event-logs [node]="miner" class="flex"></app-event-logs>
+      <app-event-logs
+        [node]="miner"
+        class="flex"
+        (show)="showLogs()"
+        (close)="closeLogs()"
+      ></app-event-logs>
 
       <app-mining-block
         [block]="miner.currentBlock"

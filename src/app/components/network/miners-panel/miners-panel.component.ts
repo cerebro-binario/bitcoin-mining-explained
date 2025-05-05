@@ -253,6 +253,14 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
     this.renderer.removeClass(this.document.body, 'overflow-hidden');
   }
 
+  onLogsMaximized() {
+    this.renderer.addClass(this.document.body, 'overflow-hidden');
+  }
+
+  onLogsMinimized() {
+    this.renderer.removeClass(this.document.body, 'overflow-hidden');
+  }
+
   ngOnDestroy() {
     if (this.miningInterval) {
       clearInterval(this.miningInterval);
