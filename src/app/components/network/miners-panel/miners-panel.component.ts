@@ -1,13 +1,13 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import {
-  Component,
-  OnDestroy,
-  QueryList,
-  ViewChildren,
   AfterViewInit,
   ChangeDetectorRef,
-  Renderer2,
+  Component,
   Inject,
+  OnDestroy,
+  QueryList,
+  Renderer2,
+  ViewChildren,
 } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { Block } from '../../../models/block.model';
@@ -15,7 +15,6 @@ import { Node } from '../../../models/node';
 import { AddressService } from '../../../services/address.service';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { MinerComponent } from './miner/miner.component';
-import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-miners-panel',
@@ -50,6 +49,8 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
   maximizedMiner?: Node;
   minersToExpandCount = 0;
   minersToCollapseCount = 0;
+  isControlPanelFaded = false;
+  private fadeTimeout: any;
 
   constructor(
     public network: BitcoinNetworkService,
@@ -265,6 +266,8 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
       this.updateMinersCollapseCounts();
       this.cdr.detectChanges();
     });
+
+    this.onControlPanelMouseLeave();
   }
 
   updateMinersCollapseCounts() {
@@ -276,5 +279,22 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
         .toArray()
         .filter((m) => !m.isCollapsed).length;
     }
+  }
+
+  onControlPanelMouseEnter() {
+    this.isControlPanelFaded = false;
+    if (this.fadeTimeout) {
+      clearTimeout(this.fadeTimeout);
+    }
+  }
+
+  onControlPanelMouseLeave() {
+    if (this.fadeTimeout) {
+      clearTimeout(this.fadeTimeout);
+    }
+
+    this.fadeTimeout = setTimeout(() => {
+      this.isControlPanelFaded = true;
+    }, 5000);
   }
 }
