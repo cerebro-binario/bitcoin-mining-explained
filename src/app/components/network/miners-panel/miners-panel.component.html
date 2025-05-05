@@ -75,9 +75,31 @@
       #minerComponent
       [miner]="miner"
       [collapseOnInit]="allMinersCollapsed"
+      [maximized]="false"
       (blockBroadcasted)="onBlockBroadcasted($event)"
       (minerRemoved)="onMinerRemoved($event)"
       (minerCollapsed)="onMinerCollapsed($event)"
+      (minerMaximized)="onMinerMaximized($event)"
     ></app-miner>
   </div>
+
+  <!-- Dialog do Miner maximizado -->
+  <ng-template [ngIf]="maximizedMiner">
+    <div
+      class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center !m-0 backdrop-blur"
+      (click)="maximizedMiner = undefined"
+    >
+      <div
+        class="relative bg-zinc-900 rounded-lg shadow-2xl border border-zinc-800 w-full h-full max-w-[90vw] max-h-[90vh] flex flex-col m-8"
+        (click)="$event.stopPropagation()"
+      >
+        <app-miner
+          [miner]="maximizedMiner"
+          [maximized]="true"
+          class="w-full flex-1 overflow-y-auto"
+          (minerMinimized)="onMinerMinimized($event)"
+        ></app-miner>
+      </div>
+    </div>
+  </ng-template>
 </div>

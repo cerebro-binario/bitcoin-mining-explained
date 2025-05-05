@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, QueryList, ViewChildren } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { Block } from '../../../models/block.model';
+import { Node } from '../../../models/node';
 import { AddressService } from '../../../services/address.service';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { MinerComponent } from './miner/miner.component';
@@ -36,6 +37,7 @@ export class MinersPanelComponent implements OnDestroy {
   ];
 
   allMinersCollapsed = false;
+  maximizedMiner?: Node;
 
   constructor(
     public network: BitcoinNetworkService,
@@ -211,6 +213,14 @@ export class MinersPanelComponent implements OnDestroy {
 
   onMinerCollapsed(collapsed: boolean) {
     this.checkAllMinersCollapsed();
+  }
+
+  onMinerMaximized(miner: Node) {
+    this.maximizedMiner = miner;
+  }
+
+  onMinerMinimized(miner: Node) {
+    this.maximizedMiner = undefined;
   }
 
   ngOnDestroy() {

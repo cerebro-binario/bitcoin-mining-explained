@@ -33,7 +33,6 @@ export class MinerComponent {
   realHashRate = 0;
   private lastHashRateUpdate = 0;
   private hashCount = 0;
-  isBlockchainFullscreen = false;
 
   @Input() miner!: Node;
   @Input() hashRateOptions: HashRateOption[] = [
@@ -43,6 +42,7 @@ export class MinerComponent {
     { label: 'Máximo', value: null },
   ];
   @Input() collapseOnInit = false;
+  @Input() maximized: boolean = false;
   @Output() minerRemoved = new EventEmitter<{ minerId: number }>();
   @Output() blockBroadcasted = new EventEmitter<{
     minerId: number;
@@ -53,6 +53,8 @@ export class MinerComponent {
     transaction: Transaction;
   }>();
   @Output() minerCollapsed = new EventEmitter<boolean>();
+  @Output() minerMaximized = new EventEmitter<Node>();
+  @Output() minerMinimized = new EventEmitter<Node>();
 
   isCollapsedHashRateSelectorOpen = false;
 
@@ -263,6 +265,14 @@ export class MinerComponent {
       }
     }
     return forkHeights;
+  }
+
+  maximizeMiner() {
+    this.minerMaximized.emit(this.miner);
+  }
+
+  minimizeMiner() {
+    this.minerMinimized.emit(this.miner);
   }
 
   @HostListener('document:click', ['$event'])
