@@ -6,6 +6,8 @@ import {
   ViewChildren,
   AfterViewInit,
   ChangeDetectorRef,
+  Renderer2,
+  Inject,
 } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { Block } from '../../../models/block.model';
@@ -13,6 +15,7 @@ import { Node } from '../../../models/node';
 import { AddressService } from '../../../services/address.service';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { MinerComponent } from './miner/miner.component';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-miners-panel',
@@ -51,7 +54,9 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
   constructor(
     public network: BitcoinNetworkService,
     private addressService: AddressService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private renderer: Renderer2,
+    @Inject(DOCUMENT) private document: Document
   ) {
     this.startMiningInterval();
   }
@@ -239,16 +244,19 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
 
   onMinerMaximized(miner: Node) {
     this.maximizedMiner = miner;
+    this.renderer.addClass(this.document.body, 'overflow-hidden');
   }
 
   onMinerMinimized(miner: Node) {
     this.maximizedMiner = undefined;
+    this.renderer.removeClass(this.document.body, 'overflow-hidden');
   }
 
   ngOnDestroy() {
     if (this.miningInterval) {
       clearInterval(this.miningInterval);
     }
+    this.renderer.removeClass(this.document.body, 'overflow-hidden');
   }
 
   ngAfterViewInit() {
