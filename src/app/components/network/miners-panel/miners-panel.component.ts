@@ -50,6 +50,7 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
   minersToExpandCount = 0;
   minersToCollapseCount = 0;
   isControlPanelFaded = false;
+  showSettings = false;
   private fadeTimeout: any;
 
   constructor(
