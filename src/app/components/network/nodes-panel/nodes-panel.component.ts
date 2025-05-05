@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { BlockNode } from '../../../models/block.model';
+import { Node } from '../../../models/node';
 
 @Component({
   selector: 'app-nodes-panel',
@@ -12,6 +13,9 @@ import { BlockNode } from '../../../models/block.model';
   styleUrls: ['./nodes-panel.component.scss'],
 })
 export class NodesPanelComponent {
+  showAllLogs = false;
+  selectedNodeForLogs?: Node;
+
   constructor(public network: BitcoinNetworkService) {}
 
   get nodes() {
@@ -43,5 +47,15 @@ export class NodesPanelComponent {
     if (node) {
       this.network.removeNode(node.id!);
     }
+  }
+
+  showNodeLogs(node: Node) {
+    this.selectedNodeForLogs = node;
+    this.showAllLogs = true;
+  }
+
+  closeLogs() {
+    this.showAllLogs = false;
+    this.selectedNodeForLogs = undefined;
   }
 }
