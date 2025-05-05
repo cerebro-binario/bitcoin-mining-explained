@@ -367,7 +367,8 @@
     class="transition-all duration-300 ease-in-out"
     [ngStyle]="{
       'max-height': isCollapsed ? '0px' : null,
-      opacity: isCollapsed ? '0' : '1'
+      opacity: isCollapsed ? '0' : '1',
+      overflow: isCollapsed ? 'hidden' : 'visible'
     }"
   >
     <div class="space-y-5">
