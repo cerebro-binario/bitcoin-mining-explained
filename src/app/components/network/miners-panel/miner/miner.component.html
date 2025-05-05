@@ -92,6 +92,7 @@
       </button>
     </ng-container>
 
+    <!-- Chain Info -->
     <div class="flex items-center gap-2 ml-4">
       <span class="text-xs text-zinc-400">Chain:</span>
       <span class="text-xs text-blue-400">{{
@@ -103,7 +104,10 @@
       >
     </div>
 
+    <!-- Miner ID -->
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
+
+    <!-- Collapse Button -->
     <button
       *ngIf="!maximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
@@ -126,6 +130,8 @@
         />
       </svg>
     </button>
+
+    <!-- Remove Miner Button -->
     <button
       *ngIf="!maximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition"
@@ -147,6 +153,8 @@
         />
       </svg>
     </button>
+
+    <!-- Maximize Miner Button -->
     <button
       *ngIf="!maximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
@@ -168,6 +176,8 @@
         />
       </svg>
     </button>
+
+    <!-- Minimize Miner Button -->
     <button
       *ngIf="maximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
