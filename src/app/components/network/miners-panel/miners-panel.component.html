@@ -12,6 +12,13 @@
     >
       Pausar Todos
     </button>
+    <button
+      *ngIf="miners.length > 0"
+      class="px-3 py-1 rounded bg-zinc-700 text-white text-sm font-semibold hover:bg-zinc-800 transition"
+      (click)="toggleAllMinersCollapse()"
+    >
+      {{ allMinersCollapsed ? "Expandir Todos" : "Colapsar Todos" }}
+    </button>
   </div>
   <div class="flex items-center gap-2">
     <span class="text-xs text-zinc-400">Hash Rate Padrão:</span>
@@ -51,13 +58,6 @@
       (click)="addMiner()"
     >
       + Adicionar Minerador
-    </button>
-    <button
-      *ngIf="miners.length > 0"
-      class="px-4 py-2 rounded bg-zinc-700 text-white font-semibold hover:bg-zinc-800 transition"
-      (click)="toggleAllMinersCollapse()"
-    >
-      {{ allMinersCollapsed ? "Expandir Todos" : "Colapsar Todos" }}
     </button>
   </div>
   <div *ngIf="miners.length === 0" class="text-zinc-400 italic mb-4">
