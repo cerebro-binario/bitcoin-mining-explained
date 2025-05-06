@@ -93,6 +93,10 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
     this.checkAllMinersCollapsed();
   }
 
+  get allMinersCollapsed(): boolean {
+    return this._allMinersCollapsed;
+  }
+
   get defaultHashRate(): number | null | undefined {
     const rates = this.miners.map((m) => m.hashRate);
     return rates.length > 0 && rates.every((r) => r === rates[0])
