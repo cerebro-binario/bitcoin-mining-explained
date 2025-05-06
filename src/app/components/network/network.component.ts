@@ -21,15 +21,15 @@ import { NodesPanelComponent } from './nodes-panel/nodes-panel.component';
 })
 export class NetworkComponent {
   private fadeTimeout: any;
-  private _minersToExpandCount = 0;
-  private _minersToCollapseCount = 0;
 
   miners$!: Observable<Node[]>;
   minersTotal = 0;
   minersMiningCount = 0;
-  realNetworkHashRate = 0;
+  minersToExpandCount = 0;
+  minersToCollapseCount = 0;
   minersToStartCount = 0;
   minersToPauseCount = 0;
+  realNetworkHashRate = 0;
 
   isControlPanelFaded = false;
   allMinersCollapsed = false;
@@ -70,20 +70,6 @@ export class NetworkComponent {
 
   ngAfterViewInit() {
     this.onControlPanelMouseLeave();
-  }
-
-  set minersToExpandCount(value: number) {
-    this._minersToExpandCount = value;
-  }
-  get minersToExpandCount() {
-    return this._minersToExpandCount;
-  }
-
-  set minersToCollapseCount(value: number) {
-    this._minersToCollapseCount = value;
-  }
-  get minersToCollapseCount() {
-    return this._minersToCollapseCount;
   }
 
   startAllMiners() {
