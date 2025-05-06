@@ -50,20 +50,7 @@ export class NetworkComponent {
     this.miners$ = this.network.nodes$.pipe(
       map((nodes) => nodes.filter((n) => n.isMiner)),
       tap((miners) => {
-        this.minersTotal = miners.length;
-
-        const minersMining = miners.filter((m) => m.isMining);
-
-        this.minersMiningCount = minersMining.length;
-        this.realNetworkHashRate = minersMining.reduce(
-          (sum, m) => sum + m.currentHashRate,
-          0
-        );
-        this.minersToPauseCount = minersMining.length;
-
-        this.minersToStartCount = miners.filter(
-          (m) => !m.isMining && (!m.isSyncing || m.initialSyncComplete)
-        ).length;
+        this.updateMinersStats(miners);
       })
     );
   }
@@ -74,10 +61,12 @@ export class NetworkComponent {
 
   startAllMiners() {
     this.minersPanel.startAllMiners();
+    this.updateMinersStats(this.minersPanel.miners);
   }
 
   pauseAllMiners() {
     this.minersPanel.pauseAllMiners();
+    this.updateMinersStats(this.minersPanel.miners);
   }
 
   toggleAllMinersCollapse() {
@@ -104,5 +93,25 @@ export class NetworkComponent {
     this.fadeTimeout = setTimeout(() => {
       this.isControlPanelFaded = true;
     }, 5000);
+  }
+
+  private updateMinersStats(miners: Node[]) {
+    // Atualiza o total de mineradores
+    this.minersTotal = miners.length;
+    // Referencia os mineradores que estão minerando
+    const minersMining = miners.filter((m) => m.isMining);
+    // Atualiza o total de mineradores que estão minerando
+    this.minersMiningCount = minersMining.length;
+    // Atualiza a taxa de hash da rede
+    this.realNetworkHashRate = minersMining.reduce(
+      (sum, m) => sum + m.currentHashRate,
+      0
+    );
+    // Atualiza o total de mineradores que podem ser pausados
+    this.minersToPauseCount = minersMining.length;
+    // Atualiza o total de mineradores que podem ser iniciados
+    this.minersToStartCount = miners.filter(
+      (m) => !m.isMining && (!m.isSyncing || m.initialSyncComplete)
+    ).length;
   }
 }
