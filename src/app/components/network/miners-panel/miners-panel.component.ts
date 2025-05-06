@@ -111,6 +111,18 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
       .reduce((sum, m) => sum + (m.hashRate || 0), 0);
   }
 
+  addMiner() {
+    const hashRate =
+      this.defaultHashRate === undefined ? 1000 : this.defaultHashRate;
+    const miner = this.network.addNode(true, undefined, hashRate);
+    miner.name = `Minerador ${miner.id}`;
+    miner.miningAddress = this.addressService.generateRandomAddress();
+    this.network.initializeNode(miner);
+
+    this.updateMinersCollapseCounts();
+    this.checkAllMinersCollapsed();
+  }
+
   checkAllMinersCollapsed() {
     this.allMinersCollapsed =
       this.minerComponents && this.minerComponents.length > 0
@@ -192,18 +204,6 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
   ): MinerComponent | null {
     if (minerId === undefined) return null;
     return this.minerComponents.find((c) => c.miner.id === minerId) || null;
-  }
-
-  addMiner() {
-    const hashRate =
-      this.defaultHashRate === undefined ? 1000 : this.defaultHashRate;
-    const miner = this.network.addNode(true, undefined, hashRate);
-    miner.name = `Minerador ${miner.id}`;
-    miner.miningAddress = this.addressService.generateRandomAddress();
-    this.network.initializeNode(miner);
-
-    this.updateMinersCollapseCounts();
-    this.checkAllMinersCollapsed();
   }
 
   onBlockBroadcasted(event: { minerId: number; block: Block }) {
