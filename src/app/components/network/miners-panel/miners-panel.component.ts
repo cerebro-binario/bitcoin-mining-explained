@@ -3,8 +3,11 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  EventEmitter,
   Inject,
+  Input,
   OnDestroy,
+  Output,
   QueryList,
   Renderer2,
   ViewChildren,
@@ -24,6 +27,7 @@ import { MinerComponent } from './miner/miner.component';
   styleUrls: ['./miners-panel.component.scss'],
 })
 export class MinersPanelComponent implements OnDestroy, AfterViewInit {
+  private readonly DEFAULT_HASH_RATE = 1000;
   private miningInterval?: any;
   private readonly MINING_INTERVAL = 1; // ms
   private readonly TARGET_FRAME_TIME = 16; // ms (60 FPS)
@@ -34,24 +38,45 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
   private currentBatchSize = 1000;
   private frameTimes: number[] = [];
   private readonly FRAME_TIME_HISTORY_SIZE = 10;
-  private _defaultHashRate: number | null = 1000;
+  private _defaultHashRate: number | null = this.DEFAULT_HASH_RATE;
+  private _allMinersCollapsed = false;
+  private _minersToExpandCount = 0;
+  private _minersToCollapseCount = 0;
 
   @ViewChildren(MinerComponent) minerComponents!: QueryList<MinerComponent>;
 
-  hashRateOptions = [
-    { value: 1, label: '1 H/s' },
-    { value: 100, label: '100 H/s' },
-    { value: 1000, label: '1000 H/s' },
-    { value: null, label: 'Máximo' },
-  ];
+  @Input() miners: Node[] = [];
+  @Input() set allMinersCollapsed(value: boolean) {
+    if (value !== this._allMinersCollapsed) {
+      this._allMinersCollapsed = value;
+      this.allMinersCollapsedChange.emit(value);
+    }
+  }
+  @Input() set minersToExpandCount(value: number) {
+    if (value !== this._minersToExpandCount) {
+      this._minersToExpandCount = value;
+      this.minersToExpandCountChange.emit(value);
+    }
+  }
+  @Input() set minersToCollapseCount(value: number) {
+    if (value !== this._minersToCollapseCount) {
+      this._minersToCollapseCount = value;
+      this.minersToCollapseCountChange.emit(value);
+    }
+  }
+  @Input() set defaultHashRate(value: number | null) {
+    if (value !== this._defaultHashRate) {
+      this._defaultHashRate = value;
+      this.defaultHashRateChange.emit(value);
+    }
+  }
 
-  allMinersCollapsed = false;
+  @Output() allMinersCollapsedChange = new EventEmitter<boolean>();
+  @Output() minersToExpandCountChange = new EventEmitter<number>();
+  @Output() minersToCollapseCountChange = new EventEmitter<number>();
+  @Output() defaultHashRateChange = new EventEmitter<number | null>();
+
   maximizedMiner?: Node;
-  minersToExpandCount = 0;
-  minersToCollapseCount = 0;
-  isControlPanelFaded = false;
-  showSettings = false;
-  private fadeTimeout: any;
 
   constructor(
     public network: BitcoinNetworkService,
@@ -63,8 +88,9 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
     this.startMiningInterval();
   }
 
-  get miners() {
-    return this.network.nodes.filter((n) => n.isMiner);
+  ngAfterViewInit() {
+    this.updateMinersCollapseCounts();
+    this.checkAllMinersCollapsed();
   }
 
   get defaultHashRate(): number | null | undefined {
@@ -74,36 +100,11 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
       : this._defaultHashRate;
   }
 
-  get minersMining(): number {
-    return this.miners.filter((m) => m.isMining).length;
-  }
-
-  get minersTotal(): number {
-    return this.miners.length;
-  }
-
   get networkHashRate(): number {
     // Soma apenas dos mineradores ativos (isMining)
     return this.miners
       .filter((m) => m.isMining && m.hashRate != null)
       .reduce((sum, m) => sum + (m.hashRate || 0), 0);
-  }
-
-  get realNetworkHashRate(): number {
-    // Soma dos hash rates reais de todos os mineradores ativos
-    return this.miners
-      .filter((m) => m.isMining)
-      .reduce((sum, m) => sum + m.currentHashRate, 0);
-  }
-
-  get minersToStartCount(): number {
-    return this.miners.filter(
-      (m) => !m.isMining && (!m.isSyncing || m.initialSyncComplete)
-    ).length;
-  }
-
-  get minersToPauseCount(): number {
-    return this.miners.filter((m) => m.isMining).length;
   }
 
   checkAllMinersCollapsed() {
@@ -196,6 +197,9 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
     miner.name = `Minerador ${miner.id}`;
     miner.miningAddress = this.addressService.generateRandomAddress();
     this.network.initializeNode(miner);
+
+    this.updateMinersCollapseCounts();
+    this.checkAllMinersCollapsed();
   }
 
   onBlockBroadcasted(event: { minerId: number; block: Block }) {
@@ -204,6 +208,8 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
 
   onMinerRemoved(event: { minerId: number }) {
     this.network.removeNode(event.minerId);
+    this.updateMinersCollapseCounts();
+    this.checkAllMinersCollapsed();
   }
 
   startAllMiners() {
@@ -220,13 +226,6 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
   pauseAllMiners() {
     this.minerComponents.forEach((minerComponent) => {
       minerComponent.stopMining(minerComponent.miner);
-    });
-  }
-
-  setDefaultHashRate(value: number | null) {
-    this._defaultHashRate = value;
-    this.minerComponents.forEach((minerComponent) => {
-      minerComponent.setHashRate(value);
     });
   }
 
@@ -262,23 +261,6 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
     this.renderer.removeClass(this.document.body, 'overflow-hidden');
   }
 
-  ngOnDestroy() {
-    if (this.miningInterval) {
-      clearInterval(this.miningInterval);
-    }
-    this.renderer.removeClass(this.document.body, 'overflow-hidden');
-  }
-
-  ngAfterViewInit() {
-    this.updateMinersCollapseCounts();
-    this.minerComponents.changes.subscribe(() => {
-      this.updateMinersCollapseCounts();
-      this.cdr.detectChanges();
-    });
-
-    this.onControlPanelMouseLeave();
-  }
-
   updateMinersCollapseCounts() {
     if (this.minerComponents) {
       this.minersToExpandCount = this.minerComponents
@@ -290,20 +272,10 @@ export class MinersPanelComponent implements OnDestroy, AfterViewInit {
     }
   }
 
-  onControlPanelMouseEnter() {
-    this.isControlPanelFaded = false;
-    if (this.fadeTimeout) {
-      clearTimeout(this.fadeTimeout);
+  ngOnDestroy() {
+    if (this.miningInterval) {
+      clearInterval(this.miningInterval);
     }
-  }
-
-  onControlPanelMouseLeave() {
-    if (this.fadeTimeout) {
-      clearTimeout(this.fadeTimeout);
-    }
-
-    this.fadeTimeout = setTimeout(() => {
-      this.isControlPanelFaded = true;
-    }, 5000);
+    this.renderer.removeClass(this.document.body, 'overflow-hidden');
   }
 }

@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { Block, BlockNode } from '../models/block.model';
 import { Node } from '../models/node';
-import { Block } from '../models/block.model';
-import { BlockNode } from '../models/block.model';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
+  private readonly nodesSubject = new BehaviorSubject<Node[]>([]);
+  nodes$ = this.nodesSubject.asObservable();
   nodes: Node[] = [];
   private nextId = 1;
   private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
@@ -33,6 +35,7 @@ export class BitcoinNetworkService {
       neighbor.neighbors.push({ nodeId: node.id!, latency }); // bidirecional
     }
     this.nodes.push(node);
+    this.nodesSubject.next(this.nodes);
     return node;
   }
 
@@ -41,6 +44,7 @@ export class BitcoinNetworkService {
     this.nodes.forEach((n) => {
       n.neighbors = n.neighbors.filter((nb) => nb.nodeId !== nodeId);
     });
+    this.nodesSubject.next(this.nodes);
   }
 
   addConnection(nodeId: number, neighborId: number, latency: number = 50) {
