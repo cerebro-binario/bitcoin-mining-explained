@@ -8,13 +8,13 @@ import {
   Output,
 } from '@angular/core';
 import { Block, Transaction } from '../../../../models/block.model';
+import { ConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
-import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
-import { ConsensusParameters } from '../../../../models/consensus.model';
+import { MiningBlockComponent } from './mining-block/mining-block.component';
 
 interface HashRateOption {
   label: string;
@@ -37,9 +37,6 @@ interface HashRateOption {
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
-  realHashRate = 0;
-  private lastHashRateUpdate = 0;
-  private hashCount = 0;
 
   @Input() miner!: Node;
   @Output() miningChanged = new EventEmitter<Node>();
