@@ -409,7 +409,7 @@
           </ng-container>
         </div>
         <span *ngIf="miner.isMining" class="text-xs text-green-400 ml-2">
-          (Real: {{ miner.currentHashRate }} H/s)
+          (Real: {{ miner.currentHashRate | number }} H/s)
         </span>
       </div>
     </div>
