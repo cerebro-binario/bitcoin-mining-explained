@@ -65,6 +65,17 @@ type ForkType = 'none' | 'soft' | 'hard';
               <p class="mt-1 text-xs text-zinc-500">
                 Número de blocos entre cada ajuste de dificuldade
               </p>
+              <div
+                *ngIf="forkWarnings['difficultyAdjustmentInterval'] === 'hard'"
+                class="mt-2 p-2 bg-red-900/50 border border-red-700 rounded text-xs text-red-400"
+              >
+                <p class="font-semibold">⚠️ Hard Fork Detectado</p>
+                <p class="mt-1">
+                  Esta alteração pode causar incompatibilidade com a rede atual.
+                  Outros miners com configurações diferentes não conseguirão
+                  validar seus blocos.
+                </p>
+              </div>
             </div>
 
             <!-- Máximo de Transações -->
@@ -281,8 +292,10 @@ export class ConsensusDialogComponent {
     const value = parseInt(input.value);
     if (!isNaN(value) && value > 0) {
       this.editingParams.difficultyAdjustmentInterval = value;
-      // Exemplo: se quiser avisar sobre patch, pode adicionar aqui
-      // this.forkWarnings['difficultyAdjustmentInterval'] = value !== this.originalParams.difficultyAdjustmentInterval ? 'soft' : 'none';
+      this.forkWarnings['difficultyAdjustmentInterval'] =
+        value !== this.originalParams.difficultyAdjustmentInterval
+          ? 'hard'
+          : 'none';
     }
   }
 
