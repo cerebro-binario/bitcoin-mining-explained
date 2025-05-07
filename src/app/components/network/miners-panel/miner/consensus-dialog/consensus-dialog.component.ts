@@ -61,8 +61,16 @@ type ForkType = 'none' | 'soft' | 'hard';
           <div class="space-y-4">
             <!-- Intervalo de Ajuste -->
             <div>
-              <label class="block text-sm font-medium text-zinc-400 mb-1">
+              <label
+                class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+              >
                 Intervalo de Ajuste de Dificuldade
+                <span
+                  *ngIf="isParamInFork('difficultyAdjustmentInterval')"
+                  class="text-yellow-400"
+                  title="Este parâmetro está causando o fork!"
+                  >⚠️</span
+                >
               </label>
               <div class="flex items-center gap-2">
                 <input
@@ -82,8 +90,16 @@ type ForkType = 'none' | 'soft' | 'hard';
 
             <!-- Máximo de Transações -->
             <div>
-              <label class="block text-sm font-medium text-zinc-400 mb-1">
+              <label
+                class=" text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+              >
                 Máximo de Transações por Bloco
+                <span
+                  *ngIf="isParamInFork('maxTransactionsPerBlock')"
+                  class="text-yellow-400"
+                  title="Este parâmetro está causando o fork!"
+                  >⚠️</span
+                >
               </label>
               <div class="flex items-center gap-2">
                 <input
@@ -103,8 +119,16 @@ type ForkType = 'none' | 'soft' | 'hard';
 
             <!-- Tamanho Máximo do Bloco -->
             <div>
-              <label class="block text-sm font-medium text-zinc-400 mb-1">
+              <label
+                class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+              >
                 Tamanho Máximo do Bloco
+                <span
+                  *ngIf="isParamInFork('maxBlockSize')"
+                  class="text-yellow-400"
+                  title="Este parâmetro está causando o fork!"
+                  >⚠️</span
+                >
               </label>
               <div class="flex items-center gap-2">
                 <input
@@ -328,7 +352,6 @@ export class ConsensusDialogComponent {
   }
 
   private updateConsolidatedFork() {
-    console.log(this.forkWarnings);
     const hardParams = Object.entries(this.forkWarnings)
       .filter(([_, type]) => type === 'hard')
       .map(([param]) => this.getParamLabel(param));
@@ -340,9 +363,7 @@ export class ConsensusDialogComponent {
       .filter(([_, type]) => type === 'soft')
       .map(([param]) => this.getParamLabel(param));
     if (softParams.length > 0) {
-      console.log(softParams);
       this.consolidatedFork = { type: 'soft', params: softParams };
-      console.log(this.consolidatedFork);
       return;
     }
     this.consolidatedFork = { type: 'none', params: [] };
@@ -359,5 +380,9 @@ export class ConsensusDialogComponent {
       default:
         return param;
     }
+  }
+
+  isParamInFork(param: string): boolean {
+    return this.consolidatedFork.params.includes(this.getParamLabel(param));
   }
 }
