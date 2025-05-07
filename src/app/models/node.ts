@@ -1,5 +1,6 @@
 import * as CryptoJS from 'crypto-js';
 import { Block, BlockNode, Transaction } from './block.model';
+import { ConsensusParameters, DEFAULT_CONSENSUS } from './consensus.model';
 
 export interface Neighbor {
   nodeId: number;
@@ -68,6 +69,9 @@ export class Node {
   isCollapsed = false;
   isMaximized = false;
   isLogsMaximized = false;
+
+  // Parâmetros de consenso do nó
+  consensus: ConsensusParameters = { ...DEFAULT_CONSENSUS };
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
