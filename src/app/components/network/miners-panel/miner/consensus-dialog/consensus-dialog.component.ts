@@ -17,7 +17,7 @@ type ForkType = 'none' | 'soft' | 'hard';
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
       <div
-        class="flex flex-col bg-zinc-800 rounded-lg shadow-xl w-full max-w-md h-5/6 mx-4"
+        class="flex flex-col bg-zinc-800 rounded-lg shadow-xl w-full max-w-2xl h-5/6 mx-4"
       >
         <!-- Header -->
         <div
@@ -48,16 +48,6 @@ type ForkType = 'none' | 'soft' | 'hard';
 
         <!-- Content -->
         <div class="p-6 space-y-4 flex-1 overflow-y-auto">
-          <!-- Consolidated Fork Warning -->
-          <app-fork-warning
-            [type]="consolidatedFork.type"
-            *ngIf="consolidatedFork.type !== 'none'"
-          >
-            <div *ngIf="consolidatedFork.params.length > 0" class="mt-1">
-              Parâmetros alterados:
-              <b>{{ consolidatedFork.params.join(', ') }}</b>
-            </div>
-          </app-fork-warning>
           <div class="space-y-4">
             <!-- Intervalo de Ajuste -->
             <div>
@@ -181,34 +171,45 @@ type ForkType = 'none' | 'soft' | 'hard';
         <div
           class="flex items-center justify-end gap-2 p-6 border-t border-zinc-700"
         >
-          <button
-            *ngIf="isEditing"
-            class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
-            (click)="cancelEdit()"
+          <app-fork-warning
+            [type]="consolidatedFork.type"
+            *ngIf="consolidatedFork.type !== 'none'"
           >
-            Cancelar
-          </button>
-          <button
-            *ngIf="!isEditing"
-            class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-            (click)="startEditing()"
-          >
-            Editar
-          </button>
-          <button
-            *ngIf="isEditing"
-            class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
-            (click)="saveChanges()"
-          >
-            Salvar
-          </button>
-          <button
-            *ngIf="!isEditing"
-            class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
-            (click)="close.emit()"
-          >
-            Fechar
-          </button>
+            <div *ngIf="consolidatedFork.params.length > 0" class="mt-1">
+              Parâmetros alterados:
+              <b>{{ consolidatedFork.params.join(', ') }}</b>
+            </div>
+          </app-fork-warning>
+          <div class="flex gap-2">
+            <button
+              *ngIf="isEditing"
+              class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+              (click)="cancelEdit()"
+            >
+              Cancelar
+            </button>
+            <button
+              *ngIf="!isEditing"
+              class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+              (click)="startEditing()"
+            >
+              Editar
+            </button>
+            <button
+              *ngIf="isEditing"
+              class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
+              (click)="saveChanges()"
+            >
+              Salvar
+            </button>
+            <button
+              *ngIf="!isEditing"
+              class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+              (click)="close.emit()"
+            >
+              Fechar
+            </button>
+          </div>
         </div>
       </div>
     </div>
