@@ -258,26 +258,21 @@ export class ConsensusDialogComponent {
   }
 
   saveChanges() {
-    // Verifica se houve mudança no tamanho do bloco
-    if (this.editingParams.maxBlockSize !== this.originalParams.maxBlockSize) {
-      if (this.editingParams.maxBlockSize > this.originalParams.maxBlockSize) {
-        this.incrementMajorVersion();
-      } else {
-        this.incrementMinorVersion();
-      }
-    }
-    // Verifica se houve mudança no número de transações (Soft Fork)
-    else if (
-      this.editingParams.maxTransactionsPerBlock !==
-      this.originalParams.maxTransactionsPerBlock
-    ) {
+    // Atualize o consolidatedFork antes de salvar, se necessário
+    this.updateConsolidatedFork();
+
+    if (this.consolidatedFork.type === 'hard') {
+      this.incrementMajorVersion();
+    } else if (this.consolidatedFork.type === 'soft') {
       this.incrementMinorVersion();
-    }
-    // Verifica se houve mudança no intervalo de ajuste
-    else if (
+    } else if (
       this.editingParams.difficultyAdjustmentInterval !==
-      this.originalParams.difficultyAdjustmentInterval
+        this.originalParams.difficultyAdjustmentInterval ||
+      this.editingParams.maxTransactionsPerBlock !==
+        this.originalParams.maxTransactionsPerBlock ||
+      this.editingParams.maxBlockSize !== this.originalParams.maxBlockSize
     ) {
+      // Caso queira garantir que qualquer alteração sem fork ainda incrementa PATCH
       this.incrementPatchVersion();
     }
 
