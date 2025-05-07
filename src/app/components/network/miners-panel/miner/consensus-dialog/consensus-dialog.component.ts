@@ -4,18 +4,21 @@ import {
   ConsensusParameters,
   DEFAULT_CONSENSUS,
 } from '../../../../../models/consensus.model';
+import { ForkWarningComponent } from './fork-warning.component';
 
 type ForkType = 'none' | 'soft' | 'hard';
 
 @Component({
   selector: 'app-consensus-dialog',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ForkWarningComponent],
   template: `
     <div
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
-      <div class="bg-zinc-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div
+        class="flex flex-col bg-zinc-800 rounded-lg shadow-xl w-full max-w-md h-5/6 mx-4"
+      >
         <!-- Header -->
         <div
           class="flex items-center justify-between p-6 border-b border-zinc-700"
@@ -44,7 +47,7 @@ type ForkType = 'none' | 'soft' | 'hard';
         </div>
 
         <!-- Content -->
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 flex-1 overflow-y-auto">
           <div class="space-y-4">
             <!-- Intervalo de Ajuste -->
             <div>
@@ -65,17 +68,9 @@ type ForkType = 'none' | 'soft' | 'hard';
               <p class="mt-1 text-xs text-zinc-500">
                 Número de blocos entre cada ajuste de dificuldade
               </p>
-              <div
-                *ngIf="forkWarnings['difficultyAdjustmentInterval'] === 'hard'"
-                class="mt-2 p-2 bg-red-900/50 border border-red-700 rounded text-xs text-red-400"
-              >
-                <p class="font-semibold">⚠️ Hard Fork Detectado</p>
-                <p class="mt-1">
-                  Esta alteração pode causar incompatibilidade com a rede atual.
-                  Outros miners com configurações diferentes não conseguirão
-                  validar seus blocos.
-                </p>
-              </div>
+              <app-fork-warning
+                [type]="forkWarnings['difficultyAdjustmentInterval']"
+              ></app-fork-warning>
             </div>
 
             <!-- Máximo de Transações -->
@@ -97,17 +92,9 @@ type ForkType = 'none' | 'soft' | 'hard';
               <p class="mt-1 text-xs text-zinc-500">
                 Limite de transações por bloco (0 = sem limite)
               </p>
-              <div
-                *ngIf="forkWarnings['maxTransactionsPerBlock'] === 'soft'"
-                class="mt-2 p-2 bg-yellow-900/50 border border-yellow-700 rounded text-xs text-yellow-400"
-              >
-                <p class="font-semibold">⚠️ Soft Fork Detectado</p>
-                <p class="mt-1">
-                  Esta alteração é compatível com a rede atual. Outros miners
-                  podem continuar operando normalmente, mesmo com configurações
-                  diferentes.
-                </p>
-              </div>
+              <app-fork-warning
+                [type]="forkWarnings['maxTransactionsPerBlock']"
+              ></app-fork-warning>
             </div>
 
             <!-- Tamanho Máximo do Bloco -->
@@ -130,28 +117,9 @@ type ForkType = 'none' | 'soft' | 'hard';
               <p class="mt-1 text-xs text-zinc-500">
                 Tamanho máximo do bloco em megabytes
               </p>
-              <div
-                *ngIf="forkWarnings['maxBlockSize'] === 'soft'"
-                class="mt-2 p-2 bg-yellow-900/50 border border-yellow-700 rounded text-xs text-yellow-400"
-              >
-                <p class="font-semibold">⚠️ Soft Fork Detectado</p>
-                <p class="mt-1">
-                  Esta alteração é compatível com a rede atual. Outros miners
-                  podem continuar operando normalmente, mesmo com configurações
-                  diferentes.
-                </p>
-              </div>
-              <div
-                *ngIf="forkWarnings['maxBlockSize'] === 'hard'"
-                class="mt-2 p-2 bg-red-900/50 border border-red-700 rounded text-xs text-red-400"
-              >
-                <p class="font-semibold">⚠️ Hard Fork Detectado</p>
-                <p class="mt-1">
-                  Esta alteração pode causar incompatibilidade com a rede atual.
-                  Outros miners com configurações diferentes não conseguirão
-                  validar seus blocos.
-                </p>
-              </div>
+              <app-fork-warning
+                [type]="forkWarnings['maxBlockSize']"
+              ></app-fork-warning>
             </div>
 
             <!-- Versão do Consenso -->
