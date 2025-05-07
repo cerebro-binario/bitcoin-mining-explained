@@ -1,5 +1,5 @@
-import { Block, BlockNode, Transaction } from './block.model';
 import * as CryptoJS from 'crypto-js';
+import { Block, BlockNode, Transaction } from './block.model';
 
 export interface Neighbor {
   nodeId: number;
@@ -11,7 +11,7 @@ export class Node {
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
   private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
 
-  isSyncing: boolean = false;
+  isSyncing: boolean = true;
   initialSyncComplete: boolean = false;
   pendingBlocks: Block[] = [];
   isAddingBlock: boolean = false;
@@ -61,6 +61,13 @@ export class Node {
 
   // Estrutura para rastrear blocos em fork ativamente
   activeFork?: number; // height -> blocos em fork
+  lastMainBlocks: Block[] = [];
+  activeForkHeights: number[] = [];
+
+  // Se o miner está colapsado
+  isCollapsed = false;
+  isMaximized = false;
+  isLogsMaximized = false;
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -330,5 +337,36 @@ export class Node {
       this.hashCount = 0;
       this.lastHashRateUpdate = now;
     }
+  }
+
+  // Retorna os últimos 5 blocos da main chain (excluindo o origin fake block)
+  updateLastMainBlocks() {
+    const blocks = [];
+    let current = this.getLatestBlock();
+    let count = 0;
+    while (current && current.height >= 0 && count < 5) {
+      blocks.unshift(current);
+      // Encontra o bloco anterior na main chain
+      const prevHash = current.previousHash;
+      const prevNode = this.heights
+        .flat()
+        .find((n) => n.block.hash === prevHash);
+      current = prevNode?.block;
+      count++;
+    }
+    this.lastMainBlocks = blocks;
+  }
+
+  // Retorna as alturas dos forks ativos entre os últimos 5 blocos
+  updateActiveForkHeights() {
+    const forkHeights: number[] = [];
+    for (const nodes of this.heights) {
+      const activeBlocks = nodes.filter((n) => n.isActive);
+      if (activeBlocks.length > 1) {
+        const height = nodes[0].block.height;
+        if (height >= 0) forkHeights.push(height);
+      }
+    }
+    this.activeForkHeights = forkHeights;
   }
 }
