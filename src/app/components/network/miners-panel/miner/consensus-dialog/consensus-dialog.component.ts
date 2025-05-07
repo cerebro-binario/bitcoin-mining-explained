@@ -287,7 +287,7 @@ export class ConsensusDialogComponent {
     if (!isNaN(value) && value > 0) {
       this.editingParams.difficultyAdjustmentInterval = value;
       this.forkWarnings['difficultyAdjustmentInterval'] =
-        value !== this.originalParams.difficultyAdjustmentInterval
+        value !== DEFAULT_CONSENSUS.difficultyAdjustmentInterval
           ? 'hard'
           : 'none';
       this.updateConsolidatedFork();
@@ -300,7 +300,7 @@ export class ConsensusDialogComponent {
     if (!isNaN(value) && value >= 0) {
       this.editingParams.maxTransactionsPerBlock = value;
       this.forkWarnings['maxTransactionsPerBlock'] =
-        value !== this.originalParams.maxTransactionsPerBlock ? 'soft' : 'none';
+        value !== DEFAULT_CONSENSUS.maxTransactionsPerBlock ? 'soft' : 'none';
       this.updateConsolidatedFork();
     }
   }
@@ -310,9 +310,9 @@ export class ConsensusDialogComponent {
     const value = parseFloat(input.value);
     if (!isNaN(value) && value > 0) {
       this.editingParams.maxBlockSize = value;
-      if (value < this.originalParams.maxBlockSize) {
+      if (value < DEFAULT_CONSENSUS.maxBlockSize) {
         this.forkWarnings['maxBlockSize'] = 'soft';
-      } else if (value > this.originalParams.maxBlockSize) {
+      } else if (value > DEFAULT_CONSENSUS.maxBlockSize) {
         this.forkWarnings['maxBlockSize'] = 'hard';
       } else {
         this.forkWarnings['maxBlockSize'] = 'none';
