@@ -74,13 +74,13 @@ import {
                 <input
                   type="text"
                   [value]="editingParams.consensusVersion"
-                  [disabled]="!isEditing"
-                  (input)="onVersionChange($event)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                  disabled
+                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white opacity-50"
                 />
               </div>
               <p class="mt-1 text-xs text-zinc-500">
-                Versão das regras de consenso que este nó está seguindo
+                Versão das regras de consenso (atualizada automaticamente ao
+                alterar o intervalo)
               </p>
             </div>
 
@@ -147,13 +147,16 @@ export class ConsensusDialogComponent {
 
   isEditing = false;
   editingParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
+  private originalInterval: number = 0;
 
   ngOnInit() {
     this.editingParams = { ...this.consensus };
+    this.originalInterval = this.consensus.difficultyAdjustmentInterval;
   }
 
   startEditing() {
     this.isEditing = true;
+    this.originalInterval = this.editingParams.difficultyAdjustmentInterval;
   }
 
   cancelEdit() {
@@ -162,6 +165,12 @@ export class ConsensusDialogComponent {
   }
 
   saveChanges() {
+    // Só incrementa a versão se o intervalo final for diferente do original
+    if (
+      this.editingParams.difficultyAdjustmentInterval !== this.originalInterval
+    ) {
+      this.incrementConsensusVersion();
+    }
     this.save.emit(this.editingParams);
     this.isEditing = false;
   }
@@ -174,8 +183,10 @@ export class ConsensusDialogComponent {
     }
   }
 
-  onVersionChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.editingParams.consensusVersion = input.value;
+  private incrementConsensusVersion() {
+    const versionParts = this.editingParams.consensusVersion.split('.');
+    const minorVersion = parseInt(versionParts[2] || '0');
+    versionParts[2] = (minorVersion + 1).toString();
+    this.editingParams.consensusVersion = versionParts.join('.');
   }
 }
