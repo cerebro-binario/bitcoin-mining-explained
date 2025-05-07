@@ -65,6 +65,70 @@ import {
               </p>
             </div>
 
+            <!-- Máximo de Transações -->
+            <div>
+              <label class="block text-sm font-medium text-zinc-400 mb-1">
+                Máximo de Transações por Bloco
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="number"
+                  [value]="editingParams.maxTransactionsPerBlock"
+                  [disabled]="!isEditing"
+                  (input)="onMaxTransactionsChange($event)"
+                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                  min="0"
+                />
+                <span class="text-sm text-zinc-400">transações</span>
+              </div>
+              <p class="mt-1 text-xs text-zinc-500">
+                Limite de transações por bloco (0 = sem limite)
+              </p>
+              <div
+                *ngIf="showSoftForkWarning"
+                class="mt-2 p-2 bg-yellow-900/50 border border-yellow-700 rounded text-xs text-yellow-400"
+              >
+                <p class="font-semibold">⚠️ Soft Fork Detectado</p>
+                <p class="mt-1">
+                  Esta alteração é compatível com a rede atual. Outros miners
+                  podem continuar operando normalmente, mesmo com configurações
+                  diferentes.
+                </p>
+              </div>
+            </div>
+
+            <!-- Tamanho Máximo do Bloco -->
+            <div>
+              <label class="block text-sm font-medium text-zinc-400 mb-1">
+                Tamanho Máximo do Bloco
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="number"
+                  [value]="editingParams.maxBlockSize"
+                  [disabled]="!isEditing"
+                  (input)="onMaxBlockSizeChange($event)"
+                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                  min="1"
+                />
+                <span class="text-sm text-zinc-400">MB</span>
+              </div>
+              <p class="mt-1 text-xs text-zinc-500">
+                Tamanho máximo do bloco em megabytes
+              </p>
+              <div
+                *ngIf="showHardForkWarning"
+                class="mt-2 p-2 bg-red-900/50 border border-red-700 rounded text-xs text-red-400"
+              >
+                <p class="font-semibold">⚠️ Hard Fork Detectado</p>
+                <p class="mt-1">
+                  Esta alteração pode causar incompatibilidade com a rede atual.
+                  Outros miners com configurações diferentes não conseguirão
+                  validar seus blocos.
+                </p>
+              </div>
+            </div>
+
             <!-- Versão do Consenso -->
             <div>
               <label class="block text-sm font-medium text-zinc-400 mb-1">
@@ -79,8 +143,7 @@ import {
                 />
               </div>
               <p class="mt-1 text-xs text-zinc-500">
-                Versão das regras de consenso (atualizada automaticamente ao
-                alterar o intervalo)
+                Versão das regras de consenso (atualizada automaticamente)
               </p>
             </div>
 
@@ -147,32 +210,53 @@ export class ConsensusDialogComponent {
 
   isEditing = false;
   editingParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
-  private originalInterval: number = 0;
+  private originalParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
+  showSoftForkWarning = false;
+  showHardForkWarning = false;
 
   ngOnInit() {
     this.editingParams = { ...this.consensus };
-    this.originalInterval = this.consensus.difficultyAdjustmentInterval;
+    this.originalParams = { ...this.consensus };
   }
 
   startEditing() {
     this.isEditing = true;
-    this.originalInterval = this.editingParams.difficultyAdjustmentInterval;
+    this.originalParams = { ...this.editingParams };
+    this.showSoftForkWarning = false;
+    this.showHardForkWarning = false;
   }
 
   cancelEdit() {
     this.editingParams = { ...this.consensus };
     this.isEditing = false;
+    this.showSoftForkWarning = false;
+    this.showHardForkWarning = false;
   }
 
   saveChanges() {
-    // Só incrementa a versão se o intervalo final for diferente do original
-    if (
-      this.editingParams.difficultyAdjustmentInterval !== this.originalInterval
-    ) {
-      this.incrementConsensusVersion();
+    // Verifica se houve mudança no tamanho do bloco (Hard Fork)
+    if (this.editingParams.maxBlockSize !== this.originalParams.maxBlockSize) {
+      this.incrementMajorVersion();
     }
+    // Verifica se houve mudança no número de transações (Soft Fork)
+    else if (
+      this.editingParams.maxTransactionsPerBlock !==
+      this.originalParams.maxTransactionsPerBlock
+    ) {
+      this.incrementMinorVersion();
+    }
+    // Verifica se houve mudança no intervalo de ajuste
+    else if (
+      this.editingParams.difficultyAdjustmentInterval !==
+      this.originalParams.difficultyAdjustmentInterval
+    ) {
+      this.incrementPatchVersion();
+    }
+
     this.save.emit(this.editingParams);
     this.isEditing = false;
+    this.showSoftForkWarning = false;
+    this.showHardForkWarning = false;
   }
 
   onIntervalChange(event: Event) {
@@ -183,10 +267,45 @@ export class ConsensusDialogComponent {
     }
   }
 
-  private incrementConsensusVersion() {
+  onMaxTransactionsChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value);
+    if (!isNaN(value) && value >= 0) {
+      this.editingParams.maxTransactionsPerBlock = value;
+      this.showSoftForkWarning =
+        value !== this.originalParams.maxTransactionsPerBlock;
+      this.showHardForkWarning = false;
+    }
+  }
+
+  onMaxBlockSizeChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value);
+    if (!isNaN(value) && value > 0) {
+      this.editingParams.maxBlockSize = value;
+      this.showHardForkWarning = value !== this.originalParams.maxBlockSize;
+      this.showSoftForkWarning = false;
+    }
+  }
+
+  private incrementMajorVersion() {
     const versionParts = this.editingParams.consensusVersion.split('.');
-    const minorVersion = parseInt(versionParts[2] || '0');
-    versionParts[2] = (minorVersion + 1).toString();
+    versionParts[0] = (parseInt(versionParts[0]) + 1).toString();
+    versionParts[1] = '0';
+    versionParts[2] = '0';
+    this.editingParams.consensusVersion = versionParts.join('.');
+  }
+
+  private incrementMinorVersion() {
+    const versionParts = this.editingParams.consensusVersion.split('.');
+    versionParts[1] = (parseInt(versionParts[1]) + 1).toString();
+    versionParts[2] = '0';
+    this.editingParams.consensusVersion = versionParts.join('.');
+  }
+
+  private incrementPatchVersion() {
+    const versionParts = this.editingParams.consensusVersion.split('.');
+    versionParts[2] = (parseInt(versionParts[2]) + 1).toString();
     this.editingParams.consensusVersion = versionParts.join('.');
   }
 }
