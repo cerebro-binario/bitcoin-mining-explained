@@ -48,6 +48,16 @@ type ForkType = 'none' | 'soft' | 'hard';
 
         <!-- Content -->
         <div class="p-6 space-y-4 flex-1 overflow-y-auto">
+          <!-- Consolidated Fork Warning -->
+          <app-fork-warning
+            [type]="consolidatedFork.type"
+            *ngIf="consolidatedFork.type !== 'none'"
+          >
+            <div *ngIf="consolidatedFork.params.length > 0" class="mt-1">
+              Parâmetros alterados:
+              <b>{{ consolidatedFork.params.join(', ') }}</b>
+            </div>
+          </app-fork-warning>
           <div class="space-y-4">
             <!-- Intervalo de Ajuste -->
             <div>
@@ -68,9 +78,6 @@ type ForkType = 'none' | 'soft' | 'hard';
               <p class="mt-1 text-xs text-zinc-500">
                 Número de blocos entre cada ajuste de dificuldade
               </p>
-              <app-fork-warning
-                [type]="forkWarnings['difficultyAdjustmentInterval']"
-              ></app-fork-warning>
             </div>
 
             <!-- Máximo de Transações -->
@@ -92,9 +99,6 @@ type ForkType = 'none' | 'soft' | 'hard';
               <p class="mt-1 text-xs text-zinc-500">
                 Limite de transações por bloco (0 = sem limite)
               </p>
-              <app-fork-warning
-                [type]="forkWarnings['maxTransactionsPerBlock']"
-              ></app-fork-warning>
             </div>
 
             <!-- Tamanho Máximo do Bloco -->
@@ -117,9 +121,6 @@ type ForkType = 'none' | 'soft' | 'hard';
               <p class="mt-1 text-xs text-zinc-500">
                 Tamanho máximo do bloco em megabytes
               </p>
-              <app-fork-warning
-                [type]="forkWarnings['maxBlockSize']"
-              ></app-fork-warning>
             </div>
 
             <!-- Versão do Consenso -->
@@ -208,6 +209,11 @@ export class ConsensusDialogComponent {
   // Scalable fork warning system
   forkWarnings: { [param: string]: ForkType } = {};
 
+  consolidatedFork: { type: ForkType; params: string[] } = {
+    type: 'none',
+    params: [],
+  };
+
   ngOnInit() {
     this.editingParams = { ...this.consensus };
     this.originalParams = { ...this.consensus };
@@ -264,6 +270,7 @@ export class ConsensusDialogComponent {
         value !== this.originalParams.difficultyAdjustmentInterval
           ? 'hard'
           : 'none';
+      this.updateConsolidatedFork();
     }
   }
 
@@ -274,6 +281,7 @@ export class ConsensusDialogComponent {
       this.editingParams.maxTransactionsPerBlock = value;
       this.forkWarnings['maxTransactionsPerBlock'] =
         value !== this.originalParams.maxTransactionsPerBlock ? 'soft' : 'none';
+      this.updateConsolidatedFork();
     }
   }
 
@@ -289,11 +297,13 @@ export class ConsensusDialogComponent {
       } else {
         this.forkWarnings['maxBlockSize'] = 'none';
       }
+      this.updateConsolidatedFork();
     }
   }
 
   private clearWarnings() {
     this.forkWarnings = {};
+    this.updateConsolidatedFork();
   }
 
   private incrementMajorVersion() {
@@ -315,5 +325,39 @@ export class ConsensusDialogComponent {
     const versionParts = this.editingParams.consensusVersion.split('.');
     versionParts[2] = (parseInt(versionParts[2]) + 1).toString();
     this.editingParams.consensusVersion = versionParts.join('.');
+  }
+
+  private updateConsolidatedFork() {
+    console.log(this.forkWarnings);
+    const hardParams = Object.entries(this.forkWarnings)
+      .filter(([_, type]) => type === 'hard')
+      .map(([param]) => this.getParamLabel(param));
+    if (hardParams.length > 0) {
+      this.consolidatedFork = { type: 'hard', params: hardParams };
+      return;
+    }
+    const softParams = Object.entries(this.forkWarnings)
+      .filter(([_, type]) => type === 'soft')
+      .map(([param]) => this.getParamLabel(param));
+    if (softParams.length > 0) {
+      console.log(softParams);
+      this.consolidatedFork = { type: 'soft', params: softParams };
+      console.log(this.consolidatedFork);
+      return;
+    }
+    this.consolidatedFork = { type: 'none', params: [] };
+  }
+
+  getParamLabel(param: string): string {
+    switch (param) {
+      case 'difficultyAdjustmentInterval':
+        return 'Intervalo de Ajuste de Dificuldade';
+      case 'maxBlockSize':
+        return 'Tamanho Máximo do Bloco';
+      case 'maxTransactionsPerBlock':
+        return 'Máximo de Transações por Bloco';
+      default:
+        return param;
+    }
   }
 }
