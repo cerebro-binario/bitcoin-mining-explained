@@ -13,6 +13,8 @@ import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
+import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
+import { ConsensusParameters } from '../../../../models/consensus.model';
 
 interface HashRateOption {
   label: string;
@@ -27,9 +29,10 @@ interface HashRateOption {
     MiningBlockComponent,
     BlockchainComponent,
     EventLogsComponent,
+    ConsensusDialogComponent,
   ],
   templateUrl: './miner.component.html',
-  //   styleUrls: ['./miner.component.scss'],
+  styleUrls: ['./miner.component.scss'],
 })
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
@@ -39,12 +42,6 @@ export class MinerComponent {
   private hashCount = 0;
 
   @Input() miner!: Node;
-  @Input() hashRateOptions: HashRateOption[] = [
-    { label: '1 H/s', value: 1 },
-    { label: '100 H/s', value: 100 },
-    { label: '1000 H/s', value: 1000 },
-    { label: 'Máximo', value: null },
-  ];
   @Output() miningChanged = new EventEmitter<Node>();
   @Output() minerRemoved = new EventEmitter<Node>();
   @Output() collapsedChange = new EventEmitter<Node>();
@@ -61,6 +58,15 @@ export class MinerComponent {
   }>();
 
   isCollapsedHashRateSelectorOpen = false;
+
+  hashRateOptions: HashRateOption[] = [
+    { label: '1 H/s', value: 1 },
+    { label: '10 H/s', value: 10 },
+    { label: '1000 H/s', value: 1000 },
+    { label: 'Máximo', value: null },
+  ];
+
+  showConsensusDialog = false;
 
   constructor(
     private addressService: AddressService,
@@ -275,5 +281,18 @@ export class MinerComponent {
     ) {
       this.isCollapsedHashRateSelectorOpen = false;
     }
+  }
+
+  editConsensusParams() {
+    this.showConsensusDialog = true;
+  }
+
+  onConsensusDialogClose() {
+    this.showConsensusDialog = false;
+  }
+
+  onConsensusDialogSave(newParams: ConsensusParameters) {
+    this.miner.consensus = { ...newParams };
+    this.showConsensusDialog = false;
   }
 }
