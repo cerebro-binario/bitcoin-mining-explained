@@ -85,7 +85,7 @@ import {
                 Limite de transações por bloco (0 = sem limite)
               </p>
               <div
-                *ngIf="showSoftForkWarning"
+                *ngIf="showSoftForkWarningForMaxTx"
                 class="mt-2 p-2 bg-yellow-900/50 border border-yellow-700 rounded text-xs text-yellow-400"
               >
                 <p class="font-semibold">⚠️ Soft Fork Detectado</p>
@@ -109,7 +109,8 @@ import {
                   [disabled]="!isEditing"
                   (input)="onMaxBlockSizeChange($event)"
                   class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-                  min="1"
+                  min="0.1"
+                  step="0.1"
                 />
                 <span class="text-sm text-zinc-400">MB</span>
               </div>
@@ -117,7 +118,18 @@ import {
                 Tamanho máximo do bloco em megabytes
               </p>
               <div
-                *ngIf="showHardForkWarning"
+                *ngIf="showSoftForkWarningForBlockSize"
+                class="mt-2 p-2 bg-yellow-900/50 border border-yellow-700 rounded text-xs text-yellow-400"
+              >
+                <p class="font-semibold">⚠️ Soft Fork Detectado</p>
+                <p class="mt-1">
+                  Esta alteração é compatível com a rede atual. Outros miners
+                  podem continuar operando normalmente, mesmo com configurações
+                  diferentes.
+                </p>
+              </div>
+              <div
+                *ngIf="showHardForkWarningForBlockSize"
                 class="mt-2 p-2 bg-red-900/50 border border-red-700 rounded text-xs text-red-400"
               >
                 <p class="font-semibold">⚠️ Hard Fork Detectado</p>
@@ -211,8 +223,11 @@ export class ConsensusDialogComponent {
   isEditing = false;
   editingParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
   private originalParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
-  showSoftForkWarning = false;
-  showHardForkWarning = false;
+
+  // Fork warnings per parameter
+  showSoftForkWarningForBlockSize = false;
+  showHardForkWarningForBlockSize = false;
+  showSoftForkWarningForMaxTx = false;
 
   ngOnInit() {
     this.editingParams = { ...this.consensus };
@@ -222,21 +237,23 @@ export class ConsensusDialogComponent {
   startEditing() {
     this.isEditing = true;
     this.originalParams = { ...this.editingParams };
-    this.showSoftForkWarning = false;
-    this.showHardForkWarning = false;
+    this.clearWarnings();
   }
 
   cancelEdit() {
     this.editingParams = { ...this.consensus };
     this.isEditing = false;
-    this.showSoftForkWarning = false;
-    this.showHardForkWarning = false;
+    this.clearWarnings();
   }
 
   saveChanges() {
-    // Verifica se houve mudança no tamanho do bloco (Hard Fork)
+    // Verifica se houve mudança no tamanho do bloco
     if (this.editingParams.maxBlockSize !== this.originalParams.maxBlockSize) {
-      this.incrementMajorVersion();
+      if (this.editingParams.maxBlockSize > this.originalParams.maxBlockSize) {
+        this.incrementMajorVersion();
+      } else {
+        this.incrementMinorVersion();
+      }
     }
     // Verifica se houve mudança no número de transações (Soft Fork)
     else if (
@@ -255,8 +272,7 @@ export class ConsensusDialogComponent {
 
     this.save.emit(this.editingParams);
     this.isEditing = false;
-    this.showSoftForkWarning = false;
-    this.showHardForkWarning = false;
+    this.clearWarnings();
   }
 
   onIntervalChange(event: Event) {
@@ -272,20 +288,27 @@ export class ConsensusDialogComponent {
     const value = parseInt(input.value);
     if (!isNaN(value) && value >= 0) {
       this.editingParams.maxTransactionsPerBlock = value;
-      this.showSoftForkWarning =
+      this.showSoftForkWarningForMaxTx =
         value !== this.originalParams.maxTransactionsPerBlock;
-      this.showHardForkWarning = false;
     }
   }
 
   onMaxBlockSizeChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value);
+    const value = parseFloat(input.value);
     if (!isNaN(value) && value > 0) {
       this.editingParams.maxBlockSize = value;
-      this.showHardForkWarning = value !== this.originalParams.maxBlockSize;
-      this.showSoftForkWarning = false;
+      this.showSoftForkWarningForBlockSize =
+        value < this.originalParams.maxBlockSize;
+      this.showHardForkWarningForBlockSize =
+        value > this.originalParams.maxBlockSize;
     }
+  }
+
+  private clearWarnings() {
+    this.showSoftForkWarningForBlockSize = false;
+    this.showHardForkWarningForBlockSize = false;
+    this.showSoftForkWarningForMaxTx = false;
   }
 
   private incrementMajorVersion() {
