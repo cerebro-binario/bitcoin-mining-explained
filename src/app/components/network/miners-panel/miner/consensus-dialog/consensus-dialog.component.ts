@@ -5,6 +5,8 @@ import {
   DEFAULT_CONSENSUS,
 } from '../../../../../models/consensus.model';
 
+type ForkType = 'none' | 'soft' | 'hard';
+
 @Component({
   selector: 'app-consensus-dialog',
   standalone: true,
@@ -85,7 +87,7 @@ import {
                 Limite de transações por bloco (0 = sem limite)
               </p>
               <div
-                *ngIf="showSoftForkWarningForMaxTx"
+                *ngIf="forkWarnings['maxTransactionsPerBlock'] === 'soft'"
                 class="mt-2 p-2 bg-yellow-900/50 border border-yellow-700 rounded text-xs text-yellow-400"
               >
                 <p class="font-semibold">⚠️ Soft Fork Detectado</p>
@@ -118,7 +120,7 @@ import {
                 Tamanho máximo do bloco em megabytes
               </p>
               <div
-                *ngIf="showSoftForkWarningForBlockSize"
+                *ngIf="forkWarnings['maxBlockSize'] === 'soft'"
                 class="mt-2 p-2 bg-yellow-900/50 border border-yellow-700 rounded text-xs text-yellow-400"
               >
                 <p class="font-semibold">⚠️ Soft Fork Detectado</p>
@@ -129,7 +131,7 @@ import {
                 </p>
               </div>
               <div
-                *ngIf="showHardForkWarningForBlockSize"
+                *ngIf="forkWarnings['maxBlockSize'] === 'hard'"
                 class="mt-2 p-2 bg-red-900/50 border border-red-700 rounded text-xs text-red-400"
               >
                 <p class="font-semibold">⚠️ Hard Fork Detectado</p>
@@ -224,14 +226,13 @@ export class ConsensusDialogComponent {
   editingParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
   private originalParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
 
-  // Fork warnings per parameter
-  showSoftForkWarningForBlockSize = false;
-  showHardForkWarningForBlockSize = false;
-  showSoftForkWarningForMaxTx = false;
+  // Scalable fork warning system
+  forkWarnings: { [param: string]: ForkType } = {};
 
   ngOnInit() {
     this.editingParams = { ...this.consensus };
     this.originalParams = { ...this.consensus };
+    this.clearWarnings();
   }
 
   startEditing() {
@@ -280,6 +281,8 @@ export class ConsensusDialogComponent {
     const value = parseInt(input.value);
     if (!isNaN(value) && value > 0) {
       this.editingParams.difficultyAdjustmentInterval = value;
+      // Exemplo: se quiser avisar sobre patch, pode adicionar aqui
+      // this.forkWarnings['difficultyAdjustmentInterval'] = value !== this.originalParams.difficultyAdjustmentInterval ? 'soft' : 'none';
     }
   }
 
@@ -288,8 +291,8 @@ export class ConsensusDialogComponent {
     const value = parseInt(input.value);
     if (!isNaN(value) && value >= 0) {
       this.editingParams.maxTransactionsPerBlock = value;
-      this.showSoftForkWarningForMaxTx =
-        value !== this.originalParams.maxTransactionsPerBlock;
+      this.forkWarnings['maxTransactionsPerBlock'] =
+        value !== this.originalParams.maxTransactionsPerBlock ? 'soft' : 'none';
     }
   }
 
@@ -298,17 +301,18 @@ export class ConsensusDialogComponent {
     const value = parseFloat(input.value);
     if (!isNaN(value) && value > 0) {
       this.editingParams.maxBlockSize = value;
-      this.showSoftForkWarningForBlockSize =
-        value < this.originalParams.maxBlockSize;
-      this.showHardForkWarningForBlockSize =
-        value > this.originalParams.maxBlockSize;
+      if (value < this.originalParams.maxBlockSize) {
+        this.forkWarnings['maxBlockSize'] = 'soft';
+      } else if (value > this.originalParams.maxBlockSize) {
+        this.forkWarnings['maxBlockSize'] = 'hard';
+      } else {
+        this.forkWarnings['maxBlockSize'] = 'none';
+      }
     }
   }
 
   private clearWarnings() {
-    this.showSoftForkWarningForBlockSize = false;
-    this.showHardForkWarningForBlockSize = false;
-    this.showSoftForkWarningForMaxTx = false;
+    this.forkWarnings = {};
   }
 
   private incrementMajorVersion() {
