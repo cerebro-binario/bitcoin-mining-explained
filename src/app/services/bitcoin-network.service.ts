@@ -185,6 +185,7 @@ export class BitcoinNetworkService {
     return new Promise((resolve) => {
       // Se for o primeiro nó, não precisa sincronizar
       if (this.nodes.length === 1) {
+        node.isSyncing = false;
         node.initialSyncComplete = true;
         resolve(node);
         return;
