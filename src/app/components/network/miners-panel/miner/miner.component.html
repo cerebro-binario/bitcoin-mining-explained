@@ -13,6 +13,9 @@
   >
     <span class="text-lg font-bold text-blue-400 flex items-center gap-2">
       {{ miner.name }}
+      <span class="text-xs text-zinc-400 ml-2" title="Versão do Consenso">
+        v{{ miner.consensus?.consensusVersion }}
+      </span>
       <span
         class="inline-block w-3 h-3 rounded-full border border-zinc-700"
         [ngClass]="{
