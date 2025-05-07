@@ -14,7 +14,8 @@ export class BitcoinNetworkService {
   addNode(
     isMiner: boolean,
     name?: string,
-    hashRate: number | null = null
+    hashRate: number | null = null,
+    isCollapsed: boolean = false
   ): Node {
     const node = new Node({
       id: this.nextId++,
@@ -22,6 +23,7 @@ export class BitcoinNetworkService {
       name,
       hashRate,
       neighbors: [],
+      isCollapsed,
     });
     // Conexão automática a até 3 vizinhos aleatórios
     const N = Math.min(3, this.nodes.length);
@@ -135,6 +137,9 @@ export class BitcoinNetworkService {
               blockHash: block.hash,
               timestamp: Date.now(),
             });
+
+            targetNode.updateLastMainBlocks();
+            targetNode.updateActiveForkHeights();
           } else {
             targetNode.eventLog.unshift({
               type: 'block-rejected',
@@ -176,142 +181,149 @@ export class BitcoinNetworkService {
   }
 
   // Método para inicializar um nó (minerador ou não)
-  initializeNode(node: Node) {
-    // Se for o primeiro nó, não precisa sincronizar
-    if (this.nodes.length === 1) {
-      node.initialSyncComplete = true;
-      return;
-    }
+  initializeNode(node: Node): Promise<Node> {
+    return new Promise((resolve) => {
+      // Se for o primeiro nó, não precisa sincronizar
+      if (this.nodes.length === 1) {
+        node.initialSyncComplete = true;
+        resolve(node);
+        return;
+      }
 
-    // Marca o nó como sincronizando
-    node.isSyncing = true;
+      // Marca o nó como sincronizando
+      node.isSyncing = true;
 
-    // Inicializa o rastreamento de peers
-    node.syncPeers = node.neighbors.map((neighbor) => ({
-      nodeId: neighbor.nodeId,
-      latency: neighbor.latency,
-      status: 'pending',
-    }));
+      // Inicializa o rastreamento de peers
+      node.syncPeers = node.neighbors.map((neighbor) => ({
+        nodeId: neighbor.nodeId,
+        latency: neighbor.latency,
+        status: 'pending',
+      }));
 
-    // Simula o download da blockchain através dos vizinhos
-    // Ordena os vizinhos por latência (menor primeiro)
-    const sortedNeighbors = [...node.neighbors].sort(
-      (a, b) => a.latency - b.latency
-    );
+      // Simula o download da blockchain através dos vizinhos
+      // Ordena os vizinhos por latência (menor primeiro)
+      const sortedNeighbors = [...node.neighbors].sort(
+        (a, b) => a.latency - b.latency
+      );
 
-    // Função para verificar se algum vizinho completou o download
-    const checkNeighborsForDownload = () => {
-      // Coleta as blockchains de todos os vizinhos válidos
-      const validNeighbors = sortedNeighbors
-        .map((neighbor) => this.nodes.find((n) => n.id === neighbor.nodeId))
-        .filter(
-          (neighborNode) =>
-            neighborNode &&
-            neighborNode.initialSyncComplete &&
-            neighborNode.genesis
-        );
-
-      // Se não há vizinhos com blockchain válida, verifica se há peers com chain mais longa
-      if (validNeighbors.length === 0) {
-        // Procura por peers que tenham uma chain mais longa
-        const peersWithLongerChain = sortedNeighbors
+      // Função para verificar se algum vizinho completou o download
+      const checkNeighborsForDownload = () => {
+        // Coleta as blockchains de todos os vizinhos válidos
+        const validNeighbors = sortedNeighbors
           .map((neighbor) => this.nodes.find((n) => n.id === neighbor.nodeId))
           .filter(
             (neighborNode) =>
               neighborNode &&
-              neighborNode.heights.length > (node.heights.length || 0)
+              neighborNode.initialSyncComplete &&
+              neighborNode.genesis
           );
 
-        // Se não há peers com chain mais longa, libera para minerar genesis
-        if (peersWithLongerChain.length === 0) {
-          node.isSyncing = false;
-          node.initialSyncComplete = true;
-          return true;
+        // Se não há vizinhos com blockchain válida, verifica se há peers com chain mais longa
+        if (validNeighbors.length === 0) {
+          // Procura por peers que tenham uma chain mais longa
+          const peersWithLongerChain = sortedNeighbors
+            .map((neighbor) => this.nodes.find((n) => n.id === neighbor.nodeId))
+            .filter(
+              (neighborNode) =>
+                neighborNode &&
+                neighborNode.heights.length > (node.heights.length || 0)
+            );
+
+          // Se não há peers com chain mais longa, libera para minerar genesis
+          if (peersWithLongerChain.length === 0) {
+            node.isSyncing = false;
+            node.initialSyncComplete = true;
+            resolve(node);
+            return true;
+          }
         }
-      }
 
-      // Obtém as blockchains de todos os vizinhos válidos
-      const blockchains = validNeighbors.map((neighborNode) => {
-        // Atualiza o status do peer para validando
-        const peer = node.syncPeers.find((p) => p.nodeId === neighborNode?.id);
-        if (peer) {
-          peer.status = 'validating';
-        }
-
-        return {
-          node: neighborNode,
-          blockchain: BlockNode.deserializeBlockNode(
-            BlockNode.serializeBlockNode(neighborNode?.genesis as BlockNode)
-          ),
-        };
-      });
-
-      // Valida cada blockchain
-      const validBlockchains = blockchains
-        .map(({ node: neighborNode, blockchain }) => {
-          const work = this.calculateChainWork(blockchain);
-          const isValid = this.validateBlockchain(blockchain);
-
-          // Atualiza o status do peer
+        // Obtém as blockchains de todos os vizinhos válidos
+        const blockchains = validNeighbors.map((neighborNode) => {
+          // Atualiza o status do peer para validando
           const peer = node.syncPeers.find(
             (p) => p.nodeId === neighborNode?.id
           );
           if (peer) {
-            peer.status = isValid ? 'valid' : 'invalid';
-            peer.blockchainLength = this.countBlocks(blockchain);
-            peer.work = work;
+            peer.status = 'validating';
           }
 
           return {
-            neighborNode,
-            blockchain,
-            isValid,
-            work,
+            node: neighborNode,
+            blockchain: BlockNode.deserializeBlockNode(
+              BlockNode.serializeBlockNode(neighborNode?.genesis as BlockNode)
+            ),
           };
-        })
-        .filter((result) => result.isValid)
-        .sort((a, b) => b.work - a.work); // Ordena por maior trabalho acumulado
+        });
 
-      if (validBlockchains.length === 0) {
-        console.warn(`Nó ${node.id} não encontrou nenhuma blockchain válida`);
-        return false;
-      }
+        // Valida cada blockchain
+        const validBlockchains = blockchains
+          .map(({ node: neighborNode, blockchain }) => {
+            const work = this.calculateChainWork(blockchain);
+            const isValid = this.validateBlockchain(blockchain);
 
-      // Usa a blockchain com maior trabalho acumulado
-      const bestBlockchain = validBlockchains[0];
+            // Atualiza o status do peer
+            const peer = node.syncPeers.find(
+              (p) => p.nodeId === neighborNode?.id
+            );
+            if (peer) {
+              peer.status = isValid ? 'valid' : 'invalid';
+              peer.blockchainLength = this.countBlocks(blockchain);
+              peer.work = work;
+            }
 
-      if (!bestBlockchain?.neighborNode) {
-        console.warn(`Nó ${node.id} não encontrou um vizinho válido`);
-        return false;
-      }
+            return {
+              neighborNode,
+              blockchain,
+              isValid,
+              work,
+            };
+          })
+          .filter((result) => result.isValid)
+          .sort((a, b) => b.work - a.work); // Ordena por maior trabalho acumulado
 
-      const validNeighborNode = bestBlockchain.neighborNode;
-
-      setTimeout(() => {
-        node.genesis = bestBlockchain.blockchain;
-        node.rebuildHeightsFromGenesis();
-
-        // Se for um minerador, inicializa o template para o próximo bloco
-        if (node.isMiner) {
-          node.initBlockTemplate(validNeighborNode.getLatestBlock());
+        if (validBlockchains.length === 0) {
+          console.warn(`Nó ${node.id} não encontrou nenhuma blockchain válida`);
+          return false;
         }
 
-        node.isSyncing = false;
-        node.initialSyncComplete = true;
-      }, sortedNeighbors[0].latency);
+        // Usa a blockchain com maior trabalho acumulado
+        const bestBlockchain = validBlockchains[0];
 
-      return true;
-    };
-
-    // Tenta iniciar o download imediatamente
-    if (!checkNeighborsForDownload()) {
-      // Se não conseguiu iniciar o download, tenta novamente a cada segundo
-      const interval = setInterval(() => {
-        if (checkNeighborsForDownload()) {
-          clearInterval(interval);
+        if (!bestBlockchain?.neighborNode) {
+          console.warn(`Nó ${node.id} não encontrou um vizinho válido`);
+          return false;
         }
-      }, 1000);
-    }
+
+        const validNeighborNode = bestBlockchain.neighborNode;
+
+        setTimeout(() => {
+          node.genesis = bestBlockchain.blockchain;
+          node.rebuildHeightsFromGenesis();
+
+          // Se for um minerador, inicializa o template para o próximo bloco
+          if (node.isMiner) {
+            node.initBlockTemplate(validNeighborNode.getLatestBlock());
+          }
+
+          node.isSyncing = false;
+          node.initialSyncComplete = true;
+          resolve(node);
+        }, sortedNeighbors[0].latency);
+
+        return true;
+      };
+
+      // Tenta iniciar o download imediatamente
+      if (!checkNeighborsForDownload()) {
+        // Se não conseguiu iniciar o download, tenta novamente a cada segundo
+        const interval = setInterval(() => {
+          if (checkNeighborsForDownload()) {
+            clearInterval(interval);
+          }
+        }, 1000);
+      }
+    });
   }
 
   // Calcula o trabalho acumulado de uma blockchain

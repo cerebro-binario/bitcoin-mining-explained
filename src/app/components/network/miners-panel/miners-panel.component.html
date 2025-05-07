@@ -1,37 +1,38 @@
 <div class="mt-4 mb-12">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-2xl font-semibold">Mineradores</h2>
-    <button
-      class="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-      (click)="addMiner()"
-    >
-      + Adicionar Minerador
-    </button>
-  </div>
-  <div *ngIf="miners.length === 0" class="text-zinc-400 italic mb-4">
-    Nenhum minerador adicionado ainda.
-  </div>
-  <div class="flex flex-col gap-6">
-    <app-miner
-      *ngFor="let miner of miners"
-      #minerComponent
-      [miner]="miner"
-      [collapseOnInit]="allMinersCollapsed"
-      [maximized]="false"
-      (blockBroadcasted)="onBlockBroadcasted($event)"
-      (minerRemoved)="onMinerRemoved($event)"
-      (minerCollapsed)="onMinerCollapsed($event)"
-      (minerMaximized)="onMinerMaximized($event)"
-      (logsMaximized)="onLogsMaximized()"
-      (logsMinimized)="onLogsMinimized()"
-    ></app-miner>
-  </div>
+  <ng-container *ngIf="miners$ | async as miners">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-semibold">Mineradores</h2>
+      <button
+        class="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+        (click)="addMiner()"
+      >
+        + Adicionar Minerador
+      </button>
+    </div>
+    <div *ngIf="miners.length === 0" class="text-zinc-400 italic mb-4">
+      Nenhum minerador adicionado ainda.
+    </div>
+    <div class="flex flex-col gap-6">
+      <app-miner
+        *ngFor="let miner of miners"
+        #minerComponent
+        [miner]="miner"
+        (miningChanged)="onMiningChanged($event)"
+        (blockBroadcasted)="onBlockBroadcasted($event)"
+        (minerRemoved)="onMinerRemoved($event)"
+        (collapsedChange)="onMinerCollapsedChange($event)"
+        (maximizedChange)="onMinerMaximizedChange($event)"
+        (logsMaximizedChange)="onLogsMaximizedChange($event)"
+        (hashRateChange)="onHashRateChange($event)"
+      ></app-miner>
+    </div>
+  </ng-container>
 
   <!-- Dialog do Miner maximizado -->
   <ng-template [ngIf]="maximizedMiner">
     <div
       class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center !m-0 backdrop-blur"
-      (click)="onMinerMinimized(maximizedMiner)"
+      (click)="onBackdropClick($event, maximizedMiner)"
     >
       <div
         class="relative bg-zinc-900 rounded-lg shadow-2xl border border-zinc-800 w-full h-full max-w-[90vw] max-h-[90vh] flex flex-col m-8 overflow-y-auto"
@@ -39,9 +40,11 @@
       >
         <app-miner
           [miner]="maximizedMiner"
-          [maximized]="true"
           class="w-full flex-1"
-          (minerMinimized)="onMinerMinimized($event)"
+          (miningChanged)="onMiningChanged($event)"
+          (maximizedChange)="onMinerMaximizedChange($event)"
+          (logsMaximizedChange)="onLogsMaximizedChange($event)"
+          (hashRateChange)="onHashRateChange($event)"
         ></app-miner>
       </div>
     </div>

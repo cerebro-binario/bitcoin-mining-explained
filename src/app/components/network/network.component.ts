@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { Node } from '../../models/node';
 import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 import { GraphPlotComponent } from './graph-plot/graph-plot.component';
-import { MinersPanelComponent } from './miners-panel/miners-panel.component';
+import {
+  MinersPanelComponent,
+  MinersStats,
+} from './miners-panel/miners-panel.component';
 import { NodesPanelComponent } from './nodes-panel/nodes-panel.component';
 @Component({
   selector: 'app-network',
@@ -22,18 +22,19 @@ import { NodesPanelComponent } from './nodes-panel/nodes-panel.component';
 export class NetworkComponent {
   private fadeTimeout: any;
 
-  miners$!: Observable<Node[]>;
-  minersTotal = 0;
-  minersMiningCount = 0;
-  minersToExpandCount = 0;
-  minersToCollapseCount = 0;
-  minersToStartCount = 0;
-  minersToPauseCount = 0;
-  realNetworkHashRate = 0;
+  stats: MinersStats = {
+    toCollapse: 0,
+    toExpand: 0,
+    allCollapsed: false,
+    nTotal: 0,
+    nMining: 0,
+    nCanStart: 0,
+    nCanPause: 0,
+    defaultHashRate: 1000,
+    totalHashRate: 0,
+  };
 
   isControlPanelFaded = false;
-  allMinersCollapsed = false;
-  defaultHashRate: number | null = 1000;
 
   hashRateOptions = [
     { value: 1, label: '1 H/s' },
@@ -46,14 +47,7 @@ export class NetworkComponent {
 
   @ViewChild(MinersPanelComponent) minersPanel!: MinersPanelComponent;
 
-  constructor(public network: BitcoinNetworkService) {
-    this.miners$ = this.network.nodes$.pipe(
-      map((nodes) => nodes.filter((n) => n.isMiner)),
-      tap((miners) => {
-        this.updateMinersStats(miners);
-      })
-    );
-  }
+  constructor(public network: BitcoinNetworkService) {}
 
   ngAfterViewInit() {
     this.onControlPanelMouseLeave();
@@ -61,21 +55,19 @@ export class NetworkComponent {
 
   startAllMiners() {
     this.minersPanel.startAllMiners();
-    this.updateMinersStats(this.minersPanel.miners);
   }
 
   pauseAllMiners() {
     this.minersPanel.pauseAllMiners();
-    this.updateMinersStats(this.minersPanel.miners);
   }
 
   toggleAllMinersCollapse() {
     if (!this.minersPanel) return;
-    this.minersPanel.toggleAllMinersCollapse();
+    this.minersPanel.setOrToggleAllMinersCollapsed();
   }
 
   setDefaultHashRate(value: number | null) {
-    this.defaultHashRate = value;
+    this.minersPanel.setDefaultHashRate(value);
   }
 
   onControlPanelMouseEnter() {
@@ -95,23 +87,7 @@ export class NetworkComponent {
     }, 5000);
   }
 
-  private updateMinersStats(miners: Node[]) {
-    // Atualiza o total de mineradores
-    this.minersTotal = miners.length;
-    // Referencia os mineradores que estão minerando
-    const minersMining = miners.filter((m) => m.isMining);
-    // Atualiza o total de mineradores que estão minerando
-    this.minersMiningCount = minersMining.length;
-    // Atualiza a taxa de hash da rede
-    this.realNetworkHashRate = minersMining.reduce(
-      (sum, m) => sum + m.currentHashRate,
-      0
-    );
-    // Atualiza o total de mineradores que podem ser pausados
-    this.minersToPauseCount = minersMining.length;
-    // Atualiza o total de mineradores que podem ser iniciados
-    this.minersToStartCount = miners.filter(
-      (m) => !m.isMining && (!m.isSyncing || m.initialSyncComplete)
-    ).length;
+  onStatsChange(stats: MinersStats) {
+    this.stats = stats;
   }
 }

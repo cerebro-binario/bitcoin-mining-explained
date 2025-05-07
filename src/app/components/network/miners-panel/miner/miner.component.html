@@ -1,12 +1,12 @@
 <div
   *ngIf="miner"
   class="bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700 space-y-4 h-full"
-  [ngClass]="maximized ? 'pt-0' : ''"
+  [ngClass]="miner.isMaximized ? 'pt-0' : ''"
 >
   <div
     class="flex items-center gap-2"
     [ngClass]="
-      maximized
+      miner.isMaximized
         ? 'sticky top-0 z-20 bg-zinc-800 border-b border-zinc-700 py-6'
         : ''
     "
@@ -63,7 +63,7 @@
           'bg-zinc-600 cursor-not-allowed':
             miner.isSyncing && !miner.initialSyncComplete
         }"
-        (click)="startMining(miner)"
+        (click)="startMining()"
         [disabled]="miner.isSyncing && !miner.initialSyncComplete"
         [title]="
           miner.isSyncing && !miner.initialSyncComplete
@@ -80,13 +80,13 @@
       <button
         *ngIf="miner.isMining"
         class="ml-4 px-3 py-1 rounded bg-yellow-600 text-white text-sm font-semibold hover:bg-yellow-700 transition"
-        (click)="stopMining(miner)"
+        (click)="stopMining()"
       >
         Pausar Mineração
       </button>
       <button
         class="ml-2 px-3 py-1 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
-        (click)="createTransaction(miner)"
+        (click)="createTransaction()"
       >
         Nova Transação
       </button>
@@ -109,15 +109,15 @@
 
     <!-- Collapse Button -->
     <button
-      *ngIf="!maximized"
+      *ngIf="!miner.isMaximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
-      (click)="toggleCollapsed()"
-      [title]="isCollapsed ? 'Expandir minerador' : 'Recolher minerador'"
+      (click)="setOrToggleCollapsed()"
+      [title]="miner.isCollapsed ? 'Expandir minerador' : 'Recolher minerador'"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="h-4 w-4 transition-transform"
-        [ngClass]="{ 'rotate-180': !isCollapsed }"
+        [ngClass]="{ 'rotate-180': !miner.isCollapsed }"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -133,9 +133,9 @@
 
     <!-- Remove Miner Button -->
     <button
-      *ngIf="!maximized"
+      *ngIf="!miner.isMaximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition"
-      (click)="removeMiner(miner)"
+      (click)="removeMiner()"
       title="Remover minerador"
     >
       <svg
@@ -156,9 +156,9 @@
 
     <!-- Maximize Miner Button -->
     <button
-      *ngIf="!maximized"
+      *ngIf="!miner.isMaximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
-      (click)="maximizeMiner()"
+      (click)="setOrToggleMaximized(true)"
       title="Visualizar minerador em tela cheia"
     >
       <svg
@@ -179,9 +179,9 @@
 
     <!-- Minimize Miner Button -->
     <button
-      *ngIf="maximized"
+      *ngIf="miner.isMaximized"
       class="ml-2 p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
-      (click)="minimizeMiner()"
+      (click)="setOrToggleMaximized(false)"
       title="Minimizar minerador"
     >
       <svg
@@ -202,10 +202,13 @@
   </div>
 
   <!-- Mini-chain dos últimos 5 blocos -->
-  <div *ngIf="isCollapsed" class="flex items-center gap-2 px-4 py-2 min-h-8">
-    <ng-container *ngFor="let block of lastMainBlocks; let i = index">
+  <div
+    *ngIf="miner.isCollapsed"
+    class="flex items-center gap-2 px-4 py-2 min-h-8"
+  >
+    <ng-container *ngFor="let block of miner.lastMainBlocks; let i = index">
       <div class="relative flex flex-col items-center justify-center">
-        <ng-container *ngIf="activeForkHeights.includes(block.height)">
+        <ng-container *ngIf="miner.activeForkHeights.includes(block.height)">
           <div class="absolute bottom-full flex items-center mb-0.5">
             <svg
               class="w-3 h-3 text-yellow-400"
@@ -229,9 +232,9 @@
           class="flex flex-col items-center justify-center w-8 h-8 rounded-md border-2 text-[0.85rem] cursor-pointer transition duration-200 ease-in-out"
           [ngClass]="{
             'bg-blue-700 border-blue-400 text-white':
-              i === lastMainBlocks.length - 1,
+              i === miner.lastMainBlocks.length - 1,
             'bg-zinc-700 border-zinc-500 text-zinc-200':
-              i !== lastMainBlocks.length - 1
+              i !== miner.lastMainBlocks.length - 1
           }"
           [title]="
             'Bloco #' +
@@ -242,7 +245,7 @@
             (block.minerId ?? '-') +
             '\nTxs: ' +
             block.transactions.length +
-            (activeForkHeights.includes(block.height)
+            (miner.activeForkHeights.includes(block.height)
               ? '\nFork ativo nesta altura'
               : '')
           "
@@ -258,9 +261,11 @@
           >
         </div>
       </div>
-      <span *ngIf="i < lastMainBlocks.length - 1" class="text-zinc-500">→</span>
+      <span *ngIf="i < miner.lastMainBlocks.length - 1" class="text-zinc-500"
+        >→</span
+      >
     </ng-container>
-    <span *ngIf="lastMainBlocks.length > 0" class="text-zinc-500">→</span>
+    <span *ngIf="miner.lastMainBlocks.length > 0" class="text-zinc-500">→</span>
     <div
       class="flex flex-col items-center justify-center w-8 h-8 rounded-md border-2 border-dashed text-[0.85rem]"
       [ngClass]="{
@@ -366,9 +371,9 @@
   <div
     class="transition-all duration-300 ease-in-out"
     [ngStyle]="{
-      'max-height': isCollapsed ? '0px' : null,
-      opacity: isCollapsed ? '0' : '1',
-      overflow: isCollapsed ? 'hidden' : 'visible'
+      'max-height': miner.isCollapsed ? '0px' : null,
+      opacity: miner.isCollapsed ? '0' : '1',
+      overflow: miner.isCollapsed ? 'hidden' : 'visible'
     }"
   >
     <div class="space-y-5">

@@ -7,11 +7,7 @@
   <!-- SETOR 2: MINERADORES -->
   <app-miners-panel
     #minersPanel
-    [miners]="(miners$ | async) || []"
-    [(allMinersCollapsed)]="allMinersCollapsed"
-    [(minersToExpandCount)]="minersToExpandCount"
-    [(minersToCollapseCount)]="minersToCollapseCount"
-    [(defaultHashRate)]="defaultHashRate"
+    (statsChange)="onStatsChange($event)"
   ></app-miners-panel>
 
   <!-- SETOR 3: NÓS -->
@@ -29,12 +25,12 @@
       <div
         class="text-sm text-zinc-400 bg-zinc-800 px-3 py-1 rounded shadow-2xl border border-zinc-700"
       >
-        Minerando: {{ minersMiningCount }}/{{ minersTotal }}
+        Minerando: {{ stats.nMining }}/{{ stats.nTotal }}
       </div>
       <div
         class="text-sm text-zinc-400 bg-zinc-800 px-3 py-1 rounded shadow-2xl border border-zinc-700"
       >
-        Hash Rate: {{ realNetworkHashRate | number }} H/s
+        Hash Rate: {{ stats.totalHashRate | number }} H/s
       </div>
     </div>
     <div class="flex w-full items-center mb-2">
@@ -47,23 +43,21 @@
             class="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
             (click)="startAllMiners()"
           >
-            Iniciar Todos ({{ minersToStartCount }})
+            Iniciar Todos ({{ stats.nCanStart }})
           </button>
           <button
             class="px-4 py-2 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition"
             (click)="pauseAllMiners()"
           >
-            Pausar Todos ({{ minersToPauseCount }})
+            Pausar Todos ({{ stats.nCanPause }})
           </button>
           <button
-            *ngIf="minersTotal > 0"
+            *ngIf="stats.nTotal > 0"
             class="px-3 py-1 rounded bg-zinc-700 text-white text-sm font-semibold hover:bg-zinc-800 transition"
             (click)="toggleAllMinersCollapse()"
           >
-            {{ allMinersCollapsed ? "Expandir Todos" : "Colapsar Todos" }}
-            ({{
-              allMinersCollapsed ? minersToExpandCount : minersToCollapseCount
-            }})
+            {{ stats.allCollapsed ? "Expandir Todos" : "Colapsar Todos" }}
+            ({{ stats.allCollapsed ? stats.toExpand : stats.toCollapse }})
           </button>
         </div>
         <div class="flex items-center gap-2">
@@ -72,9 +66,9 @@
             <button
               class="px-2 py-1 rounded text-xs font-semibold transition"
               [ngClass]="{
-                'bg-blue-600 text-white': defaultHashRate === rate.value,
+                'bg-blue-600 text-white': stats.defaultHashRate === rate.value,
                 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600':
-                  defaultHashRate !== rate.value
+                  stats.defaultHashRate !== rate.value
               }"
               (click)="setDefaultHashRate(rate.value)"
               [title]="rate.label"
