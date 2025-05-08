@@ -124,7 +124,9 @@
                 <ng-template let-consensus pTemplate="item">
                   <div class="flex items-center">
                     <span
-                      *ngIf="consensus.version === miner.consensus.version"
+                      *ngIf="
+                        consensus.instanceHash === miner.consensus.instanceHash
+                      "
                       class="mr-2 text-green-400 flex items-center"
                     >
                       <svg
