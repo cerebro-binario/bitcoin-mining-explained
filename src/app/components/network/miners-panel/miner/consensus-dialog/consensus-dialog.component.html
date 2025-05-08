@@ -134,9 +134,21 @@
 
         <!-- Versão do Consenso -->
         <div *ngIf="mode !== 'creating'">
-          <label class="block text-sm font-medium text-zinc-400 mb-1">
-            Versão do Consenso
-          </label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-sm font-medium text-zinc-400">
+              Versão do Consenso
+            </label>
+            <button
+              *ngIf="mode === 'viewing'"
+              type="button"
+              class="text-blue-500 hover:text-blue-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
+              (click)="startEditing()"
+              aria-label="Criar nova versão de consenso"
+              title="Criar nova versão de consenso"
+            >
+              Criar nova versão
+            </button>
+          </div>
           <div class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
               <p-select
@@ -221,13 +233,6 @@
                   </div>
                 </ng-template>
               </p-select>
-              <button
-                *ngIf="mode === 'viewing'"
-                class="ml-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition whitespace-nowrap"
-                (click)="startEditing()"
-              >
-                Criar versão
-              </button>
             </div>
             <p class="mt-1 text-xs text-zinc-500">
               Versão das regras de consenso (atualizada automaticamente)
