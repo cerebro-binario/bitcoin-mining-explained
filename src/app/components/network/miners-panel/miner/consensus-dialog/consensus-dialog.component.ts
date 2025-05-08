@@ -8,8 +8,10 @@ import {
   Output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { ToastModule } from 'primeng/toast';
 import { Subject, takeUntil } from 'rxjs';
 import {
   calculateConsensusVersionHash,
@@ -36,7 +38,9 @@ interface GroupedConsensusVersions {
     SelectModule,
     ForkWarningComponent,
     MessageModule,
+    ToastModule,
   ],
+  providers: [MessageService],
   templateUrl: './consensus-dialog.component.html',
   styleUrls: ['./consensus-dialog.component.scss'],
 })
@@ -67,7 +71,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   paramChanged = false;
 
-  constructor(private consensusService: ConsensusService) {}
+  constructor(
+    private consensusService: ConsensusService,
+    private messageService: MessageService
+  ) {}
 
   ngOnInit() {
     this.editingParams = { ...this.miner.consensus };
@@ -115,8 +122,19 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         this.consensusService.versions,
         this.miner.localConsensusVersions
       );
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sucesso',
+        detail: `Versão v${this.editingParams.version} criada com sucesso e já esta em uso!`,
+        life: 6000,
+      });
     } else {
-      this.error = 'Erro ao criar versão do consenso. Tente novamente.';
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao criar versão do consenso. Tente novamente.',
+        life: 6000,
+      });
     }
 
     this.isEditing = false;
@@ -193,8 +211,15 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
+    this.miner.consensus = this.editingParams;
     this.mode = 'viewing';
     this.clearMessages();
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Sucesso',
+      detail: `Versão v${this.editingParams.version} agora está em uso!`,
+      life: 6000,
+    });
   }
 
   cancelVersionChange() {
