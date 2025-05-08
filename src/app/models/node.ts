@@ -1,6 +1,7 @@
 import * as CryptoJS from 'crypto-js';
 import { Block, BlockNode, Transaction } from './block.model';
 import {
+  calculateConsensusInstanceHash,
   calculateConsensusVersionHash,
   ConsensusParameters,
   DEFAULT_CONSENSUS,
@@ -381,8 +382,9 @@ export class Node {
 
   createConsensusVersion(consensus: ConsensusParameters) {
     consensus.isLocal = true;
-
+    consensus.minerId = this.id;
     consensus.hash = calculateConsensusVersionHash(consensus);
+    consensus.instanceHash = calculateConsensusInstanceHash(consensus);
     const existingVersion = this.localConsensusVersions.find(
       (v) => v.hash === consensus.hash
     );

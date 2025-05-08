@@ -84,7 +84,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.consensusService.versions$
       .pipe(takeUntil(this.destroy$))
       .subscribe((versions) => {
-        this.updateVersionList(versions, this.miner.localConsensusVersions);
+        this.updateVersionList(versions);
       });
   }
 
@@ -118,10 +118,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     const created = this.miner.createConsensusVersion(this.editingParams);
     if (created) {
       this.miner.consensus = this.editingParams;
-      this.updateVersionList(
-        this.consensusService.versions,
-        this.miner.localConsensusVersions
-      );
+
+      // Atualizar a lista de versões, já que se trata de uma versão local (ainda não publicada)
+      this.updateVersionList(this.consensusService.versions);
+
       this.messageService.add({
         severity: 'success',
         summary: 'Sucesso',
@@ -202,7 +202,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     if (event.value) {
       const selected = event.value as ConsensusParameters;
       if (selected.version !== this.miner.consensus.version) {
-        this.editingParams = { ...event.value };
+        this.editingParams = { ...selected };
         this.mode = 'confirming';
       } else {
         this.mode = 'viewing';
@@ -292,10 +292,9 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     return this.consolidatedFork.params.includes(this.getParamLabel(param));
   }
 
-  private updateVersionList(
-    networkVersions: ConsensusParameters[],
-    localVersions: ConsensusParameters[]
-  ) {
+  private updateVersionList(networkVersions: ConsensusParameters[]) {
+    this.handleDuplicatedAndConflictedVersions(networkVersions);
+
     this.versionsByGroup = [
       {
         label: 'Rede',
@@ -303,7 +302,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       },
       {
         label: 'Local',
-        items: localVersions,
+        items: this.miner.localConsensusVersions,
       },
     ].filter((group) => group.items.length > 0);
 
@@ -314,6 +313,32 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     } else {
       this.versions = [];
     }
+  }
+
+  private handleDuplicatedAndConflictedVersions(
+    networkVersions: ConsensusParameters[]
+  ) {
+    // Remover a versão local se ela foi publicada na rede pelo mesmo miner (duplicada)
+    // e marcar a versão local como conflitante se ela foi publicada na rede por outro miner (conflito)
+    this.miner.localConsensusVersions =
+      this.miner.localConsensusVersions.filter(
+        (v) =>
+          !networkVersions.some((nv) => {
+            const sameHash = nv.hash === v.hash;
+            const sameMiner = nv.minerId === v.minerId;
+            const remove = sameHash && sameMiner;
+
+            if (sameHash && !sameMiner) {
+              v.conflictVersion = nv.version;
+            }
+
+            if (remove && this.miner.consensus.hash === v.hash) {
+              this.miner.consensus = this.editingParams = { ...nv };
+            }
+
+            return remove;
+          })
+      );
   }
 
   private checkForExistingVersion() {
@@ -341,8 +366,25 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   publishVersion() {
-    this.consensusService.publishConsensus(this.editingParams);
-    this.info = 'Versão publicada na rede!';
+    const success = this.consensusService.publishConsensus(this.editingParams);
+
+    if (!success) {
+      // Se não foi publicado, exibir mensagem de erro
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao publicar versão na rede. Tente novamente.',
+        life: 6000,
+      });
+      return;
+    }
+
+    this.messageService.add({
+      severity: 'success',
+      summary: `Versão v${this.editingParams.version} publicada na rede!`,
+      detail: 'Outros nodes poderão atualizar para a nova versão.',
+      life: 6000,
+    });
   }
 
   ngOnDestroy() {

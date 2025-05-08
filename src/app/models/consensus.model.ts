@@ -15,6 +15,12 @@ export interface ConsensusParameters {
   timestamp: Date;
   // Whether this is a local version or not
   isLocal: boolean;
+  // The id of the miner that published this version
+  minerId?: number;
+  // The hash of the version of the consensus rules that this miner is conflicting with
+  conflictVersion?: string;
+  // The hash of the instance of the version of the consensus rules
+  instanceHash?: string;
 }
 
 // Default Bitcoin-like consensus parameters
@@ -39,5 +45,12 @@ export function calculateConsensusVersionHash(
     maxTransactionsPerBlock: params.maxTransactionsPerBlock,
     maxBlockSize: params.maxBlockSize,
   });
+  return CryptoJS.SHA256(data).toString();
+}
+
+export function calculateConsensusInstanceHash(
+  params: ConsensusParameters
+): string {
+  const data = JSON.stringify(params);
   return CryptoJS.SHA256(data).toString();
 }
