@@ -17,7 +17,7 @@ import {
   DEFAULT_CONSENSUS,
 } from '../../../../../models/consensus.model';
 import { Node } from '../../../../../models/node';
-import { BitcoinNetworkService } from '../../../../../services/bitcoin-network.service';
+import { ConsensusService } from '../../../../../services/consensus.service';
 import { ForkWarningComponent } from './fork-warning.component';
 
 type ForkType = 'none' | 'soft' | 'hard';
@@ -64,19 +64,17 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   @Input() miner!: Node;
 
   @Output() close = new EventEmitter<void>();
-  @Output() save = new EventEmitter<ConsensusParameters>();
-  @Output() publish = new EventEmitter<void>();
 
   paramChanged = false;
 
-  constructor(private network: BitcoinNetworkService) {}
+  constructor(private consensusService: ConsensusService) {}
 
   ngOnInit() {
     this.editingParams = { ...this.miner.consensus };
     this.originalParams = { ...this.miner.consensus };
     this.clearMessages();
 
-    this.network.consensusVersions$
+    this.consensusService.versions$
       .pipe(takeUntil(this.destroy$))
       .subscribe((versions) => {
         this.updateVersionList(versions, this.miner.localConsensusVersions);
@@ -114,7 +112,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     if (created) {
       this.miner.consensus = this.editingParams;
       this.updateVersionList(
-        this.network.consensusVersions,
+        this.consensusService.versions,
         this.miner.localConsensusVersions
       );
     } else {
@@ -134,7 +132,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
-    this.save.emit(this.editingParams);
     this.mode = 'viewing';
     this.clearMessages();
   }
@@ -298,7 +295,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     const currentHash = calculateConsensusVersionHash(this.editingParams);
 
     this.existingVersion =
-      this.network.consensusVersions.find((v) => v.hash === currentHash) ||
+      this.consensusService.versions.find((v) => v.hash === currentHash) ||
       this.miner.localConsensusVersions.find((v) => v.hash === currentHash);
 
     if (this.existingVersion) {
@@ -316,6 +313,11 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       this.clearMessages();
       this.updateConsolidatedFork();
     }
+  }
+
+  publishVersion() {
+    this.consensusService.publishConsensus(this.editingParams);
+    this.info = 'Versão publicada na rede!';
   }
 
   ngOnDestroy() {

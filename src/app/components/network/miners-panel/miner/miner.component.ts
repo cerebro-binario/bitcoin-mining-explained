@@ -12,7 +12,6 @@ import { Block, Transaction } from '../../../../models/block.model';
 import { ConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
-import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
@@ -71,13 +70,10 @@ export class MinerComponent {
 
   constructor(
     private addressService: AddressService,
-    private elRef: ElementRef,
-    private bitcoinNetworkService: BitcoinNetworkService
+    private elRef: ElementRef
   ) {}
 
   ngOnInit() {
-    this.networkVersions$ = this.bitcoinNetworkService.consensusVersions$;
-
     // Reinicia a mineração caso estivesse minerando
     if (this.miner.isMining) {
       // Para garantir que não haja intervalos residuais
@@ -310,13 +306,5 @@ export class MinerComponent {
     } else {
       this.miner.consensus = version;
     }
-  }
-
-  publishConsensus() {
-    this.bitcoinNetworkService.publishConsensus(this.miner.consensus);
-  }
-
-  onConsensusDialogPublish() {
-    this.publishConsensus();
   }
 }
