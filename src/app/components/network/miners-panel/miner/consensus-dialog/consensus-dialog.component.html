@@ -1,0 +1,344 @@
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div
+    class="flex flex-col bg-zinc-800 rounded-lg shadow-xl w-full max-w-2xl h-5/6 mx-4"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-zinc-700">
+      <h3 class="text-lg font-semibold text-blue-400">
+        Parâmetros de Consenso
+      </h3>
+      <button
+        class="text-zinc-400 hover:text-zinc-200 transition"
+        (click)="close.emit()"
+      >
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 space-y-4 flex-1 overflow-y-auto">
+      <div class="space-y-4">
+        <div *ngIf="mode === 'creating'">
+          <h3 class="text-lg font-semibold text-blue-400">
+            Nova versão
+            <span class="text-xs text-zinc-400 ml-2 italic"
+              >(baseada em v{{ miner.consensus.version }})</span
+            >
+          </h3>
+
+          <ng-container *ngIf="existingVersion && paramChanged">
+            <ng-container
+              *ngTemplateOutlet="existingVersionInfo"
+            ></ng-container>
+          </ng-container>
+        </div>
+        <!-- Intervalo de Ajuste -->
+        <div>
+          <label
+            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+          >
+            Intervalo de Ajuste de Dificuldade
+            <span
+              *ngIf="isParamInFork('difficultyAdjustmentInterval')"
+              class="text-yellow-400"
+              title="Este parâmetro está causando o fork!"
+              >⚠️</span
+            >
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [value]="editingParams.difficultyAdjustmentInterval"
+              [disabled]="!isEditing"
+              (input)="onIntervalChange($event)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              min="1"
+            />
+            <span class="text-sm text-zinc-400">blocos</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Número de blocos entre cada ajuste de dificuldade
+          </p>
+        </div>
+
+        <!-- Máximo de Transações -->
+        <div>
+          <label
+            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+          >
+            Máximo de Transações por Bloco
+            <span
+              *ngIf="isParamInFork('maxTransactionsPerBlock')"
+              class="text-yellow-400"
+              title="Este parâmetro está causando o fork!"
+              >⚠️</span
+            >
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [value]="editingParams.maxTransactionsPerBlock"
+              [disabled]="!isEditing"
+              (input)="onMaxTransactionsChange($event)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              min="0"
+            />
+            <span class="text-sm text-zinc-400">transações</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Limite de transações por bloco (0 = sem limite)
+          </p>
+        </div>
+
+        <!-- Tamanho Máximo do Bloco -->
+        <div>
+          <label
+            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+          >
+            Tamanho Máximo do Bloco
+            <span
+              *ngIf="isParamInFork('maxBlockSize')"
+              class="text-yellow-400"
+              title="Este parâmetro está causando o fork!"
+              >⚠️</span
+            >
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [value]="editingParams.maxBlockSize"
+              [disabled]="!isEditing"
+              (input)="onMaxBlockSizeChange($event)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              min="0.1"
+              step="0.1"
+            />
+            <span class="text-sm text-zinc-400">MB</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Tamanho máximo do bloco em megabytes
+          </p>
+        </div>
+
+        <!-- Versão do Consenso -->
+        <div *ngIf="mode !== 'creating'">
+          <label class="block text-sm font-medium text-zinc-400 mb-1">
+            Versão do Consenso
+          </label>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+              <p-select
+                [options]="isGrouped ? versionsByGroup : versions"
+                [(ngModel)]="editingParams"
+                (onChange)="onVersionSelect($event)"
+                optionLabel="version"
+                [group]="isGrouped"
+                class="w-full bg-zinc-900 border border-zinc-700"
+              >
+                <ng-template #selectedItem let-selectedOption>
+                  <div class="flex items-center">
+                    <span
+                      *ngIf="selectedOption.version === miner.consensus.version"
+                      class="mr-2 text-green-400 flex items-center"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        fill="none"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M4 8.5l3 3 5-5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                    <span class="text-white"
+                      >v{{ selectedOption.version }}</span
+                    >
+                    <span
+                      *ngIf="selectedOption.isLocal"
+                      class="ml-2 text-xs text-zinc-400 italic"
+                    >
+                      (local)</span
+                    >
+                    <span
+                      *ngIf="selectedOption.version === miner.consensus.version"
+                      class="ml-2 text-xs text-zinc-400 italic"
+                    >
+                      (em uso)</span
+                    >
+                  </div>
+                </ng-template>
+                <ng-template let-group pTemplate="group">
+                  <div class="flex items-center">
+                    <span class="text-zinc-400">{{ group.label }}</span>
+                  </div>
+                </ng-template>
+                <ng-template let-consensus pTemplate="item">
+                  <div class="flex items-center">
+                    <span
+                      *ngIf="consensus.version === miner.consensus.version"
+                      class="mr-2 text-green-400 flex items-center"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        fill="none"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M4 8.5l3 3 5-5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                    <span class="text-white">v{{ consensus.version }}</span>
+                    <span
+                      *ngIf="consensus.isLocal"
+                      class="ml-2 text-xs text-zinc-400 italic"
+                    >
+                      (local)
+                    </span>
+                  </div>
+                </ng-template>
+              </p-select>
+              <button
+                *ngIf="mode === 'viewing'"
+                class="ml-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition whitespace-nowrap"
+                (click)="startEditing()"
+              >
+                Criar versão
+              </button>
+            </div>
+            <p class="mt-1 text-xs text-zinc-500">
+              Versão das regras de consenso (atualizada automaticamente)
+            </p>
+          </div>
+        </div>
+
+        <!-- Última Atualização -->
+        <div>
+          <label class="block text-sm font-medium text-zinc-400 mb-1">
+            Última Atualização
+          </label>
+          <div class="text-sm text-zinc-300">
+            {{ editingParams.timestamp | date : "dd/MM/yyyy HH:mm:ss" }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div
+      class="relative flex items-end justify-between gap-6 p-6 border-t border-zinc-700"
+    >
+      <div>
+        <app-fork-warning
+          [type]="consolidatedFork.type"
+          *ngIf="consolidatedFork.type !== 'none'"
+        >
+          <div *ngIf="consolidatedFork.params.length > 0" class="mt-1">
+            Parâmetros alterados:
+            <b>{{ consolidatedFork.params.join(", ") }}</b>
+          </div>
+        </app-fork-warning>
+        <ng-container *ngIf="existingVersion && paramChanged">
+          <ng-container *ngTemplateOutlet="existingVersionInfo"></ng-container>
+        </ng-container>
+        <p-message severity="error" *ngIf="error">
+          {{ error }}
+        </p-message>
+      </div>
+      <div class="h-full flex items-end gap-3 whitespace-nowrap">
+        @switch (mode) { @case ('creating') {
+        <!-- Editando nova versão local -->
+        <button
+          class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+          (click)="cancelEdit()"
+        >
+          Cancelar
+        </button>
+        <button
+          [disabled]="existingVersion"
+          class="px-4 py-2 rounded bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white not-disabled:hover:bg-green-700 transition"
+          (click)="confirmEdit()"
+        >
+          Confirmar nova versão
+        </button>
+        } @case ('confirming') {
+        <!-- Mudando versão local para uma versão existente -->
+        <button
+          class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+          (click)="cancelVersionChange()"
+        >
+          Cancelar
+        </button>
+        <button
+          class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
+          (click)="confirmVersionChange()"
+        >
+          Confirmar
+        </button>
+        } @case('viewing'){
+        <!-- Estado padrão inicial do dialog -->
+        <button
+          class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+          (click)="close.emit()"
+        >
+          Fechar</button
+        >}}
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #existingVersionInfo>
+  <div
+    *ngIf="existingVersion"
+    class="mt-4 p-3 rounded bg-blue-900/40 border border-blue-700 flex items-center gap-3"
+  >
+    <span class="text-blue-300">
+      Já existe uma versão idêntica:
+      <b>v{{ existingVersion.version }}</b>
+      <i
+        *ngIf="existingVersion.isLocal"
+        class="ml-2 text-xs text-zinc-400 italic"
+        >(local)</i
+      >
+    </span>
+    <a
+      *ngIf="
+        existingVersion.version !== miner.consensus.version;
+        else sameVersion
+      "
+      class="underline ml-4 text-blue-400 hover:text-blue-300 focus:text-blue-200 transition-colors italic cursor-pointer outline-none"
+      (click)="useExistingVersion()"
+      role="button"
+      tabindex="0"
+    >
+      Usar esta versão
+    </a>
+    <ng-template #sameVersion>
+      <span class="ml-4 text-blue-300 italic">(atualmente em uso)</span>
+    </ng-template>
+  </div>
+</ng-template>

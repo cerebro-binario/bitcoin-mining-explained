@@ -1,263 +1,98 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import {
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
+import { Subject, takeUntil } from 'rxjs';
+import {
+  calculateConsensusVersionHash,
   ConsensusParameters,
   DEFAULT_CONSENSUS,
 } from '../../../../../models/consensus.model';
+import { Node } from '../../../../../models/node';
+import { BitcoinNetworkService } from '../../../../../services/bitcoin-network.service';
 import { ForkWarningComponent } from './fork-warning.component';
 
 type ForkType = 'none' | 'soft' | 'hard';
 
+interface GroupedConsensusVersions {
+  label: string;
+  items: ConsensusParameters[];
+}
+
 @Component({
   selector: 'app-consensus-dialog',
   standalone: true,
-  imports: [CommonModule, ForkWarningComponent],
-  template: `
-    <div
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-    >
-      <div
-        class="flex flex-col bg-zinc-800 rounded-lg shadow-xl w-full max-w-2xl h-5/6 mx-4"
-      >
-        <!-- Header -->
-        <div
-          class="flex items-center justify-between p-6 border-b border-zinc-700"
-        >
-          <h3 class="text-lg font-semibold text-blue-400">
-            Parâmetros de Consenso
-          </h3>
-          <button
-            class="text-zinc-400 hover:text-zinc-200 transition"
-            (click)="close.emit()"
-          >
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Content -->
-        <div class="p-6 space-y-4 flex-1 overflow-y-auto">
-          <div class="space-y-4">
-            <!-- Intervalo de Ajuste -->
-            <div>
-              <label
-                class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
-              >
-                Intervalo de Ajuste de Dificuldade
-                <span
-                  *ngIf="isParamInFork('difficultyAdjustmentInterval')"
-                  class="text-yellow-400"
-                  title="Este parâmetro está causando o fork!"
-                  >⚠️</span
-                >
-              </label>
-              <div class="flex items-center gap-2">
-                <input
-                  type="number"
-                  [value]="editingParams.difficultyAdjustmentInterval"
-                  [disabled]="!isEditing"
-                  (input)="onIntervalChange($event)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-                  min="1"
-                />
-                <span class="text-sm text-zinc-400">blocos</span>
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Número de blocos entre cada ajuste de dificuldade
-              </p>
-            </div>
-
-            <!-- Máximo de Transações -->
-            <div>
-              <label
-                class=" text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
-              >
-                Máximo de Transações por Bloco
-                <span
-                  *ngIf="isParamInFork('maxTransactionsPerBlock')"
-                  class="text-yellow-400"
-                  title="Este parâmetro está causando o fork!"
-                  >⚠️</span
-                >
-              </label>
-              <div class="flex items-center gap-2">
-                <input
-                  type="number"
-                  [value]="editingParams.maxTransactionsPerBlock"
-                  [disabled]="!isEditing"
-                  (input)="onMaxTransactionsChange($event)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-                  min="0"
-                />
-                <span class="text-sm text-zinc-400">transações</span>
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Limite de transações por bloco (0 = sem limite)
-              </p>
-            </div>
-
-            <!-- Tamanho Máximo do Bloco -->
-            <div>
-              <label
-                class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
-              >
-                Tamanho Máximo do Bloco
-                <span
-                  *ngIf="isParamInFork('maxBlockSize')"
-                  class="text-yellow-400"
-                  title="Este parâmetro está causando o fork!"
-                  >⚠️</span
-                >
-              </label>
-              <div class="flex items-center gap-2">
-                <input
-                  type="number"
-                  [value]="editingParams.maxBlockSize"
-                  [disabled]="!isEditing"
-                  (input)="onMaxBlockSizeChange($event)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-                  min="0.1"
-                  step="0.1"
-                />
-                <span class="text-sm text-zinc-400">MB</span>
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Tamanho máximo do bloco em megabytes
-              </p>
-            </div>
-
-            <!-- Versão do Consenso -->
-            <div>
-              <label class="block text-sm font-medium text-zinc-400 mb-1">
-                Versão do Consenso
-              </label>
-              <div class="flex items-center gap-2">
-                <input
-                  type="text"
-                  [value]="editingParams.consensusVersion"
-                  disabled
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white opacity-50"
-                />
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Versão das regras de consenso (atualizada automaticamente)
-              </p>
-            </div>
-
-            <!-- Última Atualização -->
-            <div>
-              <label class="block text-sm font-medium text-zinc-400 mb-1">
-                Última Atualização
-              </label>
-              <div class="text-sm text-zinc-300">
-                {{ editingParams.timestamp | date : 'dd/MM/yyyy HH:mm:ss' }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div
-          class="flex items-center justify-end gap-2 p-6 border-t border-zinc-700"
-        >
-          <app-fork-warning
-            [type]="consolidatedFork.type"
-            *ngIf="consolidatedFork.type !== 'none'"
-          >
-            <div *ngIf="consolidatedFork.params.length > 0" class="mt-1">
-              Parâmetros alterados:
-              <b>{{ consolidatedFork.params.join(', ') }}</b>
-            </div>
-          </app-fork-warning>
-          <div class="flex gap-2">
-            <button
-              *ngIf="isEditing"
-              class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
-              (click)="cancelEdit()"
-            >
-              Cancelar
-            </button>
-            <button
-              *ngIf="!isEditing"
-              class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-              (click)="startEditing()"
-            >
-              Editar
-            </button>
-            <button
-              *ngIf="isEditing"
-              class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
-              (click)="saveChanges()"
-            >
-              Salvar
-            </button>
-            <button
-              *ngIf="!isEditing"
-              class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
-              (click)="close.emit()"
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `,
+  imports: [
+    CommonModule,
+    FormsModule,
+    SelectModule,
+    ForkWarningComponent,
+    MessageModule,
   ],
+  templateUrl: './consensus-dialog.component.html',
+  styleUrls: ['./consensus-dialog.component.scss'],
 })
-export class ConsensusDialogComponent {
-  @Input() consensus!: ConsensusParameters;
-  @Output() close = new EventEmitter<void>();
-  @Output() save = new EventEmitter<ConsensusParameters>();
+export class ConsensusDialogComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  private originalParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
 
+  mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
   isEditing = false;
   editingParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
-  private originalParams: ConsensusParameters = { ...DEFAULT_CONSENSUS };
+  isGrouped = false;
+  versions: ConsensusParameters[] = [];
+  versionsByGroup: GroupedConsensusVersions[] = [];
+  existingVersion?: ConsensusParameters;
 
   // Scalable fork warning system
   forkWarnings: { [param: string]: ForkType } = {};
-
   consolidatedFork: { type: ForkType; params: string[] } = {
     type: 'none',
     params: [],
   };
 
+  error: string | null = null;
+  info: string | null = null;
+  @Input() miner!: Node;
+
+  @Output() close = new EventEmitter<void>();
+  @Output() save = new EventEmitter<ConsensusParameters>();
+  @Output() publish = new EventEmitter<void>();
+
+  paramChanged = false;
+
+  constructor(private network: BitcoinNetworkService) {}
+
   ngOnInit() {
-    this.editingParams = { ...this.consensus };
-    this.originalParams = { ...this.consensus };
-    this.clearWarnings();
+    this.editingParams = { ...this.miner.consensus };
+    this.originalParams = { ...this.miner.consensus };
+    this.clearMessages();
+
+    this.network.consensusVersions$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((versions) => {
+        this.updateVersionList(versions, this.miner.localConsensusVersions);
+      });
   }
 
   startEditing() {
+    this.clearMessages();
+    this.checkForExistingVersion();
+    this.paramChanged = false;
+    this.mode = 'creating';
     this.isEditing = true;
     this.originalParams = { ...this.editingParams };
-    this.clearWarnings();
   }
 
-  cancelEdit() {
-    this.editingParams = { ...this.consensus };
-    this.isEditing = false;
-    this.clearWarnings();
-  }
-
-  saveChanges() {
+  confirmEdit() {
     // Atualize o consolidatedFork antes de salvar, se necessário
     this.updateConsolidatedFork();
 
@@ -272,13 +107,43 @@ export class ConsensusDialogComponent {
         this.originalParams.maxTransactionsPerBlock ||
       this.editingParams.maxBlockSize !== this.originalParams.maxBlockSize
     ) {
-      // Caso queira garantir que qualquer alteração sem fork ainda incrementa PATCH
       this.incrementPatchVersion();
     }
 
-    this.save.emit(this.editingParams);
+    const created = this.miner.createConsensusVersion(this.editingParams);
+    if (created) {
+      this.miner.consensus = this.editingParams;
+      this.updateVersionList(
+        this.network.consensusVersions,
+        this.miner.localConsensusVersions
+      );
+    } else {
+      this.error = 'Erro ao criar versão do consenso. Tente novamente.';
+    }
+
     this.isEditing = false;
-    this.clearWarnings();
+    this.mode = 'viewing';
+    this.clearMessages();
+  }
+
+  cancelEdit() {
+    this.editingParams = { ...this.miner.consensus };
+    this.isEditing = false;
+    this.mode = 'viewing';
+    this.clearMessages();
+  }
+
+  confirmVersionChange() {
+    this.save.emit(this.editingParams);
+    this.mode = 'viewing';
+    this.clearMessages();
+  }
+
+  cancelVersionChange() {
+    this.editingParams = { ...this.miner.consensus };
+    this.isEditing = false;
+    this.mode = 'viewing';
+    this.clearMessages();
   }
 
   onIntervalChange(event: Event) {
@@ -292,6 +157,8 @@ export class ConsensusDialogComponent {
           : 'none';
       this.updateConsolidatedFork();
     }
+    this.paramChanged = true;
+    this.checkForExistingVersion();
   }
 
   onMaxTransactionsChange(event: Event) {
@@ -303,6 +170,8 @@ export class ConsensusDialogComponent {
         value !== DEFAULT_CONSENSUS.maxTransactionsPerBlock ? 'soft' : 'none';
       this.updateConsolidatedFork();
     }
+    this.paramChanged = true;
+    this.checkForExistingVersion();
   }
 
   onMaxBlockSizeChange(event: Event) {
@@ -319,32 +188,51 @@ export class ConsensusDialogComponent {
       }
       this.updateConsolidatedFork();
     }
+    this.paramChanged = true;
+    this.checkForExistingVersion();
   }
 
-  private clearWarnings() {
+  onVersionSelect(event: any) {
+    this.clearMessages();
+    this.updateConsolidatedFork();
+
+    if (event.value) {
+      const selected = event.value as ConsensusParameters;
+      if (selected.version !== this.miner.consensus.version) {
+        this.editingParams = { ...event.value };
+        this.mode = 'confirming';
+      } else {
+        this.mode = 'viewing';
+      }
+    }
+  }
+
+  private clearMessages() {
+    this.error = null;
+    this.info = null;
     this.forkWarnings = {};
     this.updateConsolidatedFork();
   }
 
   private incrementMajorVersion() {
-    const versionParts = this.editingParams.consensusVersion.split('.');
+    const versionParts = this.editingParams.version.split('.');
     versionParts[0] = (parseInt(versionParts[0]) + 1).toString();
     versionParts[1] = '0';
     versionParts[2] = '0';
-    this.editingParams.consensusVersion = versionParts.join('.');
+    this.editingParams.version = versionParts.join('.');
   }
 
   private incrementMinorVersion() {
-    const versionParts = this.editingParams.consensusVersion.split('.');
+    const versionParts = this.editingParams.version.split('.');
     versionParts[1] = (parseInt(versionParts[1]) + 1).toString();
     versionParts[2] = '0';
-    this.editingParams.consensusVersion = versionParts.join('.');
+    this.editingParams.version = versionParts.join('.');
   }
 
   private incrementPatchVersion() {
-    const versionParts = this.editingParams.consensusVersion.split('.');
+    const versionParts = this.editingParams.version.split('.');
     versionParts[2] = (parseInt(versionParts[2]) + 1).toString();
-    this.editingParams.consensusVersion = versionParts.join('.');
+    this.editingParams.version = versionParts.join('.');
   }
 
   private updateConsolidatedFork() {
@@ -380,5 +268,58 @@ export class ConsensusDialogComponent {
 
   isParamInFork(param: string): boolean {
     return this.consolidatedFork.params.includes(this.getParamLabel(param));
+  }
+
+  private updateVersionList(
+    networkVersions: ConsensusParameters[],
+    localVersions: ConsensusParameters[]
+  ) {
+    this.versionsByGroup = [
+      {
+        label: 'Rede',
+        items: networkVersions,
+      },
+      {
+        label: 'Local',
+        items: localVersions,
+      },
+    ].filter((group) => group.items.length > 0);
+
+    this.isGrouped = this.versionsByGroup.length > 1;
+
+    if (!this.isGrouped) {
+      this.versions = this.versionsByGroup.flatMap((group) => group.items);
+    } else {
+      this.versions = [];
+    }
+  }
+
+  private checkForExistingVersion() {
+    const currentHash = calculateConsensusVersionHash(this.editingParams);
+
+    this.existingVersion =
+      this.network.consensusVersions.find((v) => v.hash === currentHash) ||
+      this.miner.localConsensusVersions.find((v) => v.hash === currentHash);
+
+    if (this.existingVersion) {
+      const from = this.existingVersion.isLocal ? 'no minerador' : 'na rede';
+      this.info = `Versão v${this.existingVersion.version} já existe ${from} com os mesmos parâmetros.`;
+    } else {
+      this.info = null;
+    }
+  }
+
+  useExistingVersion() {
+    if (this.existingVersion) {
+      this.editingParams = { ...this.existingVersion };
+      this.mode = 'confirming';
+      this.clearMessages();
+      this.updateConsolidatedFork();
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

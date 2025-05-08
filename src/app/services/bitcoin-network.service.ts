@@ -1,13 +1,25 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Block, BlockNode } from '../models/block.model';
+import {
+  ConsensusParameters,
+  DEFAULT_CONSENSUS,
+} from '../models/consensus.model';
 import { Node } from '../models/node';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
   private readonly nodesSubject = new BehaviorSubject<Node[]>([]);
+  private readonly consensusVersionsSubject = new BehaviorSubject<
+    ConsensusParameters[]
+  >([{ ...DEFAULT_CONSENSUS }]);
+
   nodes$ = this.nodesSubject.asObservable();
-  nodes: Node[] = [];
+  nodes: Node[] = this.nodesSubject.getValue();
+  consensusVersions$ = this.consensusVersionsSubject.asObservable();
+  consensusVersions: ConsensusParameters[] =
+    this.consensusVersionsSubject.getValue();
+
   private nextId = 1;
   private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
 
@@ -486,5 +498,11 @@ export class BitcoinNetworkService {
   private findBlockByHash(hash: string): Block | undefined {
     // Implementação simplificada - na prática precisaria percorrer a blockchain
     return undefined;
+  }
+
+  publishConsensus(consensus: ConsensusParameters) {
+    if (!this.consensusVersions.some((v) => v.version === consensus.version)) {
+      this.consensusVersions.push({ ...consensus });
+    }
   }
 }

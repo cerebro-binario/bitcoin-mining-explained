@@ -7,10 +7,12 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
 import { ConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
+import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
@@ -37,6 +39,8 @@ interface HashRateOption {
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
+
+  networkVersions$!: Observable<ConsensusParameters[]>;
 
   @Input() miner!: Node;
   @Output() miningChanged = new EventEmitter<Node>();
@@ -67,10 +71,13 @@ export class MinerComponent {
 
   constructor(
     private addressService: AddressService,
-    private elRef: ElementRef
+    private elRef: ElementRef,
+    private bitcoinNetworkService: BitcoinNetworkService
   ) {}
 
   ngOnInit() {
+    this.networkVersions$ = this.bitcoinNetworkService.consensusVersions$;
+
     // Reinicia a mineração caso estivesse minerando
     if (this.miner.isMining) {
       // Para garantir que não haja intervalos residuais
@@ -289,7 +296,27 @@ export class MinerComponent {
   }
 
   onConsensusDialogSave(newParams: ConsensusParameters) {
-    this.miner.consensus = { ...newParams };
-    this.showConsensusDialog = false;
+    const version = this.miner.localConsensusVersions.find(
+      (c) => c.hash === newParams.hash
+    );
+
+    if (!version) {
+      newParams.isLocal = true;
+      this.miner.consensus = { ...newParams };
+      this.miner.localConsensusVersions = [
+        ...this.miner.localConsensusVersions,
+        { ...newParams },
+      ];
+    } else {
+      this.miner.consensus = version;
+    }
+  }
+
+  publishConsensus() {
+    this.bitcoinNetworkService.publishConsensus(this.miner.consensus);
+  }
+
+  onConsensusDialogPublish() {
+    this.publishConsensus();
   }
 }
