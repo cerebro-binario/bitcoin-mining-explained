@@ -131,18 +131,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
-  confirmVersionChange() {
-    this.mode = 'viewing';
-    this.clearMessages();
-  }
-
-  cancelVersionChange() {
-    this.editingParams = { ...this.miner.consensus };
-    this.isEditing = false;
-    this.mode = 'viewing';
-    this.clearMessages();
-  }
-
   onIntervalChange(event: Event) {
     const input = event.target as HTMLInputElement;
     const value = parseInt(input.value);
@@ -202,6 +190,18 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         this.mode = 'viewing';
       }
     }
+  }
+
+  confirmVersionChange() {
+    this.mode = 'viewing';
+    this.clearMessages();
+  }
+
+  cancelVersionChange() {
+    this.editingParams = { ...this.miner.consensus };
+    this.isEditing = false;
+    this.mode = 'viewing';
+    this.clearMessages();
   }
 
   private clearMessages() {

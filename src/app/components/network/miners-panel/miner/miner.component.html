@@ -516,4 +516,5 @@
 <app-consensus-dialog
   *ngIf="showConsensusDialog"
   [miner]="miner"
+  (close)="onConsensusDialogClose()"
 ></app-consensus-dialog>
