@@ -44,93 +44,6 @@
             ></ng-container>
           </ng-container>
         </div>
-        <!-- Intervalo de Ajuste -->
-        <div>
-          <label
-            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
-          >
-            Intervalo de Ajuste de Dificuldade
-            <span
-              *ngIf="isParamInFork('difficultyAdjustmentInterval')"
-              class="text-yellow-400"
-              title="Este parâmetro está causando o fork!"
-              >⚠️</span
-            >
-          </label>
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              [value]="editingParams.difficultyAdjustmentInterval"
-              [disabled]="!isEditing"
-              (input)="onIntervalChange($event)"
-              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-              min="1"
-            />
-            <span class="text-sm text-zinc-400">blocos</span>
-          </div>
-          <p class="mt-1 text-xs text-zinc-500">
-            Número de blocos entre cada ajuste de dificuldade
-          </p>
-        </div>
-
-        <!-- Máximo de Transações -->
-        <div>
-          <label
-            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
-          >
-            Máximo de Transações por Bloco
-            <span
-              *ngIf="isParamInFork('maxTransactionsPerBlock')"
-              class="text-yellow-400"
-              title="Este parâmetro está causando o fork!"
-              >⚠️</span
-            >
-          </label>
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              [value]="editingParams.maxTransactionsPerBlock"
-              [disabled]="!isEditing"
-              (input)="onMaxTransactionsChange($event)"
-              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-              min="0"
-            />
-            <span class="text-sm text-zinc-400">transações</span>
-          </div>
-          <p class="mt-1 text-xs text-zinc-500">
-            Limite de transações por bloco (0 = sem limite)
-          </p>
-        </div>
-
-        <!-- Tamanho Máximo do Bloco -->
-        <div>
-          <label
-            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
-          >
-            Tamanho Máximo do Bloco
-            <span
-              *ngIf="isParamInFork('maxBlockSize')"
-              class="text-yellow-400"
-              title="Este parâmetro está causando o fork!"
-              >⚠️</span
-            >
-          </label>
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              [value]="editingParams.maxBlockSize"
-              [disabled]="!isEditing"
-              (input)="onMaxBlockSizeChange($event)"
-              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-              min="0.1"
-              step="0.1"
-            />
-            <span class="text-sm text-zinc-400">MB</span>
-          </div>
-          <p class="mt-1 text-xs text-zinc-500">
-            Tamanho máximo do bloco em megabytes
-          </p>
-        </div>
 
         <!-- Versão do Consenso -->
         <div *ngIf="mode !== 'creating'">
@@ -262,6 +175,94 @@
               Versão das regras de consenso (atualizada automaticamente)
             </p>
           </div>
+        </div>
+
+        <!-- Intervalo de Ajuste -->
+        <div>
+          <label
+            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+          >
+            Intervalo de Ajuste de Dificuldade
+            <span
+              *ngIf="isParamInFork('difficultyAdjustmentInterval')"
+              class="text-yellow-400"
+              title="Este parâmetro está causando o fork!"
+              >⚠️</span
+            >
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [value]="editingParams.difficultyAdjustmentInterval"
+              [disabled]="!isEditing"
+              (input)="onIntervalChange($event)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              min="1"
+            />
+            <span class="text-sm text-zinc-400">blocos</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Número de blocos entre cada ajuste de dificuldade
+          </p>
+        </div>
+
+        <!-- Máximo de Transações -->
+        <div>
+          <label
+            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+          >
+            Máximo de Transações por Bloco
+            <span
+              *ngIf="isParamInFork('maxTransactionsPerBlock')"
+              class="text-yellow-400"
+              title="Este parâmetro está causando o fork!"
+              >⚠️</span
+            >
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [value]="editingParams.maxTransactionsPerBlock"
+              [disabled]="!isEditing"
+              (input)="onMaxTransactionsChange($event)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              min="0"
+            />
+            <span class="text-sm text-zinc-400">transações</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Limite de transações por bloco (0 = sem limite)
+          </p>
+        </div>
+
+        <!-- Tamanho Máximo do Bloco -->
+        <div>
+          <label
+            class="text-sm font-medium text-zinc-400 mb-1 flex items-center gap-1"
+          >
+            Tamanho Máximo do Bloco
+            <span
+              *ngIf="isParamInFork('maxBlockSize')"
+              class="text-yellow-400"
+              title="Este parâmetro está causando o fork!"
+              >⚠️</span
+            >
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [value]="editingParams.maxBlockSize"
+              [disabled]="!isEditing"
+              (input)="onMaxBlockSizeChange($event)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              min="0.1"
+              step="0.1"
+            />
+            <span class="text-sm text-zinc-400">MB</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Tamanho máximo do bloco em megabytes
+          </p>
         </div>
 
         <!-- Última Atualização -->
