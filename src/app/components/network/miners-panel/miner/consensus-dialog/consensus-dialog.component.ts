@@ -232,6 +232,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private clearMessages() {
     this.error = null;
     this.info = null;
+    this.existingVersion = undefined;
     this.forkWarnings = {};
     this.updateConsolidatedFork();
   }
