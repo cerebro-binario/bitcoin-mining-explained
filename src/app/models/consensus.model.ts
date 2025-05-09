@@ -2,60 +2,110 @@ import * as CryptoJS from 'crypto-js';
 import { CONSENSUS_CONFIG } from '../config/consensus.config';
 
 export interface ConsensusParameters {
-  // The number of blocks between difficulty adjustments
+  version: number;
+  timestamp: number;
   difficultyAdjustmentInterval: number;
-  // Maximum transactions per block
   maxTransactionsPerBlock: number;
-  // Maximum block size
   maxBlockSize: number;
-  // The version of the consensus rules this miner is following
-  version: string;
-  // The hash of the version of the consensus rules this miner is following
-  hash: string;
-  // Timestamp when these parameters were set
-  timestamp: Date;
-  // Whether this is a local version or not
-  isLocal: boolean;
-  // The id of the miner that published this version
-  minerId?: number;
-  // The hash of the version of the consensus rules that this miner is conflicting with
-  conflictVersion?: string;
-  // The hash of the instance of the version of the consensus rules
-  instanceHash?: string;
-  // Tempo alvo de bloco em segundos
   targetBlockTime: number;
+  isLocal?: boolean;
+  minerId?: number;
+  hash?: string;
+  instanceHash?: string;
+  conflictVersion?: boolean;
 }
 
-// Default consensus parameters based on environment
-export const DEFAULT_CONSENSUS: ConsensusParameters = {
-  difficultyAdjustmentInterval: CONSENSUS_CONFIG.difficultyAdjustmentInterval,
-  targetBlockTime: CONSENSUS_CONFIG.targetBlockTime,
-  maxTransactionsPerBlock: CONSENSUS_CONFIG.maxTransactionsPerBlock,
-  maxBlockSize: CONSENSUS_CONFIG.maxBlockSize,
-  isLocal: false,
-  version: '1.0.0',
-  hash: '0000000000000000000000000000000000000000000000000000000000000000',
-  timestamp: new Date(),
+export interface ConsensusEpoch {
+  startHeight: number;
+  endHeight?: number; // undefined significa "até o presente"
+  parameters: ConsensusParameters;
+  hash: string; // Hash único para esta época
+}
+
+export interface ConsensusVersion {
+  version: number;
+  timestamp: number;
+  epochs: ConsensusEpoch[];
+  isLocal?: boolean;
+  minerId?: number;
+  hash: string;
+  instanceHash: string;
+  conflictVersion?: boolean;
+}
+
+// Função para calcular o hash de uma época
+export function calculateEpochHash(epoch: ConsensusEpoch): string {
+  const data = {
+    startHeight: epoch.startHeight,
+    endHeight: epoch.endHeight,
+    parameters: epoch.parameters,
+  };
+  return CryptoJS.SHA256(JSON.stringify(data)).toString();
+}
+
+// Função para calcular o hash de uma versão de consenso
+export function calculateConsensusVersionHash(
+  version: ConsensusVersion
+): string {
+  const data = {
+    version: version.version,
+    timestamp: version.timestamp,
+    epochs: version.epochs.map((e) => e.hash),
+  };
+  return CryptoJS.SHA256(JSON.stringify(data)).toString();
+}
+
+// Função para calcular o hash de instância (inclui minerId)
+export function calculateConsensusInstanceHash(
+  version: ConsensusVersion
+): string {
+  const data = {
+    hash: version.hash,
+    minerId: version.minerId,
+  };
+  return CryptoJS.SHA256(JSON.stringify(data)).toString();
+}
+
+// Função para obter os parâmetros de consenso para uma altura específica
+export function getConsensusForHeight(
+  version: ConsensusVersion,
+  height: number
+): ConsensusParameters {
+  const epoch = version.epochs.find(
+    (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
+  );
+  if (!epoch) {
+    throw new Error(`No consensus parameters found for height ${height}`);
+  }
+  return epoch.parameters;
+}
+
+// Versão padrão do consenso (com uma única época)
+export const DEFAULT_CONSENSUS: ConsensusVersion = {
+  version: 1,
+  timestamp: Date.now(),
+  epochs: [
+    {
+      startHeight: 0,
+      parameters: {
+        version: 1,
+        timestamp: Date.now(),
+        difficultyAdjustmentInterval: 2016,
+        maxTransactionsPerBlock: 0,
+        maxBlockSize: 1,
+        targetBlockTime: 10,
+      },
+      hash: '',
+    },
+  ],
+  hash: '',
+  instanceHash: '',
 };
 
-// Calculate initial hash
+// Inicializa os hashes da versão padrão
+DEFAULT_CONSENSUS.epochs[0].hash = calculateEpochHash(
+  DEFAULT_CONSENSUS.epochs[0]
+);
 DEFAULT_CONSENSUS.hash = calculateConsensusVersionHash(DEFAULT_CONSENSUS);
-
-export function calculateConsensusVersionHash(
-  params: ConsensusParameters
-): string {
-  const data = JSON.stringify({
-    difficultyAdjustmentInterval: params.difficultyAdjustmentInterval,
-    maxTransactionsPerBlock: params.maxTransactionsPerBlock,
-    maxBlockSize: params.maxBlockSize,
-    targetBlockTime: params.targetBlockTime,
-  });
-  return CryptoJS.SHA256(data).toString();
-}
-
-export function calculateConsensusInstanceHash(
-  params: ConsensusParameters
-): string {
-  const data = JSON.stringify(params);
-  return CryptoJS.SHA256(data).toString();
-}
+DEFAULT_CONSENSUS.instanceHash =
+  calculateConsensusInstanceHash(DEFAULT_CONSENSUS);

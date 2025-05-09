@@ -3,8 +3,11 @@ import { Block, BlockNode, Transaction } from './block.model';
 import {
   calculateConsensusInstanceHash,
   calculateConsensusVersionHash,
+  calculateEpochHash,
   ConsensusParameters,
+  ConsensusVersion,
   DEFAULT_CONSENSUS,
+  getConsensusForHeight,
 } from './consensus.model';
 
 export interface Neighbor {
@@ -76,8 +79,8 @@ export class Node {
   isLogsMaximized = false;
 
   // Parâmetros de consenso do nó
-  consensus: ConsensusParameters = { ...DEFAULT_CONSENSUS };
-  localConsensusVersions: ConsensusParameters[] = [];
+  consensus: ConsensusVersion = { ...DEFAULT_CONSENSUS };
+  localConsensusVersions: ConsensusVersion[] = [];
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -128,8 +131,10 @@ export class Node {
 
   // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
   calculateExpectedNBits(height: number): number {
-    const interval = this.consensus.difficultyAdjustmentInterval;
-    const targetBlockTime = this.consensus.targetBlockTime; // em segundos
+    // Obtém os parâmetros de consenso para a altura específica
+    const consensus = getConsensusForHeight(this.consensus, height);
+    const interval = consensus.difficultyAdjustmentInterval;
+    const targetBlockTime = consensus.targetBlockTime; // em segundos
 
     // Se for o bloco gênese ou antes do primeiro ajuste, retorna o valor inicial
     if (height === 0 || height < interval) {
@@ -177,6 +182,17 @@ export class Node {
 
     // Converte o target de volta para nBits
     const newNBits = this.targetToNBits(newTarget);
+
+    console.log(`Ajuste de dificuldade:
+      Altura: ${height}
+      Tempo real: ${actualTime}ms
+      Tempo esperado: ${expectedTime}ms
+      Target anterior: ${prevTarget}
+      Target novo: ${newTarget}
+      nBits anterior: ${prevAdjustmentNode.block.nBits}
+      nBits novo: ${newNBits}
+      Fator de ajuste: ${adjustmentFactor}
+    `);
 
     return newNBits;
   }
@@ -447,11 +463,17 @@ export class Node {
     this.activeForkHeights = forkHeights;
   }
 
-  createConsensusVersion(consensus: ConsensusParameters) {
+  createConsensusVersion(consensus: ConsensusVersion) {
     consensus.isLocal = true;
     consensus.minerId = this.id;
+
+    // Calculate hashes
+    consensus.epochs.forEach((epoch) => {
+      epoch.hash = calculateEpochHash(epoch);
+    });
     consensus.hash = calculateConsensusVersionHash(consensus);
     consensus.instanceHash = calculateConsensusInstanceHash(consensus);
+
     const existingVersion = this.localConsensusVersions.find(
       (v) => v.hash === consensus.hash
     );
@@ -473,6 +495,28 @@ export class Node {
       return true;
     }
     return false;
+  }
+
+  // Update the difficulty adjustment interval based on block height
+  getDifficultyAdjustmentInterval(height: number): number {
+    const epoch = this.consensus.epochs.find(
+      (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
+    );
+    if (!epoch) {
+      throw new Error(`No consensus parameters found for height ${height}`);
+    }
+    return epoch.parameters.difficultyAdjustmentInterval;
+  }
+
+  // Get consensus parameters for a specific block height
+  getConsensusForHeight(height: number): ConsensusParameters {
+    const epoch = this.consensus.epochs.find(
+      (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
+    );
+    if (!epoch) {
+      throw new Error(`No consensus parameters found for height ${height}`);
+    }
+    return epoch.parameters;
   }
 
   // Método para validar um bloco individual

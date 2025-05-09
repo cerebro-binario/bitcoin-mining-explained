@@ -11,7 +11,10 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
-import { ConsensusParameters } from '../../../../models/consensus.model';
+import {
+  ConsensusParameters,
+  ConsensusVersion,
+} from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
@@ -316,17 +319,17 @@ export class MinerComponent {
     this.showConsensusDialog = false;
   }
 
-  onConsensusDialogSave(newParams: ConsensusParameters) {
+  onConsensusDialogSave(newVersion: ConsensusVersion) {
     const version = this.miner.localConsensusVersions.find(
-      (c) => c.hash === newParams.hash
+      (c) => c.hash === newVersion.hash
     );
 
     if (!version) {
-      newParams.isLocal = true;
-      this.miner.consensus = { ...newParams };
+      newVersion.isLocal = true;
+      this.miner.consensus = { ...newVersion };
       this.miner.localConsensusVersions = [
         ...this.miner.localConsensusVersions,
-        { ...newParams },
+        { ...newVersion },
       ];
     } else {
       this.miner.consensus = version;
