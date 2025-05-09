@@ -218,7 +218,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.messageService.add({
       severity: 'success',
       summary: 'Sucesso',
-      detail: `Versão v${this.editingParams.version} agora está em uso!`,
+      detail: `Versão v${this.editingParams.version} agora está em uso.`,
       life: 6000,
     });
   }
@@ -230,9 +230,76 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
-  syncAllConflicts() {}
+  syncAllConflicts() {
+    this.syncCurrentConflict();
 
-  syncCurrentConflict() {}
+    this.miner.localConsensusVersions =
+      this.miner.localConsensusVersions.filter((v) => !v.conflictVersion);
+
+    this.updateVersionList(this.consensusService.versions);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Sucesso',
+      detail:
+        'Todos as versões locais em conflito foram sincronizadas e removidas.',
+      life: 6000,
+    });
+  }
+
+  syncCurrentConflict() {
+    let needUpdate = false;
+
+    // Sincroniza a versão local com a versão publicada na rede
+    if (this.editingParams.conflictVersion) {
+      const published = this.consensusService.versions.find(
+        (v) => v.version === this.editingParams.conflictVersion
+      );
+      if (published) {
+        this.clearMessages();
+        needUpdate = true;
+        // Remove a versão local em conflito
+        this.miner.localConsensusVersions =
+          this.miner.localConsensusVersions.filter(
+            (v) => v.version !== this.editingParams.conflictVersion
+          );
+
+        // Atualiza a versão local com a versão publicada na rede
+        this.editingParams = { ...published };
+      }
+    }
+
+    // Sincroniza a versão em uso com a versão publicada na rede
+    if (this.miner.consensus.conflictVersion) {
+      const published = this.consensusService.versions.find(
+        (v) => v.version === this.miner.consensus.conflictVersion
+      );
+      if (published) {
+        this.clearMessages();
+        needUpdate = true;
+
+        // Remove a versão local em conflito
+        this.miner.localConsensusVersions =
+          this.miner.localConsensusVersions.filter(
+            (v) => v.version !== this.miner.consensus.conflictVersion
+          );
+
+        // Atualiza a versão em uso com a versão publicada na rede
+        this.miner.consensus = { ...published };
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: `Versão local sincronizada com a versão v${this.miner.consensus.version} publicada na rede.`,
+          life: 6000,
+        });
+      }
+    }
+
+    if (needUpdate) {
+      this.updateVersionList(this.consensusService.versions);
+    }
+  }
 
   private clearMessages() {
     this.error = null;

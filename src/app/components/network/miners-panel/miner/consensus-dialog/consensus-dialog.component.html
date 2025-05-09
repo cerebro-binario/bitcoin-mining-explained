@@ -47,7 +47,7 @@
 
         <!-- Alerta de conflito de versões locais -->
         <div
-          *ngIf="hasAnyConflict"
+          *ngIf="hasAnyConflict && mode !== 'creating'"
           class="mt-4 p-3 rounded bg-orange-900/40 border border-orange-700 flex items-center gap-3"
         >
           <span class="text-orange-300">
