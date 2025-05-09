@@ -196,6 +196,19 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.checkForExistingVersion();
   }
 
+  onTargetBlockTimeChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value);
+    if (!isNaN(value) && value > 0) {
+      this.editingParams.targetBlockTime = value;
+      this.forkWarnings['targetBlockTime'] =
+        value !== DEFAULT_CONSENSUS.targetBlockTime ? 'hard' : 'none';
+      this.updateConsolidatedFork();
+    }
+    this.paramChanged = true;
+    this.checkForExistingVersion();
+  }
+
   onVersionSelect(event: any) {
     this.clearMessages();
     this.updateConsolidatedFork();
@@ -356,6 +369,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         return 'Tamanho Máximo do Bloco';
       case 'maxTransactionsPerBlock':
         return 'Máximo de Transações por Bloco';
+      case 'targetBlockTime':
+        return 'Tempo Alvo de Bloco';
       default:
         return param;
     }

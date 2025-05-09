@@ -359,6 +359,41 @@
           </p>
         </div>
 
+        <!-- Tempo Alvo de Bloco -->
+        <div class="mb-4">
+          <div class="flex items-baseline gap-2">
+            <span class="text-sm font-medium text-zinc-400">
+              Tempo Alvo de Bloco
+            </span>
+            <span
+              *ngIf="isParamInFork('targetBlockTime')"
+              class="text-yellow-400"
+              title="Este parâmetro está causando o fork!"
+              >⚠️</span
+            >
+          </div>
+          <div class="flex items-baseline gap-2 mt-1">
+            <input
+              *ngIf="mode === 'creating'"
+              type="number"
+              [value]="editingParams.targetBlockTime"
+              (input)="onTargetBlockTimeChange($event)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              min="1"
+              step="1"
+            />
+            <span
+              *ngIf="mode !== 'creating'"
+              class="text-lg font-semibold text-zinc-100"
+              >{{ editingParams.targetBlockTime }}</span
+            >
+            <span class="text-sm text-zinc-400">segundos</span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">
+            Tempo esperado para mineração de cada bloco
+          </p>
+        </div>
+
         <!-- Última Atualização -->
         <div>
           <label class="block text-sm font-medium text-zinc-400 mb-1">

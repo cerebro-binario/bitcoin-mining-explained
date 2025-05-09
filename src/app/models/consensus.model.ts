@@ -47,6 +47,7 @@ export function calculateConsensusVersionHash(
     difficultyAdjustmentInterval: params.difficultyAdjustmentInterval,
     maxTransactionsPerBlock: params.maxTransactionsPerBlock,
     maxBlockSize: params.maxBlockSize,
+    targetBlockTime: params.targetBlockTime,
   });
   return CryptoJS.SHA256(data).toString();
 }
