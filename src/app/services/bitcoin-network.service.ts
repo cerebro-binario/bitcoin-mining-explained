@@ -262,7 +262,7 @@ export class BitcoinNetworkService {
         // Valida cada blockchain usando os parâmetros de consenso do nó que está inicializando
         const validBlockchains = blockchains
           .map(({ node: neighborNode, blockchain }) => {
-            const work = this.calculateChainWork(blockchain);
+            const work = node.calculateChainWork(blockchain);
             const isValid = node.validateBlockchain(blockchain);
 
             // Atualiza o status do peer
@@ -327,19 +327,5 @@ export class BitcoinNetworkService {
         }, 1000);
       }
     });
-  }
-
-  // Calcula o trabalho acumulado de uma blockchain
-  private calculateChainWork(blockchain: BlockNode): number {
-    let work = 0;
-    let current: BlockNode | undefined = blockchain;
-
-    while (current) {
-      // O trabalho é inversamente proporcional ao target
-      work += 1 / Number(current.block.target);
-      current = current.children[0];
-    }
-
-    return work;
   }
 }

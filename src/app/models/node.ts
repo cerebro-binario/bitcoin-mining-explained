@@ -521,4 +521,18 @@ export class Node {
 
     return true;
   }
+
+  // Calcula o trabalho acumulado de uma blockchain
+  calculateChainWork(blockchain: BlockNode): number {
+    let work = 0;
+    let current: BlockNode | undefined = blockchain;
+
+    while (current) {
+      // O trabalho é inversamente proporcional ao target
+      work += 1 / Number(current.block.target);
+      current = current.children[0];
+    }
+
+    return work;
+  }
 }
