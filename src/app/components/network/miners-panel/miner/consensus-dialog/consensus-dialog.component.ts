@@ -203,7 +203,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onVersionSelect(event: any) {
     this.clearMessages();
-    this.updateConsolidatedFork();
 
     if (event.value) {
       const selected = event.value as ConsensusVersion;
@@ -217,7 +216,15 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
-    this.close.emit();
+    this.miner.consensus = this.editingVersion;
+    this.mode = 'viewing';
+    this.clearMessages();
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Sucesso',
+      detail: `Versão v${this.editingVersion.version} agora está em uso.`,
+      life: 6000,
+    });
   }
 
   private clearMessages() {
