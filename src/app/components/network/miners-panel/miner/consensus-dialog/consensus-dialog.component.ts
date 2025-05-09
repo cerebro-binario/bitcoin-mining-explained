@@ -55,6 +55,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   versions: ConsensusParameters[] = [];
   versionsByGroup: GroupedConsensusVersions[] = [];
   existingVersion?: ConsensusParameters;
+  hasAnyConflict = false;
 
   // Scalable fork warning system
   forkWarnings: { [param: string]: ForkType } = {};
@@ -229,6 +230,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
+  syncAllConflicts() {}
+
+  syncCurrentConflict() {}
+
   private clearMessages() {
     this.error = null;
     this.info = null;
@@ -319,6 +324,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private handleDuplicatedAndConflictedVersions(
     networkVersions: ConsensusParameters[]
   ) {
+    this.hasAnyConflict = false;
+
     // Remover a versão local se ela foi publicada na rede pelo mesmo miner (duplicada)
     // e marcar a versão local como conflitante se ela foi publicada na rede por outro miner (conflito)
     this.miner.localConsensusVersions =
@@ -331,6 +338,11 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
             if (sameHash && !sameMiner) {
               v.conflictVersion = nv.version;
+              this.hasAnyConflict = true;
+
+              if (v.instanceHash === this.editingParams.instanceHash) {
+                this.editingParams.conflictVersion = nv.version;
+              }
             }
 
             if (remove && this.miner.consensus.hash === v.hash) {
