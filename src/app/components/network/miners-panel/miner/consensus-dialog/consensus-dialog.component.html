@@ -133,8 +133,31 @@
                 [group]="isGrouped"
                 class="w-full bg-zinc-900 border border-zinc-700"
               >
+                <!-- Selecionado -->
                 <ng-template #selectedItem let-selectedOption>
                   <div class="flex items-center">
+                    <span
+                      *ngIf="
+                        selectedOption.instanceHash ===
+                        miner.consensus.instanceHash
+                      "
+                      class="mr-2 text-green-400 flex items-center"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        fill="none"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M4 8.5l3 3 5-5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
                     <span class="text-white"
                       >v{{ selectedOption.version }}</span
                     >
@@ -143,12 +166,6 @@
                       class="ml-2 text-xs text-zinc-400 italic"
                     >
                       (local)</span
-                    >
-                    <span
-                      *ngIf="selectedOption.version === miner.consensus.version"
-                      class="ml-2 text-xs text-zinc-400 italic"
-                    >
-                      (em uso)</span
                     >
                     <span
                       *ngIf="selectedOption.conflictVersion"
@@ -172,11 +189,13 @@
                     </span>
                   </div>
                 </ng-template>
+                <!-- Grupo -->
                 <ng-template let-group pTemplate="group">
                   <div class="flex items-center">
                     <span class="text-zinc-400">{{ group.label }}</span>
                   </div>
                 </ng-template>
+                <!-- Item -->
                 <ng-template let-consensus pTemplate="item">
                   <div class="flex items-center">
                     <span
