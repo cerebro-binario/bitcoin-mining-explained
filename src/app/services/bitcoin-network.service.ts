@@ -259,11 +259,11 @@ export class BitcoinNetworkService {
           };
         });
 
-        // Valida cada blockchain
+        // Valida cada blockchain usando os parâmetros de consenso do nó que está inicializando
         const validBlockchains = blockchains
           .map(({ node: neighborNode, blockchain }) => {
             const work = this.calculateChainWork(blockchain);
-            const isValid = this.validateBlockchain(blockchain);
+            const isValid = this.validateBlockchain(blockchain, node);
 
             // Atualiza o status do peer
             const peer = node.syncPeers.find(
@@ -347,6 +347,7 @@ export class BitcoinNetworkService {
   private validateBlock(
     block: Block,
     height: number,
+    node: Node,
     previousBlock?: Block
   ): boolean {
     if (height === -1) {
@@ -391,7 +392,8 @@ export class BitcoinNetworkService {
     if (height > 0) {
       const expectedNBits = this.calculateExpectedNBits(
         previousBlock!,
-        block.timestamp
+        block.timestamp,
+        node
       );
       if (block.nBits !== expectedNBits) {
         console.warn(
@@ -415,7 +417,7 @@ export class BitcoinNetworkService {
   }
 
   // Método para validar uma blockchain inteira
-  private validateBlockchain(blockchain: BlockNode): boolean {
+  private validateBlockchain(blockchain: BlockNode, node: Node): boolean {
     let current: BlockNode | undefined = blockchain;
     let previousBlock: Block | undefined;
     let height = -1;
@@ -423,7 +425,7 @@ export class BitcoinNetworkService {
     while (current) {
       const block = current.block;
 
-      if (!this.validateBlock(block, height, previousBlock)) {
+      if (!this.validateBlock(block, height, node, previousBlock)) {
         return false;
       }
 
@@ -438,30 +440,31 @@ export class BitcoinNetworkService {
   // Calcula o nBits esperado para o próximo bloco
   private calculateExpectedNBits(
     previousBlock: Block,
-    currentTimestamp: number
+    currentTimestamp: number,
+    node: Node
   ): number {
-    // Ajuste de dificuldade a cada 2016 blocos
-    const DIFFICULTY_ADJUSTMENT_INTERVAL = 2016;
-    const TARGET_TIMESPAN = 14 * 24 * 60 * 60 * 1000; // 2 semanas em milissegundos
+    const interval = node.consensus.difficultyAdjustmentInterval;
+    const targetBlockTime = node.consensus.targetBlockTime;
 
     // Se não é um bloco de ajuste de dificuldade, mantém o mesmo nBits
-    if (previousBlock.height % DIFFICULTY_ADJUSTMENT_INTERVAL !== 0) {
+    if (previousBlock.height % interval !== 0) {
       return previousBlock.nBits;
     }
 
     // Encontra o bloco do último ajuste
     let lastAdjustmentBlock = previousBlock;
-    for (let i = 0; i < DIFFICULTY_ADJUSTMENT_INTERVAL - 1; i++) {
+    for (let i = 0; i < interval - 1; i++) {
       const parent = this.findBlockByHash(lastAdjustmentBlock.previousHash);
       if (!parent) return previousBlock.nBits; // Se não encontrou, mantém o mesmo
       lastAdjustmentBlock = parent;
     }
 
-    // Calcula o tempo real que levou para minerar os últimos 2016 blocos
+    // Calcula o tempo real que levou para minerar os blocos desde o último ajuste
     const actualTimespan = currentTimestamp - lastAdjustmentBlock.timestamp;
+    const expectedTimespan = interval * targetBlockTime * 1000; // ms
 
     // Limita o ajuste a um fator de 4
-    let adjustment = actualTimespan / TARGET_TIMESPAN;
+    let adjustment = actualTimespan / expectedTimespan;
     adjustment = Math.max(0.25, Math.min(4, adjustment));
 
     // Ajusta o nBits
