@@ -130,33 +130,71 @@ export class Node {
   calculateExpectedNBits(height: number): number {
     const interval = this.consensus.difficultyAdjustmentInterval;
     const targetBlockTime = this.consensus.targetBlockTime; // em segundos
+
     // Se for o bloco gênese ou antes do primeiro ajuste, retorna o valor inicial
     if (height === 0 || height < interval) {
       return this.INITIAL_NBITS;
     }
+
+    // Se não for um bloco de ajuste, mantém o nBits do bloco anterior
+    if (height % interval !== 0) {
+      const lastBlockNode = this.heights
+        .flat()
+        .find((n) => n.block.height === height - 1 && n.isActive);
+      if (!lastBlockNode) {
+        return this.INITIAL_NBITS;
+      }
+      return lastBlockNode.block.nBits;
+    }
+
     // Encontra o bloco do último ajuste
     const prevAdjustmentHeight = height - interval;
     const prevAdjustmentNode = this.heights
       .flat()
-      .find((n) => n.block.height === prevAdjustmentHeight);
+      .find((n) => n.block.height === prevAdjustmentHeight && n.isActive);
     const lastBlockNode = this.heights
       .flat()
-      .find((n) => n.block.height === height - 1);
+      .find((n) => n.block.height === height - 1 && n.isActive);
     if (!prevAdjustmentNode || !lastBlockNode) {
       return this.INITIAL_NBITS;
     }
+
     const actualTime =
       lastBlockNode.block.timestamp - prevAdjustmentNode.block.timestamp; // ms
     const expectedTime = interval * targetBlockTime * 1000; // ms
-    // Dificuldade é ajustada proporcionalmente ao tempo real x tempo alvo
-    let prevNBits = prevAdjustmentNode.block.nBits;
-    let newNBits = Math.round(prevNBits * (expectedTime / actualTime));
-    // Limita o ajuste para evitar mudanças bruscas (ex: 4x para cima/baixo)
-    newNBits = Math.max(
-      Math.floor(prevNBits / 4),
-      Math.min(newNBits, prevNBits * 4)
-    );
+
+    // Converte o nBits anterior para target
+    const prevTarget = Number(prevAdjustmentNode.block.target);
+
+    // Calcula o fator de ajuste baseado no tempo real x tempo alvo
+    let adjustmentFactor = actualTime / expectedTime;
+
+    // Limita o fator de ajuste para evitar mudanças bruscas (ex: 4x para cima/baixo)
+    adjustmentFactor = Math.max(0.25, Math.min(adjustmentFactor, 4));
+
+    // Aplica o fator de ajuste ao target
+    let newTarget = Math.round(prevTarget * adjustmentFactor);
+
+    // Converte o target de volta para nBits
+    const newNBits = this.targetToNBits(newTarget);
+
     return newNBits;
+  }
+
+  // Converte um target para nBits
+  private targetToNBits(target: number): number {
+    // Encontra o número de bytes necessários para representar o target
+    const targetHex = target.toString(16);
+    const targetBytes = Math.ceil(targetHex.length / 2);
+
+    // O primeiro byte é o número de bytes significativos
+    const significantBytes = targetBytes;
+
+    // Os próximos 3 bytes são os bytes mais significativos do target
+    const significantBits = targetHex.slice(0, 6);
+
+    // Combina os bytes para formar o nBits
+    return parseInt(significantBytes.toString(16) + significantBits, 16);
   }
 
   private calculateBlockSubsidy(blockHeight: number): number {

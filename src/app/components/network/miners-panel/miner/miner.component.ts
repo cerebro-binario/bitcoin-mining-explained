@@ -222,20 +222,20 @@ export class MinerComponent {
       this.miner.addBlock(block);
       this.miner.isAddingBlock = false;
 
+      // Cria um novo bloco para continuar minerando
+      this.miner.initBlockTemplate(block);
+      // Reinicia o cronômetro para o novo bloco
+      const newBlock = this.miner.currentBlock;
+      if (newBlock) {
+        newBlock.miningElapsed = 0;
+      }
+
       this.miner.updateLastMainBlocks();
       this.miner.updateActiveForkHeights();
 
       // Emite evento para propagar o bloco
       this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
     }, 600);
-
-    // Cria um novo bloco para continuar minerando
-    this.miner.initBlockTemplate(block);
-    // Reinicia o cronômetro para o novo bloco
-    const newBlock = this.miner.currentBlock;
-    if (newBlock) {
-      newBlock.miningElapsed = 0;
-    }
   }
 
   createTransaction() {
