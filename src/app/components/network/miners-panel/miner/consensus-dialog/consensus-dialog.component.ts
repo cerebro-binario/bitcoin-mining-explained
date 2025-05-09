@@ -128,6 +128,9 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     );
 
     this.publishVersion();
+
+    this.mode = 'confirming';
+    this.clearMessages();
   }
 
   onIntervalChange(event: Event, epochIndex: number) {
@@ -220,6 +223,9 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private clearMessages() {
     this.error = null;
     this.info = null;
+    this.existingVersion = undefined;
+    this.forkWarnings = {};
+    this.updateConsolidatedFork();
   }
 
   private checkForExistingVersion() {
