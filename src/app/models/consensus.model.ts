@@ -18,11 +18,9 @@ export interface ConsensusVersion {
   version: number;
   timestamp: number;
   epochs: ConsensusEpoch[];
-  isLocal?: boolean;
   minerId?: number;
   hash: string;
   instanceHash: string;
-  conflictVersion?: boolean;
 }
 
 // Função para calcular o hash de uma versão de consenso

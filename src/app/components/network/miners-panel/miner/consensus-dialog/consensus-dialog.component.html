@@ -45,30 +45,6 @@
           </ng-container>
         </div>
 
-        <!-- Alerta de conflito de versões locais -->
-        <div
-          *ngIf="hasAnyConflict && mode !== 'creating'"
-          class="mt-4 p-3 rounded bg-orange-900/40 border border-orange-700 flex items-center gap-3"
-        >
-          <span class="text-orange-300">
-            <b>Conflito de versão local:</b>
-            Você possui uma ou mais versões locais com os mesmos parâmetros de
-            uma versão já publicada na rede.
-            <span class="block text-xs text-orange-200 mt-1">
-              Para evitar inconsistências, sincronize suas versões locais com a
-              rede.
-            </span>
-          </span>
-          <a
-            class="underline ml-4 text-orange-400 hover:text-orange-300 focus:text-orange-200 transition-colors italic cursor-pointer outline-none"
-            (click)="syncAllConflicts()"
-            role="button"
-            tabindex="0"
-          >
-            Sincronizar Tudo
-          </a>
-        </div>
-
         <!-- Versão do Consenso -->
         <div *ngIf="mode !== 'creating'">
           <div class="flex items-center justify-between mb-1">
@@ -76,43 +52,6 @@
               Versão do Consenso
             </label>
             <div class="flex items-center gap-2">
-              <!-- Sincronizar -->
-              <button
-                *ngIf="editingVersion.conflictVersion"
-                type="button"
-                class="text-orange-400 hover:text-orange-600 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
-                (click)="syncCurrentConflict()"
-                aria-label="Sincronizar este consenso local em conflito"
-                title="Sincronizar este consenso local em conflito"
-              >
-                Sincronizar
-              </button>
-              <!-- Publicar e Criar versão -->
-              <button
-                *ngIf="
-                  editingVersion.isLocal && !editingVersion.conflictVersion
-                "
-                type="button"
-                class="text-green-500 hover:text-green-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
-                (click)="publishVersion()"
-                aria-label="Publicar esta versão na rede"
-                title="Tornar esta versão visível para todos os nodes da rede"
-              >
-                <svg
-                  class="inline w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M12 19V5M5 12l7-7 7 7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-                Publicar na rede
-              </button>
               <button
                 type="button"
                 class="text-blue-500 hover:text-blue-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
@@ -127,12 +66,11 @@
           <div class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
               <p-select
-                [options]="isGrouped ? versionsByGroup : versions"
+                [options]="versions"
                 [(ngModel)]="editingVersion"
                 (onChange)="onVersionSelect($event)"
                 optionLabel="version"
                 dataKey="instanceHash"
-                [group]="isGrouped"
                 class="w-full bg-zinc-900 border border-zinc-700"
               >
                 <!-- Selecionado -->
@@ -163,41 +101,10 @@
                     <span class="text-white"
                       >v{{ selectedOption.version }}</span
                     >
-                    <span
-                      *ngIf="selectedOption.isLocal"
-                      class="ml-2 text-xs text-zinc-400 italic"
-                    >
-                      (local)</span
-                    >
-                    <span
-                      *ngIf="selectedOption.conflictVersion"
-                      class="ml-2 text-orange-400 flex items-center gap-1"
-                      title="Esta versão local está em conflito com uma versão publicada na rede"
-                    >
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
-                      <span class="text-xs">(conflito)</span>
-                    </span>
                   </div>
                 </ng-template>
-                <!-- Grupo -->
-                <ng-template let-group pTemplate="group">
-                  <div class="flex items-center">
-                    <span class="text-zinc-400">{{ group.label }}</span>
-                  </div>
-                </ng-template>
-                <!-- Item -->
+
+                <!-- Item da lista -->
                 <ng-template let-consensus pTemplate="item">
                   <div class="flex items-center">
                     <span
@@ -222,32 +129,6 @@
                       </svg>
                     </span>
                     <span class="text-white">v{{ consensus.version }}</span>
-                    <span
-                      *ngIf="consensus.isLocal"
-                      class="ml-2 text-xs text-zinc-400 italic"
-                    >
-                      (local)
-                    </span>
-                    <span
-                      *ngIf="consensus.conflictVersion"
-                      class="ml-2 text-orange-400 flex items-center gap-1"
-                      title="Esta versão local está em conflito com uma versão publicada na rede"
-                    >
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
-                      <span class="text-xs">(conflito)</span>
-                    </span>
                   </div>
                 </ng-template>
               </p-select>
@@ -522,11 +403,6 @@
     <span class="text-blue-300">
       Já existe uma versão idêntica:
       <b>v{{ existingVersion.version }}</b>
-      <i
-        *ngIf="existingVersion.isLocal"
-        class="ml-2 text-xs text-zinc-400 italic"
-        >(local)</i
-      >
     </span>
     <a
       *ngIf="

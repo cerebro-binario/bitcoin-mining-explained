@@ -319,23 +319,6 @@ export class MinerComponent {
     this.showConsensusDialog = false;
   }
 
-  onConsensusDialogSave(newVersion: ConsensusVersion) {
-    const version = this.miner.localConsensusVersions.find(
-      (c) => c.hash === newVersion.hash
-    );
-
-    if (!version) {
-      newVersion.isLocal = true;
-      this.miner.consensus = { ...newVersion };
-      this.miner.localConsensusVersions = [
-        ...this.miner.localConsensusVersions,
-        { ...newVersion },
-      ];
-    } else {
-      this.miner.consensus = version;
-    }
-  }
-
   confirmRemoveMiner() {
     this.confirmationService.confirm({
       message:

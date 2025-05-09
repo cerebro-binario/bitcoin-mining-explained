@@ -49,14 +49,12 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private originalVersion: ConsensusVersion = { ...DEFAULT_CONSENSUS };
 
+  versions: ConsensusVersion[] = [];
+
   mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
   isEditing = false;
   editingVersion: ConsensusVersion = { ...DEFAULT_CONSENSUS };
-  isGrouped = true;
-  versions: ConsensusVersion[] = [];
-  versionsByGroup: GroupedConsensusVersions[] = [];
   existingVersion?: ConsensusVersion;
-  hasAnyConflict = false;
 
   // Scalable fork warning system
   forkWarnings: { [param: string]: ForkType } = {};
@@ -70,7 +68,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   @Input() miner!: Node;
 
   @Output() close = new EventEmitter<void>();
-  @Output() save = new EventEmitter<ConsensusVersion>();
 
   paramChanged = false;
 
@@ -87,7 +84,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.consensusService.versions$
       .pipe(takeUntil(this.destroy$))
       .subscribe((versions) => {
-        this.updateVersionList(versions);
+        this.versions = versions;
       });
   }
 
@@ -130,8 +127,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       this.editingVersion
     );
 
-    this.save.emit(this.editingVersion);
-    this.close.emit();
+    this.publishVersion();
   }
 
   onIntervalChange(event: Event, epochIndex: number) {
@@ -218,7 +214,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
-    this.save.emit(this.editingVersion);
     this.close.emit();
   }
 
@@ -246,46 +241,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         v.epochs[0].parameters.targetBlockTime ===
           this.editingVersion.epochs[0].parameters.targetBlockTime
     );
-  }
-
-  private updateVersionList(versions: ConsensusVersion[]) {
-    this.versions = versions;
-    this.hasAnyConflict = versions.some((v) => v.conflictVersion);
-
-    // Group versions
-    const groups: { [key: string]: ConsensusVersion[] } = {
-      network: [],
-      local: [],
-      conflicts: [],
-    };
-
-    versions.forEach((v) => {
-      if (v.conflictVersion) {
-        groups['conflicts'].push(v);
-      } else if (v.isLocal) {
-        groups['local'].push(v);
-      } else {
-        groups['network'].push(v);
-      }
-    });
-
-    this.versionsByGroup = [
-      {
-        label: 'Versões da Rede',
-        items: groups['network'],
-      },
-      {
-        label: 'Versões Locais',
-        items: groups['local'],
-      },
-    ];
-
-    if (groups['conflicts'].length > 0) {
-      this.versionsByGroup.push({
-        label: 'Versões em Conflito',
-        items: groups['conflicts'],
-      });
-    }
   }
 
   private updateConsolidatedFork() {
@@ -378,57 +333,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     this.messageService.add({
       severity: 'success',
-      summary: `Versão v${this.editingVersion.version} publicada na rede!`,
+      summary: `Versão v${this.editingVersion.version} criada e publicada na rede.`,
       detail: 'Outros nodes poderão atualizar para a nova versão.',
       life: 6000,
     });
-  }
-
-  syncAllConflicts() {
-    this.syncCurrentConflict();
-
-    // Remove all conflicted versions
-    this.miner.localConsensusVersions =
-      this.miner.localConsensusVersions.filter((v) => !v.conflictVersion);
-
-    this.updateVersionList(this.versions);
-
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Sucesso',
-      detail:
-        'Todos as versões locais em conflito foram sincronizadas e removidas.',
-      life: 6000,
-    });
-  }
-
-  syncCurrentConflict() {
-    if (this.editingVersion.conflictVersion) {
-      const published = this.versions.find(
-        (v) => v.hash === this.editingVersion.hash
-      );
-      if (published) {
-        this.clearMessages();
-
-        // Remove the conflicted local version
-        this.miner.localConsensusVersions =
-          this.miner.localConsensusVersions.filter(
-            (v) => v.hash !== this.editingVersion.hash
-          );
-
-        // Update with the published version
-        this.editingVersion = { ...published };
-
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Sucesso',
-          detail: `Versão local sincronizada com a versão v${this.editingVersion.version} publicada na rede.`,
-          life: 6000,
-        });
-
-        this.updateVersionList(this.versions);
-      }
-    }
   }
 
   isParamInFork(param: string): boolean {

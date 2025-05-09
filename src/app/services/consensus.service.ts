@@ -31,7 +31,6 @@ export class ConsensusService {
     if (!this.versions.some((v) => v.version === consensus.version)) {
       // Calculate hashes before publishing
       consensus.hash = calculateConsensusVersionHash(consensus);
-      consensus.isLocal = false;
 
       this.versions.push({ ...consensus });
       this.versionsSubject.next(this.versions);
