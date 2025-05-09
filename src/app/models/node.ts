@@ -1,5 +1,11 @@
 import * as CryptoJS from 'crypto-js';
 import { Block, BlockNode, Transaction } from './block.model';
+import {
+  calculateConsensusInstanceHash,
+  calculateConsensusVersionHash,
+  ConsensusParameters,
+  DEFAULT_CONSENSUS,
+} from './consensus.model';
 
 export interface Neighbor {
   nodeId: number;
@@ -68,6 +74,10 @@ export class Node {
   isCollapsed = false;
   isMaximized = false;
   isLogsMaximized = false;
+
+  // Parâmetros de consenso do nó
+  consensus: ConsensusParameters = { ...DEFAULT_CONSENSUS };
+  localConsensusVersions: ConsensusParameters[] = [];
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -368,5 +378,33 @@ export class Node {
       }
     }
     this.activeForkHeights = forkHeights;
+  }
+
+  createConsensusVersion(consensus: ConsensusParameters) {
+    consensus.isLocal = true;
+    consensus.minerId = this.id;
+    consensus.hash = calculateConsensusVersionHash(consensus);
+    consensus.instanceHash = calculateConsensusInstanceHash(consensus);
+    const existingVersion = this.localConsensusVersions.find(
+      (v) => v.hash === consensus.hash
+    );
+
+    if (!existingVersion) {
+      this.localConsensusVersions = [...this.localConsensusVersions, consensus];
+      return true;
+    }
+
+    return false;
+  }
+
+  useConsensusVersionByHash(versionHash: string) {
+    const consensus = this.localConsensusVersions.find(
+      (v) => v.hash === versionHash
+    );
+    if (consensus) {
+      this.consensus = consensus;
+      return true;
+    }
+    return false;
   }
 }

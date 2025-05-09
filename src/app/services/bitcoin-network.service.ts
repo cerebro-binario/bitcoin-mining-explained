@@ -6,8 +6,10 @@ import { Node } from '../models/node';
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
   private readonly nodesSubject = new BehaviorSubject<Node[]>([]);
+
   nodes$ = this.nodesSubject.asObservable();
-  nodes: Node[] = [];
+  nodes: Node[] = this.nodesSubject.getValue();
+
   private nextId = 1;
   private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
 
@@ -185,6 +187,7 @@ export class BitcoinNetworkService {
     return new Promise((resolve) => {
       // Se for o primeiro nó, não precisa sincronizar
       if (this.nodes.length === 1) {
+        node.isSyncing = false;
         node.initialSyncComplete = true;
         resolve(node);
         return;

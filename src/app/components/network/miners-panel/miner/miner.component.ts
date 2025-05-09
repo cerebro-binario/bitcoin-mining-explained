@@ -7,11 +7,14 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
+import { ConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
+import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 
 interface HashRateOption {
@@ -27,24 +30,18 @@ interface HashRateOption {
     MiningBlockComponent,
     BlockchainComponent,
     EventLogsComponent,
+    ConsensusDialogComponent,
   ],
   templateUrl: './miner.component.html',
-  //   styleUrls: ['./miner.component.scss'],
+  styleUrls: ['./miner.component.scss'],
 })
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
-  realHashRate = 0;
-  private lastHashRateUpdate = 0;
-  private hashCount = 0;
+
+  networkVersions$!: Observable<ConsensusParameters[]>;
 
   @Input() miner!: Node;
-  @Input() hashRateOptions: HashRateOption[] = [
-    { label: '1 H/s', value: 1 },
-    { label: '100 H/s', value: 100 },
-    { label: '1000 H/s', value: 1000 },
-    { label: 'Máximo', value: null },
-  ];
   @Output() miningChanged = new EventEmitter<Node>();
   @Output() minerRemoved = new EventEmitter<Node>();
   @Output() collapsedChange = new EventEmitter<Node>();
@@ -61,6 +58,15 @@ export class MinerComponent {
   }>();
 
   isCollapsedHashRateSelectorOpen = false;
+
+  hashRateOptions: HashRateOption[] = [
+    { label: '1 H/s', value: 1 },
+    { label: '10 H/s', value: 10 },
+    { label: '1000 H/s', value: 1000 },
+    { label: 'Máximo', value: null },
+  ];
+
+  showConsensusDialog = false;
 
   constructor(
     private addressService: AddressService,
@@ -274,6 +280,31 @@ export class MinerComponent {
       !this.elRef.nativeElement.contains(event.target)
     ) {
       this.isCollapsedHashRateSelectorOpen = false;
+    }
+  }
+
+  editConsensusParams() {
+    this.showConsensusDialog = true;
+  }
+
+  onConsensusDialogClose() {
+    this.showConsensusDialog = false;
+  }
+
+  onConsensusDialogSave(newParams: ConsensusParameters) {
+    const version = this.miner.localConsensusVersions.find(
+      (c) => c.hash === newParams.hash
+    );
+
+    if (!version) {
+      newParams.isLocal = true;
+      this.miner.consensus = { ...newParams };
+      this.miner.localConsensusVersions = [
+        ...this.miner.localConsensusVersions,
+        { ...newParams },
+      ];
+    } else {
+      this.miner.consensus = version;
     }
   }
 }
