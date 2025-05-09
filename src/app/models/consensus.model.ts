@@ -21,6 +21,8 @@ export interface ConsensusParameters {
   conflictVersion?: string;
   // The hash of the instance of the version of the consensus rules
   instanceHash?: string;
+  // Tempo alvo de bloco em segundos
+  targetBlockTime: number;
 }
 
 // Default Bitcoin-like consensus parameters
@@ -32,6 +34,7 @@ const DEFAULT_CONSENSUS: ConsensusParameters = {
   maxTransactionsPerBlock: 0, // 0 = sem limite
   maxBlockSize: 1, // 1MB
   isLocal: false,
+  targetBlockTime: 600, // 10 minutos
 };
 DEFAULT_CONSENSUS.hash = calculateConsensusVersionHash(DEFAULT_CONSENSUS);
 
