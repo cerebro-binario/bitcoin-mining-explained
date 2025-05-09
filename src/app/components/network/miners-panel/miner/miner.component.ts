@@ -7,6 +7,8 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
 import { ConsensusParameters } from '../../../../models/consensus.model';
@@ -31,9 +33,11 @@ interface HashRateOption {
     BlockchainComponent,
     EventLogsComponent,
     ConsensusDialogComponent,
+    ConfirmDialogModule,
   ],
   templateUrl: './miner.component.html',
   styleUrls: ['./miner.component.scss'],
+  providers: [ConfirmationService],
 })
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
@@ -70,7 +74,8 @@ export class MinerComponent {
 
   constructor(
     private addressService: AddressService,
-    private elRef: ElementRef
+    private elRef: ElementRef,
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit() {
@@ -109,9 +114,29 @@ export class MinerComponent {
     this.miningChanged.emit(this.miner);
   }
 
-  removeMiner() {
-    this.stopMining();
-    this.minerRemoved.emit(this.miner);
+  removeMiner(event: Event) {
+    this.confirmationService.confirm({
+      target: event.currentTarget as HTMLElement,
+      message: 'Tem certeza que deseja remover este minerador?',
+      icon: 'pi pi-exclamation-triangle',
+      position: 'bottom',
+      rejectButtonProps: {
+        label: 'Cancelar',
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptButtonProps: {
+        label: 'Remover',
+        severity: 'danger',
+      },
+      accept: () => {
+        this.stopMining();
+        this.minerRemoved.emit(this.miner);
+      },
+      reject: () => {
+        // Do nothing
+      },
+    });
   }
 
   setHashRate(rate: number | null) {
@@ -306,5 +331,22 @@ export class MinerComponent {
     } else {
       this.miner.consensus = version;
     }
+  }
+
+  confirmRemoveMiner() {
+    this.confirmationService.confirm({
+      message:
+        'Tem certeza que deseja remover este minerador? Esta ação não pode ser desfeita.',
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Remover',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary',
+      accept: () => {
+        this.stopMining();
+        this.minerRemoved.emit(this.miner);
+      },
+    });
   }
 }
