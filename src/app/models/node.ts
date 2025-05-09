@@ -436,4 +436,89 @@ export class Node {
     }
     return false;
   }
+
+  // Método para validar um bloco individual
+  validateBlock(block: Block, height: number, previousBlock?: Block): boolean {
+    if (height === -1) {
+      return true;
+    }
+
+    // 1. Verifica se o hash do bloco é válido
+    if (block.hash !== block.calculateHash()) {
+      console.warn(`Bloco ${height} tem hash inválido`);
+      return false;
+    }
+
+    // 2. Verifica se o hash atinge o target
+    if (!block.isValid()) {
+      console.warn(`Bloco ${height} não atinge o target de dificuldade`);
+      return false;
+    }
+
+    // 3. Verifica se o bloco anterior existe e tem o hash correto
+    if (height > 0) {
+      if (!previousBlock || previousBlock.hash !== block.previousHash) {
+        console.warn(`Bloco ${height} tem hash anterior inválido`);
+        return false;
+      }
+    }
+
+    // 4. Verifica se o timestamp é razoável
+    const now = Date.now();
+    if (block.timestamp > now + 7200000) {
+      // 2 horas no futuro
+      console.warn(`Bloco ${height} tem timestamp no futuro`);
+      return false;
+    }
+
+    // 5. Verifica se o timestamp é posterior ao bloco anterior
+    if (previousBlock && block.timestamp <= previousBlock.timestamp) {
+      console.warn(`Bloco ${height} tem timestamp anterior ao bloco anterior`);
+      return false;
+    }
+
+    // 6. Verifica se a dificuldade (nBits) está correta
+    if (height > 0) {
+      const expectedNBits = this.calculateExpectedNBits(height);
+      if (block.nBits !== expectedNBits) {
+        console.warn(
+          `Bloco ${height} tem nBits incorreto. Esperado: ${expectedNBits}, Recebido: ${block.nBits}`
+        );
+        return false;
+      }
+    }
+
+    // 7. Verifica se o subsídio está correto
+    const expectedSubsidy = this.calculateBlockSubsidy(height);
+    const actualSubsidy = block.transactions[0].outputs[0].value; // Coinbase é sempre a primeira transação
+    if (actualSubsidy !== expectedSubsidy) {
+      console.warn(
+        `Bloco ${height} tem subsídio incorreto. Esperado: ${expectedSubsidy}, Recebido: ${actualSubsidy}`
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  // Método para validar uma blockchain inteira
+  validateBlockchain(blockchain: BlockNode): boolean {
+    let current: BlockNode | undefined = blockchain;
+    let previousBlock: Block | undefined;
+    let height = -1;
+
+    while (current) {
+      const block = current.block;
+
+      if (!this.validateBlock(block, height, previousBlock)) {
+        return false;
+      }
+
+      previousBlock = block;
+      current = current.children[0]; // Pega o primeiro filho (main chain)
+      height++;
+    }
+
+    return true;
+  }
 }
