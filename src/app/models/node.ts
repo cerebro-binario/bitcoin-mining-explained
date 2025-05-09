@@ -83,39 +83,6 @@ export class Node {
     Object.assign(this, init);
   }
 
-  // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
-  calculateExpectedNBits(height: number): number {
-    const interval = this.consensus.difficultyAdjustmentInterval;
-    const targetBlockTime = this.consensus.targetBlockTime; // em segundos
-    // Se for o bloco gênese ou antes do primeiro ajuste, retorna o valor inicial
-    if (height === 0 || height < interval) {
-      return this.INITIAL_NBITS;
-    }
-    // Encontra o bloco do último ajuste
-    const prevAdjustmentHeight = height - interval;
-    const prevAdjustmentNode = this.heights
-      .flat()
-      .find((n) => n.block.height === prevAdjustmentHeight);
-    const lastBlockNode = this.heights
-      .flat()
-      .find((n) => n.block.height === height - 1);
-    if (!prevAdjustmentNode || !lastBlockNode) {
-      return this.INITIAL_NBITS;
-    }
-    const actualTime =
-      lastBlockNode.block.timestamp - prevAdjustmentNode.block.timestamp; // ms
-    const expectedTime = interval * targetBlockTime * 1000; // ms
-    // Dificuldade é ajustada proporcionalmente ao tempo real x tempo alvo
-    let prevNBits = prevAdjustmentNode.block.nBits;
-    let newNBits = Math.round(prevNBits * (expectedTime / actualTime));
-    // Limita o ajuste para evitar mudanças bruscas (ex: 4x para cima/baixo)
-    newNBits = Math.max(
-      Math.floor(prevNBits / 4),
-      Math.min(newNBits, prevNBits * 4)
-    );
-    return newNBits;
-  }
-
   initBlockTemplate(lastBlock?: Block): Block {
     const timestamp = Date.now();
     const previousHash =
@@ -159,11 +126,37 @@ export class Node {
     return this.currentBlock;
   }
 
-  private calculateNBits(lastBlock?: Block): number {
-    if (!lastBlock) return this.INITIAL_NBITS;
-
-    // TODO: Implementar ajuste de nBits baseado no tempo de mineração do último bloco
-    return this.INITIAL_NBITS;
+  // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
+  calculateExpectedNBits(height: number): number {
+    const interval = this.consensus.difficultyAdjustmentInterval;
+    const targetBlockTime = this.consensus.targetBlockTime; // em segundos
+    // Se for o bloco gênese ou antes do primeiro ajuste, retorna o valor inicial
+    if (height === 0 || height < interval) {
+      return this.INITIAL_NBITS;
+    }
+    // Encontra o bloco do último ajuste
+    const prevAdjustmentHeight = height - interval;
+    const prevAdjustmentNode = this.heights
+      .flat()
+      .find((n) => n.block.height === prevAdjustmentHeight);
+    const lastBlockNode = this.heights
+      .flat()
+      .find((n) => n.block.height === height - 1);
+    if (!prevAdjustmentNode || !lastBlockNode) {
+      return this.INITIAL_NBITS;
+    }
+    const actualTime =
+      lastBlockNode.block.timestamp - prevAdjustmentNode.block.timestamp; // ms
+    const expectedTime = interval * targetBlockTime * 1000; // ms
+    // Dificuldade é ajustada proporcionalmente ao tempo real x tempo alvo
+    let prevNBits = prevAdjustmentNode.block.nBits;
+    let newNBits = Math.round(prevNBits * (expectedTime / actualTime));
+    // Limita o ajuste para evitar mudanças bruscas (ex: 4x para cima/baixo)
+    newNBits = Math.max(
+      Math.floor(prevNBits / 4),
+      Math.min(newNBits, prevNBits * 4)
+    );
+    return newNBits;
   }
 
   private calculateBlockSubsidy(blockHeight: number): number {
