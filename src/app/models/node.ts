@@ -3,7 +3,6 @@ import { Block, BlockNode, Transaction } from './block.model';
 import {
   calculateConsensusInstanceHash,
   calculateConsensusVersionHash,
-  calculateEpochHash,
   ConsensusParameters,
   ConsensusVersion,
   DEFAULT_CONSENSUS,
@@ -467,10 +466,6 @@ export class Node {
     consensus.isLocal = true;
     consensus.minerId = this.id;
 
-    // Calculate hashes
-    consensus.epochs.forEach((epoch) => {
-      epoch.hash = calculateEpochHash(epoch);
-    });
     consensus.hash = calculateConsensusVersionHash(consensus);
     consensus.instanceHash = calculateConsensusInstanceHash(consensus);
 

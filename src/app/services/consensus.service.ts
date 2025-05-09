@@ -4,7 +4,6 @@ import {
   ConsensusVersion,
   DEFAULT_CONSENSUS,
   calculateConsensusVersionHash,
-  calculateEpochHash,
 } from '../models/consensus.model';
 
 @Injectable({ providedIn: 'root' })
@@ -31,9 +30,6 @@ export class ConsensusService {
   publishConsensus(consensus: ConsensusVersion) {
     if (!this.versions.some((v) => v.version === consensus.version)) {
       // Calculate hashes before publishing
-      consensus.epochs.forEach((epoch) => {
-        epoch.hash = calculateEpochHash(epoch);
-      });
       consensus.hash = calculateConsensusVersionHash(consensus);
       consensus.isLocal = false;
 

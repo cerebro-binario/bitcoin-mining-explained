@@ -15,11 +15,9 @@ import { ToastModule } from 'primeng/toast';
 import { Subject, takeUntil } from 'rxjs';
 import {
   calculateConsensusVersionHash,
-  ConsensusVersion,
   ConsensusEpoch,
-  ConsensusParameters,
+  ConsensusVersion,
   DEFAULT_CONSENSUS,
-  calculateEpochHash,
 } from '../../../../../models/consensus.model';
 import { Node } from '../../../../../models/node';
 import { ConsensusService } from '../../../../../services/consensus.service';
@@ -111,7 +109,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         {
           startHeight: lastEpoch.endHeight || lastEpoch.startHeight,
           parameters: { ...lastEpoch.parameters },
-          hash: '',
         },
       ],
       hash: '',
@@ -129,10 +126,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Calculate final hashes
-    this.editingVersion.epochs.forEach((epoch) => {
-      epoch.hash = calculateEpochHash(epoch);
-    });
     this.editingVersion.hash = calculateConsensusVersionHash(
       this.editingVersion
     );
@@ -339,7 +332,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     const newEpoch: ConsensusEpoch = {
       startHeight: lastEpoch.endHeight || lastEpoch.startHeight + 1,
       parameters: { ...lastEpoch.parameters },
-      hash: '',
     };
     this.editingVersion.epochs.push(newEpoch);
     this.paramChanged = true;
