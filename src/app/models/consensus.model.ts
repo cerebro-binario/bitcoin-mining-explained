@@ -1,4 +1,5 @@
 import * as CryptoJS from 'crypto-js';
+import { CONSENSUS_CONFIG } from '../config/consensus.config';
 
 export interface ConsensusParameters {
   // The number of blocks between difficulty adjustments
@@ -25,20 +26,20 @@ export interface ConsensusParameters {
   targetBlockTime: number;
 }
 
-// Default Bitcoin-like consensus parameters
-const DEFAULT_CONSENSUS: ConsensusParameters = {
-  difficultyAdjustmentInterval: 2016,
+// Default consensus parameters based on environment
+export const DEFAULT_CONSENSUS: ConsensusParameters = {
+  difficultyAdjustmentInterval: CONSENSUS_CONFIG.difficultyAdjustmentInterval,
+  targetBlockTime: CONSENSUS_CONFIG.targetBlockTime,
+  maxTransactionsPerBlock: CONSENSUS_CONFIG.maxTransactionsPerBlock,
+  maxBlockSize: CONSENSUS_CONFIG.maxBlockSize,
+  isLocal: false,
   version: '1.0.0',
   hash: '0000000000000000000000000000000000000000000000000000000000000000',
   timestamp: new Date(),
-  maxTransactionsPerBlock: 0, // 0 = sem limite
-  maxBlockSize: 1, // 1MB
-  isLocal: false,
-  targetBlockTime: 600, // 10 minutos
 };
-DEFAULT_CONSENSUS.hash = calculateConsensusVersionHash(DEFAULT_CONSENSUS);
 
-export { DEFAULT_CONSENSUS };
+// Calculate initial hash
+DEFAULT_CONSENSUS.hash = calculateConsensusVersionHash(DEFAULT_CONSENSUS);
 
 export function calculateConsensusVersionHash(
   params: ConsensusParameters
