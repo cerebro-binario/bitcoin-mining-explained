@@ -1,4 +1,5 @@
 import * as CryptoJS from 'crypto-js';
+import { CONSENSUS_CONFIG } from '../config/consensus.config';
 
 export interface ConsensusParameters {
   difficultyAdjustmentInterval: number;
@@ -64,12 +65,7 @@ export const DEFAULT_CONSENSUS: ConsensusVersion = {
   epochs: [
     {
       startHeight: 0,
-      parameters: {
-        difficultyAdjustmentInterval: 2016,
-        maxTransactionsPerBlock: 0,
-        maxBlockSize: 1,
-        targetBlockTime: 10,
-      },
+      parameters: { ...CONSENSUS_CONFIG },
     },
   ],
   hash: '',
