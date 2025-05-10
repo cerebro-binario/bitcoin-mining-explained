@@ -1,6 +1,7 @@
 import * as CryptoJS from 'crypto-js';
 import { Block, BlockNode, Transaction } from './block.model';
 import {
+  ConsensusEpoch,
   ConsensusParameters,
   ConsensusVersion,
   DEFAULT_CONSENSUS,
@@ -127,17 +128,19 @@ export class Node {
   // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
   calculateExpectedNBits(height: number): number {
     // Obtém os parâmetros de consenso para a altura específica
-    const consensus = this.getConsensusForHeight(height);
+    const epoch = this.getEpochForHeight(height);
+    const consensus = epoch.parameters;
     const interval = consensus.difficultyAdjustmentInterval;
     const targetBlockTime = consensus.targetBlockTime; // em segundos
+    const adjustedHeight = height - epoch.startHeight;
 
-    // Se for o bloco gênese ou antes do primeiro ajuste, retorna o valor inicial
-    if (height === 0 || height < interval) {
+    // Se for o bloco gênese, retorna o valor inicial
+    if (height === 0) {
       return this.INITIAL_NBITS;
     }
 
     // Se não for um bloco de ajuste, mantém o nBits do bloco anterior
-    if (height % interval !== 0) {
+    if (adjustedHeight % interval !== 0) {
       const lastBlockNode = this.heights
         .flat()
         .find((n) => n.block.height === height - 1 && n.isActive);
@@ -467,6 +470,20 @@ export class Node {
       throw new Error(`No consensus parameters found for height ${height}`);
     }
     return epoch.parameters.difficultyAdjustmentInterval;
+  }
+
+  getCurrentEpoch(): ConsensusEpoch {
+    return this.consensus.epochs[this.consensus.epochs.length - 1];
+  }
+
+  getEpochForHeight(height: number): ConsensusEpoch {
+    const epoch = this.consensus.epochs.find(
+      (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
+    );
+    if (!epoch) {
+      throw new Error(`No consensus parameters found for height ${height}`);
+    }
+    return epoch;
   }
 
   // Get consensus parameters for a specific block height
