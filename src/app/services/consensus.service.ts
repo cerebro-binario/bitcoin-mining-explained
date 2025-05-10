@@ -33,6 +33,7 @@ export class ConsensusService {
     }
 
     consensus.version = ++this.nVersionRef;
+    consensus.timestamp = Date.now();
 
     this.versions.push(consensus);
     this.versionsSubject.next(this.versions);
