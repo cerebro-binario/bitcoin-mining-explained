@@ -120,6 +120,7 @@ export class Node {
       nonce: 0,
       hash: '',
       miningElapsed: 0,
+      consensusVersion: this.consensus.version,
     });
 
     return this.currentBlock;
@@ -329,6 +330,7 @@ export class Node {
         nonce: 0,
         miningElapsed: 0,
         minerId: this.id,
+        consensusVersion: this.consensus.version,
       });
       const originNode = new BlockNode(originBlock);
       this.heights.unshift([originNode]);
