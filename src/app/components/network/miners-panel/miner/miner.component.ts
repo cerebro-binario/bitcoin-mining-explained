@@ -11,10 +11,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
-import {
-  ConsensusParameters,
-  ConsensusVersion,
-} from '../../../../models/consensus.model';
+import { ConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
@@ -334,5 +331,11 @@ export class MinerComponent {
         this.minerRemoved.emit(this.miner);
       },
     });
+  }
+
+  onConsensusVersionChange() {
+    // Recomeçar a mineração do bloco atual para que seja gerado com a nova versão do consenso
+    const lastBlock = this.miner.heights[0][0];
+    this.miner.currentBlock = this.miner.initBlockTemplate(lastBlock.block);
   }
 }

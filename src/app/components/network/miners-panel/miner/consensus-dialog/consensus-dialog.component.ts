@@ -67,6 +67,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   @Input() miner!: Node;
 
   @Output() close = new EventEmitter<void>();
+  @Output() versionChange = new EventEmitter<void>();
 
   constructor(
     private consensusService: ConsensusService,
@@ -204,6 +205,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       detail: `Versão v${this.selected.version} agora está em uso.`,
       life: 6000,
     });
+    this.versionChange.emit();
   }
 
   publishVersion() {
