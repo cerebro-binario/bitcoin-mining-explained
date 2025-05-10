@@ -34,11 +34,11 @@
           <h3 class="text-lg font-semibold text-blue-400">
             Nova versão
             <span class="text-xs text-zinc-400 ml-2 italic"
-              >(baseada em v{{ editingVersion.version }})</span
+              >(baseada em v{{ selected.version }})</span
             >
           </h3>
 
-          <ng-container *ngIf="existingVersion && paramChanged">
+          <ng-container *ngIf="existing && paramChanged">
             <ng-container
               *ngTemplateOutlet="existingVersionInfo"
             ></ng-container>
@@ -66,21 +66,18 @@
           <div class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
               <p-select
-                [options]="versions"
-                [(ngModel)]="editingVersion"
+                [options]="items"
+                [(ngModel)]="selected"
                 (onChange)="onVersionSelect($event)"
                 optionLabel="version"
-                dataKey="instanceHash"
+                dataKey="hash"
                 class="w-full bg-zinc-900 border border-zinc-700"
               >
                 <!-- Selecionado -->
                 <ng-template #selectedItem let-selectedOption>
                   <div class="flex items-center">
                     <span
-                      *ngIf="
-                        selectedOption.instanceHash ===
-                        miner.consensus.instanceHash
-                      "
+                      *ngIf="selectedOption.hash === miner.consensus.hash"
                       class="mr-2 text-green-400 flex items-center"
                     >
                       <svg
@@ -108,9 +105,7 @@
                 <ng-template let-consensus pTemplate="item">
                   <div class="flex items-center">
                     <span
-                      *ngIf="
-                        consensus.instanceHash === miner.consensus.instanceHash
-                      "
+                      *ngIf="consensus.hash === miner.consensus.hash"
                       class="mr-2 text-green-400 flex items-center"
                     >
                       <svg
@@ -139,183 +134,148 @@
           </div>
         </div>
 
-        <!-- Épocas -->
+        <!-- Parâmetros de Consenso -->
         <div class="space-y-4">
-          <h4 class="text-sm font-medium text-zinc-400">Épocas</h4>
-
-          <div
-            *ngFor="let epoch of editingVersion.epochs; let i = index"
-            class="p-4 bg-zinc-900 rounded-lg"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <h5 class="text-sm font-medium text-blue-400">
-                Época {{ i + 1 }}
-                <span class="text-xs text-zinc-500">
-                  (Altura {{ epoch.startHeight }} -
-                  {{ epoch.endHeight || "presente" }})
-                </span>
-              </h5>
-              <div class="flex items-center gap-2" *ngIf="mode === 'creating'">
-                <button
-                  *ngIf="i > 0"
-                  type="button"
-                  class="text-red-500 hover:text-red-700 transition"
-                  (click)="removeEpoch(i)"
-                >
-                  Remover
-                </button>
-                <button
-                  *ngIf="i === editingVersion.epochs.length - 1"
-                  type="button"
-                  class="text-blue-500 hover:text-blue-700 transition"
-                  (click)="addEpoch()"
-                >
-                  Adicionar Época
-                </button>
-              </div>
+          <!-- Intervalo de Ajuste de Dificuldade -->
+          <div class="mb-4">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-medium text-zinc-400"
+                >Intervalo de Ajuste de Dificuldade</span
+              >
+              <span
+                *ngIf="isParamInFork('difficultyAdjustmentInterval')"
+                class="text-yellow-400"
+                title="Este parâmetro está causando o fork!"
+                >⚠️</span
+              >
             </div>
-
-            <!-- Intervalo de Ajuste de Dificuldade -->
-            <div class="mb-4">
-              <div class="flex items-baseline gap-2">
-                <span class="text-sm font-medium text-zinc-400"
-                  >Intervalo de Ajuste de Dificuldade</span
-                >
-                <span
-                  *ngIf="isParamInFork('difficultyAdjustmentInterval')"
-                  class="text-yellow-400"
-                  title="Este parâmetro está causando o fork!"
-                  >⚠️</span
-                >
-              </div>
-              <div class="flex items-baseline gap-2 mt-1">
-                <input
-                  *ngIf="mode === 'creating'"
-                  type="number"
-                  [value]="epoch.parameters.difficultyAdjustmentInterval"
-                  (input)="onIntervalChange($event, i)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                  min="1"
-                />
-                <span
-                  *ngIf="mode !== 'creating'"
-                  class="text-lg font-semibold text-zinc-100"
-                >
-                  {{ epoch.parameters.difficultyAdjustmentInterval }}
-                </span>
-                <span class="text-sm text-zinc-400">blocos</span>
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Número de blocos entre cada ajuste de dificuldade
-              </p>
+            <div class="flex items-baseline gap-2 mt-1">
+              <input
+                *ngIf="mode === 'creating'"
+                type="number"
+                [(ngModel)]="newParams.difficultyAdjustmentInterval"
+                (ngModelChange)="onIntervalChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="1"
+              />
+              <span
+                *ngIf="mode !== 'creating'"
+                class="text-lg font-semibold text-zinc-100"
+              >
+                {{ selectedParams.difficultyAdjustmentInterval }}
+              </span>
+              <span class="text-sm text-zinc-400">blocos</span>
             </div>
+            <p class="mt-1 text-xs text-zinc-500">
+              Número de blocos entre cada ajuste de dificuldade
+            </p>
+          </div>
 
-            <!-- Máximo de Transações -->
-            <div class="mb-4">
-              <div class="flex items-baseline gap-2">
-                <span class="text-sm font-medium text-zinc-400"
-                  >Máximo de Transações por Bloco</span
-                >
-                <span
-                  *ngIf="isParamInFork('maxTransactionsPerBlock')"
-                  class="text-yellow-400"
-                  title="Este parâmetro está causando o fork!"
-                  >⚠️</span
-                >
-              </div>
-              <div class="flex items-baseline gap-2 mt-1">
-                <input
-                  *ngIf="mode === 'creating'"
-                  type="number"
-                  [value]="epoch.parameters.maxTransactionsPerBlock"
-                  (input)="onMaxTransactionsChange($event, i)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                  min="0"
-                />
-                <span
-                  *ngIf="mode !== 'creating'"
-                  class="text-lg font-semibold text-zinc-100"
-                >
-                  {{ epoch.parameters.maxTransactionsPerBlock }}
-                </span>
-                <span class="text-sm text-zinc-400">transações</span>
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Limite de transações por bloco (0 = sem limite)
-              </p>
+          <!-- Máximo de Transações -->
+          <div class="mb-4">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-medium text-zinc-400"
+                >Máximo de Transações por Bloco</span
+              >
+              <span
+                *ngIf="isParamInFork('maxTransactionsPerBlock')"
+                class="text-yellow-400"
+                title="Este parâmetro está causando o fork!"
+                >⚠️</span
+              >
             </div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <input
+                *ngIf="mode === 'creating'"
+                type="number"
+                [(ngModel)]="newParams.maxTransactionsPerBlock"
+                (ngModelChange)="onMaxTransactionsChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="0"
+              />
+              <span
+                *ngIf="mode !== 'creating'"
+                class="text-lg font-semibold text-zinc-100"
+              >
+                {{ selectedParams.maxTransactionsPerBlock }}
+              </span>
+              <span class="text-sm text-zinc-400">transações</span>
+            </div>
+            <p class="mt-1 text-xs text-zinc-500">
+              Limite de transações por bloco (0 = sem limite)
+            </p>
+          </div>
 
-            <!-- Tamanho Máximo do Bloco -->
-            <div class="mb-4">
-              <div class="flex items-baseline gap-2">
-                <span class="text-sm font-medium text-zinc-400"
-                  >Tamanho Máximo do Bloco</span
-                >
-                <span
-                  *ngIf="isParamInFork('maxBlockSize')"
-                  class="text-yellow-400"
-                  title="Este parâmetro está causando o fork!"
-                  >⚠️</span
-                >
-              </div>
-              <div class="flex items-baseline gap-2 mt-1">
-                <input
-                  *ngIf="mode === 'creating'"
-                  type="number"
-                  [value]="epoch.parameters.maxBlockSize"
-                  (input)="onMaxBlockSizeChange($event, i)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                  min="0.1"
-                  step="0.1"
-                />
-                <span
-                  *ngIf="mode !== 'creating'"
-                  class="text-lg font-semibold text-zinc-100"
-                >
-                  {{ epoch.parameters.maxBlockSize }}
-                </span>
-                <span class="text-sm text-zinc-400">MB</span>
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Tamanho máximo do bloco em megabytes
-              </p>
+          <!-- Tamanho Máximo do Bloco -->
+          <div class="mb-4">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-medium text-zinc-400"
+                >Tamanho Máximo do Bloco</span
+              >
+              <span
+                *ngIf="isParamInFork('maxBlockSize')"
+                class="text-yellow-400"
+                title="Este parâmetro está causando o fork!"
+                >⚠️</span
+              >
             </div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <input
+                *ngIf="mode === 'creating'"
+                type="number"
+                [(ngModel)]="newParams.maxBlockSize"
+                (ngModelChange)="onMaxBlockSizeChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="0.1"
+                step="0.1"
+              />
+              <span
+                *ngIf="mode !== 'creating'"
+                class="text-lg font-semibold text-zinc-100"
+              >
+                {{ selectedParams.maxBlockSize }}
+              </span>
+              <span class="text-sm text-zinc-400">MB</span>
+            </div>
+            <p class="mt-1 text-xs text-zinc-500">
+              Tamanho máximo do bloco em megabytes
+            </p>
+          </div>
 
-            <!-- Tempo Alvo de Bloco -->
-            <div class="mb-4">
-              <div class="flex items-baseline gap-2">
-                <span class="text-sm font-medium text-zinc-400"
-                  >Tempo Alvo de Bloco</span
-                >
-                <span
-                  *ngIf="isParamInFork('targetBlockTime')"
-                  class="text-yellow-400"
-                  title="Este parâmetro está causando o fork!"
-                  >⚠️</span
-                >
-              </div>
-              <div class="flex items-baseline gap-2 mt-1">
-                <input
-                  *ngIf="mode === 'creating'"
-                  type="number"
-                  [value]="epoch.parameters.targetBlockTime"
-                  (input)="onTargetBlockTimeChange($event, i)"
-                  class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                  min="1"
-                  step="1"
-                />
-                <span
-                  *ngIf="mode !== 'creating'"
-                  class="text-lg font-semibold text-zinc-100"
-                >
-                  {{ epoch.parameters.targetBlockTime }}
-                </span>
-                <span class="text-sm text-zinc-400">segundos</span>
-              </div>
-              <p class="mt-1 text-xs text-zinc-500">
-                Tempo esperado para mineração de cada bloco
-              </p>
+          <!-- Tempo Alvo de Bloco -->
+          <div class="mb-4">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-medium text-zinc-400"
+                >Tempo Alvo de Bloco</span
+              >
+              <span
+                *ngIf="isParamInFork('targetBlockTime')"
+                class="text-yellow-400"
+                title="Este parâmetro está causando o fork!"
+                >⚠️</span
+              >
             </div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <input
+                *ngIf="mode === 'creating'"
+                type="number"
+                [(ngModel)]="newParams.targetBlockTime"
+                (ngModelChange)="onTargetBlockTimeChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="1"
+                step="1"
+              />
+              <span
+                *ngIf="mode !== 'creating'"
+                class="text-lg font-semibold text-zinc-100"
+              >
+                {{ selectedParams.targetBlockTime }}
+              </span>
+              <span class="text-sm text-zinc-400">segundos</span>
+            </div>
+            <p class="mt-1 text-xs text-zinc-500">
+              Tempo esperado para mineração de cada bloco
+            </p>
           </div>
         </div>
 
@@ -325,7 +285,7 @@
             >Última Atualização</label
           >
           <div class="text-sm text-zinc-300">
-            {{ editingVersion.timestamp | date : "dd/MM/yyyy HH:mm:ss" }}
+            {{ selected.timestamp | date : "dd/MM/yyyy HH:mm:ss" }}
           </div>
         </div>
       </div>
@@ -338,14 +298,14 @@
       <div>
         <app-fork-warning
           [type]="consolidatedFork.type"
-          *ngIf="consolidatedFork.type !== 'none'"
+          *ngIf="consolidatedFork.type !== 'none' && !existing"
         >
           <div *ngIf="consolidatedFork.params.length > 0" class="mt-1">
             Parâmetros alterados:
             <b>{{ consolidatedFork.params.join(", ") }}</b>
           </div>
         </app-fork-warning>
-        <ng-container *ngIf="existingVersion && paramChanged">
+        <ng-container *ngIf="existing && paramChanged">
           <ng-container *ngTemplateOutlet="existingVersionInfo"></ng-container>
         </ng-container>
         <p-message severity="error" *ngIf="error">
@@ -362,7 +322,7 @@
           Cancelar
         </button>
         <button
-          [disabled]="existingVersion"
+          [disabled]="existing"
           class="px-4 py-2 rounded bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white not-disabled:hover:bg-green-700 transition"
           (click)="confirmEdit()"
         >
@@ -397,18 +357,15 @@
 
 <ng-template #existingVersionInfo>
   <div
-    *ngIf="existingVersion"
+    *ngIf="existing"
     class="mt-4 p-3 rounded bg-blue-900/40 border border-blue-700 flex items-center gap-3"
   >
     <span class="text-blue-300">
       Já existe uma versão idêntica:
-      <b>v{{ existingVersion.version }}</b>
+      <b>v{{ existing.version }}</b>
     </span>
     <a
-      *ngIf="
-        existingVersion.version !== miner.consensus.version;
-        else sameVersion
-      "
+      *ngIf="existing.version !== miner.consensus.version; else sameVersion"
       class="underline ml-4 text-blue-400 hover:text-blue-300 focus:text-blue-200 transition-colors italic cursor-pointer outline-none"
       (click)="useExistingVersion()"
       role="button"

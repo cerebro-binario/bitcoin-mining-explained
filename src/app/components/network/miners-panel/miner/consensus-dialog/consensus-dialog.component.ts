@@ -14,21 +14,15 @@ import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { Subject, takeUntil } from 'rxjs';
 import {
-  calculateConsensusVersionHash,
   ConsensusEpoch,
+  ConsensusParameters,
   ConsensusVersion,
-  DEFAULT_CONSENSUS,
 } from '../../../../../models/consensus.model';
 import { Node } from '../../../../../models/node';
 import { ConsensusService } from '../../../../../services/consensus.service';
 import { ForkWarningComponent } from './fork-warning.component';
 
 type ForkType = 'none' | 'soft' | 'hard';
-
-interface GroupedConsensusVersions {
-  label: string;
-  items: ConsensusVersion[];
-}
 
 @Component({
   selector: 'app-consensus-dialog',
@@ -47,14 +41,10 @@ interface GroupedConsensusVersions {
 })
 export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
-  private originalVersion: ConsensusVersion = { ...DEFAULT_CONSENSUS };
 
-  versions: ConsensusVersion[] = [];
-
-  mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
   isEditing = false;
-  editingVersion: ConsensusVersion = { ...DEFAULT_CONSENSUS };
-  existingVersion?: ConsensusVersion;
+  paramChanged = false;
+  mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
 
   // Scalable fork warning system
   forkWarnings: { [param: string]: ForkType } = {};
@@ -65,11 +55,18 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   error: string | null = null;
   info: string | null = null;
+
+  items: ConsensusVersion[] = [];
+  new!: ConsensusVersion;
+  newParams!: ConsensusParameters;
+  copy!: ConsensusParameters;
+  selected!: ConsensusVersion;
+  selectedParams!: ConsensusParameters;
+  existing?: ConsensusVersion;
+
   @Input() miner!: Node;
 
   @Output() close = new EventEmitter<void>();
-
-  paramChanged = false;
 
   constructor(
     private consensusService: ConsensusService,
@@ -77,44 +74,90 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.editingVersion = { ...this.miner.consensus };
-    this.originalVersion = { ...this.miner.consensus };
+    // Inicializar a versão selecionada com a versão rodando no miner
+    this.selected = new ConsensusVersion({ ...this.miner.consensus });
+    this.selectedParams = { ...this.selected.getCurrentConsensusParameters() };
+
+    // Inicializar a versão nova com base na versão selecionada
+    this.new = new ConsensusVersion({ ...this.selected });
+    this.newParams = { ...this.selectedParams };
+
     this.clearMessages();
 
     this.consensusService.versions$
       .pipe(takeUntil(this.destroy$))
       .subscribe((versions) => {
-        this.versions = versions;
+        this.items = versions;
       });
   }
 
   startEditing() {
-    this.clearMessages();
-    this.checkForExistingVersion();
-    this.paramChanged = false;
     this.mode = 'creating';
     this.isEditing = true;
-    this.originalVersion = { ...this.editingVersion };
+    this.paramChanged = false;
 
-    // Create a new epoch based on the last current epoch
-    const lastEpoch =
-      this.miner.consensus.epochs[this.miner.consensus.epochs.length - 1];
-    this.editingVersion = {
-      version: this.miner.consensus.version + 1,
-      timestamp: Date.now(),
-      epochs: [
-        {
-          startHeight: lastEpoch.endHeight || lastEpoch.startHeight,
-          parameters: { ...lastEpoch.parameters },
-        },
-      ],
-      hash: '',
-      instanceHash: '',
-    };
+    // Criar uma nova versão com base nos parâmetros atuais da versão selecionada
+    this.new = new ConsensusVersion({ ...this.selected });
+    this.newParams = { ...this.selectedParams };
+
+    // Fazer uma cópia dos parâmetros atuais para poder restaurar caso necessário
+    this.copy = { ...this.selectedParams };
+
+    // Limpar mensagens de erro e sucesso
+    this.clearMessages();
+  }
+
+  onIntervalChange(value: number) {
+    if (!isNaN(value) && value > 0) {
+      this.selectedParams.difficultyAdjustmentInterval = value;
+      this.forkWarnings['difficultyAdjustmentInterval'] =
+        value !== this.copy.difficultyAdjustmentInterval ? 'hard' : 'none';
+      this.updateConsolidatedFork();
+    }
+
+    this.onParametersChange();
+  }
+
+  onMaxTransactionsChange(value: number) {
+    if (!isNaN(value) && value >= 0) {
+      this.selectedParams.maxTransactionsPerBlock = value;
+      this.forkWarnings['maxTransactionsPerBlock'] =
+        value !== this.copy.maxTransactionsPerBlock ? 'soft' : 'none';
+      this.updateConsolidatedFork();
+    }
+
+    this.onParametersChange();
+  }
+
+  onMaxBlockSizeChange(value: number) {
+    if (!isNaN(value) && value > 0) {
+      this.selectedParams.maxBlockSize = value;
+      if (value < this.copy.maxBlockSize) {
+        this.forkWarnings['maxBlockSize'] = 'soft';
+      } else if (value > this.copy.maxBlockSize) {
+        this.forkWarnings['maxBlockSize'] = 'hard';
+      } else {
+        this.forkWarnings['maxBlockSize'] = 'none';
+      }
+      this.updateConsolidatedFork();
+    }
+
+    this.onParametersChange();
+  }
+
+  onTargetBlockTimeChange(value: number) {
+    if (!isNaN(value) && value > 0) {
+      this.selectedParams.targetBlockTime = value;
+      this.forkWarnings['targetBlockTime'] =
+        value !== this.copy.targetBlockTime ? 'hard' : 'none';
+      this.updateConsolidatedFork();
+    }
+
+    this.onParametersChange();
   }
 
   confirmEdit() {
-    if (this.existingVersion) {
+    if (this.existing) {
       this.messageService.add({
         severity: 'error',
         summary: 'Erro',
@@ -123,82 +166,16 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.editingVersion.hash = calculateConsensusVersionHash(
-      this.editingVersion
-    );
+    const success = this.publishVersion();
 
-    this.publishVersion();
-
-    this.mode = 'confirming';
-    this.clearMessages();
-  }
-
-  onIntervalChange(event: Event, epochIndex: number) {
-    const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value);
-    if (!isNaN(value) && value > 0) {
-      this.editingVersion.epochs[
-        epochIndex
-      ].parameters.difficultyAdjustmentInterval = value;
-      this.forkWarnings['difficultyAdjustmentInterval'] =
-        value !==
-        DEFAULT_CONSENSUS.epochs[0].parameters.difficultyAdjustmentInterval
-          ? 'hard'
-          : 'none';
-      this.updateConsolidatedFork();
+    if (success) {
+      this.selected = new ConsensusVersion({ ...this.new });
+      this.selectedParams = {
+        ...this.newParams,
+      };
+      this.mode = 'confirming';
+      this.clearMessages();
     }
-    this.paramChanged = true;
-    this.checkForExistingVersion();
-  }
-
-  onMaxTransactionsChange(event: Event, epochIndex: number) {
-    const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value);
-    if (!isNaN(value) && value >= 0) {
-      this.editingVersion.epochs[
-        epochIndex
-      ].parameters.maxTransactionsPerBlock = value;
-      this.forkWarnings['maxTransactionsPerBlock'] =
-        value !== DEFAULT_CONSENSUS.epochs[0].parameters.maxTransactionsPerBlock
-          ? 'soft'
-          : 'none';
-      this.updateConsolidatedFork();
-    }
-    this.paramChanged = true;
-    this.checkForExistingVersion();
-  }
-
-  onMaxBlockSizeChange(event: Event, epochIndex: number) {
-    const input = event.target as HTMLInputElement;
-    const value = parseFloat(input.value);
-    if (!isNaN(value) && value > 0) {
-      this.editingVersion.epochs[epochIndex].parameters.maxBlockSize = value;
-      if (value < DEFAULT_CONSENSUS.epochs[0].parameters.maxBlockSize) {
-        this.forkWarnings['maxBlockSize'] = 'soft';
-      } else if (value > DEFAULT_CONSENSUS.epochs[0].parameters.maxBlockSize) {
-        this.forkWarnings['maxBlockSize'] = 'hard';
-      } else {
-        this.forkWarnings['maxBlockSize'] = 'none';
-      }
-      this.updateConsolidatedFork();
-    }
-    this.paramChanged = true;
-    this.checkForExistingVersion();
-  }
-
-  onTargetBlockTimeChange(event: Event, epochIndex: number) {
-    const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value);
-    if (!isNaN(value) && value > 0) {
-      this.editingVersion.epochs[epochIndex].parameters.targetBlockTime = value;
-      this.forkWarnings['targetBlockTime'] =
-        value !== DEFAULT_CONSENSUS.epochs[0].parameters.targetBlockTime
-          ? 'hard'
-          : 'none';
-      this.updateConsolidatedFork();
-    }
-    this.paramChanged = true;
-    this.checkForExistingVersion();
   }
 
   onVersionSelect(event: any) {
@@ -206,8 +183,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     if (event.value) {
       const selected = event.value as ConsensusVersion;
+
+      this.selectedParams = { ...selected.getCurrentConsensusParameters() };
+
       if (selected.version !== this.miner.consensus.version) {
-        this.editingVersion = { ...selected };
         this.mode = 'confirming';
       } else {
         this.mode = 'viewing';
@@ -216,44 +195,114 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
-    this.miner.consensus = this.editingVersion;
+    this.miner.consensus = new ConsensusVersion({ ...this.selected });
     this.mode = 'viewing';
     this.clearMessages();
     this.messageService.add({
       severity: 'success',
       summary: 'Sucesso',
-      detail: `Versão v${this.editingVersion.version} agora está em uso.`,
+      detail: `Versão v${this.selected.version} agora está em uso.`,
       life: 6000,
     });
+  }
+
+  publishVersion() {
+    const success = this.consensusService.publishConsensus(this.new);
+
+    if (!success) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao publicar versão na rede. Tente novamente.',
+        life: 6000,
+      });
+      return false;
+    }
+
+    this.messageService.add({
+      severity: 'success',
+      summary: `Versão v${this.new.version} criada e publicada na rede.`,
+      detail: 'Você e outros nodes poderão atualizar para a nova versão.',
+      life: 6000,
+    });
+
+    return true;
+  }
+
+  isParamInFork(param: string): boolean {
+    return this.consolidatedFork.params.includes(param);
+  }
+
+  cancelEdit() {
+    this.mode = 'viewing';
+    this.isEditing = false;
+    this.selectedParams = { ...this.copy };
+    this.clearMessages();
+  }
+
+  cancelVersionChange() {
+    this.mode = 'viewing';
+    this.selectedParams = { ...this.copy };
+    this.clearMessages();
+  }
+
+  useExistingVersion() {
+    if (this.existing) {
+      this.selected = new ConsensusVersion({ ...this.existing });
+      this.copy = {
+        ...this.existing.getCurrentConsensusParameters(),
+      };
+      this.selectedParams = {
+        ...this.existing.getCurrentConsensusParameters(),
+      };
+      this.mode = 'confirming';
+    }
+  }
+
+  private prepareNewVersionInstance(startHeight?: number) {
+    // Pegar altura atual (do current block) caso usuário não tenha definido uma
+    startHeight = startHeight ?? (this.miner.currentBlock?.height || 0);
+
+    let newEpoch: ConsensusEpoch = {
+      startHeight,
+      parameters: { ...this.newParams },
+    };
+
+    const previousEpochs = this.selected.epochs
+      .filter((epoch) => epoch.startHeight < startHeight)
+      .map((epoch) => ({
+        ...epoch,
+      }));
+
+    this.new = new ConsensusVersion({
+      version: -1,
+      timestamp: -1,
+      epochs: [...previousEpochs, newEpoch],
+    });
+
+    if (previousEpochs.length > 0) {
+      const lastEpoch = previousEpochs[previousEpochs.length - 1];
+      lastEpoch.endHeight = startHeight - 1;
+    }
+
+    this.new.calculateHash();
   }
 
   private clearMessages() {
     this.error = null;
     this.info = null;
-    this.existingVersion = undefined;
+    this.existing = undefined;
     this.forkWarnings = {};
     this.updateConsolidatedFork();
   }
 
   private checkForExistingVersion() {
     if (!this.paramChanged) {
-      this.existingVersion = undefined;
+      this.existing = undefined;
       return;
     }
 
-    this.existingVersion = this.versions.find(
-      (v) =>
-        v.version !== this.editingVersion.version &&
-        v.epochs[0].parameters.difficultyAdjustmentInterval ===
-          this.editingVersion.epochs[0].parameters
-            .difficultyAdjustmentInterval &&
-        v.epochs[0].parameters.maxTransactionsPerBlock ===
-          this.editingVersion.epochs[0].parameters.maxTransactionsPerBlock &&
-        v.epochs[0].parameters.maxBlockSize ===
-          this.editingVersion.epochs[0].parameters.maxBlockSize &&
-        v.epochs[0].parameters.targetBlockTime ===
-          this.editingVersion.epochs[0].parameters.targetBlockTime
-    );
+    this.existing = this.items.find((v) => v.hash === this.new.hash);
   }
 
   private updateConsolidatedFork() {
@@ -273,107 +322,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     };
   }
 
-  onEpochStartHeightChange(value: number, epochIndex: number) {
-    if (!isNaN(value) && value >= 0) {
-      this.editingVersion.epochs[epochIndex].startHeight = value;
-      this.validateEpochHeights();
-      this.paramChanged = true;
-      this.checkForExistingVersion();
-    }
-  }
-
-  onEpochEndHeightChange(value: number, epochIndex: number) {
-    if (
-      !isNaN(value) &&
-      value > this.editingVersion.epochs[epochIndex].startHeight
-    ) {
-      this.editingVersion.epochs[epochIndex].endHeight = value;
-      this.validateEpochHeights();
-      this.paramChanged = true;
-      this.checkForExistingVersion();
-    }
-  }
-
-  addEpoch() {
-    const lastEpoch =
-      this.editingVersion.epochs[this.editingVersion.epochs.length - 1];
-    const newEpoch: ConsensusEpoch = {
-      startHeight: lastEpoch.endHeight || lastEpoch.startHeight + 1,
-      parameters: { ...lastEpoch.parameters },
-    };
-    this.editingVersion.epochs.push(newEpoch);
+  private onParametersChange() {
     this.paramChanged = true;
-  }
-
-  removeEpoch(index: number) {
-    if (index > 0) {
-      this.editingVersion.epochs.splice(index, 1);
-      this.validateEpochHeights();
-      this.paramChanged = true;
-    }
-  }
-
-  private validateEpochHeights() {
-    // Sort epochs by start height
-    this.editingVersion.epochs.sort((a, b) => a.startHeight - b.startHeight);
-
-    // Ensure epochs don't overlap
-    for (let i = 0; i < this.editingVersion.epochs.length - 1; i++) {
-      const currentEpoch = this.editingVersion.epochs[i];
-      const nextEpoch = this.editingVersion.epochs[i + 1];
-
-      if (
-        currentEpoch.endHeight === undefined ||
-        currentEpoch.endHeight >= nextEpoch.startHeight
-      ) {
-        currentEpoch.endHeight = nextEpoch.startHeight - 1;
-      }
-    }
-  }
-
-  publishVersion() {
-    const success = this.consensusService.publishConsensus(this.editingVersion);
-
-    if (!success) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao publicar versão na rede. Tente novamente.',
-        life: 6000,
-      });
-      return;
-    }
-
-    this.messageService.add({
-      severity: 'success',
-      summary: `Versão v${this.editingVersion.version} criada e publicada na rede.`,
-      detail: 'Outros nodes poderão atualizar para a nova versão.',
-      life: 6000,
-    });
-  }
-
-  isParamInFork(param: string): boolean {
-    return this.consolidatedFork.params.includes(param);
-  }
-
-  cancelEdit() {
-    this.mode = 'viewing';
-    this.isEditing = false;
-    this.editingVersion = { ...this.originalVersion };
-    this.clearMessages();
-  }
-
-  cancelVersionChange() {
-    this.mode = 'viewing';
-    this.editingVersion = { ...this.originalVersion };
-    this.clearMessages();
-  }
-
-  useExistingVersion() {
-    if (this.existingVersion) {
-      this.editingVersion = { ...this.existingVersion };
-      this.mode = 'confirming';
-    }
+    this.prepareNewVersionInstance();
+    this.checkForExistingVersion();
   }
 
   ngOnDestroy() {

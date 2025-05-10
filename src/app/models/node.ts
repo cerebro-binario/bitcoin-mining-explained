@@ -4,7 +4,6 @@ import {
   ConsensusParameters,
   ConsensusVersion,
   DEFAULT_CONSENSUS,
-  getConsensusForHeight,
 } from './consensus.model';
 
 export interface Neighbor {
@@ -76,7 +75,7 @@ export class Node {
   isLogsMaximized = false;
 
   // Parâmetros de consenso do nó
-  consensus: ConsensusVersion = { ...DEFAULT_CONSENSUS };
+  consensus: ConsensusVersion = DEFAULT_CONSENSUS;
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -128,7 +127,7 @@ export class Node {
   // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
   calculateExpectedNBits(height: number): number {
     // Obtém os parâmetros de consenso para a altura específica
-    const consensus = getConsensusForHeight(this.consensus, height);
+    const consensus = this.getConsensusForHeight(height);
     const interval = consensus.difficultyAdjustmentInterval;
     const targetBlockTime = consensus.targetBlockTime; // em segundos
 
@@ -479,6 +478,10 @@ export class Node {
       throw new Error(`No consensus parameters found for height ${height}`);
     }
     return epoch.parameters;
+  }
+
+  getCurrentConsensusParameters(): ConsensusParameters {
+    return this.getConsensusForHeight(this.currentBlock?.height || 0);
   }
 
   // Método para validar um bloco individual
