@@ -45,8 +45,7 @@ export class BitcoinNetworkService {
       const idx = Math.floor(Math.random() * candidates.length);
       const neighbor = candidates.splice(idx, 1)[0];
       const latency = 3000 + Math.floor(Math.random() * 7001); // 3000-10000ms (3-10 segundos)
-      node.neighbors.push({ nodeId: neighbor.id!, latency });
-      neighbor.neighbors.push({ nodeId: node.id!, latency }); // bidirecional
+      this.addConnection(node.id!, neighbor.id!, latency);
     }
   }
 
@@ -68,6 +67,9 @@ export class BitcoinNetworkService {
     ) {
       node.neighbors.push({ nodeId: neighborId, latency });
       neighbor.neighbors.push({ nodeId: nodeId, latency });
+      // Subscribe each to the other's block broadcasts
+      node.subscribeToPeerBlocks(neighbor);
+      neighbor.subscribeToPeerBlocks(node);
     }
   }
 
@@ -79,6 +81,9 @@ export class BitcoinNetworkService {
       neighbor.neighbors = neighbor.neighbors.filter(
         (n) => n.nodeId !== nodeId
       );
+      // Unsubscribe from block broadcasts
+      node.unsubscribeFromPeerBlocks(neighbor);
+      neighbor.unsubscribeFromPeerBlocks(node);
     }
   }
 
@@ -107,73 +112,7 @@ export class BitcoinNetworkService {
   propagateBlock(sourceNodeId: number, block: Block) {
     const sourceNode = this.nodes.find((n) => n.id === sourceNodeId);
     if (!sourceNode) return;
-
-    // Marca o nó fonte como tendo recebido o bloco
-    this.markBlockAsReceived(sourceNodeId, block.hash);
-
-    // Para cada vizinho do nó fonte
-    sourceNode.neighbors.forEach((neighbor) => {
-      const targetNode = this.nodes.find((n) => n.id === neighbor.nodeId);
-      if (!targetNode) return;
-
-      if (this.hasNodeReceivedBlock(targetNode.id!, block.hash)) {
-        return;
-      }
-
-      // Marca o nó como sincronizando
-      targetNode.isSyncing = true;
-
-      // Simula o delay de propagação baseado na latência
-      setTimeout(() => {
-        // Marca o nó como tendo recebido o bloco
-        this.markBlockAsReceived(targetNode.id!, block.hash);
-
-        // Log de recebimento do bloco
-        targetNode.eventLog.unshift({
-          type: 'block-received',
-          from: sourceNodeId,
-          blockHash: block.hash,
-          timestamp: Date.now(),
-        });
-        // if (targetNode.eventLog.length > 10) targetNode.eventLog.pop();
-
-        if (targetNode.initialSyncComplete) {
-          // Tenta adicionar o bloco (validação)
-          const result = targetNode.addBlock(block);
-          if (result.success) {
-            targetNode.eventLog.unshift({
-              type: 'block-validated',
-              blockHash: block.hash,
-              timestamp: Date.now(),
-            });
-
-            targetNode.updateLastMainBlocks();
-            targetNode.updateActiveForkHeights();
-          } else {
-            targetNode.eventLog.unshift({
-              type: 'block-rejected',
-              blockHash: block.hash,
-              timestamp: Date.now(),
-              reason: result.reason,
-            });
-          }
-          if (targetNode.eventLog.length > 10) targetNode.eventLog.pop();
-
-          // Verifica se o bloco mais recente agora é o que acabamos de adicionar
-          const latestBlock = targetNode.getLatestBlock();
-          if (latestBlock && latestBlock.hash === block.hash) {
-            targetNode.initBlockTemplate(block);
-          }
-
-          this.propagateBlock(targetNode.id!, block);
-        } else {
-          // Se ainda não completou o sync inicial, adiciona à fila de pendentes
-          targetNode.pendingBlocks.push(block);
-        }
-
-        targetNode.isSyncing = false;
-      }, neighbor.latency);
-    });
+    sourceNode.blockBroadcast$.next(block);
   }
 
   // Método para contar o número total de blocos em uma blockchain

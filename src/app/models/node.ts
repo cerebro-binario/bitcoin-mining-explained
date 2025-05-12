@@ -6,6 +6,7 @@ import {
   ConsensusVersion,
   DEFAULT_CONSENSUS,
 } from './consensus.model';
+import { Subject, Subscription } from 'rxjs';
 
 export interface Neighbor {
   nodeId: number;
@@ -77,6 +78,10 @@ export class Node {
 
   // Parâmetros de consenso do nó
   consensus: ConsensusVersion = DEFAULT_CONSENSUS;
+
+  blockBroadcast$ = new Subject<Block>();
+  private peerBlockSubscriptions: { [peerId: number]: Subscription } = {};
+  private receivedBlockHashes = new Set<string>();
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -600,5 +605,64 @@ export class Node {
     }
 
     return work;
+  }
+
+  // Subscribe to a peer's block broadcasts
+  subscribeToPeerBlocks(peer: Node) {
+    if (this.peerBlockSubscriptions[peer.id!]) return;
+    this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$.subscribe(
+      (block: Block) => {
+        this.onPeerBlockReceived(block, peer);
+      }
+    );
+  }
+
+  // Unsubscribe from a peer's block broadcasts
+  unsubscribeFromPeerBlocks(peer: Node) {
+    this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
+    delete this.peerBlockSubscriptions[peer.id!];
+  }
+
+  // Handler for when a block is received from a peer
+  onPeerBlockReceived(block: Block, peer: Node) {
+    // Deduplicação: se já recebeu esse bloco, não processa novamente
+    if (this.receivedBlockHashes.has(block.hash)) return;
+    this.receivedBlockHashes.add(block.hash);
+
+    // 1. Marcar como sincronizando
+    this.isSyncing = true;
+
+    // 2. Log de recebimento do bloco
+    this.eventLog.unshift({
+      type: 'block-received',
+      from: peer.id,
+      blockHash: block.hash,
+      timestamp: Date.now(),
+    });
+
+    // 3. Validar e tentar adicionar o bloco
+    const result = this.addBlock(block);
+    if (result.success) {
+      this.eventLog.unshift({
+        type: 'block-validated',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+      });
+      this.updateLastMainBlocks();
+      this.updateActiveForkHeights();
+    } else {
+      this.eventLog.unshift({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: result.reason,
+      });
+    }
+    if (this.eventLog.length > 10) this.eventLog.pop();
+
+    // 4. Repropagar para outros peers (emitir no próprio subject)
+    this.blockBroadcast$.next(block);
+
+    this.isSyncing = false;
   }
 }
