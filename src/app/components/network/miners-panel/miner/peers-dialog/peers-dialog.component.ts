@@ -18,7 +18,7 @@ export interface PeerInfo {
   latency: number;
   blockCount: number;
   consensusVersion: number | string;
-  syncStatus: 'in-sync' | 'behind' | 'fork' | 'unknown';
+  syncStatus: 'in-sync' | 'behind' | 'peer-behind' | 'fork' | 'unknown';
   syncTooltip: string;
 }
 
@@ -60,51 +60,67 @@ export class PeersDialogComponent implements OnInit, OnDestroy {
   }
 
   private computePeerInfos() {
+    this.peerInfos = this.miner.neighbors.map((peer) =>
+      this.computePeerInfoForId(peer.nodeId)
+    );
+  }
+
+  private computePeerInfoForId(peerId: number): PeerInfo {
+    const peer = this.miner.neighbors.find((p) => p.nodeId === peerId);
+    const peerNode = this.networkService.nodes.find(
+      (n: any) => n.id === peerId
+    );
+    let blockCount = 0;
+    let consensusVersion: number | string = '?';
+    let syncStatus: 'in-sync' | 'behind' | 'peer-behind' | 'fork' | 'unknown' =
+      'unknown';
+    let syncTooltip = 'Peer não encontrado';
+    let name = peerNode?.name ?? `#${peerId}`;
     const myBlock = this.miner.getLatestBlock?.();
-    this.peerInfos = this.miner.neighbors.map((peer) => {
-      const peerNode = this.networkService.nodes.find(
-        (n: any) => n.id === peer.nodeId
-      );
-      let blockCount = 0;
-      let consensusVersion: number | string = '?';
-      let syncStatus: 'in-sync' | 'behind' | 'fork' | 'unknown' = 'unknown';
-      let syncTooltip = 'Peer não encontrado';
-      let name = peerNode?.name ?? `#${peer.nodeId}`;
-      if (peerNode) {
-        const peerBlock = peerNode.getLatestBlock?.();
-        blockCount = peerBlock ? peerBlock.height + 1 : 0;
-        consensusVersion = peerNode?.consensus?.version ?? '?';
-        if (myBlock && peerBlock) {
-          if (peerBlock.hash === myBlock.hash) {
-            syncStatus = 'in-sync';
-            syncTooltip = 'Em sync';
-          } else if (peerBlock.height > myBlock.height) {
-            syncStatus = 'behind';
-            syncTooltip = `Atrasado ${
-              peerBlock.height - myBlock.height
-            } blocos`;
-          } else if (
-            peerBlock.height === myBlock.height &&
-            peerBlock.hash !== myBlock.hash
-          ) {
-            syncStatus = 'fork';
-            syncTooltip = 'Fork';
-          } else {
-            syncTooltip = 'Status desconhecido';
-          }
-        } else {
-          syncTooltip = 'Sem blocos';
-        }
+    const peerBlock = peerNode?.getLatestBlock?.();
+    if (!myBlock && peerBlock) {
+      syncStatus = 'behind';
+      syncTooltip = 'Você está atrasado em relação a este peer';
+    } else if (myBlock && !peerBlock) {
+      syncStatus = 'peer-behind';
+      syncTooltip = 'Este peer está atrasado em relação a você';
+    } else if (!myBlock && !peerBlock) {
+      syncStatus = 'unknown';
+      syncTooltip = 'Sem blocos';
+    } else if (myBlock && peerBlock) {
+      if (peerBlock.hash === myBlock.hash) {
+        syncStatus = 'in-sync';
+        syncTooltip = 'Em sync';
+      } else if (peerBlock.height > myBlock.height) {
+        syncStatus = 'behind';
+        syncTooltip = `Você está atrasado ${
+          peerBlock.height - myBlock.height
+        } blocos`;
+      } else if (peerBlock.height < myBlock.height) {
+        syncStatus = 'peer-behind';
+        syncTooltip = `Este peer está atrasado ${
+          myBlock.height - peerBlock.height
+        } blocos`;
+      } else if (
+        peerBlock.height === myBlock.height &&
+        peerBlock.hash !== myBlock.hash
+      ) {
+        syncStatus = 'fork';
+        syncTooltip = 'Fork';
+      } else {
+        syncTooltip = 'Status desconhecido';
       }
-      return {
-        id: peer.nodeId,
-        name,
-        latency: peer.latency,
-        blockCount,
-        consensusVersion,
-        syncStatus,
-        syncTooltip,
-      };
-    });
+    }
+    blockCount = peerBlock ? peerBlock.height + 1 : 0;
+    consensusVersion = peerNode?.consensus?.version ?? '?';
+    return {
+      id: peerId,
+      name,
+      latency: peer?.latency ?? 0,
+      blockCount,
+      consensusVersion,
+      syncStatus,
+      syncTooltip,
+    };
   }
 }
