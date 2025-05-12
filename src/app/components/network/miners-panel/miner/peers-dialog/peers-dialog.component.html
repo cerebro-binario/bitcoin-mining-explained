@@ -1,6 +1,10 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur"
+  (click)="onBackdropClick($event)"
+>
   <div
     class="bg-zinc-900 rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw] w-full max-h-[80vh] overflow-y-auto relative"
+    (click)="$event.stopPropagation()"
   >
     <button
       (click)="onClose()"
