@@ -73,6 +73,7 @@ export class MinerComponent {
   ];
 
   showConsensusDialog = false;
+  showPeersDialog = false;
 
   constructor(
     private addressService: AddressService,
@@ -351,5 +352,13 @@ export class MinerComponent {
     setTimeout(() => {
       this.isConnecting = false;
     }, 2000);
+  }
+
+  openPeersDialog() {
+    this.showPeersDialog = true;
+  }
+
+  closePeersDialog() {
+    this.showPeersDialog = false;
   }
 }
