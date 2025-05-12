@@ -37,7 +37,7 @@ export class BitcoinNetworkService {
     const candidates = this.nodes.filter(
       (n) =>
         n.id !== node.id &&
-        !node.neighbors.some((neighbor) => neighbor.nodeId === n.id)
+        !node.neighbors.some((neighbor) => neighbor.node === n)
     );
 
     for (let i = 0; i < N; i++) {
@@ -52,7 +52,7 @@ export class BitcoinNetworkService {
   removeNode(nodeId: number) {
     this.nodes = this.nodes.filter((n) => n.id !== nodeId);
     this.nodes.forEach((n) => {
-      n.neighbors = n.neighbors.filter((nb) => nb.nodeId !== nodeId);
+      n.neighbors = n.neighbors.filter((nb) => nb.node.id !== nodeId);
     });
     this.nodesSubject.next(this.nodes);
   }
@@ -60,13 +60,9 @@ export class BitcoinNetworkService {
   addConnection(nodeId: number, neighborId: number, latency: number = 50) {
     const node = this.nodes.find((n) => n.id === nodeId);
     const neighbor = this.nodes.find((n) => n.id === neighborId);
-    if (
-      node &&
-      neighbor &&
-      !node.neighbors.some((n) => n.nodeId === neighborId)
-    ) {
-      node.neighbors.push({ nodeId: neighborId, latency });
-      neighbor.neighbors.push({ nodeId: nodeId, latency });
+    if (node && neighbor && !node.neighbors.some((n) => n.node === neighbor)) {
+      node.neighbors.push({ node: neighbor, latency });
+      neighbor.neighbors.push({ node: node, latency });
       // Subscribe each to the other's block broadcasts
       node.subscribeToPeerBlocks(neighbor);
       neighbor.subscribeToPeerBlocks(node);
@@ -77,10 +73,8 @@ export class BitcoinNetworkService {
     const node = this.nodes.find((n) => n.id === nodeId);
     const neighbor = this.nodes.find((n) => n.id === neighborId);
     if (node && neighbor) {
-      node.neighbors = node.neighbors.filter((n) => n.nodeId !== neighborId);
-      neighbor.neighbors = neighbor.neighbors.filter(
-        (n) => n.nodeId !== nodeId
-      );
+      node.neighbors = node.neighbors.filter((n) => n.node !== neighbor);
+      neighbor.neighbors = neighbor.neighbors.filter((n) => n.node !== node);
       // Unsubscribe from block broadcasts
       node.unsubscribeFromPeerBlocks(neighbor);
       neighbor.unsubscribeFromPeerBlocks(node);
@@ -91,8 +85,8 @@ export class BitcoinNetworkService {
     const node = this.nodes.find((n) => n.id === nodeId);
     const neighbor = this.nodes.find((n) => n.id === neighborId);
     if (node && neighbor) {
-      const n1 = node.neighbors.find((n) => n.nodeId === neighborId);
-      const n2 = neighbor.neighbors.find((n) => n.nodeId === nodeId);
+      const n1 = node.neighbors.find((n) => n.node === neighbor);
+      const n2 = neighbor.neighbors.find((n) => n.node === node);
       if (n1) n1.latency = latency;
       if (n2) n2.latency = latency;
     }
@@ -144,7 +138,7 @@ export class BitcoinNetworkService {
 
       // Inicializa o rastreamento de peers
       node.syncPeers = node.neighbors.map((neighbor) => ({
-        nodeId: neighbor.nodeId,
+        nodeId: neighbor.node.id!,
         latency: neighbor.latency,
         status: 'pending',
       }));
@@ -159,7 +153,7 @@ export class BitcoinNetworkService {
       const checkNeighborsForDownload = () => {
         // Coleta as blockchains de todos os vizinhos válidos
         const validNeighbors = sortedNeighbors
-          .map((neighbor) => this.nodes.find((n) => n.id === neighbor.nodeId))
+          .map((neighbor) => this.nodes.find((n) => n.id === neighbor.node.id))
           .filter(
             (neighborNode) =>
               neighborNode &&
@@ -171,7 +165,9 @@ export class BitcoinNetworkService {
         if (validNeighbors.length === 0) {
           // Procura por peers que tenham uma chain mais longa
           const peersWithLongerChain = sortedNeighbors
-            .map((neighbor) => this.nodes.find((n) => n.id === neighbor.nodeId))
+            .map((neighbor) =>
+              this.nodes.find((n) => n.id === neighbor.node.id)
+            )
             .filter(
               (neighborNode) =>
                 neighborNode &&

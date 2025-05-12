@@ -48,11 +48,11 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
           <!-- Draw edges -->
           <ng-container *ngFor="let neighbor of node.neighbors">
             <line
-              *ngIf="getNodeById(neighbor.nodeId) as target"
+              *ngIf="getNodeById(neighbor.node.id) as target"
               [attr.x1]="getX(i)"
               [attr.y1]="getY(i)"
-              [attr.x2]="getX(getIndexById(neighbor.nodeId))"
-              [attr.y2]="getY(getIndexById(neighbor.nodeId))"
+              [attr.x2]="getX(getIndexById(neighbor.node.id))"
+              [attr.y2]="getY(getIndexById(neighbor.node.id))"
               stroke="#888"
               stroke-width="2"
               [attr.opacity]="0.7"
@@ -60,8 +60,8 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
             <!-- Linha animada para tráfego de dados -->
             <line
               *ngIf="node.isSyncing"
-              [attr.x1]="getX(getIndexById(neighbor.nodeId))"
-              [attr.y1]="getY(getIndexById(neighbor.nodeId))"
+              [attr.x1]="getX(getIndexById(neighbor.node.id))"
+              [attr.y1]="getY(getIndexById(neighbor.node.id))"
               [attr.x2]="getX(i)"
               [attr.y2]="getY(i)"
               stroke="#3b82f6"
@@ -157,10 +157,10 @@ export class GraphPlotComponent {
     const angle = (2 * Math.PI * i) / n;
     return this.height / 2 + Math.sin(angle) * (this.height / 2.5);
   }
-  getNodeById(id: number) {
+  getNodeById(id: number | undefined) {
     return this.network.nodes.find((n) => n.id === id);
   }
-  getIndexById(id: number) {
+  getIndexById(id: number | undefined) {
     return this.network.nodes.findIndex((n) => n.id === id);
   }
 }

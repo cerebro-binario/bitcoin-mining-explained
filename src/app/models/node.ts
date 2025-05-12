@@ -1,4 +1,6 @@
 import * as CryptoJS from 'crypto-js';
+import { Subject, Subscription } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import {
   ConsensusEpoch,
@@ -6,12 +8,10 @@ import {
   ConsensusVersion,
   DEFAULT_CONSENSUS,
 } from './consensus.model';
-import { Subject, Subscription } from 'rxjs';
-import { delay } from 'rxjs/operators';
 
 export interface Neighbor {
-  nodeId: number;
   latency: number;
+  node: Node;
 }
 
 export class Node {
@@ -83,6 +83,7 @@ export class Node {
   blockBroadcast$ = new Subject<Block>();
   private peerBlockSubscriptions: { [peerId: number]: Subscription } = {};
   private receivedBlockHashes = new Set<string>();
+  private orphanBlocks: Map<string, Block[]> = new Map(); // chave: previousHash, valor: blocos órfãos que dependem desse hash
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -244,7 +245,7 @@ export class Node {
     ) {
       latencyA = 0;
     } else if (this.id !== undefined && aMinerId !== undefined) {
-      const neighbor = this.neighbors.find((n) => n.nodeId === aMinerId);
+      const neighbor = this.neighbors.find((n) => n.node.id === aMinerId);
       if (neighbor) latencyA = neighbor.latency;
     }
 
@@ -255,7 +256,7 @@ export class Node {
     ) {
       latencyB = 0;
     } else if (this.id !== undefined && bMinerId !== undefined) {
-      const neighbor = this.neighbors.find((n) => n.nodeId === bMinerId);
+      const neighbor = this.neighbors.find((n) => n.node.id === bMinerId);
       if (neighbor) latencyB = neighbor.latency;
     }
 
@@ -611,7 +612,7 @@ export class Node {
   // Subscribe to a peer's block broadcasts
   subscribeToPeerBlocks(peer: Node) {
     if (this.peerBlockSubscriptions[peer.id!]) return;
-    const neighbor = this.neighbors.find((n) => n.nodeId === peer.id);
+    const neighbor = this.neighbors.find((n) => n.node.id === peer.id);
     const latency = neighbor?.latency || 0;
     this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
       .pipe(delay(latency))
@@ -644,6 +645,7 @@ export class Node {
     });
 
     // 3. Validar e tentar adicionar o bloco
+    const latestBlock = this.getLatestBlock();
     const result = this.addBlock(block);
     if (result.success) {
       this.eventLog.unshift({
@@ -653,6 +655,20 @@ export class Node {
       });
       this.updateLastMainBlocks();
       this.updateActiveForkHeights();
+      // Tentar encaixar órfãos que dependem deste bloco
+      this.tryAttachOrphans(block.hash);
+    } else if (result.reason === 'invalid-parent') {
+      // Se não conseguiu adicionar por falta do bloco anterior, armazena como órfão
+      if (!this.orphanBlocks.has(block.previousHash)) {
+        this.orphanBlocks.set(block.previousHash, []);
+      }
+      this.orphanBlocks.get(block.previousHash)!.push(block);
+      this.eventLog.unshift({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: 'orphan',
+      });
     } else {
       this.eventLog.unshift({
         type: 'block-rejected',
@@ -663,9 +679,111 @@ export class Node {
     }
     if (this.eventLog.length > 10) this.eventLog.pop();
 
-    // 4. Repropagar para outros peers (emitir no próprio subject)
+    // 4. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
+    const myHeight = latestBlock ? latestBlock.height : -1;
+    if (block.height > myHeight + 1) {
+      this.catchUpBlocks(myHeight + 1, block.height, peer);
+    }
+
+    // 5. Repropagar para outros peers (emitir no próprio subject apenas uma vez)
     this.blockBroadcast$.next(block);
 
     this.isSyncing = false;
+  }
+
+  // Tenta encaixar órfãos que dependem de um bloco recém-adicionado
+  private tryAttachOrphans(parentHash: string) {
+    const orphans = this.orphanBlocks.get(parentHash);
+    if (!orphans) return;
+    this.orphanBlocks.delete(parentHash);
+    for (const orphan of orphans) {
+      // Tenta adicionar o órfão (pode encaixar em cascata)
+      const result = this.addBlock(orphan);
+      if (result.success) {
+        this.eventLog.unshift({
+          type: 'block-validated',
+          blockHash: orphan.hash,
+          timestamp: Date.now(),
+        });
+        this.updateLastMainBlocks();
+        this.updateActiveForkHeights();
+        // Recursivamente tenta encaixar órfãos que dependem deste
+        this.tryAttachOrphans(orphan.hash);
+      } else if (result.reason === 'invalid-parent') {
+        // Continua órfão, re-adiciona
+        if (!this.orphanBlocks.has(orphan.previousHash)) {
+          this.orphanBlocks.set(orphan.previousHash, []);
+        }
+        this.orphanBlocks.get(orphan.previousHash)!.push(orphan);
+      } else {
+        this.eventLog.unshift({
+          type: 'block-rejected',
+          blockHash: orphan.hash,
+          timestamp: Date.now(),
+          reason: result.reason,
+        });
+      }
+      //   if (this.eventLog.length > 10) this.eventLog.pop();
+    }
+  }
+
+  // Busca ativa de blocos faltantes dos peers
+  private catchUpBlocks(
+    startHeight: number,
+    endHeight: number,
+    originPeer: Node
+  ) {
+    for (let h = startHeight; h < endHeight; h++) {
+      const blocks = this.requestBlockFromPeers(h, originPeer);
+      if (!blocks.length) break; // Para se não encontrar mais blocos
+      // Os blocos serão processados normalmente via onPeerBlockReceived
+    }
+  }
+
+  // Solicita todos os blocos ativos de todos os peers conectados
+  private requestBlockFromPeers(height: number, _originPeer: Node): Block[] {
+    const foundBlocks: Block[] = [];
+    for (const neighbor of this.neighbors) {
+      if (neighbor.node) {
+        const blocks = neighbor.node.getActiveBlocksByHeight?.(height) || [];
+        for (const block of blocks) {
+          // Simula recebimento do bloco
+          this.onPeerBlockReceived(block, neighbor.node);
+          foundBlocks.push(block);
+        }
+      }
+    }
+    return foundBlocks;
+  }
+
+  // Helper para obter o Node conectado pelo id
+  private getConnectedPeerNode(peerId: number): Node | null {
+    const neighbor = this.neighbors.find((n) => n.node.id === peerId);
+    return neighbor?.node || null;
+  }
+
+  // Busca um bloco local por altura
+  getBlockByHeight(height: number): Block | null {
+    for (const heightArr of this.heights) {
+      for (const node of heightArr) {
+        if (node.block.height === height) {
+          return node.block;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Busca todos os blocos ativos de uma altura
+  getActiveBlocksByHeight(height: number): Block[] {
+    const blocks: Block[] = [];
+    for (const heightArr of this.heights) {
+      for (const node of heightArr) {
+        if (node.block.height === height && node.isActive) {
+          blocks.push(node.block);
+        }
+      }
+    }
+    return blocks;
   }
 }
