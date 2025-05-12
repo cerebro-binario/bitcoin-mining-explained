@@ -27,9 +27,19 @@ export class BitcoinNetworkService {
       neighbors: [],
       isCollapsed,
     });
-    // Conexão automática a até 3 vizinhos aleatórios
-    const N = Math.min(3, this.nodes.length);
-    const candidates = [...this.nodes];
+    this.nodes.push(node);
+    this.nodesSubject.next(this.nodes);
+    return node;
+  }
+
+  connectToRandomPeers(node: Node, maxConnections: number = 3) {
+    const N = Math.min(maxConnections, this.nodes.length - 1); // -1 para excluir o próprio nó
+    const candidates = this.nodes.filter(
+      (n) =>
+        n.id !== node.id &&
+        !node.neighbors.some((neighbor) => neighbor.nodeId === n.id)
+    );
+
     for (let i = 0; i < N; i++) {
       if (candidates.length === 0) break;
       const idx = Math.floor(Math.random() * candidates.length);
@@ -38,9 +48,6 @@ export class BitcoinNetworkService {
       node.neighbors.push({ nodeId: neighbor.id!, latency });
       neighbor.neighbors.push({ nodeId: node.id!, latency }); // bidirecional
     }
-    this.nodes.push(node);
-    this.nodesSubject.next(this.nodes);
-    return node;
   }
 
   removeNode(nodeId: number) {
