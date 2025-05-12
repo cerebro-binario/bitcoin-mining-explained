@@ -24,6 +24,9 @@
         }"
         [title]="miner.isSyncing ? 'Sincronizando com peers' : 'Conectado'"
       ></span>
+      <span class="text-xs text-zinc-400 ml-2" title="Peers Conectados">
+        {{ miner.neighbors.length }} peers
+      </span>
     </span>
 
     <!-- Mining Controls in Header -->
