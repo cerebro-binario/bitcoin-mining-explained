@@ -26,6 +26,41 @@
       ></span>
       <span class="text-xs text-zinc-400 ml-2" title="Peers Conectados">
         {{ miner.neighbors.length }} peers
+        <button
+          *ngIf="miner.neighbors.length < 3"
+          class="ml-1 p-1 rounded-full transition align-middle relative overflow-hidden"
+          (click)="connectToPeers()"
+          [disabled]="isConnecting || miner.isSyncing"
+          [title]="
+            isConnecting || miner.isSyncing
+              ? 'Procurando conexões...'
+              : 'Procurar conexões na rede'
+          "
+          [ngClass]="{
+            'animate-pulse-ring': isConnecting || miner.isSyncing,
+            'bg-blue-700/30': isConnecting || miner.isSyncing,
+            'hover:bg-blue-700/30': !(isConnecting || miner.isSyncing)
+          }"
+          style="vertical-align: middle"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4 text-blue-400 transition-transform"
+            [ngClass]="{ 'animate-spin-slow': isConnecting || miner.isSyncing }"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M2 12a10 10 0 0 1 20 0" />
+            <path d="M12 2v2m0 16v2m10-10h-2M4 12H2" />
+          </svg>
+          <span
+            *ngIf="isConnecting || miner.isSyncing"
+            class="absolute inset-0 rounded-full border-2 border-blue-400 opacity-40 animate-pulse"
+          ></span>
+        </button>
       </span>
     </span>
 
@@ -109,17 +144,6 @@
         >(#{{ miner.getLatestBlock()?.height }})</span
       >
     </div>
-
-    <!-- Connect to Peers Button -->
-    <button
-      *ngIf="miner.neighbors.length === 0"
-      class="ml-4 px-3 py-1 rounded text-white text-sm font-semibold transition bg-blue-600 hover:bg-blue-700"
-      (click)="connectToPeers()"
-      [disabled]="isConnecting"
-      [title]="isConnecting ? 'Conectando...' : 'Conectar a peers aleatórios'"
-    >
-      {{ isConnecting ? "Conectando..." : "Conectar Peers" }}
-    </button>
 
     <!-- Miner ID -->
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
@@ -532,3 +556,30 @@
   (close)="onConsensusDialogClose()"
   (versionChange)="onConsensusVersionChange()"
 ></app-consensus-dialog>
+
+<!-- Animations -->
+<style>
+  .animate-spin-slow {
+    animation: spin 1.2s linear infinite;
+  }
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  .animate-pulse-ring {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+    animation: pulse-ring 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+    }
+    70% {
+      box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+  }
+</style>
