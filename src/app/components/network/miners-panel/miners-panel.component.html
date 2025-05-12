@@ -18,12 +18,13 @@
         #minerComponent
         [miner]="miner"
         (miningChanged)="onMiningChanged($event)"
-        (blockBroadcasted)="onBlockBroadcasted($event)"
         (minerRemoved)="onMinerRemoved($event)"
         (collapsedChange)="onMinerCollapsedChange($event)"
         (maximizedChange)="onMinerMaximizedChange($event)"
         (logsMaximizedChange)="onLogsMaximizedChange($event)"
         (hashRateChange)="onHashRateChange($event)"
+        (blockBroadcasted)="onBlockBroadcasted($event)"
+        (connectToPeersRequested)="onConnectToPeersRequested($event)"
       ></app-miner>
     </div>
   </ng-container>

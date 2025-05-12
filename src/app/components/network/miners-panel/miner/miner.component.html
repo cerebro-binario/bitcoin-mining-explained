@@ -110,6 +110,17 @@
       >
     </div>
 
+    <!-- Connect to Peers Button -->
+    <button
+      *ngIf="miner.neighbors.length === 0"
+      class="ml-4 px-3 py-1 rounded text-white text-sm font-semibold transition bg-blue-600 hover:bg-blue-700"
+      (click)="connectToPeers()"
+      [disabled]="isConnecting"
+      [title]="isConnecting ? 'Conectando...' : 'Conectar a peers aleatórios'"
+    >
+      {{ isConnecting ? "Conectando..." : "Conectar Peers" }}
+    </button>
+
     <!-- Miner ID -->
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
 

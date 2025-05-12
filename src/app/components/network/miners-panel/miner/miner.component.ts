@@ -42,6 +42,7 @@ interface HashRateOption {
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
+  isConnecting = false;
 
   networkVersions$!: Observable<ConsensusParameters[]>;
 
@@ -60,6 +61,7 @@ export class MinerComponent {
     minerId: number;
     transaction: Transaction;
   }>();
+  @Output() connectToPeersRequested = new EventEmitter<Node>();
 
   isCollapsedHashRateSelectorOpen = false;
 
@@ -337,5 +339,17 @@ export class MinerComponent {
     // Recomeçar a mineração do bloco atual para que seja gerado com a nova versão do consenso
     const lastBlock = this.miner.heights[0][0];
     this.miner.currentBlock = this.miner.initBlockTemplate(lastBlock.block);
+  }
+
+  connectToPeers() {
+    if (this.isConnecting) return;
+
+    this.isConnecting = true;
+    this.connectToPeersRequested.emit(this.miner);
+
+    // Reseta o estado após 2 segundos (tempo suficiente para a conexão)
+    setTimeout(() => {
+      this.isConnecting = false;
+    }, 2000);
   }
 }

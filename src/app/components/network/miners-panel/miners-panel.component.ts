@@ -154,6 +154,10 @@ export class MinersPanelComponent implements OnDestroy {
     this.network.removeNode(miner.id!);
   }
 
+  onConnectToPeersRequested(miner: Node) {
+    this.network.connectToRandomPeers(miner);
+  }
+
   onMiningChanged(miner: Node) {
     if (miner.isMining) {
       this.minersStats.nMining++;
