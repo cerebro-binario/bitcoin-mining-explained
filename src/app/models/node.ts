@@ -7,6 +7,7 @@ import {
   DEFAULT_CONSENSUS,
 } from './consensus.model';
 import { Subject, Subscription } from 'rxjs';
+import { delay } from 'rxjs/operators';
 
 export interface Neighbor {
   nodeId: number;
@@ -610,11 +611,13 @@ export class Node {
   // Subscribe to a peer's block broadcasts
   subscribeToPeerBlocks(peer: Node) {
     if (this.peerBlockSubscriptions[peer.id!]) return;
-    this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$.subscribe(
-      (block: Block) => {
+    const neighbor = this.neighbors.find((n) => n.nodeId === peer.id);
+    const latency = neighbor?.latency || 0;
+    this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
+      .pipe(delay(latency))
+      .subscribe((block: Block) => {
         this.onPeerBlockReceived(block, peer);
-      }
-    );
+      });
   }
 
   // Unsubscribe from a peer's block broadcasts
