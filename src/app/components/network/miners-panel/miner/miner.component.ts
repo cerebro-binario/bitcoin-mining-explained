@@ -18,6 +18,7 @@ import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
+import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
 
 interface HashRateOption {
   label: string;
@@ -34,6 +35,7 @@ interface HashRateOption {
     EventLogsComponent,
     ConsensusDialogComponent,
     ConfirmDialogModule,
+    PeersDialogComponent,
   ],
   templateUrl: './miner.component.html',
   styleUrls: ['./miner.component.scss'],

@@ -1,0 +1,35 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+  <div
+    class="bg-zinc-900 rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw] w-full max-h-[80vh] overflow-y-auto relative"
+  >
+    <button
+      (click)="onClose()"
+      class="absolute top-2 right-2 text-zinc-400 hover:text-red-400"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-5 h-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </button>
+    <h3 class="text-lg font-semibold text-blue-400 mb-4">Peers conectados</h3>
+    <div *ngIf="miner.neighbors.length === 0" class="text-zinc-400">
+      Nenhum peer conectado.
+    </div>
+    <div *ngIf="miner.neighbors.length > 0">
+      <!-- Aqui virá a lista de peers e status -->
+      <div class="text-zinc-300">
+        (Em breve: status visual de sync de cada peer)
+      </div>
+    </div>
+  </div>
+</div>
