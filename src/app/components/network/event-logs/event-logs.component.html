@@ -12,7 +12,8 @@
         [ngClass]="{
           'text-green-400': event.type === 'block-validated',
           'text-red-400': event.type === 'block-rejected',
-          'text-blue-400': event.type === 'block-received'
+          'text-blue-400': event.type === 'block-received',
+          'text-yellow-400': event.type === 'sync-progress'
         }"
       >
         <span class="font-mono">{{
@@ -21,13 +22,41 @@
         <span *ngIf="event.type === 'block-validated'">✔️</span>
         <span *ngIf="event.type === 'block-rejected'">❌</span>
         <span *ngIf="event.type === 'block-received'">⬇️</span>
-        <span class="ml-1">{{ event.type.replace("block-", "") }}</span>
-        <span class="ml-1 text-zinc-400"
+        <span *ngIf="event.type === 'sync-progress'">🔄</span>
+        <span class="ml-1">
+          {{
+            event.type === "block-validated"
+              ? "validado"
+              : event.type === "block-received"
+              ? "recebido"
+              : event.type === "block-rejected"
+              ? "rejeitado"
+              : event.type === "sync-progress"
+              ? "sincronizando"
+              : event.type
+          }}
+        </span>
+        <span *ngIf="event.type !== 'sync-progress'" class="ml-1 text-zinc-400"
           >({{ event.blockHash | slice : 0 : 8 }}...)</span
         >
-        <span *ngIf="event.reason" class="ml-1 text-red-300"
-          >({{ event.reason }})</span
+        <span
+          *ngIf="event.type === 'sync-progress'"
+          class="ml-1 text-yellow-300"
         >
+          Sincronizando: {{ event.syncProgress?.processed }}/{{
+            event.syncProgress?.total
+          }}
+          blocos ({{ event.syncProgress?.blocksPerSecond | number : "1.0-0" }}
+          blocos/s,
+          {{ event.syncProgress?.estimatedTimeRemaining | number : "1.0-0" }}s
+          restantes)
+        </span>
+        <span
+          *ngIf="event.message && event.type !== 'sync-progress'"
+          class="ml-1 text-red-300"
+        >
+          ({{ event.message }})
+        </span>
       </li>
       <li *ngIf="node.eventLog.length === 0" class="text-zinc-500 italic">
         Nenhum evento ainda.
@@ -75,7 +104,8 @@
           [ngClass]="{
             'text-green-400': event.type === 'block-validated',
             'text-red-400': event.type === 'block-rejected',
-            'text-blue-400': event.type === 'block-received'
+            'text-blue-400': event.type === 'block-received',
+            'text-yellow-400': event.type === 'sync-progress'
           }"
         >
           <span class="font-mono">{{
@@ -84,13 +114,43 @@
           <span *ngIf="event.type === 'block-validated'">✔️</span>
           <span *ngIf="event.type === 'block-rejected'">❌</span>
           <span *ngIf="event.type === 'block-received'">⬇️</span>
-          <span class="ml-1">{{ event.type.replace("block-", "") }}</span>
-          <span class="ml-1 text-zinc-400"
+          <span *ngIf="event.type === 'sync-progress'">🔄</span>
+          <span class="ml-1">
+            {{
+              event.type === "block-validated"
+                ? "validado"
+                : event.type === "block-received"
+                ? "recebido"
+                : event.type === "block-rejected"
+                ? "rejeitado"
+                : event.type === "sync-progress"
+                ? "sincronizando"
+                : event.type
+            }}
+          </span>
+          <span
+            *ngIf="event.type !== 'sync-progress'"
+            class="ml-1 text-zinc-400"
             >({{ event.blockHash | slice : 0 : 8 }}...)</span
           >
-          <span *ngIf="event.reason" class="ml-1 text-red-300"
-            >({{ event.reason }})</span
+          <span
+            *ngIf="event.type === 'sync-progress'"
+            class="ml-1 text-yellow-300"
           >
+            Sincronizando: {{ event.syncProgress?.processed }}/{{
+              event.syncProgress?.total
+            }}
+            blocos ({{ event.syncProgress?.blocksPerSecond | number : "1.0-0" }}
+            blocos/s,
+            {{ event.syncProgress?.estimatedTimeRemaining | number : "1.0-0" }}s
+            restantes)
+          </span>
+          <span
+            *ngIf="event.message && event.type !== 'sync-progress'"
+            class="ml-1 text-red-300"
+          >
+            ({{ event.message }})
+          </span>
         </li>
       </ul>
     </div>

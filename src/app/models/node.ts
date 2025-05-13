@@ -764,6 +764,21 @@ export class Node {
     let processedBlocks = 0;
     const startTime = Date.now();
 
+    // Log inicial de início de sincronização
+    this.addEvent({
+      type: 'sync-progress',
+      from: originPeer.id,
+      blockHash: `sync-progress-start`,
+      timestamp: Date.now(),
+      reason: 'sync-progress',
+      syncProgress: {
+        processed: 0,
+        total: totalBlocks,
+        blocksPerSecond: 0,
+        estimatedTimeRemaining: 0,
+      },
+    });
+
     for (let h = startHeight; h <= endHeight; h += BATCH_SIZE) {
       const batchEnd = Math.min(h + BATCH_SIZE - 1, endHeight);
       const blocks = await this.requestBlockFromPeers(h, batchEnd, originPeer);
@@ -772,9 +787,10 @@ export class Node {
 
       processedBlocks += blocks.length;
       const elapsedTime = (Date.now() - startTime) / 1000; // em segundos
-      const blocksPerSecond = processedBlocks / elapsedTime;
+      const blocksPerSecond = processedBlocks / (elapsedTime || 1);
       const remainingBlocks = totalBlocks - processedBlocks;
-      const estimatedTimeRemaining = remainingBlocks / blocksPerSecond;
+      const estimatedTimeRemaining =
+        blocksPerSecond > 0 ? remainingBlocks / blocksPerSecond : 0;
 
       // Atualiza o log com o progresso
       this.addEvent({
