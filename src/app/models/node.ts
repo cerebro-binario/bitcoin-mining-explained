@@ -627,6 +627,49 @@ export class Node {
     delete this.peerBlockSubscriptions[peer.id!];
   }
 
+  // Método centralizado para processar um bloco recebido
+  private processBlock(block: Block, isOrphan: boolean = false): void {
+    const result = this.addBlock(block);
+    if (result.success) {
+      this.eventLog.unshift({
+        type: 'block-validated',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+      });
+      this.updateLastMainBlocks();
+      this.updateActiveForkHeights();
+
+      // Tentar encaixar órfãos que dependem deste bloco
+      this.tryAttachOrphans(block.hash);
+
+      // Atualizar current block apenas se não for um órfão
+      this.initBlockTemplate(block);
+    } else if (result.reason === 'invalid-parent') {
+      // Se não conseguiu adicionar por falta do bloco anterior, armazena como órfão
+      if (!this.orphanBlocks.has(block.previousHash)) {
+        this.orphanBlocks.set(block.previousHash, []);
+      }
+      this.orphanBlocks.get(block.previousHash)!.push(block);
+
+      // Log apenas se não for um órfão (para evitar duplicação de logs)
+      if (!isOrphan) {
+        this.eventLog.unshift({
+          type: 'block-rejected',
+          blockHash: block.hash,
+          timestamp: Date.now(),
+          reason: 'orphan',
+        });
+      }
+    } else {
+      this.eventLog.unshift({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: result.reason,
+      });
+    }
+  }
+
   // Handler for when a block is received from a peer
   onPeerBlockReceived(block: Block, peer: Node) {
     // Deduplicação: se já recebeu esse bloco, não processa novamente
@@ -644,48 +687,16 @@ export class Node {
       timestamp: Date.now(),
     });
 
-    // 3. Validar e tentar adicionar o bloco
-    const latestBlock = this.getLatestBlock();
-    const result = this.addBlock(block);
-    if (result.success) {
-      this.eventLog.unshift({
-        type: 'block-validated',
-        blockHash: block.hash,
-        timestamp: Date.now(),
-      });
-      this.updateLastMainBlocks();
-      this.updateActiveForkHeights();
-      // Tentar encaixar órfãos que dependem deste bloco
-      this.tryAttachOrphans(block.hash);
-    } else if (result.reason === 'invalid-parent') {
-      // Se não conseguiu adicionar por falta do bloco anterior, armazena como órfão
-      if (!this.orphanBlocks.has(block.previousHash)) {
-        this.orphanBlocks.set(block.previousHash, []);
-      }
-      this.orphanBlocks.get(block.previousHash)!.push(block);
-      this.eventLog.unshift({
-        type: 'block-rejected',
-        blockHash: block.hash,
-        timestamp: Date.now(),
-        reason: 'orphan',
-      });
-    } else {
-      this.eventLog.unshift({
-        type: 'block-rejected',
-        blockHash: block.hash,
-        timestamp: Date.now(),
-        reason: result.reason,
-      });
-    }
-    // if (this.eventLog.length > 10) this.eventLog.pop();
+    // 3. Processar o bloco
+    this.processBlock(block);
 
     // 4. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
-    const myHeight = latestBlock ? latestBlock.height : -1;
+    const myHeight = this.getLatestBlock()?.height || -1;
     if (block.height > myHeight + 1) {
       this.catchUpBlocks(myHeight + 1, block.height, peer);
     }
 
-    // 5. Repropagar para outros peers (emitir no próprio subject apenas uma vez)
+    // 5. Repropagar para outros peers
     this.blockBroadcast$.next(block);
 
     this.isSyncing = false;
@@ -696,34 +707,9 @@ export class Node {
     const orphans = this.orphanBlocks.get(parentHash);
     if (!orphans) return;
     this.orphanBlocks.delete(parentHash);
+
     for (const orphan of orphans) {
-      // Tenta adicionar o órfão (pode encaixar em cascata)
-      const result = this.addBlock(orphan);
-      if (result.success) {
-        this.eventLog.unshift({
-          type: 'block-validated',
-          blockHash: orphan.hash,
-          timestamp: Date.now(),
-        });
-        this.updateLastMainBlocks();
-        this.updateActiveForkHeights();
-        // Recursivamente tenta encaixar órfãos que dependem deste
-        this.tryAttachOrphans(orphan.hash);
-      } else if (result.reason === 'invalid-parent') {
-        // Continua órfão, re-adiciona
-        if (!this.orphanBlocks.has(orphan.previousHash)) {
-          this.orphanBlocks.set(orphan.previousHash, []);
-        }
-        this.orphanBlocks.get(orphan.previousHash)!.push(orphan);
-      } else {
-        this.eventLog.unshift({
-          type: 'block-rejected',
-          blockHash: orphan.hash,
-          timestamp: Date.now(),
-          reason: result.reason,
-        });
-      }
-      //   if (this.eventLog.length > 10) this.eventLog.pop();
+      this.processBlock(orphan, true);
     }
   }
 
