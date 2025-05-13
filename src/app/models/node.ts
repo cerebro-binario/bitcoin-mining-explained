@@ -720,27 +720,60 @@ export class Node {
   }
 
   // Busca ativa de blocos faltantes dos peers
-  private catchUpBlocks(
+  private async catchUpBlocks(
     startHeight: number,
     endHeight: number,
     originPeer: Node
   ) {
-    for (let h = startHeight; h <= endHeight; h++) {
-      const blocks = this.requestBlockFromPeers(h, originPeer);
-      if (!blocks.length) break; // Para se não encontrar mais blocos
-      // Os blocos serão processados normalmente via onPeerBlockReceived
+    const BATCH_SIZE = 10; // Número de blocos por lote
+    const totalBlocks = endHeight - startHeight + 1;
+    let processedBlocks = 0;
+    const startTime = Date.now();
+
+    for (let h = startHeight; h <= endHeight; h += BATCH_SIZE) {
+      const batchEnd = Math.min(h + BATCH_SIZE - 1, endHeight);
+      const blocks = await this.requestBlockFromPeers(h, batchEnd, originPeer);
+
+      if (!blocks.length) break;
+
+      processedBlocks += blocks.length;
+      const elapsedTime = (Date.now() - startTime) / 1000; // em segundos
+      const blocksPerSecond = processedBlocks / elapsedTime;
+      const remainingBlocks = totalBlocks - processedBlocks;
+      const estimatedTimeRemaining = remainingBlocks / blocksPerSecond;
+
+      // Atualiza o log com o progresso
+      this.eventLog.unshift({
+        type: 'block-received',
+        from: originPeer.id,
+        blockHash: `sync-progress-${h}-${batchEnd}`,
+        timestamp: Date.now(),
+        reason: `Sync progress: ${processedBlocks}/${totalBlocks} blocks (${Math.round(
+          blocksPerSecond
+        )} blocks/s, ${Math.round(estimatedTimeRemaining)}s remaining)`,
+      });
     }
   }
 
   // Solicita todos os blocos ativos de todos os peers conectados
-  private requestBlockFromPeers(height: number, _originPeer: Node): Block[] {
+  private async requestBlockFromPeers(
+    startHeight: number,
+    endHeight: number,
+    originPeer: Node
+  ): Promise<Block[]> {
     const foundBlocks: Block[] = [];
-    for (const neighbor of this.neighbors) {
-      if (neighbor.node) {
-        const blocks = neighbor.node.getActiveBlocksByHeight?.(height) || [];
+    const neighbor = this.neighbors.find((n) => n.node.id === originPeer.id);
+    const latency = neighbor?.latency || 0;
+
+    // Simula latência na requisição (uma única vez por lote)
+    await new Promise((resolve) => setTimeout(resolve, latency));
+
+    if (originPeer) {
+      // Busca todos os blocos do lote de uma vez
+      for (let h = startHeight; h <= endHeight; h++) {
+        const blocks = originPeer.getActiveBlocksByHeight?.(h) || [];
         for (const block of blocks) {
-          // Simula recebimento do bloco
-          this.onPeerBlockReceived(block, neighbor.node);
+          this.onPeerBlockReceived(block, originPeer);
           foundBlocks.push(block);
         }
       }
