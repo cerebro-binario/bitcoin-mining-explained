@@ -677,7 +677,7 @@ export class Node {
         reason: result.reason,
       });
     }
-    if (this.eventLog.length > 10) this.eventLog.pop();
+    // if (this.eventLog.length > 10) this.eventLog.pop();
 
     // 4. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
     const myHeight = latestBlock ? latestBlock.height : -1;
