@@ -81,15 +81,6 @@ export class MinersPanelComponent implements OnDestroy {
       map((nodes) => nodes.filter((n) => n.isMiner)),
       tap((miners) => {
         this.updateStats(miners);
-
-        const toInitialize = miners.filter(
-          (miner) => !miner.initialSyncComplete
-        );
-        Promise.all(
-          toInitialize.map((miner) => this.network.initializeNode(miner))
-        ).then(() => {
-          this.updateStats(miners);
-        });
       })
     );
   }
@@ -107,12 +98,7 @@ export class MinersPanelComponent implements OnDestroy {
 
   startAllMiners() {
     const miners = this.minerComponents.map((minerComponent) => {
-      if (
-        !minerComponent.miner.isSyncing ||
-        minerComponent.miner.initialSyncComplete
-      ) {
-        minerComponent.startMining();
-      }
+      minerComponent.startMining();
 
       return minerComponent.miner;
     });
@@ -244,10 +230,7 @@ export class MinersPanelComponent implements OnDestroy {
         acc.toExpand += miner.isCollapsed ? 1 : 0;
         acc.nTotal++;
         acc.nMining += miner.isMining ? 1 : 0;
-        acc.nCanStart +=
-          !miner.isMining && (!miner.isSyncing || miner.initialSyncComplete)
-            ? 1
-            : 0;
+        acc.nCanStart += !miner.isMining ? 1 : 0;
         acc.nCanPause += miner.isMining ? 1 : 0;
         acc.totalHashRate += miner.currentHashRate;
         return acc;

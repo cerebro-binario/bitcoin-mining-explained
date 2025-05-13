@@ -128,7 +128,6 @@ export class BitcoinNetworkService {
       // Se for o primeiro nó, não precisa sincronizar
       if (this.nodes.length === 1) {
         node.isSyncing = false;
-        node.initialSyncComplete = true;
         resolve(node);
         return;
       }
@@ -154,12 +153,7 @@ export class BitcoinNetworkService {
         // Coleta as blockchains de todos os vizinhos válidos
         const validNeighbors = sortedNeighbors
           .map((neighbor) => this.nodes.find((n) => n.id === neighbor.node.id))
-          .filter(
-            (neighborNode) =>
-              neighborNode &&
-              neighborNode.initialSyncComplete &&
-              neighborNode.genesis
-          );
+          .filter((neighborNode) => neighborNode && neighborNode.genesis);
 
         // Se não há vizinhos com blockchain válida, verifica se há peers com chain mais longa
         if (validNeighbors.length === 0) {
@@ -177,7 +171,6 @@ export class BitcoinNetworkService {
           // Se não há peers com chain mais longa, libera para minerar genesis
           if (peersWithLongerChain.length === 0) {
             node.isSyncing = false;
-            node.initialSyncComplete = true;
             resolve(node);
             return true;
           }
@@ -252,7 +245,6 @@ export class BitcoinNetworkService {
           }
 
           node.isSyncing = false;
-          node.initialSyncComplete = true;
           resolve(node);
         }, sortedNeighbors[0].latency);
 

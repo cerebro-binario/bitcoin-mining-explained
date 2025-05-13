@@ -19,8 +19,7 @@ export class Node {
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
   private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
 
-  isSyncing: boolean = true;
-  initialSyncComplete: boolean = false;
+  isSyncing: boolean = false;
   pendingBlocks: Block[] = [];
   isAddingBlock: boolean = false;
 
@@ -619,6 +618,13 @@ export class Node {
       .subscribe((block: Block) => {
         this.onPeerBlockReceived(block, peer);
       });
+
+    // Faz um sync inicial com o peer
+    const myHeight = this.getLatestBlock()?.height || -1;
+    const peerLatestBlock = peer.getLatestBlock();
+    if (peerLatestBlock && peerLatestBlock.height > myHeight) {
+      this.catchUpBlocks(myHeight + 1, peerLatestBlock.height, peer);
+    }
   }
 
   // Unsubscribe from a peer's block broadcasts
@@ -719,7 +725,7 @@ export class Node {
     endHeight: number,
     originPeer: Node
   ) {
-    for (let h = startHeight; h < endHeight; h++) {
+    for (let h = startHeight; h <= endHeight; h++) {
       const blocks = this.requestBlockFromPeers(h, originPeer);
       if (!blocks.length) break; // Para se não encontrar mais blocos
       // Os blocos serão processados normalmente via onPeerBlockReceived
