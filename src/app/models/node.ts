@@ -8,6 +8,11 @@ import {
   ConsensusVersion,
   DEFAULT_CONSENSUS,
 } from './consensus.model';
+import {
+  EventLog,
+  validationMessages,
+  ValidationType,
+} from './event-log.model';
 
 export interface Neighbor {
   latency: number;
@@ -23,6 +28,9 @@ export class Node {
   pendingBlocks: Block[] = [];
   isAddingBlock: boolean = false;
 
+  // Log de eventos de propagação/validação de blocos
+  eventLog: EventLog[] = [];
+
   // Rastreamento de peers durante o sync inicial
   syncPeers: {
     nodeId: number;
@@ -30,15 +38,6 @@ export class Node {
     status: 'pending' | 'validating' | 'valid' | 'invalid';
     blockchainLength?: number;
     work?: number;
-  }[] = [];
-
-  // Log de eventos de propagação/validação de blocos
-  eventLog: {
-    type: 'block-received' | 'block-validated' | 'block-rejected';
-    from?: number;
-    blockHash: string;
-    timestamp: number;
-    reason?: string;
   }[] = [];
 
   id?: number;
@@ -86,6 +85,11 @@ export class Node {
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
+  }
+
+  private addEvent(event: Omit<EventLog, 'message'>) {
+    const message = event.reason ? validationMessages[event.reason] : undefined;
+    this.eventLog.unshift({ ...event, message });
   }
 
   initBlockTemplate(lastBlock?: Block): Block {
@@ -320,7 +324,7 @@ export class Node {
     return this.heights.length - height - 1;
   }
 
-  addBlock(block: Block): { success: boolean; reason?: string } {
+  addBlock(block: Block): { success: boolean; reason?: ValidationType } {
     const blockNode = new BlockNode(block);
 
     if (!this.heights.length) {
@@ -517,20 +521,35 @@ export class Node {
 
     // 1. Verifica se o hash do bloco é válido
     if (block.hash !== block.calculateHash()) {
-      console.warn(`Bloco ${height} tem hash inválido`);
+      this.addEvent({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: 'invalid-hash',
+      });
       return false;
     }
 
     // 2. Verifica se o hash atinge o target
     if (!block.isValid()) {
-      console.warn(`Bloco ${height} não atinge o target de dificuldade`);
+      this.addEvent({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: 'invalid-target',
+      });
       return false;
     }
 
     // 3. Verifica se o bloco anterior existe e tem o hash correto
     if (height > 0) {
       if (!previousBlock || previousBlock.hash !== block.previousHash) {
-        console.warn(`Bloco ${height} tem hash anterior inválido`);
+        this.addEvent({
+          type: 'block-rejected',
+          blockHash: block.hash,
+          timestamp: Date.now(),
+          reason: 'invalid-parent',
+        });
         return false;
       }
     }
@@ -538,14 +557,23 @@ export class Node {
     // 4. Verifica se o timestamp é razoável
     const now = Date.now();
     if (block.timestamp > now + 7200000) {
-      // 2 horas no futuro
-      console.warn(`Bloco ${height} tem timestamp no futuro`);
+      this.addEvent({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: 'invalid-timestamp',
+      });
       return false;
     }
 
     // 5. Verifica se o timestamp é posterior ao bloco anterior
     if (previousBlock && block.timestamp <= previousBlock.timestamp) {
-      console.warn(`Bloco ${height} tem timestamp anterior ao bloco anterior`);
+      this.addEvent({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: 'invalid-timestamp',
+      });
       return false;
     }
 
@@ -553,20 +581,26 @@ export class Node {
     if (height > 0) {
       const expectedNBits = this.calculateExpectedNBits(height);
       if (block.nBits !== expectedNBits) {
-        console.warn(
-          `Bloco ${height} tem nBits incorreto. Esperado: ${expectedNBits}, Recebido: ${block.nBits}`
-        );
+        this.addEvent({
+          type: 'block-rejected',
+          blockHash: block.hash,
+          timestamp: Date.now(),
+          reason: 'invalid-nbits',
+        });
         return false;
       }
     }
 
     // 7. Verifica se o subsídio está correto
     const expectedSubsidy = this.calculateBlockSubsidy(height);
-    const actualSubsidy = block.transactions[0].outputs[0].value; // Coinbase é sempre a primeira transação
+    const actualSubsidy = block.transactions[0].outputs[0].value;
     if (actualSubsidy !== expectedSubsidy) {
-      console.warn(
-        `Bloco ${height} tem subsídio incorreto. Esperado: ${expectedSubsidy}, Recebido: ${actualSubsidy}`
-      );
+      this.addEvent({
+        type: 'block-rejected',
+        blockHash: block.hash,
+        timestamp: Date.now(),
+        reason: 'invalid-subsidy',
+      });
       return false;
     }
 
@@ -637,7 +671,7 @@ export class Node {
   private processBlock(block: Block, isOrphan: boolean = false): void {
     const result = this.addBlock(block);
     if (result.success) {
-      this.eventLog.unshift({
+      this.addEvent({
         type: 'block-validated',
         blockHash: block.hash,
         timestamp: Date.now(),
@@ -659,15 +693,15 @@ export class Node {
 
       // Log apenas se não for um órfão (para evitar duplicação de logs)
       if (!isOrphan) {
-        this.eventLog.unshift({
+        this.addEvent({
           type: 'block-rejected',
           blockHash: block.hash,
           timestamp: Date.now(),
-          reason: 'orphan',
+          reason: 'invalid-parent',
         });
       }
     } else {
-      this.eventLog.unshift({
+      this.addEvent({
         type: 'block-rejected',
         blockHash: block.hash,
         timestamp: Date.now(),
@@ -686,7 +720,7 @@ export class Node {
     this.isSyncing = true;
 
     // 2. Log de recebimento do bloco
-    this.eventLog.unshift({
+    this.addEvent({
       type: 'block-received',
       from: peer.id,
       blockHash: block.hash,
@@ -743,14 +777,18 @@ export class Node {
       const estimatedTimeRemaining = remainingBlocks / blocksPerSecond;
 
       // Atualiza o log com o progresso
-      this.eventLog.unshift({
-        type: 'block-received',
+      this.addEvent({
+        type: 'sync-progress',
         from: originPeer.id,
         blockHash: `sync-progress-${h}-${batchEnd}`,
         timestamp: Date.now(),
-        reason: `Sync progress: ${processedBlocks}/${totalBlocks} blocks (${Math.round(
-          blocksPerSecond
-        )} blocks/s, ${Math.round(estimatedTimeRemaining)}s remaining)`,
+        reason: 'sync-progress',
+        syncProgress: {
+          processed: processedBlocks,
+          total: totalBlocks,
+          blocksPerSecond,
+          estimatedTimeRemaining,
+        },
       });
     }
   }
