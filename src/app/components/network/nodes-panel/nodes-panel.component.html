@@ -59,10 +59,7 @@
       </div>
 
       <!-- Seção de peers durante primeira sincronização -->
-      <div
-        *ngIf="node.isSyncing && !node.initialSyncComplete"
-        class="w-full mt-4"
-      >
+      <div *ngIf="node.isSyncing" class="w-full mt-4">
         <div class="text-xs text-zinc-400 mb-2">Peers:</div>
         <div class="space-y-2">
           <div

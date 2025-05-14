@@ -484,18 +484,18 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-      <app-event-logs
-        [node]="miner"
-        class="flex"
-        (show)="showLogs()"
-        (close)="closeLogs()"
-      ></app-event-logs>
-
+    <div class="flex flex-col md:flex-row gap-6 mt-6 h-[390px] relative">
       <app-mining-block
+        class="w-full h-full"
         [block]="miner.currentBlock"
         [miningElapsed]="miner.currentBlock?.miningElapsed"
       ></app-mining-block>
+      <app-event-logs
+        [node]="miner"
+        class="h-full"
+        (show)="showLogs()"
+        (close)="closeLogs()"
+      ></app-event-logs>
     </div>
 
     <!-- Blockchain Local -->
