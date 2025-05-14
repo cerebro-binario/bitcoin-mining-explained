@@ -40,10 +40,21 @@
               : event.type
           }}
         </span>
-        <span *ngIf="event.type !== 'sync-progress'" class="ml-1 text-zinc-400">
-          ({{ event.block?.hash | slice : 0 : 32 }}... v{{
-            event.block?.consensusVersion || "-"
-          }})
+        <span
+          *ngIf="event.type !== 'sync-progress'"
+          class="ml-1 flex items-center gap-1.5"
+        >
+          <span class="text-blue-500 font-semibold text-xs"
+            >#{{ event.block?.height ?? "-" }}</span
+          >
+          <span class="text-zinc-400 text-xs">•</span>
+          <span class="font-mono text-zinc-500 text-xs tracking-tight">
+            {{ event.block?.hash | slice : 0 : 32 }}...
+          </span>
+          <span class="text-zinc-400 text-xs">•</span>
+          <span class="text-blue-700 text-xs italic"
+            >v{{ event.block?.consensusVersion || "-" }}</span
+          >
         </span>
         <span
           *ngIf="event.type === 'sync-progress'"
@@ -164,9 +175,19 @@
           </span>
           <span
             *ngIf="event.type !== 'sync-progress'"
-            class="ml-1 text-zinc-400"
-            >({{ event.block?.hash | slice : 0 : 32 }}... v
-            {{ event.block?.consensusVersion || "-" }})
+            class="ml-1 flex items-center gap-1.5"
+          >
+            <span class="text-blue-500 font-semibold text-xs"
+              >#{{ event.block?.height ?? "-" }}</span
+            >
+            <span class="text-zinc-400 text-xs">•</span>
+            <span class="font-mono text-zinc-500 text-xs tracking-tight">
+              {{ event.block?.hash | slice : 0 : 32 }}...
+            </span>
+            <span class="text-zinc-400 text-xs">•</span>
+            <span class="text-blue-700 text-xs italic"
+              >v{{ event.block?.consensusVersion || "-" }}</span
+            >
           </span>
           <span
             *ngIf="event.type === 'sync-progress'"
