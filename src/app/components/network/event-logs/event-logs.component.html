@@ -10,7 +10,8 @@
       <li
         *ngFor="let event of node.eventLog | slice : 0 : 15"
         [ngClass]="{
-          'text-green-400': event.type === 'block-validated',
+          'text-green-400':
+            event.type === 'block-validated' || event.type === 'block-mined',
           'text-red-400': event.type === 'block-rejected',
           'text-blue-400': event.type === 'block-received',
           'text-yellow-400': event.type === 'sync-progress'
@@ -23,6 +24,7 @@
         <span *ngIf="event.type === 'block-rejected'">❌</span>
         <span *ngIf="event.type === 'block-received'">⬇️</span>
         <span *ngIf="event.type === 'sync-progress'">🔄</span>
+        <span *ngIf="event.type === 'block-mined'">⛏️</span>
         <span class="ml-1">
           {{
             event.type === "block-validated"
@@ -33,6 +35,8 @@
               ? "rejeitado"
               : event.type === "sync-progress"
               ? "sincronizando"
+              : event.type === "block-mined"
+              ? "minerado"
               : event.type
           }}
         </span>
@@ -128,7 +132,8 @@
         <li
           *ngFor="let event of node.eventLog"
           [ngClass]="{
-            'text-green-400': event.type === 'block-validated',
+            'text-green-400':
+              event.type === 'block-validated' || event.type === 'block-mined',
             'text-red-400': event.type === 'block-rejected',
             'text-blue-400': event.type === 'block-received',
             'text-yellow-400': event.type === 'sync-progress'
@@ -141,6 +146,7 @@
           <span *ngIf="event.type === 'block-rejected'">❌</span>
           <span *ngIf="event.type === 'block-received'">⬇️</span>
           <span *ngIf="event.type === 'sync-progress'">🔄</span>
+          <span *ngIf="event.type === 'block-mined'">⛏️</span>
           <span class="ml-1">
             {{
               event.type === "block-validated"
@@ -151,6 +157,8 @@
                 ? "rejeitado"
                 : event.type === "sync-progress"
                 ? "sincronizando"
+                : event.type === "block-mined"
+                ? "minerado"
                 : event.type
             }}
           </span>

@@ -378,6 +378,15 @@ export class Node {
       this.heights[heightIndex].push(blockNode);
     }
 
+    // Log de bloco minerado localmente
+    if (block.minerId === this.id) {
+      this.addEvent({
+        type: 'block-mined',
+        block: block,
+        timestamp: Date.now(),
+      });
+    }
+
     this.checkForksAndSort();
     return { success: true };
   }

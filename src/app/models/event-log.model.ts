@@ -14,7 +14,8 @@ export type EventType =
   | 'block-received'
   | 'block-validated'
   | 'block-rejected'
-  | 'sync-progress';
+  | 'sync-progress'
+  | 'block-mined';
 
 export interface EventLog {
   type: EventType;
@@ -33,7 +34,7 @@ export interface EventLog {
 
 // Mapeamento de tipos de validação para mensagens
 export const validationMessages: Record<
-  ValidationType | 'sync-progress',
+  ValidationType | 'sync-progress' | 'sync-complete' | 'block-mined',
   string
 > = {
   duplicate: 'Bloco duplicado',
@@ -45,4 +46,5 @@ export const validationMessages: Record<
   'invalid-subsidy': 'Subsídio do bloco incorreto',
   'sync-progress': 'Sincronização em andamento',
   'sync-complete': 'Sincronização concluída',
+  'block-mined': 'Bloco minerado',
 };
