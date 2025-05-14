@@ -1,3 +1,5 @@
+import { Block } from './block.model';
+
 export type ValidationType =
   | 'duplicate'
   | 'invalid-parent'
@@ -16,7 +18,7 @@ export type EventType =
 export interface EventLog {
   type: EventType;
   from?: number;
-  blockHash: string;
+  block?: Block;
   timestamp: number;
   reason?: ValidationType | 'sync-progress';
   message?: string;

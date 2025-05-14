@@ -36,9 +36,11 @@
               : event.type
           }}
         </span>
-        <span *ngIf="event.type !== 'sync-progress'" class="ml-1 text-zinc-400"
-          >({{ event.blockHash | slice : 0 : 8 }}...)</span
-        >
+        <span *ngIf="event.type !== 'sync-progress'" class="ml-1 text-zinc-400">
+          ({{ event.block?.hash | slice : 0 : 32 }}... v{{
+            event.block?.consensusVersion || "-"
+          }})
+        </span>
         <span
           *ngIf="event.type === 'sync-progress'"
           class="ml-1 text-yellow-300"
@@ -131,8 +133,9 @@
           <span
             *ngIf="event.type !== 'sync-progress'"
             class="ml-1 text-zinc-400"
-            >({{ event.blockHash | slice : 0 : 8 }}...)</span
-          >
+            >({{ event.block?.hash | slice : 0 : 32 }}... v
+            {{ event.block?.consensusVersion || "-" }})
+          </span>
           <span
             *ngIf="event.type === 'sync-progress'"
             class="ml-1 text-yellow-300"

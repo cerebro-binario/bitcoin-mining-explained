@@ -523,7 +523,7 @@ export class Node {
     if (block.hash !== block.calculateHash()) {
       this.addEvent({
         type: 'block-rejected',
-        blockHash: block.hash,
+        block: block,
         timestamp: Date.now(),
         reason: 'invalid-hash',
       });
@@ -534,7 +534,7 @@ export class Node {
     if (!block.isValid()) {
       this.addEvent({
         type: 'block-rejected',
-        blockHash: block.hash,
+        block: block,
         timestamp: Date.now(),
         reason: 'invalid-target',
       });
@@ -546,7 +546,7 @@ export class Node {
       if (!previousBlock || previousBlock.hash !== block.previousHash) {
         this.addEvent({
           type: 'block-rejected',
-          blockHash: block.hash,
+          block: block,
           timestamp: Date.now(),
           reason: 'invalid-parent',
         });
@@ -559,7 +559,7 @@ export class Node {
     if (block.timestamp > now + 7200000) {
       this.addEvent({
         type: 'block-rejected',
-        blockHash: block.hash,
+        block: block,
         timestamp: Date.now(),
         reason: 'invalid-timestamp',
       });
@@ -570,7 +570,7 @@ export class Node {
     if (previousBlock && block.timestamp <= previousBlock.timestamp) {
       this.addEvent({
         type: 'block-rejected',
-        blockHash: block.hash,
+        block: block,
         timestamp: Date.now(),
         reason: 'invalid-timestamp',
       });
@@ -583,7 +583,7 @@ export class Node {
       if (block.nBits !== expectedNBits) {
         this.addEvent({
           type: 'block-rejected',
-          blockHash: block.hash,
+          block: block,
           timestamp: Date.now(),
           reason: 'invalid-nbits',
         });
@@ -597,7 +597,7 @@ export class Node {
     if (actualSubsidy !== expectedSubsidy) {
       this.addEvent({
         type: 'block-rejected',
-        blockHash: block.hash,
+        block: block,
         timestamp: Date.now(),
         reason: 'invalid-subsidy',
       });
@@ -673,7 +673,7 @@ export class Node {
     if (result.success) {
       this.addEvent({
         type: 'block-validated',
-        blockHash: block.hash,
+        block: block,
         timestamp: Date.now(),
       });
       this.updateLastMainBlocks();
@@ -695,7 +695,7 @@ export class Node {
       if (!isOrphan) {
         this.addEvent({
           type: 'block-rejected',
-          blockHash: block.hash,
+          block: block,
           timestamp: Date.now(),
           reason: 'invalid-parent',
         });
@@ -703,7 +703,7 @@ export class Node {
     } else {
       this.addEvent({
         type: 'block-rejected',
-        blockHash: block.hash,
+        block: block,
         timestamp: Date.now(),
         reason: result.reason,
       });
@@ -723,7 +723,7 @@ export class Node {
     this.addEvent({
       type: 'block-received',
       from: peer.id,
-      blockHash: block.hash,
+      block: block,
       timestamp: Date.now(),
     });
 
@@ -768,7 +768,6 @@ export class Node {
     this.addEvent({
       type: 'sync-progress',
       from: originPeer.id,
-      blockHash: `sync-progress-start`,
       timestamp: Date.now(),
       reason: 'sync-progress',
       syncProgress: {
@@ -796,7 +795,6 @@ export class Node {
       this.addEvent({
         type: 'sync-progress',
         from: originPeer.id,
-        blockHash: `sync-progress-${h}-${batchEnd}`,
         timestamp: Date.now(),
         reason: 'sync-progress',
         syncProgress: {
