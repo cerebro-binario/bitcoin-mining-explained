@@ -805,6 +805,23 @@ export class Node {
         },
       });
     }
+
+    // Log especial de conclusão de sincronização
+    if (processedBlocks === totalBlocks && totalBlocks > 0) {
+      this.addEvent({
+        type: 'sync-progress',
+        from: originPeer.id,
+        timestamp: Date.now(),
+        reason: 'sync-complete',
+        syncProgress: {
+          processed: processedBlocks,
+          total: totalBlocks,
+          blocksPerSecond:
+            processedBlocks / ((Date.now() - startTime) / 1000 || 1),
+          estimatedTimeRemaining: 0,
+        },
+      });
+    }
   }
 
   // Solicita todos os blocos ativos de todos os peers conectados

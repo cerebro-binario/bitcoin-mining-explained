@@ -7,7 +7,8 @@ export type ValidationType =
   | 'invalid-target'
   | 'invalid-timestamp'
   | 'invalid-nbits'
-  | 'invalid-subsidy';
+  | 'invalid-subsidy'
+  | 'sync-complete';
 
 export type EventType =
   | 'block-received'
@@ -43,4 +44,5 @@ export const validationMessages: Record<
   'invalid-nbits': 'Dificuldade (nBits) do bloco incorreta',
   'invalid-subsidy': 'Subsídio do bloco incorreto',
   'sync-progress': 'Sincronização em andamento',
+  'sync-complete': 'Sincronização concluída',
 };

@@ -45,13 +45,37 @@
           *ngIf="event.type === 'sync-progress'"
           class="ml-1 text-yellow-300"
         >
-          Sincronizando: {{ event.syncProgress?.processed }}/{{
-            event.syncProgress?.total
-          }}
-          blocos ({{ event.syncProgress?.blocksPerSecond | number : "1.0-0" }}
-          blocos/s,
-          {{ event.syncProgress?.estimatedTimeRemaining | number : "1.0-0" }}s
-          restantes)
+          <ng-container
+            *ngIf="event.reason === 'sync-complete'; else syncProgressDetail"
+          >
+            {{ event.message }}: {{ event.syncProgress?.processed }}/{{
+              event.syncProgress?.total
+            }}
+            blocos
+          </ng-container>
+          <ng-template #syncProgressDetail>
+            <ng-container
+              *ngIf="
+                event.syncProgress?.processed === 0;
+                else syncProgressRunning
+              "
+            >
+              Sincronização iniciada: {{ event.syncProgress?.total }} blocos a
+              baixar...
+            </ng-container>
+            <ng-template #syncProgressRunning>
+              Sincronizando: {{ event.syncProgress?.processed }}/{{
+                event.syncProgress?.total
+              }}
+              blocos ({{
+                event.syncProgress?.blocksPerSecond | number : "1.0-0"
+              }}
+              blocos/s,
+              {{
+                event.syncProgress?.estimatedTimeRemaining | number : "1.0-0"
+              }}s restantes)
+            </ng-template>
+          </ng-template>
         </span>
         <span
           *ngIf="event.message && event.type !== 'sync-progress'"
@@ -140,13 +164,37 @@
             *ngIf="event.type === 'sync-progress'"
             class="ml-1 text-yellow-300"
           >
-            Sincronizando: {{ event.syncProgress?.processed }}/{{
-              event.syncProgress?.total
-            }}
-            blocos ({{ event.syncProgress?.blocksPerSecond | number : "1.0-0" }}
-            blocos/s,
-            {{ event.syncProgress?.estimatedTimeRemaining | number : "1.0-0" }}s
-            restantes)
+            <ng-container
+              *ngIf="event.reason === 'sync-complete'; else syncProgressDetail"
+            >
+              {{ event.message }}: {{ event.syncProgress?.processed }}/{{
+                event.syncProgress?.total
+              }}
+              blocos
+            </ng-container>
+            <ng-template #syncProgressDetail>
+              <ng-container
+                *ngIf="
+                  event.syncProgress?.processed === 0;
+                  else syncProgressRunning
+                "
+              >
+                Sincronização iniciada: {{ event.syncProgress?.total }} blocos a
+                baixar...
+              </ng-container>
+              <ng-template #syncProgressRunning>
+                Sincronizando: {{ event.syncProgress?.processed }}/{{
+                  event.syncProgress?.total
+                }}
+                blocos ({{
+                  event.syncProgress?.blocksPerSecond | number : "1.0-0"
+                }}
+                blocos/s,
+                {{
+                  event.syncProgress?.estimatedTimeRemaining | number : "1.0-0"
+                }}s restantes)
+              </ng-template>
+            </ng-template>
           </span>
           <span
             *ngIf="event.message && event.type !== 'sync-progress'"
