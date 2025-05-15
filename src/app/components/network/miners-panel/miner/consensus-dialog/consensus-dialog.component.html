@@ -127,12 +127,30 @@
                       >v{{ selectedOption.version }}</span
                     >
                     <span
-                      *ngIf="selectedHasFutureEpochs"
+                      *ngIf="
+                        futureInfoByVersion[selectedOption.hash]
+                          ?.nextFutureEpochHeight
+                      "
                       class="ml-2 text-yellow-400 text-xs flex items-center"
                       title="Possui parâmetros futuros"
                     >
                       ⏳ Programado para altura
-                      {{ selectedNextFutureEpochHeight || "?" }}
+                      {{
+                        futureInfoByVersion[selectedOption.hash]
+                          .nextFutureEpochHeight
+                      }}
+                      <em
+                        *ngIf="
+                          futureInfoByVersion[selectedOption.hash].blocksToGo
+                        "
+                        class="ml-1 text-xs text-yellow-200 italic"
+                      >
+                        (Faltam
+                        {{
+                          futureInfoByVersion[selectedOption.hash].blocksToGo
+                        }}
+                        blocos)
+                      </em>
                     </span>
                   </div>
                 </ng-template>
@@ -161,12 +179,26 @@
                     </span>
                     <span class="text-white">v{{ consensus.version }}</span>
                     <span
-                      *ngIf="hasFutureEpochs(consensus)"
+                      *ngIf="
+                        futureInfoByVersion[consensus.hash]
+                          ?.nextFutureEpochHeight
+                      "
                       class="ml-2 text-yellow-400 text-xs flex items-center"
                       title="Possui parâmetros futuros"
                     >
                       ⏳ Programado para altura
-                      {{ getNextFutureEpochHeight(consensus) || "?" }}
+                      {{
+                        futureInfoByVersion[consensus.hash]
+                          .nextFutureEpochHeight
+                      }}
+                      <em
+                        *ngIf="futureInfoByVersion[consensus.hash].blocksToGo"
+                        class="ml-1 text-xs text-yellow-200 italic"
+                      >
+                        (Faltam
+                        {{ futureInfoByVersion[consensus.hash].blocksToGo }}
+                        blocos)
+                      </em>
                     </span>
                   </div>
                 </ng-template>

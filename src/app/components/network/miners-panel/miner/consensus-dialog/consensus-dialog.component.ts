@@ -80,6 +80,13 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   public selectedHasFutureEpochs = false;
   public selectedNextFutureEpochHeight: number | null = null;
 
+  public futureInfoByVersion: {
+    [hash: string]: {
+      nextFutureEpochHeight: number | null;
+      blocksToGo: number | null;
+    };
+  } = {};
+
   constructor(
     private consensusService: ConsensusService,
     private messageService: MessageService
@@ -114,6 +121,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       });
 
     this.updateSelectedFutureEpochsInfo();
+    this.updateFutureInfoForItems();
   }
 
   startEditing() {
@@ -129,6 +137,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.startHeight = this.currentHeight;
     this.blocksToTarget = null;
     this.updateSelectedFutureEpochsInfo();
+    this.updateFutureInfoForItems();
 
     // Verificar se já existe uma época futura programada
     const futureEpochIdx = this.selected.epochs.findIndex(
@@ -159,6 +168,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.onParametersChange();
     this.startHeightInput$.next(value);
     this.updateSelectedFutureEpochsInfo();
+    this.updateFutureInfoForItems();
   }
 
   onIntervalChange(value: number) {
@@ -255,6 +265,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       });
       this.versionChange.emit();
       this.updateSelectedFutureEpochsInfo();
+      this.updateFutureInfoForItems();
       return;
     }
 
@@ -283,6 +294,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       this.mode = 'confirming';
       this.clearMessages();
       this.updateSelectedFutureEpochsInfo();
+      this.updateFutureInfoForItems();
     }
   }
 
@@ -294,6 +306,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       this.selectedParams = { ...selected.getCurrentConsensusParameters() };
       this.selected = selected;
       this.updateSelectedFutureEpochsInfo();
+      this.updateFutureInfoForItems();
       if (selected.version !== this.miner.consensus.version) {
         this.mode = 'confirming';
       } else {
@@ -458,6 +471,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     }
     this.onStartHeightChange(this.startHeight!);
     this.updateSelectedFutureEpochsInfo();
+    this.updateFutureInfoForItems();
   }
 
   get nextFutureEpochHeight(): number | null {
@@ -499,5 +513,20 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.selectedNextFutureEpochHeight = future.length
       ? Math.min(...future)
       : null;
+  }
+
+  private updateFutureInfoForItems() {
+    this.futureInfoByVersion = {};
+    for (const v of this.items) {
+      const future = v.epochs
+        .filter((e) => e.startHeight > this.currentHeight)
+        .map((e) => e.startHeight);
+      const next = future.length ? Math.min(...future) : null;
+      this.futureInfoByVersion[v.hash] = {
+        nextFutureEpochHeight: next,
+        blocksToGo:
+          next && next > this.currentHeight ? next - this.currentHeight : null,
+      };
+    }
   }
 }
