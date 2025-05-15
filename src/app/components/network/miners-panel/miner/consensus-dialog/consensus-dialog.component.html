@@ -34,30 +34,27 @@
         *ngIf="selected && futureEpochs.length > 0"
         class="mb-4 p-3 rounded bg-yellow-900/30 border border-yellow-600 text-yellow-200"
       >
-        <b>Atenção:</b> Esta versão possui parâmetros futuros programados para a
-        altura {{ selectedNextFutureEpochHeight }}.
+        <b>⏳ Nova política programada para</b>
+        <span class="font-semibold">
+          Altura {{ selectedNextFutureEpochHeight }}</span
+        >
         <span
           *ngIf="
             selectedNextFutureEpochHeight &&
             selectedNextFutureEpochHeight > currentHeight
           "
         >
-          (Faltam {{ selectedNextFutureEpochHeight - currentHeight }} blocos
-          para entrar em vigor)
+          — Faltam {{ selectedNextFutureEpochHeight - currentHeight }} blocos
         </span>
-        <br />
-        Os seguintes parâmetros entrarão em vigor:
-        <ul class="list-disc ml-6 mt-1">
-          <li *ngFor="let e of futureEpochs">
-            <b>Altura {{ e.startHeight }}:</b>
-            <span class="ml-2"
-              >Ajuste: {{ e.parameters.difficultyAdjustmentInterval }}, Máx. TX:
-              {{ e.parameters.maxTransactionsPerBlock }}, Máx. Bloco:
-              {{ e.parameters.maxBlockSize }} MB, Tempo alvo:
-              {{ e.parameters.targetBlockTime }}s</span
-            >
-          </li>
-        </ul>
+        <div class="mt-2">
+          <span *ngFor="let e of futureEpochs">
+            <b>Parâmetros:</b>
+            Ajuste: {{ e.parameters.difficultyAdjustmentInterval }}, Máx. TX:
+            {{ e.parameters.maxTransactionsPerBlock }}, Máx. Bloco:
+            {{ e.parameters.maxBlockSize }} MB, Tempo alvo:
+            {{ e.parameters.targetBlockTime }}s
+          </span>
+        </div>
       </div>
 
       <div class="space-y-6">
