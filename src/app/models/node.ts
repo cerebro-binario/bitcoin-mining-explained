@@ -1,4 +1,6 @@
 import * as CryptoJS from 'crypto-js';
+import { Subject, Subscription } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import {
   ConsensusEpoch,
@@ -6,10 +8,15 @@ import {
   ConsensusVersion,
   DEFAULT_CONSENSUS,
 } from './consensus.model';
+import {
+  EventLog,
+  validationMessages,
+  ValidationType,
+} from './event-log.model';
 
 export interface Neighbor {
-  nodeId: number;
   latency: number;
+  node: Node;
 }
 
 export class Node {
@@ -17,10 +24,12 @@ export class Node {
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
   private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
 
-  isSyncing: boolean = true;
-  initialSyncComplete: boolean = false;
+  isSyncing: boolean = false;
   pendingBlocks: Block[] = [];
   isAddingBlock: boolean = false;
+
+  // Log de eventos de propagação/validação de blocos
+  eventLog: EventLog[] = [];
 
   // Rastreamento de peers durante o sync inicial
   syncPeers: {
@@ -29,15 +38,6 @@ export class Node {
     status: 'pending' | 'validating' | 'valid' | 'invalid';
     blockchainLength?: number;
     work?: number;
-  }[] = [];
-
-  // Log de eventos de propagação/validação de blocos
-  eventLog: {
-    type: 'block-received' | 'block-validated' | 'block-rejected';
-    from?: number;
-    blockHash: string;
-    timestamp: number;
-    reason?: string;
   }[] = [];
 
   id?: number;
@@ -78,8 +78,18 @@ export class Node {
   // Parâmetros de consenso do nó
   consensus: ConsensusVersion = DEFAULT_CONSENSUS;
 
+  blockBroadcast$ = new Subject<Block>();
+  private peerBlockSubscriptions: { [peerId: number]: Subscription } = {};
+  private receivedBlockHashes = new Set<string>();
+  private orphanBlocks: Map<string, Block[]> = new Map(); // chave: previousHash, valor: blocos órfãos que dependem desse hash
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
+  }
+
+  private addEvent(event: Omit<EventLog, 'message'>) {
+    const message = event.reason ? validationMessages[event.reason] : undefined;
+    this.eventLog.unshift({ ...event, message });
   }
 
   initBlockTemplate(lastBlock?: Block): Block {
@@ -238,7 +248,7 @@ export class Node {
     ) {
       latencyA = 0;
     } else if (this.id !== undefined && aMinerId !== undefined) {
-      const neighbor = this.neighbors.find((n) => n.nodeId === aMinerId);
+      const neighbor = this.neighbors.find((n) => n.node.id === aMinerId);
       if (neighbor) latencyA = neighbor.latency;
     }
 
@@ -249,7 +259,7 @@ export class Node {
     ) {
       latencyB = 0;
     } else if (this.id !== undefined && bMinerId !== undefined) {
-      const neighbor = this.neighbors.find((n) => n.nodeId === bMinerId);
+      const neighbor = this.neighbors.find((n) => n.node.id === bMinerId);
       if (neighbor) latencyB = neighbor.latency;
     }
 
@@ -314,7 +324,7 @@ export class Node {
     return this.heights.length - height - 1;
   }
 
-  addBlock(block: Block): { success: boolean; reason?: string } {
+  addBlock(block: Block): { success: boolean; reason?: ValidationType } {
     const blockNode = new BlockNode(block);
 
     if (!this.heights.length) {
@@ -366,6 +376,15 @@ export class Node {
       this.heights[heightIndex] = [blockNode];
     } else {
       this.heights[heightIndex].push(blockNode);
+    }
+
+    // Log de bloco minerado localmente
+    if (block.minerId === this.id) {
+      this.addEvent({
+        type: 'block-mined',
+        block: block,
+        timestamp: Date.now(),
+      });
     }
 
     this.checkForksAndSort();
@@ -511,20 +530,35 @@ export class Node {
 
     // 1. Verifica se o hash do bloco é válido
     if (block.hash !== block.calculateHash()) {
-      console.warn(`Bloco ${height} tem hash inválido`);
+      this.addEvent({
+        type: 'block-rejected',
+        block: block,
+        timestamp: Date.now(),
+        reason: 'invalid-hash',
+      });
       return false;
     }
 
     // 2. Verifica se o hash atinge o target
     if (!block.isValid()) {
-      console.warn(`Bloco ${height} não atinge o target de dificuldade`);
+      this.addEvent({
+        type: 'block-rejected',
+        block: block,
+        timestamp: Date.now(),
+        reason: 'invalid-target',
+      });
       return false;
     }
 
     // 3. Verifica se o bloco anterior existe e tem o hash correto
     if (height > 0) {
       if (!previousBlock || previousBlock.hash !== block.previousHash) {
-        console.warn(`Bloco ${height} tem hash anterior inválido`);
+        this.addEvent({
+          type: 'block-rejected',
+          block: block,
+          timestamp: Date.now(),
+          reason: 'invalid-parent',
+        });
         return false;
       }
     }
@@ -532,14 +566,23 @@ export class Node {
     // 4. Verifica se o timestamp é razoável
     const now = Date.now();
     if (block.timestamp > now + 7200000) {
-      // 2 horas no futuro
-      console.warn(`Bloco ${height} tem timestamp no futuro`);
+      this.addEvent({
+        type: 'block-rejected',
+        block: block,
+        timestamp: Date.now(),
+        reason: 'invalid-timestamp',
+      });
       return false;
     }
 
     // 5. Verifica se o timestamp é posterior ao bloco anterior
     if (previousBlock && block.timestamp <= previousBlock.timestamp) {
-      console.warn(`Bloco ${height} tem timestamp anterior ao bloco anterior`);
+      this.addEvent({
+        type: 'block-rejected',
+        block: block,
+        timestamp: Date.now(),
+        reason: 'invalid-timestamp',
+      });
       return false;
     }
 
@@ -547,20 +590,26 @@ export class Node {
     if (height > 0) {
       const expectedNBits = this.calculateExpectedNBits(height);
       if (block.nBits !== expectedNBits) {
-        console.warn(
-          `Bloco ${height} tem nBits incorreto. Esperado: ${expectedNBits}, Recebido: ${block.nBits}`
-        );
+        this.addEvent({
+          type: 'block-rejected',
+          block: block,
+          timestamp: Date.now(),
+          reason: 'invalid-nbits',
+        });
         return false;
       }
     }
 
     // 7. Verifica se o subsídio está correto
     const expectedSubsidy = this.calculateBlockSubsidy(height);
-    const actualSubsidy = block.transactions[0].outputs[0].value; // Coinbase é sempre a primeira transação
+    const actualSubsidy = block.transactions[0].outputs[0].value;
     if (actualSubsidy !== expectedSubsidy) {
-      console.warn(
-        `Bloco ${height} tem subsídio incorreto. Esperado: ${expectedSubsidy}, Recebido: ${actualSubsidy}`
-      );
+      this.addEvent({
+        type: 'block-rejected',
+        block: block,
+        timestamp: Date.now(),
+        reason: 'invalid-subsidy',
+      });
       return false;
     }
 
@@ -600,5 +649,244 @@ export class Node {
     }
 
     return work;
+  }
+
+  // Subscribe to a peer's block broadcasts
+  subscribeToPeerBlocks(peer: Node) {
+    if (this.peerBlockSubscriptions[peer.id!]) return;
+    const neighbor = this.neighbors.find((n) => n.node.id === peer.id);
+    const latency = neighbor?.latency || 0;
+    this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
+      .pipe(delay(latency))
+      .subscribe((block: Block) => {
+        this.onPeerBlockReceived(block, peer);
+      });
+
+    // Faz um sync inicial com o peer
+    const myHeight = this.getLatestBlock()?.height || -1;
+    const peerLatestBlock = peer.getLatestBlock();
+    if (peerLatestBlock && peerLatestBlock.height > myHeight) {
+      this.catchUpBlocks(myHeight + 1, peerLatestBlock.height, peer);
+    }
+  }
+
+  // Unsubscribe from a peer's block broadcasts
+  unsubscribeFromPeerBlocks(peer: Node) {
+    this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
+    delete this.peerBlockSubscriptions[peer.id!];
+  }
+
+  // Método centralizado para processar um bloco recebido
+  private processBlock(block: Block, isOrphan: boolean = false): void {
+    const result = this.addBlock(block);
+    if (result.success) {
+      this.addEvent({
+        type: 'block-validated',
+        block: block,
+        timestamp: Date.now(),
+      });
+      this.updateLastMainBlocks();
+      this.updateActiveForkHeights();
+
+      // Tentar encaixar órfãos que dependem deste bloco
+      this.tryAttachOrphans(block.hash);
+
+      // Atualizar current block apenas se não for um órfão
+      this.initBlockTemplate(block);
+    } else if (result.reason === 'invalid-parent') {
+      // Se não conseguiu adicionar por falta do bloco anterior, armazena como órfão
+      if (!this.orphanBlocks.has(block.previousHash)) {
+        this.orphanBlocks.set(block.previousHash, []);
+      }
+      this.orphanBlocks.get(block.previousHash)!.push(block);
+
+      // Log apenas se não for um órfão (para evitar duplicação de logs)
+      if (!isOrphan) {
+        this.addEvent({
+          type: 'block-rejected',
+          block: block,
+          timestamp: Date.now(),
+          reason: 'invalid-parent',
+        });
+      }
+    } else {
+      this.addEvent({
+        type: 'block-rejected',
+        block: block,
+        timestamp: Date.now(),
+        reason: result.reason,
+      });
+    }
+  }
+
+  // Handler for when a block is received from a peer
+  onPeerBlockReceived(block: Block, peer: Node) {
+    // Deduplicação: se já recebeu esse bloco, não processa novamente
+    if (this.receivedBlockHashes.has(block.hash)) return;
+    this.receivedBlockHashes.add(block.hash);
+
+    // 1. Marcar como sincronizando
+    this.isSyncing = true;
+
+    // 2. Log de recebimento do bloco
+    this.addEvent({
+      type: 'block-received',
+      from: peer.id,
+      block: block,
+      timestamp: Date.now(),
+    });
+
+    // 3. Processar o bloco
+    this.processBlock(block);
+
+    // 4. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
+    const myHeight = this.getLatestBlock()?.height || -1;
+    if (block.height > myHeight + 1) {
+      this.catchUpBlocks(myHeight + 1, block.height, peer);
+    }
+
+    // 5. Repropagar para outros peers
+    this.blockBroadcast$.next(block);
+
+    this.isSyncing = false;
+  }
+
+  // Tenta encaixar órfãos que dependem de um bloco recém-adicionado
+  private tryAttachOrphans(parentHash: string) {
+    const orphans = this.orphanBlocks.get(parentHash);
+    if (!orphans) return;
+    this.orphanBlocks.delete(parentHash);
+
+    for (const orphan of orphans) {
+      this.processBlock(orphan, true);
+    }
+  }
+
+  // Busca ativa de blocos faltantes dos peers
+  private async catchUpBlocks(
+    startHeight: number,
+    endHeight: number,
+    originPeer: Node
+  ) {
+    const BATCH_SIZE = 10; // Número de blocos por lote
+    const totalBlocks = endHeight - startHeight + 1;
+    let processedBlocks = 0;
+    const startTime = Date.now();
+
+    // Log inicial de início de sincronização
+    this.addEvent({
+      type: 'sync-progress',
+      from: originPeer.id,
+      timestamp: Date.now(),
+      reason: 'sync-progress',
+      syncProgress: {
+        processed: 0,
+        total: totalBlocks,
+        blocksPerSecond: 0,
+        estimatedTimeRemaining: 0,
+      },
+    });
+
+    for (let h = startHeight; h <= endHeight; h += BATCH_SIZE) {
+      const batchEnd = Math.min(h + BATCH_SIZE - 1, endHeight);
+      const blocks = await this.requestBlockFromPeers(h, batchEnd, originPeer);
+
+      if (!blocks.length) break;
+
+      processedBlocks += blocks.length;
+      const elapsedTime = (Date.now() - startTime) / 1000; // em segundos
+      const blocksPerSecond = processedBlocks / (elapsedTime || 1);
+      const remainingBlocks = totalBlocks - processedBlocks;
+      const estimatedTimeRemaining =
+        blocksPerSecond > 0 ? remainingBlocks / blocksPerSecond : 0;
+
+      // Atualiza o log com o progresso
+      this.addEvent({
+        type: 'sync-progress',
+        from: originPeer.id,
+        timestamp: Date.now(),
+        reason: 'sync-progress',
+        syncProgress: {
+          processed: processedBlocks,
+          total: totalBlocks,
+          blocksPerSecond,
+          estimatedTimeRemaining,
+        },
+      });
+    }
+
+    // Log especial de conclusão de sincronização
+    if (processedBlocks === totalBlocks && totalBlocks > 0) {
+      this.addEvent({
+        type: 'sync-progress',
+        from: originPeer.id,
+        timestamp: Date.now(),
+        reason: 'sync-complete',
+        syncProgress: {
+          processed: processedBlocks,
+          total: totalBlocks,
+          blocksPerSecond:
+            processedBlocks / ((Date.now() - startTime) / 1000 || 1),
+          estimatedTimeRemaining: 0,
+        },
+      });
+    }
+  }
+
+  // Solicita todos os blocos ativos de todos os peers conectados
+  private async requestBlockFromPeers(
+    startHeight: number,
+    endHeight: number,
+    originPeer: Node
+  ): Promise<Block[]> {
+    const foundBlocks: Block[] = [];
+    const neighbor = this.neighbors.find((n) => n.node.id === originPeer.id);
+    const latency = neighbor?.latency || 0;
+
+    // Simula latência na requisição (uma única vez por lote)
+    await new Promise((resolve) => setTimeout(resolve, latency));
+
+    if (originPeer) {
+      // Busca todos os blocos do lote de uma vez
+      for (let h = startHeight; h <= endHeight; h++) {
+        const blocks = originPeer.getActiveBlocksByHeight?.(h) || [];
+        for (const block of blocks) {
+          this.onPeerBlockReceived(block, originPeer);
+          foundBlocks.push(block);
+        }
+      }
+    }
+    return foundBlocks;
+  }
+
+  // Helper para obter o Node conectado pelo id
+  private getConnectedPeerNode(peerId: number): Node | null {
+    const neighbor = this.neighbors.find((n) => n.node.id === peerId);
+    return neighbor?.node || null;
+  }
+
+  // Busca um bloco local por altura
+  getBlockByHeight(height: number): Block | null {
+    for (const heightArr of this.heights) {
+      for (const node of heightArr) {
+        if (node.block.height === height) {
+          return node.block;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Busca todos os blocos ativos de uma altura
+  getActiveBlocksByHeight(height: number): Block[] {
+    const blocks: Block[] = [];
+    for (const heightArr of this.heights) {
+      for (const node of heightArr) {
+        if (node.block.height === height && node.isActive) {
+          blocks.push(node.block);
+        }
+      }
+    }
+    return blocks;
   }
 }

@@ -1,0 +1,179 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur"
+  (click)="onBackdropClick($event)"
+>
+  <div
+    class="bg-zinc-900 rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw] w-full max-h-[80vh] overflow-y-auto relative"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      (click)="onClose()"
+      class="absolute top-2 right-2 text-zinc-400 hover:text-red-400"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-5 h-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </button>
+    <h3 class="text-lg font-semibold text-blue-400 mb-4">Peers conectados</h3>
+    <div *ngIf="miner.neighbors.length === 0" class="text-zinc-400">
+      Nenhum peer conectado.
+    </div>
+    <div *ngIf="miner.neighbors.length > 0" class="space-y-3">
+      <div
+        *ngFor="let peer of peerInfos"
+        class="flex items-center gap-4 bg-zinc-800 rounded p-3 shadow border border-zinc-700"
+      >
+        <!-- Nome do peer -->
+        <span class="font-semibold text-blue-300 min-w-[90px]">{{
+          peer.name
+        }}</span>
+        <!-- Latência -->
+        <span
+          class="flex items-center gap-1 text-xs text-zinc-300 min-w-[60px]"
+        >
+          <svg
+            class="w-4 h-4 text-blue-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3"
+            />
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+          {{ peer.latency }} ms
+        </span>
+        <!-- Blocos -->
+        <span
+          class="flex items-center gap-1 text-xs text-zinc-300 min-w-[60px]"
+        >
+          <svg
+            class="w-4 h-4 text-green-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <path d="M8 8h8v8H8z" />
+          </svg>
+          {{ peer.blockCount }} blocos
+        </span>
+        <!-- Consenso -->
+        <span class="flex items-center gap-1 text-xs">
+          <span class="px-2 py-0.5 rounded bg-blue-900 text-blue-300 font-bold"
+            >v{{ peer.consensusVersion }}</span
+          >
+        </span>
+        <!-- Status de sync -->
+        <span
+          class="flex items-center gap-1 text-xs"
+          [title]="peer.syncTooltip"
+        >
+          <ng-container [ngSwitch]="peer.syncStatus">
+            <svg
+              *ngSwitchCase="'in-sync'"
+              class="w-4 h-4 text-green-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4"
+              />
+            </svg>
+            <svg
+              *ngSwitchCase="'behind'"
+              class="w-4 h-4 text-yellow-400 animate-pulse"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3"
+              />
+            </svg>
+            <svg
+              *ngSwitchCase="'fork'"
+              class="w-4 h-4 text-red-500 animate-shake"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 9l-6 6M9 9l6 6"
+              />
+            </svg>
+            <svg
+              *ngSwitchDefault
+              class="w-4 h-4 text-zinc-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+          </ng-container>
+          <span [ngSwitch]="peer.syncStatus" class="font-semibold">
+            <span *ngSwitchCase="'in-sync'" class="text-green-400">Sync</span>
+            <span *ngSwitchCase="'behind'" class="text-yellow-400"
+              >Atrasado</span
+            >
+            <span *ngSwitchCase="'fork'" class="text-red-400">Fork</span>
+            <span *ngSwitchDefault class="text-zinc-400">?</span>
+          </span>
+        </span>
+      </div>
+    </div>
+    <style>
+      .animate-shake {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both infinite;
+      }
+      @keyframes shake {
+        10%,
+        90% {
+          transform: translateX(-1px);
+        }
+        20%,
+        80% {
+          transform: translateX(2px);
+        }
+        30%,
+        50%,
+        70% {
+          transform: translateX(-4px);
+        }
+        40%,
+        60% {
+          transform: translateX(4px);
+        }
+      }
+    </style>
+  </div>
+</div>

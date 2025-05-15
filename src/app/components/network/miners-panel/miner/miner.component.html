@@ -16,14 +16,60 @@
       <span class="text-xs text-zinc-400 ml-2" title="Versão do Consenso">
         v{{ miner.consensus.version }}
       </span>
-      <span
-        class="inline-block w-3 h-3 rounded-full border border-zinc-700"
-        [ngClass]="{
-          'bg-blue-500 animate-pulse': miner.isSyncing,
-          'bg-green-500': !miner.isSyncing
-        }"
-        [title]="miner.isSyncing ? 'Sincronizando com peers' : 'Conectado'"
-      ></span>
+      <div class="flex items-center gap-2">
+        <span
+          class="inline-block w-3 h-3 rounded-full border border-zinc-700"
+          [ngClass]="{
+            'bg-blue-500 animate-pulse': miner.isSyncing,
+            'bg-green-500': !miner.isSyncing
+          }"
+          [title]="miner.isSyncing ? 'Sincronizando com peers' : 'Conectado'"
+        ></span>
+        <span
+          class="text-xs text-zinc-400 cursor-pointer hover:underline"
+          title="Peers Conectados"
+          (click)="openPeersDialog()"
+        >
+          {{ miner.neighbors.length }} peers
+          <button
+            *ngIf="miner.neighbors.length < 3"
+            class="ml-1 p-1 rounded-full transition align-middle relative overflow-hidden"
+            (click)="connectToPeers(); $event.stopPropagation()"
+            [disabled]="isConnecting || miner.isSyncing"
+            [title]="
+              isConnecting || miner.isSyncing
+                ? 'Procurando conexões...'
+                : 'Procurar conexões na rede'
+            "
+            [ngClass]="{
+              'animate-pulse-ring': isConnecting || miner.isSyncing,
+              'bg-blue-700/30': isConnecting || miner.isSyncing,
+              'hover:bg-blue-700/30': !(isConnecting || miner.isSyncing)
+            }"
+            style="vertical-align: middle"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4 text-blue-400 transition-transform"
+              [ngClass]="{
+                'animate-spin-slow': isConnecting || miner.isSyncing
+              }"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M2 12a10 10 0 0 1 20 0" />
+              <path d="M12 2v2m0 16v2m10-10h-2M4 12H2" />
+            </svg>
+            <span
+              *ngIf="isConnecting || miner.isSyncing"
+              class="absolute inset-0 rounded-full border-2 border-blue-400 opacity-40 animate-pulse"
+            ></span>
+          </button>
+        </span>
+      </div>
     </span>
 
     <!-- Mining Controls in Header -->
@@ -61,24 +107,14 @@
         *ngIf="!miner.isMining"
         class="ml-4 px-3 py-1 rounded text-white text-sm font-semibold transition"
         [ngClass]="{
-          'bg-green-600 hover:bg-green-700':
-            !miner.isSyncing || miner.initialSyncComplete,
-          'bg-zinc-600 cursor-not-allowed':
-            miner.isSyncing && !miner.initialSyncComplete
+          'bg-green-600 hover:bg-green-700': !miner.isSyncing,
+          'bg-zinc-600 cursor-not-allowed': miner.isSyncing
         }"
         (click)="startMining()"
-        [disabled]="miner.isSyncing && !miner.initialSyncComplete"
-        [title]="
-          miner.isSyncing && !miner.initialSyncComplete
-            ? 'Aguarde o download inicial da blockchain'
-            : ''
-        "
+        [disabled]="miner.isSyncing"
+        [title]="miner.isSyncing ? 'Aguardando Sincronização' : ''"
       >
-        {{
-          miner.isSyncing && !miner.initialSyncComplete
-            ? "Aguardando Sincronização"
-            : "Iniciar Mineração"
-        }}
+        {{ miner.isSyncing ? "Aguardando Sincronização" : "Iniciar Mineração" }}
       </button>
       <button
         *ngIf="miner.isMining"
@@ -448,18 +484,18 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-      <app-event-logs
-        [node]="miner"
-        class="flex"
-        (show)="showLogs()"
-        (close)="closeLogs()"
-      ></app-event-logs>
-
+    <div class="flex flex-col md:flex-row gap-6 mt-6 h-[390px] relative">
       <app-mining-block
+        class="w-full h-full"
         [block]="miner.currentBlock"
         [miningElapsed]="miner.currentBlock?.miningElapsed"
       ></app-mining-block>
+      <app-event-logs
+        [node]="miner"
+        class="h-full"
+        (show)="showLogs()"
+        (close)="closeLogs()"
+      ></app-event-logs>
     </div>
 
     <!-- Blockchain Local -->
@@ -518,3 +554,10 @@
   (close)="onConsensusDialogClose()"
   (versionChange)="onConsensusVersionChange()"
 ></app-consensus-dialog>
+
+<!-- Peers Dialog -->
+<app-peers-dialog
+  *ngIf="showPeersDialog"
+  [miner]="miner"
+  (close)="closePeersDialog()"
+></app-peers-dialog>

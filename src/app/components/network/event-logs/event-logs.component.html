@@ -1,6 +1,6 @@
 <div class="flex flex-col w-full h-full">
   <div
-    class="relative overflow-hidden bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex-1"
+    class="relative overflow-hidden bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex-1 h-full flex flex-col"
   >
     <div class="font-semibold text-blue-400 mb-2 flex items-center gap-2">
       <span>Eventos</span>
@@ -10,9 +10,11 @@
       <li
         *ngFor="let event of node.eventLog | slice : 0 : 15"
         [ngClass]="{
-          'text-green-400': event.type === 'block-validated',
+          'text-green-400':
+            event.type === 'block-validated' || event.type === 'block-mined',
           'text-red-400': event.type === 'block-rejected',
-          'text-blue-400': event.type === 'block-received'
+          'text-blue-400': event.type === 'block-received',
+          'text-yellow-400': event.type === 'sync-progress'
         }"
       >
         <span class="font-mono">{{
@@ -21,13 +23,81 @@
         <span *ngIf="event.type === 'block-validated'">✔️</span>
         <span *ngIf="event.type === 'block-rejected'">❌</span>
         <span *ngIf="event.type === 'block-received'">⬇️</span>
-        <span class="ml-1">{{ event.type.replace("block-", "") }}</span>
-        <span class="ml-1 text-zinc-400"
-          >({{ event.blockHash | slice : 0 : 8 }}...)</span
+        <span *ngIf="event.type === 'sync-progress'">🔄</span>
+        <span *ngIf="event.type === 'block-mined'">⛏️</span>
+        <span class="ml-1">
+          {{
+            event.type === "block-validated"
+              ? "validado"
+              : event.type === "block-received"
+              ? "recebido"
+              : event.type === "block-rejected"
+              ? "rejeitado"
+              : event.type === "sync-progress"
+              ? "sincronizando"
+              : event.type === "block-mined"
+              ? "minerado"
+              : event.type
+          }}
+        </span>
+        <span
+          *ngIf="event.type !== 'sync-progress'"
+          class="ml-4 flex items-center gap-1.5"
         >
-        <span *ngIf="event.reason" class="ml-1 text-red-300"
-          >({{ event.reason }})</span
+          <span class="text-blue-400 font-semibold text-xs"
+            >#{{ event.block?.height ?? "-" }}</span
+          >
+          <span class="text-zinc-400 text-xs">•</span>
+          <span class="font-mono text-zinc-400 text-xs tracking-tight">
+            {{ event.block?.hash | slice : 0 : 32 }}...
+          </span>
+          <span class="text-zinc-400 text-xs">•</span>
+          <span class="text-blue-400 text-xs italic"
+            >v{{ event.block?.consensusVersion || "-" }}</span
+          >
+        </span>
+        <span
+          *ngIf="event.type === 'sync-progress'"
+          class="ml-1 text-yellow-300"
         >
+          <ng-container
+            *ngIf="event.reason === 'sync-complete'; else syncProgressDetail"
+          >
+            {{ event.message }}: {{ event.syncProgress?.processed }}/{{
+              event.syncProgress?.total
+            }}
+            blocos
+          </ng-container>
+          <ng-template #syncProgressDetail>
+            <ng-container
+              *ngIf="
+                event.syncProgress?.processed === 0;
+                else syncProgressRunning
+              "
+            >
+              Sincronização iniciada: {{ event.syncProgress?.total }} blocos a
+              baixar...
+            </ng-container>
+            <ng-template #syncProgressRunning>
+              Sincronizando: {{ event.syncProgress?.processed }}/{{
+                event.syncProgress?.total
+              }}
+              blocos ({{
+                event.syncProgress?.blocksPerSecond | number : "1.0-0"
+              }}
+              blocos/s,
+              {{
+                event.syncProgress?.estimatedTimeRemaining | number : "1.0-0"
+              }}s restantes)
+            </ng-template>
+          </ng-template>
+        </span>
+        <span
+          *ngIf="event.message && event.type !== 'sync-progress'"
+          class="ml-1 text-red-300"
+        >
+          ({{ event.message }})
+        </span>
       </li>
       <li *ngIf="node.eventLog.length === 0" class="text-zinc-500 italic">
         Nenhum evento ainda.
@@ -73,9 +143,11 @@
         <li
           *ngFor="let event of node.eventLog"
           [ngClass]="{
-            'text-green-400': event.type === 'block-validated',
+            'text-green-400':
+              event.type === 'block-validated' || event.type === 'block-mined',
             'text-red-400': event.type === 'block-rejected',
-            'text-blue-400': event.type === 'block-received'
+            'text-blue-400': event.type === 'block-received',
+            'text-yellow-400': event.type === 'sync-progress'
           }"
         >
           <span class="font-mono">{{
@@ -84,13 +156,81 @@
           <span *ngIf="event.type === 'block-validated'">✔️</span>
           <span *ngIf="event.type === 'block-rejected'">❌</span>
           <span *ngIf="event.type === 'block-received'">⬇️</span>
-          <span class="ml-1">{{ event.type.replace("block-", "") }}</span>
-          <span class="ml-1 text-zinc-400"
-            >({{ event.blockHash | slice : 0 : 8 }}...)</span
+          <span *ngIf="event.type === 'sync-progress'">🔄</span>
+          <span *ngIf="event.type === 'block-mined'">⛏️</span>
+          <span class="ml-1">
+            {{
+              event.type === "block-validated"
+                ? "validado"
+                : event.type === "block-received"
+                ? "recebido"
+                : event.type === "block-rejected"
+                ? "rejeitado"
+                : event.type === "sync-progress"
+                ? "sincronizando"
+                : event.type === "block-mined"
+                ? "minerado"
+                : event.type
+            }}
+          </span>
+          <span
+            *ngIf="event.type !== 'sync-progress'"
+            class="ml-4 flex items-center gap-1.5"
           >
-          <span *ngIf="event.reason" class="ml-1 text-red-300"
-            >({{ event.reason }})</span
+            <span class="text-blue-400 font-semibold text-xs"
+              >#{{ event.block?.height ?? "-" }}</span
+            >
+            <span class="text-zinc-400 text-xs">•</span>
+            <span class="font-mono text-zinc-400 text-xs tracking-tight">
+              {{ event.block?.hash | slice : 0 : 32 }}...
+            </span>
+            <span class="text-zinc-400 text-xs">•</span>
+            <span class="text-blue-400 text-xs italic"
+              >v{{ event.block?.consensusVersion || "-" }}</span
+            >
+          </span>
+          <span
+            *ngIf="event.type === 'sync-progress'"
+            class="ml-1 text-yellow-300"
           >
+            <ng-container
+              *ngIf="event.reason === 'sync-complete'; else syncProgressDetail"
+            >
+              {{ event.message }}: {{ event.syncProgress?.processed }}/{{
+                event.syncProgress?.total
+              }}
+              blocos
+            </ng-container>
+            <ng-template #syncProgressDetail>
+              <ng-container
+                *ngIf="
+                  event.syncProgress?.processed === 0;
+                  else syncProgressRunning
+                "
+              >
+                Sincronização iniciada: {{ event.syncProgress?.total }} blocos a
+                baixar...
+              </ng-container>
+              <ng-template #syncProgressRunning>
+                Sincronizando: {{ event.syncProgress?.processed }}/{{
+                  event.syncProgress?.total
+                }}
+                blocos ({{
+                  event.syncProgress?.blocksPerSecond | number : "1.0-0"
+                }}
+                blocos/s,
+                {{
+                  event.syncProgress?.estimatedTimeRemaining | number : "1.0-0"
+                }}s restantes)
+              </ng-template>
+            </ng-template>
+          </span>
+          <span
+            *ngIf="event.message && event.type !== 'sync-progress'"
+            class="ml-1 text-red-300"
+          >
+            ({{ event.message }})
+          </span>
         </li>
       </ul>
     </div>

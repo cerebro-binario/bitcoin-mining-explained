@@ -18,6 +18,7 @@ import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventLogsComponent } from '../../event-logs/event-logs.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
+import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
 
 interface HashRateOption {
   label: string;
@@ -34,6 +35,7 @@ interface HashRateOption {
     EventLogsComponent,
     ConsensusDialogComponent,
     ConfirmDialogModule,
+    PeersDialogComponent,
   ],
   templateUrl: './miner.component.html',
   styleUrls: ['./miner.component.scss'],
@@ -42,6 +44,7 @@ interface HashRateOption {
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
+  isConnecting = false;
 
   networkVersions$!: Observable<ConsensusParameters[]>;
 
@@ -60,6 +63,7 @@ export class MinerComponent {
     minerId: number;
     transaction: Transaction;
   }>();
+  @Output() connectToPeersRequested = new EventEmitter<Node>();
 
   isCollapsedHashRateSelectorOpen = false;
 
@@ -71,6 +75,7 @@ export class MinerComponent {
   ];
 
   showConsensusDialog = false;
+  showPeersDialog = false;
 
   constructor(
     private addressService: AddressService,
@@ -337,5 +342,25 @@ export class MinerComponent {
     // Recomeçar a mineração do bloco atual para que seja gerado com a nova versão do consenso
     const lastBlock = this.miner.heights[0][0];
     this.miner.currentBlock = this.miner.initBlockTemplate(lastBlock.block);
+  }
+
+  connectToPeers() {
+    if (this.isConnecting) return;
+
+    this.isConnecting = true;
+    this.connectToPeersRequested.emit(this.miner);
+
+    // Reseta o estado após 2 segundos (tempo suficiente para a conexão)
+    setTimeout(() => {
+      this.isConnecting = false;
+    }, 2000);
+  }
+
+  openPeersDialog() {
+    this.showPeersDialog = true;
+  }
+
+  closePeersDialog() {
+    this.showPeersDialog = false;
   }
 }
