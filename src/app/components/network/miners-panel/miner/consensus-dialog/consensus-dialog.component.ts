@@ -254,6 +254,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         life: 6000,
       });
       this.versionChange.emit();
+      this.updateSelectedFutureEpochsInfo();
       return;
     }
 
@@ -281,6 +282,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       };
       this.mode = 'confirming';
       this.clearMessages();
+      this.updateSelectedFutureEpochsInfo();
     }
   }
 
