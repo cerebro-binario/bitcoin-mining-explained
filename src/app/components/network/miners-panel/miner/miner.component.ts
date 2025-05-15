@@ -182,7 +182,7 @@ export class MinerComponent {
         block.hash = block.calculateHash();
         this.miner.incrementHashCount();
 
-        if (block.isValid()) {
+        if (block.isHashBelowTarget()) {
           this.handleValidBlock(block);
           break;
         }
@@ -211,7 +211,7 @@ export class MinerComponent {
         block.hash = block.calculateHash();
         this.miner.incrementHashCount();
 
-        if (block.isValid()) {
+        if (block.isHashBelowTarget()) {
           this.handleValidBlock(block);
           break;
         }

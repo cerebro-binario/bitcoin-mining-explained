@@ -8,6 +8,8 @@ export type ValidationType =
   | 'invalid-timestamp'
   | 'invalid-nbits'
   | 'invalid-subsidy'
+  | 'invalid-size'
+  | 'invalid-transactions'
   | 'sync-complete';
 
 export type EventType =
@@ -44,6 +46,8 @@ export const validationMessages: Record<
   'invalid-timestamp': 'Timestamp do bloco inválido',
   'invalid-nbits': 'Dificuldade (nBits) do bloco incorreta',
   'invalid-subsidy': 'Subsídio do bloco incorreto',
+  'invalid-size': 'Tamanho do bloco excede o limite máximo',
+  'invalid-transactions': 'Número de transações excede o limite máximo',
   'sync-progress': 'Sincronização em andamento',
   'sync-complete': 'Sincronização concluída',
   'block-mined': 'Bloco minerado',

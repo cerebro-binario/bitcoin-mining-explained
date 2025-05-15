@@ -524,95 +524,16 @@ export class Node {
 
   // Método para validar um bloco individual
   validateBlock(block: Block, height: number, previousBlock?: Block): boolean {
-    if (height === -1) {
-      return true;
-    }
-
-    // 1. Verifica se o hash do bloco é válido
-    if (block.hash !== block.calculateHash()) {
+    const validationResult = this.validateBlockConsensus(block);
+    if (!validationResult.isValid) {
       this.addEvent({
         type: 'block-rejected',
         block: block,
         timestamp: Date.now(),
-        reason: 'invalid-hash',
+        reason: validationResult.reason,
       });
       return false;
     }
-
-    // 2. Verifica se o hash atinge o target
-    if (!block.isValid()) {
-      this.addEvent({
-        type: 'block-rejected',
-        block: block,
-        timestamp: Date.now(),
-        reason: 'invalid-target',
-      });
-      return false;
-    }
-
-    // 3. Verifica se o bloco anterior existe e tem o hash correto
-    if (height > 0) {
-      if (!previousBlock || previousBlock.hash !== block.previousHash) {
-        this.addEvent({
-          type: 'block-rejected',
-          block: block,
-          timestamp: Date.now(),
-          reason: 'invalid-parent',
-        });
-        return false;
-      }
-    }
-
-    // 4. Verifica se o timestamp é razoável
-    const now = Date.now();
-    if (block.timestamp > now + 7200000) {
-      this.addEvent({
-        type: 'block-rejected',
-        block: block,
-        timestamp: Date.now(),
-        reason: 'invalid-timestamp',
-      });
-      return false;
-    }
-
-    // 5. Verifica se o timestamp é posterior ao bloco anterior
-    if (previousBlock && block.timestamp <= previousBlock.timestamp) {
-      this.addEvent({
-        type: 'block-rejected',
-        block: block,
-        timestamp: Date.now(),
-        reason: 'invalid-timestamp',
-      });
-      return false;
-    }
-
-    // 6. Verifica se a dificuldade (nBits) está correta
-    if (height > 0) {
-      const expectedNBits = this.calculateExpectedNBits(height);
-      if (block.nBits !== expectedNBits) {
-        this.addEvent({
-          type: 'block-rejected',
-          block: block,
-          timestamp: Date.now(),
-          reason: 'invalid-nbits',
-        });
-        return false;
-      }
-    }
-
-    // 7. Verifica se o subsídio está correto
-    const expectedSubsidy = this.calculateBlockSubsidy(height);
-    const actualSubsidy = block.transactions[0].outputs[0].value;
-    if (actualSubsidy !== expectedSubsidy) {
-      this.addEvent({
-        type: 'block-rejected',
-        block: block,
-        timestamp: Date.now(),
-        reason: 'invalid-subsidy',
-      });
-      return false;
-    }
-
     return true;
   }
 
@@ -736,16 +657,30 @@ export class Node {
       timestamp: Date.now(),
     });
 
-    // 3. Processar o bloco
+    // 3. Validar o bloco antes de processar
+    const validationResult = this.validateBlockConsensus(block);
+    if (!validationResult.isValid) {
+      this.addEvent({
+        type: 'block-rejected',
+        from: peer.id,
+        block: block,
+        timestamp: Date.now(),
+        reason: validationResult.reason,
+      });
+      this.isSyncing = false;
+      return;
+    }
+
+    // 4. Processar o bloco
     this.processBlock(block);
 
-    // 4. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
+    // 5. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
     const myHeight = this.getLatestBlock()?.height || -1;
     if (block.height > myHeight + 1) {
       this.catchUpBlocks(myHeight + 1, block.height, peer);
     }
 
-    // 5. Repropagar para outros peers
+    // 6. Repropagar para outros peers
     this.blockBroadcast$.next(block);
 
     this.isSyncing = false;
@@ -888,5 +823,90 @@ export class Node {
       }
     }
     return blocks;
+  }
+
+  // Método para validação completa do bloco
+  private validateBlockConsensus(block: Block): {
+    isValid: boolean;
+    reason?: ValidationType;
+    message?: string;
+  } {
+    // 1. Validar tamanho máximo do bloco
+    const blockSize = JSON.stringify(block).length;
+    const consensusParams = this.getConsensusForHeight(block.height);
+    const maxBlockSizeBytes = consensusParams.maxBlockSize * 1024 * 1024; // Converte MB para bytes
+    if (blockSize > maxBlockSizeBytes) {
+      return {
+        isValid: false,
+        reason: 'invalid-size',
+        message: `Block size ${blockSize} bytes exceeds maximum allowed size of ${maxBlockSizeBytes} bytes (${consensusParams.maxBlockSize} MB)`,
+      };
+    }
+
+    // 2. Validar número máximo de transações (0 significa sem limite)
+    if (
+      consensusParams.maxTransactionsPerBlock > 0 &&
+      block.transactions.length > consensusParams.maxTransactionsPerBlock
+    ) {
+      return {
+        isValid: false,
+        reason: 'invalid-transactions',
+        message: `Block contains ${block.transactions.length} transactions, exceeding maximum of ${consensusParams.maxTransactionsPerBlock}`,
+      };
+    }
+
+    // 3. Validar ajuste de dificuldade (nBits)
+    const expectedNBits = this.calculateExpectedNBits(block.height);
+    if (block.nBits !== expectedNBits) {
+      return {
+        isValid: false,
+        reason: 'invalid-nbits',
+        message: `Block nBits ${block.nBits} does not match expected ${expectedNBits} for height ${block.height}`,
+      };
+    }
+
+    // 4. Validar target time
+    const previousBlock = this.getBlockByHeight(block.height - 1);
+    if (previousBlock) {
+      const timeDiff = block.timestamp - previousBlock.timestamp;
+      if (timeDiff < 0) {
+        return {
+          isValid: false,
+          reason: 'invalid-timestamp',
+          message: 'Block timestamp is before previous block',
+        };
+      }
+
+      // Verificar se o bloco não está muito no futuro (2 horas)
+      const maxFutureTime = Date.now() + 7200000; // 2 horas em milissegundos
+      if (block.timestamp > maxFutureTime) {
+        return {
+          isValid: false,
+          reason: 'invalid-timestamp',
+          message: 'Block timestamp is too far in the future',
+        };
+      }
+    }
+
+    // 5. Validar hash do bloco
+    const calculatedHash = block.calculateHash();
+    if (calculatedHash !== block.hash) {
+      return {
+        isValid: false,
+        reason: 'invalid-hash',
+        message: 'Block hash does not match calculated hash',
+      };
+    }
+
+    // 6. Validar se o hash está abaixo do target
+    if (!block.isHashBelowTarget()) {
+      return {
+        isValid: false,
+        reason: 'invalid-target',
+        message: 'Block hash is not below target',
+      };
+    }
+
+    return { isValid: true };
   }
 }

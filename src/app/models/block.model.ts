@@ -76,7 +76,7 @@ export class Block {
     return sha256(JSON.stringify(data));
   }
 
-  public isValid(): boolean {
+  public isHashBelowTarget(): boolean {
     if (!this.hash) return false;
 
     // Convert hash to BigInt for comparison
