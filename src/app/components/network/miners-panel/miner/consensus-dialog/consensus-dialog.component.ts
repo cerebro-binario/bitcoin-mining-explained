@@ -117,6 +117,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     // Definir a altura atual como referência
     this.currentHeight = this.miner.getLatestBlock()?.height || 0;
     this.startHeight = this.currentHeight;
+    this.blocksToTarget = null;
 
     // Criar uma nova versão com base nos parâmetros atuais da versão selecionada
     this.new = new ConsensusVersion({ ...this.selected });
@@ -127,6 +128,11 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     // Limpar mensagens de erro e sucesso
     this.clearMessages();
+  }
+
+  onStartHeightChange(value: number) {
+    this.onParametersChange();
+    this.startHeightInput$.next(value);
   }
 
   onIntervalChange(value: number) {
@@ -190,7 +196,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     // Se não for aplicar imediatamente, validar a altura
     if (!this.applyImmediately) {
-      if (!this.startHeight || this.startHeight < this.currentHeight) {
+      if (
+        this.startHeight === undefined ||
+        this.startHeight < this.currentHeight
+      ) {
         this.messageService.add({
           severity: 'error',
           summary: 'Erro',
@@ -294,32 +303,31 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     }
   }
 
-  private prepareNewVersionInstance(startHeight?: number) {
+  private prepareNewVersionInstance() {
     const newVersion = this.new.version + 1;
 
     // Se for aplicar imediatamente, usa a altura atual
     // Se não, usa a altura especificada pelo usuário
     const actualStartHeight = this.applyImmediately
       ? this.currentHeight
-      : startHeight || this.currentHeight;
+      : this.startHeight ?? this.currentHeight;
 
     const newEpoch: ConsensusEpoch = {
       startHeight: actualStartHeight,
       parameters: { ...this.newParams },
     };
 
+    const previousEpochs = this.selected.epochs.filter(
+      (e) => e.startHeight < actualStartHeight
+    );
+
     this.new = new ConsensusVersion({
       version: newVersion,
-      epochs: [
-        ...this.selected.epochs.filter(
-          (e) => e.startHeight < actualStartHeight
-        ),
-        newEpoch,
-      ],
+      epochs: [...previousEpochs, newEpoch],
     });
 
-    if (this.selected.epochs.length > 0) {
-      const lastEpoch = this.selected.epochs[this.selected.epochs.length - 1];
+    if (previousEpochs.length > 0) {
+      const lastEpoch = previousEpochs[previousEpochs.length - 1];
       lastEpoch.endHeight = actualStartHeight - 1;
     }
 
@@ -364,10 +372,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.paramChanged = true;
     this.prepareNewVersionInstance();
     this.checkForExistingVersion();
-  }
-
-  onStartHeightChange(value: number) {
-    this.startHeightInput$.next(value);
   }
 
   ngOnDestroy() {
