@@ -12,7 +12,7 @@ import { MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, debounceTime } from 'rxjs';
 import {
   ConsensusEpoch,
   ConsensusParameters,
@@ -41,10 +41,15 @@ type ForkType = 'none' | 'soft' | 'hard';
 })
 export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private startHeightInput$ = new Subject<number>();
 
   isEditing = false;
   paramChanged = false;
   mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
+  applyImmediately = true;
+  startHeight?: number;
+  currentHeight: number = 0;
+  blocksToTarget: number | null = null;
 
   // Scalable fork warning system
   forkWarnings: { [param: string]: ForkType } = {};
@@ -90,12 +95,28 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       .subscribe((versions) => {
         this.items = versions;
       });
+
+    // Debounce para dica de blocos restantes
+    this.startHeightInput$
+      .pipe(debounceTime(500), takeUntil(this.destroy$))
+      .subscribe((value) => {
+        if (typeof value === 'number' && value > this.currentHeight) {
+          this.blocksToTarget = value - this.currentHeight;
+        } else {
+          this.blocksToTarget = null;
+        }
+      });
   }
 
   startEditing() {
     this.mode = 'creating';
     this.isEditing = true;
     this.paramChanged = false;
+    this.applyImmediately = true;
+
+    // Definir a altura atual como referência
+    this.currentHeight = this.miner.getLatestBlock()?.height || 0;
+    this.startHeight = this.currentHeight;
 
     // Criar uma nova versão com base nos parâmetros atuais da versão selecionada
     this.new = new ConsensusVersion({ ...this.selected });
@@ -165,6 +186,18 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         detail: 'Já existe uma versão com estes parâmetros',
       });
       return;
+    }
+
+    // Se não for aplicar imediatamente, validar a altura
+    if (!this.applyImmediately) {
+      if (!this.startHeight || this.startHeight < this.currentHeight) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: `A altura de início deve ser no mínimo ${this.currentHeight}`,
+        });
+        return;
+      }
     }
 
     const success = this.publishVersion();
@@ -262,29 +295,32 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   private prepareNewVersionInstance(startHeight?: number) {
-    // Pegar altura atual (do current block) caso usuário não tenha definido uma
-    startHeight = startHeight ?? (this.miner.currentBlock?.height || 0);
+    const newVersion = this.new.version + 1;
 
-    let newEpoch: ConsensusEpoch = {
-      startHeight,
+    // Se for aplicar imediatamente, usa a altura atual
+    // Se não, usa a altura especificada pelo usuário
+    const actualStartHeight = this.applyImmediately
+      ? this.currentHeight
+      : startHeight || this.currentHeight;
+
+    const newEpoch: ConsensusEpoch = {
+      startHeight: actualStartHeight,
       parameters: { ...this.newParams },
     };
 
-    const previousEpochs = this.selected.epochs
-      .filter((epoch) => epoch.startHeight < startHeight)
-      .map((epoch) => ({
-        ...epoch,
-      }));
-
     this.new = new ConsensusVersion({
-      version: -1,
-      timestamp: -1,
-      epochs: [...previousEpochs, newEpoch],
+      version: newVersion,
+      epochs: [
+        ...this.selected.epochs.filter(
+          (e) => e.startHeight < actualStartHeight
+        ),
+        newEpoch,
+      ],
     });
 
-    if (previousEpochs.length > 0) {
-      const lastEpoch = previousEpochs[previousEpochs.length - 1];
-      lastEpoch.endHeight = startHeight - 1;
+    if (this.selected.epochs.length > 0) {
+      const lastEpoch = this.selected.epochs[this.selected.epochs.length - 1];
+      lastEpoch.endHeight = actualStartHeight - 1;
     }
 
     this.new.calculateHash();
@@ -328,6 +364,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.paramChanged = true;
     this.prepareNewVersionInstance();
     this.checkForExistingVersion();
+  }
+
+  onStartHeightChange(value: number) {
+    this.startHeightInput$.next(value);
   }
 
   ngOnDestroy() {

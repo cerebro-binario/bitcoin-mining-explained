@@ -136,6 +136,67 @@
 
         <!-- Parâmetros de Consenso -->
         <div class="space-y-4">
+          <!-- Opção de Aplicação -->
+          <div *ngIf="mode === 'creating'" class="mb-4">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-medium text-zinc-400"
+                >Aplicar Nova Versão</span
+              >
+            </div>
+            <div class="flex flex-col gap-2 mt-1">
+              <label class="inline-flex items-center">
+                <input
+                  type="radio"
+                  [(ngModel)]="applyImmediately"
+                  [value]="true"
+                  class="form-radio text-blue-500"
+                />
+                <span class="ml-2 text-zinc-100"
+                  >Aplicar imediatamente (altura {{ currentHeight }})</span
+                >
+              </label>
+              <label class="inline-flex items-center">
+                <input
+                  type="radio"
+                  [(ngModel)]="applyImmediately"
+                  [value]="false"
+                  class="form-radio text-blue-500"
+                />
+                <span class="ml-2 text-zinc-100"
+                  >Definir altura específica</span
+                >
+              </label>
+
+              <!-- Campo de altura (visível apenas quando não aplicar imediatamente) -->
+              <div *ngIf="!applyImmediately" class="ml-6 mt-2">
+                <div class="flex items-baseline gap-2">
+                  <label class="text-sm text-zinc-400 mr-2" for="alturaInput"
+                    >Altura</label
+                  >
+                  <input
+                    id="alturaInput"
+                    type="number"
+                    [(ngModel)]="startHeight"
+                    [min]="currentHeight"
+                    (ngModelChange)="onStartHeightChange($event)"
+                    class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                    placeholder="Altura de início"
+                  />
+                </div>
+                <p class="mt-1 text-xs text-zinc-500">
+                  Altura atual: {{ currentHeight }}
+                  <span *ngIf="blocksToTarget !== null"
+                    >&nbsp;|&nbsp;Faltam {{ blocksToTarget }} blocos para
+                    atingir a altura</span
+                  >
+                </p>
+              </div>
+            </div>
+            <p class="mt-1 text-xs text-zinc-500">
+              Escolha quando a nova versão de consenso deve começar a vigorar
+            </p>
+          </div>
+
           <!-- Intervalo de Ajuste de Dificuldade -->
           <div class="mb-4">
             <div class="flex items-baseline gap-2">
