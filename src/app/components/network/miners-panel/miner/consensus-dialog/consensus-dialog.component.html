@@ -29,6 +29,27 @@
 
     <!-- Content -->
     <div class="p-6 space-y-4 flex-1 overflow-y-auto">
+      <!-- AVISO DE PARÂMETROS FUTUROS NO TOPO DO FORM -->
+      <div
+        *ngIf="selected && futureEpochs.length > 0"
+        class="mb-4 p-3 rounded bg-yellow-900/30 border border-yellow-600 text-yellow-200"
+      >
+        <b>Atenção:</b> Esta versão possui parâmetros futuros programados para
+        altura {{ selectedNextFutureEpochHeight }}.<br />
+        Os seguintes parâmetros entrarão em vigor:
+        <ul class="list-disc ml-6 mt-1">
+          <li *ngFor="let e of futureEpochs">
+            <b>Altura {{ e.startHeight }}:</b>
+            <span class="ml-2"
+              >Ajuste: {{ e.parameters.difficultyAdjustmentInterval }}, Máx. TX:
+              {{ e.parameters.maxTransactionsPerBlock }}, Máx. Bloco:
+              {{ e.parameters.maxBlockSize }} MB, Tempo alvo:
+              {{ e.parameters.targetBlockTime }}s</span
+            >
+          </li>
+        </ul>
+      </div>
+
       <div class="space-y-6">
         <div *ngIf="mode === 'creating'">
           <h3 class="text-lg font-semibold text-blue-400">
@@ -98,6 +119,14 @@
                     <span class="text-white"
                       >v{{ selectedOption.version }}</span
                     >
+                    <span
+                      *ngIf="selectedHasFutureEpochs"
+                      class="ml-2 text-yellow-400 text-xs flex items-center"
+                      title="Possui parâmetros futuros"
+                    >
+                      ⏳ Programado para altura
+                      {{ selectedNextFutureEpochHeight || "?" }}
+                    </span>
                   </div>
                 </ng-template>
 
@@ -124,6 +153,14 @@
                       </svg>
                     </span>
                     <span class="text-white">v{{ consensus.version }}</span>
+                    <span
+                      *ngIf="hasFutureEpochs(consensus)"
+                      class="ml-2 text-yellow-400 text-xs flex items-center"
+                      title="Possui parâmetros futuros"
+                    >
+                      ⏳ Programado para altura
+                      {{ getNextFutureEpochHeight(consensus) || "?" }}
+                    </span>
                   </div>
                 </ng-template>
               </p-select>
@@ -150,6 +187,7 @@
                   [(ngModel)]="applyImmediately"
                   [value]="true"
                   class="form-radio text-blue-500"
+                  (ngModelChange)="onApplyImmediatelyChange()"
                 />
                 <span class="ml-2 text-zinc-100"
                   >Aplicar imediatamente (altura {{ currentHeight }})</span
@@ -161,6 +199,7 @@
                   [(ngModel)]="applyImmediately"
                   [value]="false"
                   class="form-radio text-blue-500"
+                  (ngModelChange)="onApplyImmediatelyChange()"
                 />
                 <span class="ml-2 text-zinc-100"
                   >Definir altura específica</span
@@ -376,6 +415,12 @@
       <div class="h-full flex items-end gap-3 whitespace-nowrap">
         @switch (mode) { @case ('creating') {
         <!-- Editando nova versão local -->
+        <div
+          *ngIf="isEditingFutureEpoch"
+          class="mb-2 p-2 rounded bg-blue-900/40 border border-blue-700 text-blue-200 text-sm"
+        >
+          Editando época futura já programada para altura {{ startHeight }}.
+        </div>
         <button
           class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
           (click)="cancelEdit()"
@@ -387,7 +432,9 @@
           class="px-4 py-2 rounded bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white not-disabled:hover:bg-green-700 transition"
           (click)="confirmEdit()"
         >
-          Confirmar nova versão
+          {{
+            isEditingFutureEpoch ? "Salvar alterações" : "Confirmar nova versão"
+          }}
         </button>
         } @case ('confirming') {
         <!-- Mudando versão local para uma versão existente -->

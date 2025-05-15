@@ -74,6 +74,12 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
   @Output() versionChange = new EventEmitter<void>();
 
+  isEditingFutureEpoch = false;
+  futureEpochIndex: number | null = null;
+
+  public selectedHasFutureEpochs = false;
+  public selectedNextFutureEpochHeight: number | null = null;
+
   constructor(
     private consensusService: ConsensusService,
     private messageService: MessageService
@@ -106,6 +112,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
           this.blocksToTarget = null;
         }
       });
+
+    this.updateSelectedFutureEpochsInfo();
   }
 
   startEditing() {
@@ -113,15 +121,32 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.isEditing = true;
     this.paramChanged = false;
     this.applyImmediately = true;
+    this.isEditingFutureEpoch = false;
+    this.futureEpochIndex = null;
 
     // Definir a altura atual como referência
     this.currentHeight = this.miner.getLatestBlock()?.height || 0;
     this.startHeight = this.currentHeight;
     this.blocksToTarget = null;
+    this.updateSelectedFutureEpochsInfo();
 
-    // Criar uma nova versão com base nos parâmetros atuais da versão selecionada
-    this.new = new ConsensusVersion({ ...this.selected });
-    this.newParams = { ...this.selectedParams };
+    // Verificar se já existe uma época futura programada
+    const futureEpochIdx = this.selected.epochs.findIndex(
+      (e) => e.startHeight > this.currentHeight
+    );
+    if (futureEpochIdx !== -1) {
+      // Entrar em modo de edição da época futura
+      this.isEditingFutureEpoch = true;
+      this.futureEpochIndex = futureEpochIdx;
+      const futureEpoch = this.selected.epochs[futureEpochIdx];
+      this.startHeight = futureEpoch.startHeight;
+      this.newParams = { ...futureEpoch.parameters };
+      this.applyImmediately = false;
+    } else {
+      // Criar uma nova versão com base nos parâmetros atuais da versão selecionada
+      this.new = new ConsensusVersion({ ...this.selected });
+      this.newParams = { ...this.selectedParams };
+    }
 
     // Fazer uma cópia dos parâmetros atuais para poder restaurar caso necessário
     this.copy = { ...this.selectedParams };
@@ -133,6 +158,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   onStartHeightChange(value: number) {
     this.onParametersChange();
     this.startHeightInput$.next(value);
+    this.updateSelectedFutureEpochsInfo();
   }
 
   onIntervalChange(value: number) {
@@ -194,6 +220,43 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Se for edição de época futura, apenas atualiza os parâmetros dessa época
+    if (this.isEditingFutureEpoch && this.futureEpochIndex !== null) {
+      if (
+        this.startHeight === undefined ||
+        this.startHeight < this.currentHeight
+      ) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: `A altura de início deve ser no mínimo ${this.currentHeight}`,
+        });
+        return;
+      }
+      // Atualizar época futura
+      const updatedEpochs = [...this.selected.epochs];
+      updatedEpochs[this.futureEpochIndex] = {
+        ...updatedEpochs[this.futureEpochIndex],
+        startHeight: this.startHeight,
+        parameters: { ...this.newParams },
+      };
+      // Atualizar versão selecionada
+      this.selected.epochs = updatedEpochs;
+      this.selectedParams = { ...this.newParams };
+      this.mode = 'viewing';
+      this.isEditing = false;
+      this.isEditingFutureEpoch = false;
+      this.futureEpochIndex = null;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Época futura atualizada',
+        detail: `A época futura foi atualizada para altura ${this.startHeight}.`,
+        life: 6000,
+      });
+      this.versionChange.emit();
+      return;
+    }
+
     // Se não for aplicar imediatamente, validar a altura
     if (!this.applyImmediately) {
       if (
@@ -226,9 +289,9 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     if (event.value) {
       const selected = event.value as ConsensusVersion;
-
       this.selectedParams = { ...selected.getCurrentConsensusParameters() };
-
+      this.selected = selected;
+      this.updateSelectedFutureEpochsInfo();
       if (selected.version !== this.miner.consensus.version) {
         this.mode = 'confirming';
       } else {
@@ -377,5 +440,62 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  onApplyImmediatelyChange() {
+    if (this.applyImmediately) {
+      this.startHeight = this.currentHeight;
+    } else {
+      // Se estiver editando época futura, mantém o valor dela
+      if (this.isEditingFutureEpoch && this.futureEpochIndex !== null) {
+        const futureEpoch = this.selected.epochs[this.futureEpochIndex];
+        this.startHeight = futureEpoch.startHeight;
+      } else {
+        this.startHeight = this.currentHeight;
+      }
+    }
+    this.onStartHeightChange(this.startHeight!);
+    this.updateSelectedFutureEpochsInfo();
+  }
+
+  get nextFutureEpochHeight(): number | null {
+    if (!this.selected) return null;
+    const future = this.selected.epochs
+      .filter((e) => e.startHeight > this.currentHeight)
+      .map((e) => e.startHeight);
+    return future.length ? Math.min(...future) : null;
+  }
+
+  get futureEpochs(): any[] {
+    if (!this.selected) return [];
+    return this.selected.epochs.filter(
+      (e) => e.startHeight > this.currentHeight
+    );
+  }
+
+  hasFutureEpochs(version: ConsensusVersion): boolean {
+    return version.epochs.some((e) => e.startHeight > this.currentHeight);
+  }
+
+  getNextFutureEpochHeight(version: ConsensusVersion): number | null {
+    const future = version.epochs
+      .filter((e) => e.startHeight > this.currentHeight)
+      .map((e) => e.startHeight);
+    return future.length ? Math.min(...future) : null;
+  }
+
+  private updateSelectedFutureEpochsInfo() {
+    if (!this.selected) {
+      this.selectedHasFutureEpochs = false;
+      this.selectedNextFutureEpochHeight = null;
+      return;
+    }
+    const future = this.selected.epochs
+      .filter((e) => e.startHeight > this.currentHeight)
+      .map((e) => e.startHeight);
+    this.selectedHasFutureEpochs = future.length > 0;
+    this.selectedNextFutureEpochHeight = future.length
+      ? Math.min(...future)
+      : null;
   }
 }
