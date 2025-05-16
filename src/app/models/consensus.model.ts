@@ -17,7 +17,7 @@ export class ConsensusParameters implements IConsensusParameters {
   hash: string = '';
 
   constructor(data: Partial<IConsensusParameters>) {
-    Object.assign(this, data);
+    Object.assign(this, { ...data });
   }
 
   static deepCopy(data: Partial<IConsensusParameters>): ConsensusParameters {
@@ -46,6 +46,7 @@ export class ConsensusEpoch implements IConsensusEpoch {
 
   constructor(data: Partial<IConsensusEpoch>) {
     Object.assign(this, data);
+    this.parameters = ConsensusParameters.deepCopy({ ...data.parameters }!);
   }
 
   static deepCopy(data: Partial<IConsensusEpoch>): ConsensusEpoch {
@@ -65,10 +66,7 @@ export class ConsensusVersion {
 
     // Deep copy dos parâmetros
     if (data.epochs) {
-      this.epochs = data.epochs.map((e) => ({
-        ...e,
-        parameters: { ...e.parameters },
-      }));
+      this.epochs = data.epochs.map((e) => ConsensusEpoch.deepCopy(e));
     }
   }
 

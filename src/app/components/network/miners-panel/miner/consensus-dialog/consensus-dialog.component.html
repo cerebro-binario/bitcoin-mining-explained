@@ -288,6 +288,9 @@
               >
                 {{ paramsOnView.difficultyAdjustmentInterval }}
               </span>
+              <span *ngIf="futureOnView">
+                -> {{ futureParamsOnView.difficultyAdjustmentInterval }}
+              </span>
               <span class="text-sm text-zinc-400">blocos</span>
             </div>
             <p class="mt-1 text-xs text-zinc-500">
@@ -322,6 +325,9 @@
                 class="text-lg font-semibold text-zinc-100"
               >
                 {{ paramsOnView.maxTransactionsPerBlock }}
+              </span>
+              <span *ngIf="futureOnView">
+                -> {{ futureParamsOnView.maxTransactionsPerBlock }}
               </span>
               <span class="text-sm text-zinc-400">transações</span>
             </div>
@@ -359,6 +365,9 @@
               >
                 {{ paramsOnView.maxBlockSize }}
               </span>
+              <span *ngIf="futureOnView">
+                -> {{ futureParamsOnView.maxBlockSize }}
+              </span>
               <span class="text-sm text-zinc-400">MB</span>
             </div>
             <p class="mt-1 text-xs text-zinc-500">
@@ -394,6 +403,9 @@
                 class="text-lg font-semibold text-zinc-100"
               >
                 {{ paramsOnView.targetBlockTime }}
+              </span>
+              <span *ngIf="futureOnView">
+                -> {{ futureParamsOnView.targetBlockTime }}
               </span>
               <span class="text-sm text-zinc-400">segundos</span>
             </div>

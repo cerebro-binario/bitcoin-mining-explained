@@ -73,6 +73,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   selected!: ConsensusVersion;
   paramsOnView!: IConsensusParameters;
   epochOnView!: ConsensusEpoch;
+  futureParamsOnView!: IConsensusParameters;
+  futureOnView!: ConsensusEpoch;
 
   @Input() miner!: Node;
 
@@ -100,8 +102,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Inicializar a versão selecionada com a versão rodando no miner
     this.selected = this.miner.consensus;
-    this.epochOnView = this.selected.epochs[this.selected.epochs.length - 1];
-    this.paramsOnView = this.epochOnView.parameters;
+    this.updateInfoOnView();
 
     // Inicializar a versão nova com base na versão selecionada
     this.new = ConsensusVersion.deepCopy(this.selected);
@@ -181,7 +182,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onIntervalChange(value: number) {
     if (!isNaN(value) && value > 0) {
-      this.paramsOnView.difficultyAdjustmentInterval = value;
       this.forkWarnings['difficultyAdjustmentInterval'] =
         value !== this.copy.difficultyAdjustmentInterval ? 'hard' : 'none';
       this.updateConsolidatedFork();
@@ -192,7 +192,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onMaxTransactionsChange(value: number) {
     if (!isNaN(value) && value >= 0) {
-      this.paramsOnView.maxTransactionsPerBlock = value;
       this.forkWarnings['maxTransactionsPerBlock'] =
         value !== this.copy.maxTransactionsPerBlock ? 'soft' : 'none';
       this.updateConsolidatedFork();
@@ -203,7 +202,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onMaxBlockSizeChange(value: number) {
     if (!isNaN(value) && value > 0) {
-      this.paramsOnView.maxBlockSize = value;
       if (value < this.copy.maxBlockSize) {
         this.forkWarnings['maxBlockSize'] = 'soft';
       } else if (value > this.copy.maxBlockSize) {
@@ -219,7 +217,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onTargetBlockTimeChange(value: number) {
     if (!isNaN(value) && value > 0) {
-      this.paramsOnView.targetBlockTime = value;
       this.forkWarnings['targetBlockTime'] =
         value !== this.copy.targetBlockTime ? 'hard' : 'none';
       this.updateConsolidatedFork();
@@ -254,7 +251,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         parameters: params,
       };
       this.consensusService.updateConsensus(this.selected);
-      this.paramsOnView = ConsensusParameters.deepCopy(params);
+      this.updateInfoOnView();
       this.mode = this.lastMode;
       this.isEditing = false;
       this.isEditingFutureEpoch = false;
@@ -291,9 +288,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     if (success) {
       this.selected = this.items.find((v) => v.hash === this.new.hash)!;
-      this.paramsOnView = ConsensusParameters.deepCopy(
-        this.selected.getCurrentConsensusParameters()
-      );
+      this.updateInfoOnView();
       this.mode = 'confirming';
       this.clearMessages();
       this.updateSelectedFutureEpochsInfo();
@@ -306,9 +301,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     if (event.value) {
       const selected = event.value as ConsensusVersion;
-      this.paramsOnView = ConsensusParameters.deepCopy(
-        selected.getCurrentConsensusParameters()
-      );
+      this.updateInfoOnView();
       this.updateSelectedFutureEpochsInfo();
       this.updateFutureInfoForItems();
       if (selected.version !== this.miner.consensus.version) {
@@ -397,15 +390,15 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       )
       .map((e) => ConsensusEpoch.deepCopy(e));
 
-    this.new = new ConsensusVersion({
-      version: newVersion,
-      epochs: [...previousEpochs, newEpoch],
-    });
-
     if (previousEpochs.length > 0) {
       const lastEpoch = previousEpochs[previousEpochs.length - 1];
       lastEpoch.endHeight = actualStartHeight - 1;
     }
+
+    this.new = new ConsensusVersion({
+      version: newVersion,
+      epochs: [...previousEpochs, newEpoch],
+    });
 
     this.new.calculateHash();
   }
@@ -444,11 +437,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       : this.newParams.hash === this.copy.hash;
 
     this.prepareNewVersionInstance();
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   onApplyImmediatelyChange() {
@@ -496,5 +484,21 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
           next && next > this.currentHeight ? next - this.currentHeight : null,
       };
     }
+  }
+
+  private updateInfoOnView() {
+    this.futureOnView = this.selected.epochs.find(
+      (e) => e.startHeight > this.currentHeight
+    )!;
+    this.futureParamsOnView = this.futureOnView?.parameters;
+    this.epochOnView = this.futureOnView
+      ? this.selected.epochs[this.selected.epochs.length - 2]
+      : this.selected.epochs[this.selected.epochs.length - 1];
+    this.paramsOnView = this.epochOnView.parameters;
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
