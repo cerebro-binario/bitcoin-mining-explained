@@ -17,6 +17,7 @@ import {
   ConsensusEpoch,
   ConsensusParameters,
   ConsensusVersion,
+  calculateConsensusParametersHash,
 } from '../../../../../models/consensus.model';
 import { Node } from '../../../../../models/node';
 import { ConsensusService } from '../../../../../services/consensus.service';
@@ -426,7 +427,15 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.existing = this.items.find((v) => v.hash === this.new.hash);
+    const newParamsHash = calculateConsensusParametersHash({
+      ...this.newParams,
+      hash: '',
+    });
+    this.existing = this.items.find((v) => {
+      if (v.hash === this.new.hash) return true;
+      const lastEpoch = v.epochs[v.epochs.length - 1];
+      return lastEpoch && lastEpoch.parameters.hash === newParamsHash;
+    });
   }
 
   private updateConsolidatedFork() {

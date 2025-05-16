@@ -6,6 +6,7 @@ export interface ConsensusParameters {
   maxTransactionsPerBlock: number;
   maxBlockSize: number;
   targetBlockTime: number;
+  hash: string;
 }
 
 export interface ConsensusEpoch {
@@ -46,6 +47,16 @@ export class ConsensusVersion {
   }
 }
 
+const DEFAULT_PARAMETERS_HASH = calculateConsensusParametersHash({
+  ...CONSENSUS_CONFIG,
+  hash: '',
+});
+
+const DEFAULT_CONSENSUS_PARAMETERS: ConsensusParameters = {
+  ...CONSENSUS_CONFIG,
+  hash: DEFAULT_PARAMETERS_HASH,
+};
+
 // Versão padrão do consenso (com uma única época)
 export const DEFAULT_CONSENSUS: ConsensusVersion = new ConsensusVersion({
   version: 1,
@@ -53,10 +64,19 @@ export const DEFAULT_CONSENSUS: ConsensusVersion = new ConsensusVersion({
   epochs: [
     {
       startHeight: 0,
-      parameters: { ...CONSENSUS_CONFIG },
+      parameters: DEFAULT_CONSENSUS_PARAMETERS,
     },
   ],
 });
 
 // Inicializa o hash da versão padrão
 DEFAULT_CONSENSUS.calculateHash();
+
+export function calculateConsensusParametersHash(
+  parameters: ConsensusParameters
+): string {
+  const { hash: _, ...rest } = parameters;
+  const data = JSON.stringify(rest);
+  const hash = CryptoJS.SHA256(data).toString();
+  return hash;
+}
