@@ -12,7 +12,7 @@ import { MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
-import { Subject, takeUntil, debounceTime } from 'rxjs';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 import {
   ConsensusEpoch,
   ConsensusParameters,
@@ -47,6 +47,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   isEditing = false;
   paramChanged = false;
   mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
+  lastMode: 'creating' | 'confirming' | 'viewing' = 'viewing';
   applyImmediately = true;
   startHeight?: number;
   currentHeight: number = 0;
@@ -126,6 +127,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   startEditing() {
+    this.lastMode = this.mode;
     this.mode = 'creating';
     this.isEditing = true;
     this.paramChanged = false;
@@ -249,22 +251,26 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       updatedEpochs[this.futureEpochIndex] = {
         ...updatedEpochs[this.futureEpochIndex],
         startHeight: this.startHeight,
-        parameters: { ...this.newParams },
+        parameters: {
+          ...this.newParams,
+          hash: calculateConsensusParametersHash(this.newParams),
+        },
       };
       // Atualizar versão selecionada
       this.selected.epochs = updatedEpochs;
       this.selectedParams = { ...this.newParams };
-      this.mode = 'viewing';
+      this.mode = this.lastMode;
       this.isEditing = false;
       this.isEditingFutureEpoch = false;
       this.futureEpochIndex = null;
       this.messageService.add({
         severity: 'success',
-        summary: 'Época futura atualizada',
-        detail: `A época futura foi atualizada para altura ${this.startHeight}.`,
+        summary: 'Parâmetros atualizados',
+        detail: `Os parâmetros da época futura foram atualizados para a altura ${this.startHeight}.`,
         life: 6000,
       });
       this.versionChange.emit();
+      this.clearMessages();
       this.updateSelectedFutureEpochsInfo();
       this.updateFutureInfoForItems();
       return;
@@ -357,7 +363,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   cancelEdit() {
-    this.mode = 'viewing';
+    this.mode = this.lastMode;
     this.isEditing = false;
     this.selectedParams = { ...this.copy };
     this.clearMessages();
@@ -393,7 +399,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     const newEpoch: ConsensusEpoch = {
       startHeight: actualStartHeight,
-      parameters: { ...this.newParams },
+      parameters: {
+        ...this.newParams,
+        hash: calculateConsensusParametersHash(this.newParams),
+      },
     };
 
     const previousEpochs = this.selected.epochs.filter(
