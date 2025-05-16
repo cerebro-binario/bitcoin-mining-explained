@@ -262,35 +262,27 @@
                 <span class="ml-2 text-zinc-100"
                   >Definir altura específica</span
                 >
+                <label class="text-sm text-zinc-400 ml-2 mr-2" for="alturaInput"
+                  >Altura</label
+                >
+                <input
+                  id="alturaInput"
+                  type="number"
+                  [(ngModel)]="startHeight"
+                  [min]="currentHeight"
+                  (ngModelChange)="onStartHeightChange($event)"
+                  class="w-24 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:border-zinc-700 disabled:text-zinc-500 disabled:placeholder-zinc-500 disabled:hover:border-zinc-700 disabled:hover:bg-zinc-800 disabled:hover:text-zinc-500 disabled:hover:opacity-50"
+                  placeholder="Altura"
+                  [disabled]="applyImmediately"
+                />
               </label>
-
-              <!-- Campo de altura (visível apenas quando não aplicar imediatamente) -->
-              <div *ngIf="!applyImmediately" class="ml-6 mt-2">
-                <div class="flex items-baseline gap-2">
-                  <label class="text-sm text-zinc-400 mr-2" for="alturaInput"
-                    >Altura</label
-                  >
-                  <input
-                    id="alturaInput"
-                    type="number"
-                    [(ngModel)]="startHeight"
-                    [min]="currentHeight"
-                    (ngModelChange)="onStartHeightChange($event)"
-                    class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                    placeholder="Altura de início"
-                  />
-                </div>
-                <p class="mt-1 text-xs text-zinc-500">
-                  Altura atual: {{ currentHeight }}
-                  <span *ngIf="blocksToTarget !== null"
-                    >&nbsp;|&nbsp;Faltam {{ blocksToTarget }} blocos para
-                    atingir a altura</span
-                  >
-                </p>
-              </div>
             </div>
             <p class="mt-1 text-xs text-zinc-500">
-              Escolha quando a nova versão de consenso deve começar a vigorar
+              Altura atual: {{ currentHeight }}
+              <span *ngIf="blocksToTarget !== null">
+                &nbsp;|&nbsp;Faltam {{ blocksToTarget }} blocos para atingir a
+                altura
+              </span>
             </p>
           </div>
 
