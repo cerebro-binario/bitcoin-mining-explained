@@ -69,7 +69,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   copy!: ConsensusParameters;
   selected!: ConsensusVersion;
   selectedParams!: ConsensusParameters;
-  existing?: ConsensusVersion;
 
   @Input() miner!: Node;
 
@@ -224,15 +223,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmEdit() {
-    if (this.existing) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Já existe uma versão com estes parâmetros',
-      });
-      return;
-    }
-
     // Se for edição de época futura, apenas atualiza os parâmetros dessa época
     if (this.isEditingFutureEpoch && this.futureEpochIndex !== null) {
       if (
@@ -258,6 +248,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       };
       // Atualizar versão selecionada
       this.selected.epochs = updatedEpochs;
+      this.items.find((v) => v.hash === this.selected.hash)!.epochs =
+        updatedEpochs;
       this.selectedParams = { ...this.newParams };
       this.mode = this.lastMode;
       this.isEditing = false;
@@ -375,19 +367,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
-  useExistingVersion() {
-    if (this.existing) {
-      this.selected = new ConsensusVersion({ ...this.existing });
-      this.copy = {
-        ...this.existing.getCurrentConsensusParameters(),
-      };
-      this.selectedParams = {
-        ...this.existing.getCurrentConsensusParameters(),
-      };
-      this.mode = 'confirming';
-    }
-  }
-
   private prepareNewVersionInstance() {
     const newVersion = this.new.version + 1;
 
@@ -405,9 +384,13 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       },
     };
 
-    const previousEpochs = this.selected.epochs.filter(
-      (e) => e.startHeight < actualStartHeight
-    );
+    const previousEpochs = this.selected.epochs
+      .filter(
+        (e) =>
+          e.startHeight <= this.currentHeight &&
+          e.startHeight !== actualStartHeight
+      )
+      .map((e) => ({ ...e }));
 
     this.new = new ConsensusVersion({
       version: newVersion,
@@ -425,26 +408,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private clearMessages() {
     this.error = null;
     this.info = null;
-    this.existing = undefined;
     this.forkWarnings = {};
     this.updateConsolidatedFork();
-  }
-
-  private checkForExistingVersion() {
-    if (!this.paramChanged) {
-      this.existing = undefined;
-      return;
-    }
-
-    const newParamsHash = calculateConsensusParametersHash({
-      ...this.newParams,
-      hash: '',
-    });
-    this.existing = this.items.find((v) => {
-      if (v.hash === this.new.hash) return true;
-      const lastEpoch = v.epochs[v.epochs.length - 1];
-      return lastEpoch && lastEpoch.parameters.hash === newParamsHash;
-    });
   }
 
   private updateConsolidatedFork() {
@@ -467,7 +432,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private onParametersChange() {
     this.paramChanged = true;
     this.prepareNewVersionInstance();
-    this.checkForExistingVersion();
   }
 
   ngOnDestroy() {

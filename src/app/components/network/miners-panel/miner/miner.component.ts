@@ -340,8 +340,8 @@ export class MinerComponent {
 
   onConsensusVersionChange() {
     // Recomeçar a mineração do bloco atual para que seja gerado com a nova versão do consenso
-    const lastBlock = this.miner.heights[0][0];
-    this.miner.currentBlock = this.miner.initBlockTemplate(lastBlock.block);
+    const lastBlock = this.miner.heights[0]?.[0];
+    this.miner.currentBlock = this.miner.initBlockTemplate(lastBlock?.block);
   }
 
   connectToPeers() {
