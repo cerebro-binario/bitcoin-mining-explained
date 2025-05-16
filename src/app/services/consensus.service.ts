@@ -40,4 +40,14 @@ export class ConsensusService {
 
     return true;
   }
+
+  updateConsensus(consensus: ConsensusVersion) {
+    const index = this.versions.findIndex((v) => v.hash === consensus.hash);
+    if (index !== -1) {
+      this.versions[index] = consensus;
+      consensus.calculateHash();
+      this.versions.sort((a, b) => a.version - b.version);
+      this.versionsSubject.next(this.versions);
+    }
+  }
 }

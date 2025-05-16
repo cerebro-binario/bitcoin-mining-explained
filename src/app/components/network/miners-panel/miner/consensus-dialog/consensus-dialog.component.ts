@@ -17,7 +17,8 @@ import {
   ConsensusEpoch,
   ConsensusParameters,
   ConsensusVersion,
-  calculateConsensusParametersHash,
+  IConsensusEpoch,
+  IConsensusParameters,
 } from '../../../../../models/consensus.model';
 import { Node } from '../../../../../models/node';
 import { ConsensusService } from '../../../../../services/consensus.service';
@@ -45,11 +46,13 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   private startHeightInput$ = new Subject<number>();
 
   isEditing = false;
-  paramChanged = false;
+  touched = false;
+  sameParams = false;
   mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
   lastMode: 'creating' | 'confirming' | 'viewing' = 'viewing';
   applyImmediately = true;
   startHeight?: number;
+  startHeightCopy?: number;
   currentHeight: number = 0;
   blocksToTarget: number | null = null;
 
@@ -68,7 +71,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   newParams!: ConsensusParameters;
   copy!: ConsensusParameters;
   selected!: ConsensusVersion;
-  selectedParams!: ConsensusParameters;
+  paramsOnView!: IConsensusParameters;
+  epochOnView!: ConsensusEpoch;
 
   @Input() miner!: Node;
 
@@ -95,12 +99,13 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     // Inicializar a versão selecionada com a versão rodando no miner
-    this.selected = new ConsensusVersion({ ...this.miner.consensus });
-    this.selectedParams = { ...this.selected.getCurrentConsensusParameters() };
+    this.selected = this.miner.consensus;
+    this.epochOnView = this.selected.epochs[this.selected.epochs.length - 1];
+    this.paramsOnView = this.epochOnView.parameters;
 
     // Inicializar a versão nova com base na versão selecionada
-    this.new = new ConsensusVersion({ ...this.selected });
-    this.newParams = { ...this.selectedParams };
+    this.new = ConsensusVersion.deepCopy(this.selected);
+    this.newParams = ConsensusParameters.deepCopy(this.paramsOnView);
 
     this.clearMessages();
 
@@ -129,7 +134,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.lastMode = this.mode;
     this.mode = 'creating';
     this.isEditing = true;
-    this.paramChanged = false;
+    this.touched = false;
     this.applyImmediately = true;
     this.isEditingFutureEpoch = false;
     this.futureEpochIndex = null;
@@ -151,16 +156,17 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       this.futureEpochIndex = futureEpochIdx;
       const futureEpoch = this.selected.epochs[futureEpochIdx];
       this.startHeight = futureEpoch.startHeight;
-      this.newParams = { ...futureEpoch.parameters };
+      this.newParams = ConsensusParameters.deepCopy(futureEpoch.parameters);
       this.applyImmediately = false;
     } else {
       // Criar uma nova versão com base nos parâmetros atuais da versão selecionada
-      this.new = new ConsensusVersion({ ...this.selected });
-      this.newParams = { ...this.selectedParams };
+      this.new = ConsensusVersion.deepCopy(this.selected);
+      this.newParams = ConsensusParameters.deepCopy(this.paramsOnView);
     }
 
     // Fazer uma cópia dos parâmetros atuais para poder restaurar caso necessário
-    this.copy = { ...this.selectedParams };
+    this.copy = ConsensusParameters.deepCopy(this.paramsOnView);
+    this.startHeightCopy = this.startHeight;
 
     // Limpar mensagens de erro e sucesso
     this.clearMessages();
@@ -175,7 +181,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onIntervalChange(value: number) {
     if (!isNaN(value) && value > 0) {
-      this.selectedParams.difficultyAdjustmentInterval = value;
+      this.paramsOnView.difficultyAdjustmentInterval = value;
       this.forkWarnings['difficultyAdjustmentInterval'] =
         value !== this.copy.difficultyAdjustmentInterval ? 'hard' : 'none';
       this.updateConsolidatedFork();
@@ -186,7 +192,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onMaxTransactionsChange(value: number) {
     if (!isNaN(value) && value >= 0) {
-      this.selectedParams.maxTransactionsPerBlock = value;
+      this.paramsOnView.maxTransactionsPerBlock = value;
       this.forkWarnings['maxTransactionsPerBlock'] =
         value !== this.copy.maxTransactionsPerBlock ? 'soft' : 'none';
       this.updateConsolidatedFork();
@@ -197,7 +203,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onMaxBlockSizeChange(value: number) {
     if (!isNaN(value) && value > 0) {
-      this.selectedParams.maxBlockSize = value;
+      this.paramsOnView.maxBlockSize = value;
       if (value < this.copy.maxBlockSize) {
         this.forkWarnings['maxBlockSize'] = 'soft';
       } else if (value > this.copy.maxBlockSize) {
@@ -213,7 +219,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
   onTargetBlockTimeChange(value: number) {
     if (!isNaN(value) && value > 0) {
-      this.selectedParams.targetBlockTime = value;
+      this.paramsOnView.targetBlockTime = value;
       this.forkWarnings['targetBlockTime'] =
         value !== this.copy.targetBlockTime ? 'hard' : 'none';
       this.updateConsolidatedFork();
@@ -236,21 +242,19 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         });
         return;
       }
+
       // Atualizar época futura
-      const updatedEpochs = [...this.selected.epochs];
+      const params = ConsensusParameters.deepCopy(this.newParams);
+      params.calculateHash();
+
+      const updatedEpochs = this.selected.epochs;
       updatedEpochs[this.futureEpochIndex] = {
         ...updatedEpochs[this.futureEpochIndex],
         startHeight: this.startHeight,
-        parameters: {
-          ...this.newParams,
-          hash: calculateConsensusParametersHash(this.newParams),
-        },
+        parameters: params,
       };
-      // Atualizar versão selecionada
-      this.selected.epochs = updatedEpochs;
-      this.items.find((v) => v.hash === this.selected.hash)!.epochs =
-        updatedEpochs;
-      this.selectedParams = { ...this.newParams };
+      this.consensusService.updateConsensus(this.selected);
+      this.paramsOnView = ConsensusParameters.deepCopy(params);
       this.mode = this.lastMode;
       this.isEditing = false;
       this.isEditingFutureEpoch = false;
@@ -286,10 +290,10 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     const success = this.publishVersion();
 
     if (success) {
-      this.selected = new ConsensusVersion({ ...this.new });
-      this.selectedParams = {
-        ...this.newParams,
-      };
+      this.selected = this.items.find((v) => v.hash === this.new.hash)!;
+      this.paramsOnView = ConsensusParameters.deepCopy(
+        this.selected.getCurrentConsensusParameters()
+      );
       this.mode = 'confirming';
       this.clearMessages();
       this.updateSelectedFutureEpochsInfo();
@@ -302,8 +306,9 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     if (event.value) {
       const selected = event.value as ConsensusVersion;
-      this.selectedParams = { ...selected.getCurrentConsensusParameters() };
-      this.selected = selected;
+      this.paramsOnView = ConsensusParameters.deepCopy(
+        selected.getCurrentConsensusParameters()
+      );
       this.updateSelectedFutureEpochsInfo();
       this.updateFutureInfoForItems();
       if (selected.version !== this.miner.consensus.version) {
@@ -315,7 +320,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
-    this.miner.consensus = new ConsensusVersion({ ...this.selected });
+    this.miner.consensus = this.selected;
     this.mode = 'viewing';
     this.clearMessages();
     this.messageService.add({
@@ -357,13 +362,13 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   cancelEdit() {
     this.mode = this.lastMode;
     this.isEditing = false;
-    this.selectedParams = { ...this.copy };
+    this.paramsOnView = ConsensusParameters.deepCopy(this.copy);
     this.clearMessages();
   }
 
   cancelVersionChange() {
     this.mode = 'viewing';
-    this.selectedParams = { ...this.copy };
+    this.paramsOnView = ConsensusParameters.deepCopy(this.copy);
     this.clearMessages();
   }
 
@@ -376,12 +381,12 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       ? this.currentHeight
       : this.startHeight ?? this.currentHeight;
 
-    const newEpoch: ConsensusEpoch = {
+    const params = ConsensusParameters.deepCopy(this.newParams);
+    params.calculateHash();
+
+    const newEpoch: IConsensusEpoch = {
       startHeight: actualStartHeight,
-      parameters: {
-        ...this.newParams,
-        hash: calculateConsensusParametersHash(this.newParams),
-      },
+      parameters: params,
     };
 
     const previousEpochs = this.selected.epochs
@@ -390,7 +395,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
           e.startHeight <= this.currentHeight &&
           e.startHeight !== actualStartHeight
       )
-      .map((e) => ({ ...e }));
+      .map((e) => ConsensusEpoch.deepCopy(e));
 
     this.new = new ConsensusVersion({
       version: newVersion,
@@ -430,7 +435,14 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   private onParametersChange() {
-    this.paramChanged = true;
+    this.newParams.calculateHash();
+
+    this.touched = true;
+    this.sameParams = this.isEditingFutureEpoch
+      ? this.newParams.hash === this.copy.hash &&
+        this.startHeight === this.startHeightCopy
+      : this.newParams.hash === this.copy.hash;
+
     this.prepareNewVersionInstance();
   }
 
@@ -454,32 +466,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.onStartHeightChange(this.startHeight!);
     this.updateSelectedFutureEpochsInfo();
     this.updateFutureInfoForItems();
-  }
-
-  get nextFutureEpochHeight(): number | null {
-    if (!this.selected) return null;
-    const future = this.selected.epochs
-      .filter((e) => e.startHeight > this.currentHeight)
-      .map((e) => e.startHeight);
-    return future.length ? Math.min(...future) : null;
-  }
-
-  get futureEpochs(): any[] {
-    if (!this.selected) return [];
-    return this.selected.epochs.filter(
-      (e) => e.startHeight > this.currentHeight
-    );
-  }
-
-  hasFutureEpochs(version: ConsensusVersion): boolean {
-    return version.epochs.some((e) => e.startHeight > this.currentHeight);
-  }
-
-  getNextFutureEpochHeight(version: ConsensusVersion): number | null {
-    const future = version.epochs
-      .filter((e) => e.startHeight > this.currentHeight)
-      .map((e) => e.startHeight);
-    return future.length ? Math.min(...future) : null;
   }
 
   private updateSelectedFutureEpochsInfo() {

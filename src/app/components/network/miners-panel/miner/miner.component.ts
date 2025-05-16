@@ -11,7 +11,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
-import { ConsensusParameters } from '../../../../models/consensus.model';
+import { IConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
@@ -46,7 +46,7 @@ export class MinerComponent {
   isBlockchainVisible = true;
   isConnecting = false;
 
-  networkVersions$!: Observable<ConsensusParameters[]>;
+  networkVersions$!: Observable<IConsensusParameters[]>;
 
   @Input() miner!: Node;
   @Output() miningChanged = new EventEmitter<Node>();

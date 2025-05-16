@@ -286,7 +286,7 @@
                 *ngIf="mode !== 'creating'"
                 class="text-lg font-semibold text-zinc-100"
               >
-                {{ selectedParams.difficultyAdjustmentInterval }}
+                {{ paramsOnView.difficultyAdjustmentInterval }}
               </span>
               <span class="text-sm text-zinc-400">blocos</span>
             </div>
@@ -321,7 +321,7 @@
                 *ngIf="mode !== 'creating'"
                 class="text-lg font-semibold text-zinc-100"
               >
-                {{ selectedParams.maxTransactionsPerBlock }}
+                {{ paramsOnView.maxTransactionsPerBlock }}
               </span>
               <span class="text-sm text-zinc-400">transações</span>
             </div>
@@ -357,7 +357,7 @@
                 *ngIf="mode !== 'creating'"
                 class="text-lg font-semibold text-zinc-100"
               >
-                {{ selectedParams.maxBlockSize }}
+                {{ paramsOnView.maxBlockSize }}
               </span>
               <span class="text-sm text-zinc-400">MB</span>
             </div>
@@ -393,7 +393,7 @@
                 *ngIf="mode !== 'creating'"
                 class="text-lg font-semibold text-zinc-100"
               >
-                {{ selectedParams.targetBlockTime }}
+                {{ paramsOnView.targetBlockTime }}
               </span>
               <span class="text-sm text-zinc-400">segundos</span>
             </div>
@@ -442,7 +442,7 @@
           Cancelar
         </button>
         <button
-          [disabled]="!paramChanged"
+          [disabled]="!touched || sameParams"
           class="px-4 py-2 rounded bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white not-disabled:hover:bg-green-700 transition"
           (click)="confirmEdit()"
         >

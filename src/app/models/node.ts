@@ -3,8 +3,8 @@ import { Subject, Subscription } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import {
-  ConsensusEpoch,
-  ConsensusParameters,
+  IConsensusEpoch,
+  IConsensusParameters,
   ConsensusVersion,
   DEFAULT_CONSENSUS,
 } from './consensus.model';
@@ -493,11 +493,11 @@ export class Node {
     return epoch.parameters.difficultyAdjustmentInterval;
   }
 
-  getCurrentEpoch(): ConsensusEpoch {
+  getCurrentEpoch(): IConsensusEpoch {
     return this.consensus.epochs[this.consensus.epochs.length - 1];
   }
 
-  getEpochForHeight(height: number): ConsensusEpoch {
+  getEpochForHeight(height: number): IConsensusEpoch {
     const epoch = this.consensus.epochs.find(
       (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
     );
@@ -508,7 +508,7 @@ export class Node {
   }
 
   // Get consensus parameters for a specific block height
-  getConsensusForHeight(height: number): ConsensusParameters {
+  getConsensusForHeight(height: number): IConsensusParameters {
     const epoch = this.consensus.epochs.find(
       (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
     );
@@ -518,7 +518,7 @@ export class Node {
     return epoch.parameters;
   }
 
-  getCurrentConsensusParameters(): ConsensusParameters {
+  getCurrentConsensusParameters(): IConsensusParameters {
     return this.getConsensusForHeight(this.currentBlock?.height || 0);
   }
 
