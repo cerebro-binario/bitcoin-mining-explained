@@ -603,13 +603,18 @@ export class Node {
   }
 
   // Método centralizado para processar um bloco recebido
-  private processBlock(block: Block, isOrphan: boolean = false): void {
+  private processBlock(
+    block: Block,
+    isOrphan: boolean = false,
+    peer?: Node
+  ): void {
     const result = this.addBlock(block);
     if (result.success) {
       this.addEvent({
         type: 'block-validated',
         block: block,
         timestamp: Date.now(),
+        from: peer?.id,
       });
       this.updateLastMainBlocks();
       this.updateActiveForkHeights();
@@ -697,7 +702,7 @@ export class Node {
     }
 
     // 4. Processar o bloco
-    this.processBlock(block);
+    this.processBlock(block, false, peer);
 
     // 5. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
     const myHeight = this.getLatestBlock()?.height || -1;

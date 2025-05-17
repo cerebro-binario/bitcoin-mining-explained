@@ -6,9 +6,10 @@
       <span>Eventos</span>
       <span class="text-xs text-zinc-400">({{ node.eventLog.length }})</span>
     </div>
-    <ul class="space-y-1 text-xs pr-1">
+    <ul class="text-xs pr-1 divide-y divide-zinc-800">
       <li
         *ngFor="let event of node.eventLog | slice : 0 : 15"
+        class="py-1"
         [ngClass]="{
           'text-green-400':
             event.type === 'block-validated' || event.type === 'block-mined',
@@ -48,6 +49,16 @@
                 ? "minerado"
                 : event.type
             }}
+            <span
+              *ngIf="
+                (event.type === 'block-received' ||
+                  event.type === 'block-validated' ||
+                  event.type === 'block-rejected') &&
+                event.from !== undefined
+              "
+              class="text-zinc-400"
+              >(de peer #{{ event.from }})</span
+            >
           </ng-template>
         </span>
         <span
@@ -206,6 +217,16 @@
                   ? "minerado"
                   : event.type
               }}
+              <span
+                *ngIf="
+                  (event.type === 'block-received' ||
+                    event.type === 'block-validated' ||
+                    event.type === 'block-rejected') &&
+                  event.from !== undefined
+                "
+                class="text-zinc-400"
+                >(de peer #{{ event.from }})</span
+              >
             </ng-template>
           </span>
           <span
