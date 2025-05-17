@@ -83,6 +83,11 @@ export class Node {
   private receivedBlockHashes = new Set<string>();
   private orphanBlocks: Map<string, Block[]> = new Map(); // chave: previousHash, valor: blocos órfãos que dependem desse hash
 
+  // Adiciona campo de misbehavior para cada peer
+  misbehaviorScores: { [peerId: number]: number } = {};
+  static MISBEHAVIOR_THRESHOLD = 250;
+  static MISBEHAVIOR_BLOCK_INVALID = 50;
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }
@@ -670,6 +675,23 @@ export class Node {
         timestamp: Date.now(),
         reason: validationResult.reason,
       });
+
+      // Incrementa score de misbehavior
+      if (peer.id !== undefined) {
+        if (!this.misbehaviorScores[peer.id])
+          this.misbehaviorScores[peer.id] = 0;
+        this.misbehaviorScores[peer.id] += Node.MISBEHAVIOR_BLOCK_INVALID;
+        // Se passou do limite, desconecta
+        if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
+          this.unsubscribeFromPeerBlocks(peer);
+          this.addEvent({
+            type: 'peer-disconnected',
+            from: peer.id,
+            timestamp: Date.now(),
+            reason: 'misbehavior',
+          });
+        }
+      }
       this.isSyncing = false;
       return;
     }

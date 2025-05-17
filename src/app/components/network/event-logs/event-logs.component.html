@@ -12,7 +12,9 @@
         [ngClass]="{
           'text-green-400':
             event.type === 'block-validated' || event.type === 'block-mined',
-          'text-red-400': event.type === 'block-rejected',
+          'text-red-400':
+            event.type === 'block-rejected' ||
+            event.type === 'peer-disconnected',
           'text-blue-400': event.type === 'block-received',
           'text-yellow-400': event.type === 'sync-progress'
         }"
@@ -25,23 +27,39 @@
         <span *ngIf="event.type === 'block-received'">⬇️</span>
         <span *ngIf="event.type === 'sync-progress'">🔄</span>
         <span *ngIf="event.type === 'block-mined'">⛏️</span>
+        <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
         <span class="ml-1">
-          {{
-            event.type === "block-validated"
-              ? "validado"
-              : event.type === "block-received"
-              ? "recebido"
-              : event.type === "block-rejected"
-              ? "rejeitado"
-              : event.type === "sync-progress"
-              ? "sincronizando"
-              : event.type === "block-mined"
-              ? "minerado"
-              : event.type
-          }}
+          <ng-container
+            *ngIf="event.type === 'peer-disconnected'; else defaultEventType"
+          >
+            desconectado
+          </ng-container>
+          <ng-template #defaultEventType>
+            {{
+              event.type === "block-validated"
+                ? "validado"
+                : event.type === "block-received"
+                ? "recebido"
+                : event.type === "block-rejected"
+                ? "rejeitado"
+                : event.type === "sync-progress"
+                ? "sincronizando"
+                : event.type === "block-mined"
+                ? "minerado"
+                : event.type
+            }}
+          </ng-template>
         </span>
         <span
-          *ngIf="event.type !== 'sync-progress'"
+          *ngIf="event.type === 'peer-disconnected'"
+          class="block text-xs text-red-300 ml-4"
+        >
+          Peer #{{ event.from }} desconectado por mau comportamento
+        </span>
+        <span
+          *ngIf="
+            event.type !== 'sync-progress' && event.type !== 'peer-disconnected'
+          "
           class="ml-4 flex items-center gap-1.5"
         >
           <span class="text-blue-400 font-semibold text-xs"
@@ -93,8 +111,12 @@
           </ng-template>
         </span>
         <span
-          *ngIf="event.message && event.type !== 'sync-progress'"
-          class="ml-1 text-red-300"
+          *ngIf="
+            event.message &&
+            event.type !== 'sync-progress' &&
+            event.type !== 'peer-disconnected'
+          "
+          class="ml-4 text-red-300"
         >
           ({{ event.message }})
         </span>
@@ -145,7 +167,9 @@
           [ngClass]="{
             'text-green-400':
               event.type === 'block-validated' || event.type === 'block-mined',
-            'text-red-400': event.type === 'block-rejected',
+            'text-red-400':
+              event.type === 'block-rejected' ||
+              event.type === 'peer-disconnected',
             'text-blue-400': event.type === 'block-received',
             'text-yellow-400': event.type === 'sync-progress'
           }"
@@ -158,23 +182,43 @@
           <span *ngIf="event.type === 'block-received'">⬇️</span>
           <span *ngIf="event.type === 'sync-progress'">🔄</span>
           <span *ngIf="event.type === 'block-mined'">⛏️</span>
+          <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
           <span class="ml-1">
-            {{
-              event.type === "block-validated"
-                ? "validado"
-                : event.type === "block-received"
-                ? "recebido"
-                : event.type === "block-rejected"
-                ? "rejeitado"
-                : event.type === "sync-progress"
-                ? "sincronizando"
-                : event.type === "block-mined"
-                ? "minerado"
-                : event.type
-            }}
+            <ng-container
+              *ngIf="
+                event.type === 'peer-disconnected';
+                else defaultEventTypeDialog
+              "
+            >
+              desconectado
+            </ng-container>
+            <ng-template #defaultEventTypeDialog>
+              {{
+                event.type === "block-validated"
+                  ? "validado"
+                  : event.type === "block-received"
+                  ? "recebido"
+                  : event.type === "block-rejected"
+                  ? "rejeitado"
+                  : event.type === "sync-progress"
+                  ? "sincronizando"
+                  : event.type === "block-mined"
+                  ? "minerado"
+                  : event.type
+              }}
+            </ng-template>
           </span>
           <span
-            *ngIf="event.type !== 'sync-progress'"
+            *ngIf="event.type === 'peer-disconnected'"
+            class="block text-xs text-red-300 ml-6"
+          >
+            Peer #{{ event.from }} desconectado por mau comportamento
+          </span>
+          <span
+            *ngIf="
+              event.type !== 'sync-progress' &&
+              event.type !== 'peer-disconnected'
+            "
             class="ml-4 flex items-center gap-1.5"
           >
             <span class="text-blue-400 font-semibold text-xs"
@@ -194,24 +238,27 @@
             class="ml-1 text-yellow-300"
           >
             <ng-container
-              *ngIf="event.reason === 'sync-complete'; else syncProgressDetail"
+              *ngIf="
+                event.reason === 'sync-complete';
+                else syncProgressDetailDialog
+              "
             >
               {{ event.message }}: {{ event.syncProgress?.processed }}/{{
                 event.syncProgress?.total
               }}
               blocos
             </ng-container>
-            <ng-template #syncProgressDetail>
+            <ng-template #syncProgressDetailDialog>
               <ng-container
                 *ngIf="
                   event.syncProgress?.processed === 0;
-                  else syncProgressRunning
+                  else syncProgressRunningDialog
                 "
               >
                 Sincronização iniciada: {{ event.syncProgress?.total }} blocos a
                 baixar...
               </ng-container>
-              <ng-template #syncProgressRunning>
+              <ng-template #syncProgressRunningDialog>
                 Sincronizando: {{ event.syncProgress?.processed }}/{{
                   event.syncProgress?.total
                 }}
@@ -226,7 +273,11 @@
             </ng-template>
           </span>
           <span
-            *ngIf="event.message && event.type !== 'sync-progress'"
+            *ngIf="
+              event.message &&
+              event.type !== 'sync-progress' &&
+              event.type !== 'peer-disconnected'
+            "
             class="ml-1 text-red-300"
           >
             ({{ event.message }})

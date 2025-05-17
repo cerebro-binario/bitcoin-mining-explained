@@ -10,14 +10,17 @@ export type ValidationType =
   | 'invalid-subsidy'
   | 'invalid-size'
   | 'invalid-transactions'
-  | 'sync-complete';
+  | 'sync-complete'
+  | 'misbehavior';
 
 export type EventType =
   | 'block-received'
   | 'block-validated'
   | 'block-rejected'
   | 'sync-progress'
-  | 'block-mined';
+  | 'block-mined'
+  | 'peer-disconnected'
+  | 'peer-misbehavior';
 
 export interface EventLog {
   type: EventType;
@@ -51,4 +54,5 @@ export const validationMessages: Record<
   'sync-progress': 'Sincronização em andamento',
   'sync-complete': 'Sincronização concluída',
   'block-mined': 'Bloco minerado',
+  misbehavior: 'Peer desconectado por mau comportamento',
 };
