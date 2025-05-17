@@ -499,7 +499,7 @@ export class Node {
 
   getEpochForHeight(height: number): IConsensusEpoch {
     const epoch = this.consensus.epochs.find(
-      (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
+      (e) => height >= e.startHeight && (!e.endHeight || height <= e.endHeight)
     );
     if (!epoch) {
       throw new Error(`No consensus parameters found for height ${height}`);
