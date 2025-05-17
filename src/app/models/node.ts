@@ -3,10 +3,10 @@ import { Subject, Subscription } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import {
-  IConsensusEpoch,
-  IConsensusParameters,
   ConsensusVersion,
   DEFAULT_CONSENSUS,
+  IConsensusEpoch,
+  IConsensusParameters,
 } from './consensus.model';
 import {
   EventLog,
@@ -642,6 +642,9 @@ export class Node {
 
   // Handler for when a block is received from a peer
   onPeerBlockReceived(block: Block, peer: Node) {
+    // Se o bloco é do próprio minerador, não processa
+    if (block.minerId === this.id) return;
+
     // Deduplicação: se já recebeu esse bloco, não processa novamente
     if (this.receivedBlockHashes.has(block.hash)) return;
     this.receivedBlockHashes.add(block.hash);
