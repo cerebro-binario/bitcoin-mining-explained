@@ -143,17 +143,17 @@ export class Node {
 
   // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
   calculateExpectedNBits(height: number): number {
-    // Obtém os parâmetros de consenso para a altura específica
-    const epoch = this.getEpochForHeight(height);
-    const consensus = epoch.parameters;
-    const interval = consensus.difficultyAdjustmentInterval;
-    const targetBlockTime = consensus.targetBlockTime; // em segundos
-    const adjustedHeight = height - epoch.startHeight;
-
     // Se for o bloco gênese, retorna o valor inicial
     if (height === 0) {
       return this.INITIAL_NBITS;
     }
+
+    // Obtém os parâmetros de consenso para a altura específica
+    const epoch = this.getEpochForHeight(height - 1);
+    const consensus = epoch.parameters;
+    const interval = consensus.difficultyAdjustmentInterval;
+    const targetBlockTime = consensus.targetBlockTime; // em segundos
+    const adjustedHeight = height - epoch.startHeight;
 
     // Se não for um bloco de ajuste, mantém o nBits do bloco anterior
     if (adjustedHeight % interval !== 0) {
