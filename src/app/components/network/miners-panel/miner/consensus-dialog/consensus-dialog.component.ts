@@ -94,6 +94,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     };
   } = {};
 
+  private blockSub: any;
+
   constructor(
     private consensusService: ConsensusService,
     private messageService: MessageService
@@ -102,7 +104,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Inicializar a versão selecionada com a versão rodando no miner
     this.selected = this.miner.consensus;
-    this.updateInfoOnView();
 
     // Inicializar a versão nova com base na versão selecionada
     this.new = ConsensusVersion.deepCopy(this.selected);
@@ -114,21 +115,26 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((versions) => {
         this.items = versions;
+        this.updateView();
       });
 
     // Debounce para dica de blocos restantes
     this.startHeightInput$
       .pipe(debounceTime(500), takeUntil(this.destroy$))
       .subscribe((value) => {
-        if (typeof value === 'number' && value > this.currentHeight) {
-          this.blocksToTarget = value - this.currentHeight;
-        } else {
-          this.blocksToTarget = null;
-        }
+        this.updateBlocksToTarget(value);
+
+        this.onParametersChange();
       });
 
-    this.updateSelectedFutureEpochsInfo();
-    this.updateFutureInfoForItems();
+    this.blockSub = this.miner.blockBroadcast$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((block) => {
+        this.currentHeight = block.height;
+        this.updateView();
+      });
+
+    this.updateView();
   }
 
   startEditing() {
@@ -173,11 +179,25 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
-  onStartHeightChange(value: number) {
+  onApplyImmediatelyChange() {
+    if (this.applyImmediately) {
+      this.startHeight = this.currentHeight;
+    } else {
+      // Se estiver editando época futura, mantém o valor dela
+      if (this.isEditingFutureEpoch && this.futureEpochIndex !== null) {
+        const futureEpoch = this.selected.epochs[this.futureEpochIndex];
+        this.startHeight = futureEpoch.startHeight;
+      } else {
+        this.startHeight = this.currentHeight;
+      }
+    }
+    this.onStartHeightChange(this.startHeight!);
+
     this.onParametersChange();
+  }
+
+  onStartHeightChange(value: number) {
     this.startHeightInput$.next(value);
-    this.updateSelectedFutureEpochsInfo();
-    this.updateFutureInfoForItems();
   }
 
   onIntervalChange(value: number) {
@@ -251,7 +271,6 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
         parameters: params,
       };
       this.consensusService.updateConsensus(this.selected);
-      this.updateInfoOnView();
       this.mode = this.lastMode;
       this.isEditing = false;
       this.isEditingFutureEpoch = false;
@@ -264,8 +283,8 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       });
       this.versionChange.emit();
       this.clearMessages();
-      this.updateSelectedFutureEpochsInfo();
-      this.updateFutureInfoForItems();
+      this.updateView();
+
       return;
     }
 
@@ -288,11 +307,9 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     if (success) {
       this.selected = this.items.find((v) => v.hash === this.new.hash)!;
-      this.updateInfoOnView();
       this.mode = 'confirming';
       this.clearMessages();
-      this.updateSelectedFutureEpochsInfo();
-      this.updateFutureInfoForItems();
+      this.updateView();
     }
   }
 
@@ -301,15 +318,14 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
 
     if (event.value) {
       const selected = event.value as ConsensusVersion;
-      this.updateInfoOnView();
-      this.updateSelectedFutureEpochsInfo();
-      this.updateFutureInfoForItems();
       if (selected.version !== this.miner.consensus.version) {
         this.mode = 'confirming';
       } else {
         this.mode = 'viewing';
       }
     }
+
+    this.updateView();
   }
 
   confirmVersionChange() {
@@ -323,6 +339,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       life: 6000,
     });
     this.versionChange.emit();
+    this.updateView();
   }
 
   publishVersion() {
@@ -357,12 +374,14 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.isEditing = false;
     this.paramsOnView = ConsensusParameters.deepCopy(this.copy);
     this.clearMessages();
+    this.updateView();
   }
 
   cancelVersionChange() {
     this.mode = 'viewing';
     this.paramsOnView = ConsensusParameters.deepCopy(this.copy);
     this.clearMessages();
+    this.updateView();
   }
 
   private prepareNewVersionInstance() {
@@ -437,23 +456,15 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
       : this.newParams.hash === this.copy.hash;
 
     this.prepareNewVersionInstance();
+    this.updateView();
   }
 
-  onApplyImmediatelyChange() {
-    if (this.applyImmediately) {
-      this.startHeight = this.currentHeight;
+  private updateBlocksToTarget(value?: number) {
+    if (typeof value === 'number' && value > this.currentHeight) {
+      this.blocksToTarget = value - this.currentHeight;
     } else {
-      // Se estiver editando época futura, mantém o valor dela
-      if (this.isEditingFutureEpoch && this.futureEpochIndex !== null) {
-        const futureEpoch = this.selected.epochs[this.futureEpochIndex];
-        this.startHeight = futureEpoch.startHeight;
-      } else {
-        this.startHeight = this.currentHeight;
-      }
+      this.blocksToTarget = null;
     }
-    this.onStartHeightChange(this.startHeight!);
-    this.updateSelectedFutureEpochsInfo();
-    this.updateFutureInfoForItems();
   }
 
   private updateSelectedFutureEpochsInfo() {
@@ -486,7 +497,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     }
   }
 
-  private updateInfoOnView() {
+  private updateParamsOnView() {
     this.futureOnView = this.selected.epochs.find(
       (e) => e.startHeight > this.currentHeight
     )!;
@@ -497,8 +508,18 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.paramsOnView = this.epochOnView.parameters;
   }
 
+  private updateView() {
+    this.updateParamsOnView();
+    this.updateSelectedFutureEpochsInfo();
+    this.updateFutureInfoForItems();
+    this.updateBlocksToTarget(
+      this.applyImmediately ? undefined : this.startHeight
+    );
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.blockSub?.unsubscribe();
   }
 }
