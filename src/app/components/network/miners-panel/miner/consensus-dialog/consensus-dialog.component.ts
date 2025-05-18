@@ -102,6 +102,9 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // Inicializar a altura atual do minerador
+    this.currentHeight = this.miner.getLatestBlock()?.height || 0;
+
     // Inicializar a versão selecionada com a versão rodando no miner
     this.selected = this.miner.consensus;
 
