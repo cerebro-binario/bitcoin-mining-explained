@@ -42,16 +42,16 @@
             *ngIf="miner.neighbors.length < 3"
             class="ml-1 p-1 rounded-full transition align-middle relative overflow-hidden"
             (click)="connectToPeers(); $event.stopPropagation()"
-            [disabled]="isConnecting || miner.isSyncing"
+            [disabled]="isConnecting"
             [title]="
-              isConnecting || miner.isSyncing
+              isConnecting
                 ? 'Procurando conexões...'
                 : 'Procurar conexões na rede'
             "
             [ngClass]="{
-              'animate-pulse-ring': isConnecting || miner.isSyncing,
-              'bg-blue-700/30': isConnecting || miner.isSyncing,
-              'hover:bg-blue-700/30': !(isConnecting || miner.isSyncing)
+              'animate-pulse-ring': isConnecting,
+              'bg-blue-700/30': isConnecting,
+              'hover:bg-blue-700/30': !isConnecting
             }"
             style="vertical-align: middle"
           >
@@ -59,7 +59,7 @@
               xmlns="http://www.w3.org/2000/svg"
               class="w-4 h-4 text-blue-400 transition-transform"
               [ngClass]="{
-                'animate-spin-slow': isConnecting || miner.isSyncing
+                'animate-spin-slow': isConnecting
               }"
               fill="none"
               viewBox="0 0 24 24"
@@ -71,7 +71,7 @@
               <path d="M12 2v2m0 16v2m10-10h-2M4 12H2" />
             </svg>
             <span
-              *ngIf="isConnecting || miner.isSyncing"
+              *ngIf="isConnecting"
               class="absolute inset-0 rounded-full border-2 border-blue-400 opacity-40 animate-pulse"
             ></span>
           </button>
@@ -112,16 +112,10 @@
       </span>
       <button
         *ngIf="!miner.isMining"
-        class="ml-4 px-3 py-1 rounded text-white text-sm font-semibold transition"
-        [ngClass]="{
-          'bg-green-600 hover:bg-green-700': !miner.isSyncing,
-          'bg-zinc-600 cursor-not-allowed': miner.isSyncing
-        }"
+        class="ml-4 px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition"
         (click)="startMining()"
-        [disabled]="miner.isSyncing"
-        [title]="miner.isSyncing ? 'Aguardando Sincronização' : ''"
       >
-        {{ miner.isSyncing ? "Aguardando Sincronização" : "Iniciar Mineração" }}
+        Iniciar Mineração
       </button>
       <button
         *ngIf="miner.isMining"
