@@ -363,4 +363,15 @@ export class MinerComponent {
   closePeersDialog() {
     this.showPeersDialog = false;
   }
+
+  // Status color para o indicador de conexão
+  get statusColor(): string {
+    if (this.miner.neighbors.length === 0) {
+      return 'red';
+    }
+    if (this.miner.isSyncing) {
+      return 'blue';
+    }
+    return 'green';
+  }
 }

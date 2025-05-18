@@ -1,6 +1,6 @@
 import * as CryptoJS from 'crypto-js';
 import { Subject, Subscription } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import {
   ConsensusVersion,
@@ -583,10 +583,14 @@ export class Node {
     const neighbor = this.neighbors.find((n) => n.node.id === peer.id);
     const latency = neighbor?.latency || 0;
     this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
-      .pipe(delay(latency))
-      .subscribe((block: Block) => {
-        this.onPeerBlockReceived(block, peer);
-      });
+      .pipe(
+        filter((block) => this.onPeerBlockFiltering(block, peer)),
+        tap((block) => this.onPeerBlockReceiving(block, peer)),
+        delay(latency),
+        tap((block) => this.onPeerBlockProcessing(block, peer)),
+        tap((block) => this.onPeerBlockProcessingComplete(block, peer))
+      )
+      .subscribe();
 
     // Faz um sync inicial com o peer
     const myHeight = this.getLatestBlock()?.height || -1;
@@ -650,18 +654,24 @@ export class Node {
     }
   }
 
-  // Handler for when a block is received from a peer
-  onPeerBlockReceived(block: Block, peer: Node) {
-    // Se o bloco é do próprio minerador, não processa
-    if (block.minerId === this.id) return;
+  onPeerBlockFiltering(block: Block, peer: Node) {
+    // Se o bloco é do próprio minerador, não processa (está recebendo o bloco do próprio minerador do peer)
+    if (block.minerId === this.id) return false;
 
     // Deduplicação: se já recebeu esse bloco, não processa novamente
-    if (this.receivedBlockHashes.has(block.hash)) return;
+    if (this.receivedBlockHashes.has(block.hash)) return false;
     this.receivedBlockHashes.add(block.hash);
 
+    return true;
+  }
+
+  onPeerBlockReceiving(block: Block, peer: Node) {
     // 1. Marcar como sincronizando
     this.isSyncing = true;
+  }
 
+  // Handler for when a block is received from a peer
+  onPeerBlockProcessing(block: Block, peer: Node) {
     // 2. Log de recebimento do bloco
     this.addEvent({
       type: 'block-received',
@@ -697,7 +707,6 @@ export class Node {
           });
         }
       }
-      this.isSyncing = false;
       return;
     }
 
@@ -712,7 +721,9 @@ export class Node {
 
     // 6. Repropagar para outros peers
     this.blockBroadcast$.next(block);
+  }
 
+  onPeerBlockProcessingComplete(block: Block, peer: Node) {
     this.isSyncing = false;
   }
 
@@ -816,7 +827,7 @@ export class Node {
       for (let h = startHeight; h <= endHeight; h++) {
         const blocks = originPeer.getActiveBlocksByHeight?.(h) || [];
         for (const block of blocks) {
-          this.onPeerBlockReceived(block, originPeer);
+          this.onPeerBlockProcessing(block, originPeer);
           foundBlocks.push(block);
         }
       }
