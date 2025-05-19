@@ -691,6 +691,7 @@ export class Node {
     isOrphan: boolean = false,
     peer?: Node
   ): void {
+    const prevTopBlock = this.getLatestBlock();
     const result = this.addBlock(block);
     if (result.success) {
       this.addEvent({
@@ -705,8 +706,15 @@ export class Node {
       // Tentar encaixar órfãos que dependem deste bloco
       this.tryAttachOrphans(block.hash);
 
-      // Atualizar current block apenas se não for um órfão
-      this.initBlockTemplate(block);
+      // Atualizar current block APENAS se o topo da main chain mudou
+      const newTopBlock = this.getLatestBlock();
+      if (
+        !prevTopBlock ||
+        !newTopBlock ||
+        newTopBlock.hash !== prevTopBlock.hash
+      ) {
+        this.initBlockTemplate(newTopBlock);
+      }
     } else if (result.reason === 'invalid-parent') {
       // Se não conseguiu adicionar por falta do bloco anterior, armazena como órfão
       if (!this.orphanBlocks.has(block.previousHash)) {
