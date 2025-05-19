@@ -39,19 +39,18 @@
         >
           {{ miner.neighbors.length }} peers
           <button
-            *ngIf="miner.neighbors.length < 3"
             class="ml-1 p-1 rounded-full transition align-middle relative overflow-hidden"
             (click)="connectToPeers(); $event.stopPropagation()"
-            [disabled]="isConnecting"
+            [disabled]="miner.isSearchingPeers"
             [title]="
-              isConnecting
+              miner.isSearchingPeers
                 ? 'Procurando conexões...'
                 : 'Procurar conexões na rede'
             "
             [ngClass]="{
-              'animate-pulse-ring': isConnecting,
-              'bg-blue-700/30': isConnecting,
-              'hover:bg-blue-700/30': !isConnecting
+              'animate-pulse-ring': miner.isSearchingPeers,
+              'bg-blue-700/30': miner.isSearchingPeers,
+              'hover:bg-blue-700/30': !miner.isSearchingPeers
             }"
             style="vertical-align: middle"
           >
@@ -59,7 +58,7 @@
               xmlns="http://www.w3.org/2000/svg"
               class="w-4 h-4 text-blue-400 transition-transform"
               [ngClass]="{
-                'animate-spin-slow': isConnecting
+                'animate-spin-slow': miner.isSearchingPeers
               }"
               fill="none"
               viewBox="0 0 24 24"
@@ -71,7 +70,7 @@
               <path d="M12 2v2m0 16v2m10-10h-2M4 12H2" />
             </svg>
             <span
-              *ngIf="isConnecting"
+              *ngIf="miner.isSearchingPeers"
               class="absolute inset-0 rounded-full border-2 border-blue-400 opacity-40 animate-pulse"
             ></span>
           </button>

@@ -44,7 +44,6 @@ interface HashRateOption {
 export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
-  isConnecting = false;
 
   networkVersions$!: Observable<IConsensusParameters[]>;
 
@@ -345,15 +344,9 @@ export class MinerComponent {
   }
 
   connectToPeers() {
-    if (this.isConnecting) return;
+    if (this.miner.isSearchingPeers) return;
 
-    this.isConnecting = true;
     this.connectToPeersRequested.emit(this.miner);
-
-    // Reseta o estado após 2 segundos (tempo suficiente para a conexão)
-    setTimeout(() => {
-      this.isConnecting = false;
-    }, 2000);
   }
 
   openPeersDialog() {

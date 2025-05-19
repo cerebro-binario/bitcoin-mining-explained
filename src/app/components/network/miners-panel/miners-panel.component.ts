@@ -143,7 +143,7 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   onConnectToPeersRequested(miner: Node) {
-    this.network.connectToRandomPeers(miner);
+    miner.searchPeersToConnect(this.network.nodes);
   }
 
   onMiningChanged(miner: Node) {
@@ -284,7 +284,7 @@ export class MinersPanelComponent implements OnDestroy {
           component.miner.peerSearchInterval
         ) {
           component.miner.lastPeerSearch = now;
-          component.miner.findPeersToConnect();
+          component.miner.searchPeersToConnect(this.network.nodes);
         }
       });
 

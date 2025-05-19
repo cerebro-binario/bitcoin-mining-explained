@@ -21,7 +21,8 @@ export class Node {
   private readonly MAX_PEERS: number = 5;
 
   peerSearchInterval: number = 10000; // 10 seconds
-  lastPeerSearch: number = 0;
+  lastPeerSearch: number = Date.now();
+  isSearchingPeers: boolean = false;
 
   isSyncing: boolean = false;
   pendingBlocks: Block[] = [];
@@ -86,9 +87,6 @@ export class Node {
   misbehaviorScores: { [peerId: number]: number } = {};
   static MISBEHAVIOR_THRESHOLD = 250;
   static MISBEHAVIOR_BLOCK_INVALID = 50;
-
-  // Lista de peers conhecidos (por id)
-  knownPeers: Map<number, Neighbor> = new Map();
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -554,7 +552,7 @@ export class Node {
   }
 
   // Conecta a um peer: adiciona aos neighbors e faz subscribe
-  connectToPeer(peer: Node, latency: number = 50) {
+  connectToPeer(peer: Node, latency: number = 5000) {
     if (!this.neighbors.some((n) => n.node.id === peer.id)) {
       this.neighbors.push({ node: peer, latency });
       // Log de conexão
@@ -564,8 +562,6 @@ export class Node {
         timestamp: Date.now(),
         reason: 'connection',
       });
-      // Adiciona peer à lista de conhecidos
-      this.knownPeers.set(peer.id!, { node: peer, latency });
     }
     if (!peer.neighbors.some((n) => n.node.id === this.id)) {
       peer.neighbors.push({ node: this, latency });
@@ -576,16 +572,7 @@ export class Node {
         timestamp: Date.now(),
         reason: 'connection',
       });
-      // Adiciona este nó à lista de conhecidos do peer
-      peer.knownPeers.set(this.id!, { node: this, latency });
     }
-    // Troca listas de peers conhecidos
-    peer.knownPeers.forEach((neighbor, id) =>
-      this.knownPeers.set(id, neighbor)
-    );
-    this.knownPeers.forEach((neighbor, id) =>
-      peer.knownPeers.set(id, neighbor)
-    );
 
     if (this.peerBlockSubscriptions[peer.id!]) return;
 
@@ -980,8 +967,11 @@ export class Node {
   }
 
   // Tenta reconectar a peers conhecidos se estiver isolado, ignorando banidos
-  findPeersToConnect() {
+  searchPeersToConnect(nodes: Node[]) {
     if (this.neighbors.length >= this.MAX_PEERS) return;
+    if (this.isSearchingPeers) return;
+
+    this.isSearchingPeers = true;
 
     // Log de busca por peers
     this.addEvent({
@@ -991,19 +981,21 @@ export class Node {
       reason: 'peer-search',
     });
 
-    // Encontra peers conhecidos que não estão conectados
-    const candidates = Array.from(this.knownPeers.values()).filter(
-      (neighbor) => neighbor.node.id !== this.id
-    );
     let peersConnected = 0;
-    for (const neighbor of candidates) {
-      const peer = neighbor.node;
+    let peersFound = 0;
+
+    for (const peer of nodes) {
       if (
-        peer &&
-        !this.neighbors.some((n) => n.node.id === peer.id) &&
-        this.isPeerConsensusCompatible(peer)
-      ) {
-        this.connectToPeer(peer, neighbor.latency);
+        peer.id === this.id ||
+        this.neighbors.some((n) => n.node.id === peer.id)
+      )
+        continue;
+
+      peersFound++;
+
+      if (this.isPeerConsensusCompatible(peer)) {
+        const latency = 3000 + Math.floor(Math.random() * 7001); // 3000-10000ms (3-10 segundos)
+        this.connectToPeer(peer, latency);
         peersConnected++;
 
         if (this.neighbors.length >= this.MAX_PEERS) {
@@ -1013,7 +1005,7 @@ export class Node {
             timestamp: Date.now(),
             reason: 'max-peers-reached',
             peerSearch: {
-              peersFound: candidates.length,
+              peersFound,
               peersConnected,
               maxPeers: this.MAX_PEERS,
             },
@@ -1029,11 +1021,13 @@ export class Node {
       timestamp: Date.now(),
       reason: 'peer-search-complete',
       peerSearch: {
-        peersFound: candidates.length,
+        peersFound,
         peersConnected,
         maxPeers: this.MAX_PEERS,
       },
     });
+
+    this.isSearchingPeers = false;
   }
 
   // TODO: Implementar verificação de compatibilidade de consenso não apenas pela versão,
