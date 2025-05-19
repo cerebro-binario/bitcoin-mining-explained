@@ -50,6 +50,8 @@ export class MinersPanelComponent implements OnDestroy {
   private readonly FRAME_TIME_HISTORY_SIZE = 10;
   private lastHashRateUpdate = 0;
   private readonly HASH_RATE_UPDATE_INTERVAL = 1000; // ms
+  private lastReconnectPeersTime = 0;
+  private readonly RECONNECT_PEERS_INTERVAL = 6000; // ms
 
   miners$!: Observable<Node[]>;
   minersStats: MinersStats = {
@@ -269,9 +271,20 @@ export class MinersPanelComponent implements OnDestroy {
 
       let currentHashRate = 0;
       this.minerComponents.forEach((component) => {
-        if (component && component.miner.isMining) {
+        if (!component) return;
+
+        if (component.miner.isMining) {
           component.processMiningTick(now, adaptiveBatchSize);
           currentHashRate += component.miner.currentHashRate;
+        }
+
+        // Autobusca de peers (com cooldown)
+        if (
+          now - component.miner.lastPeerSearch >
+          component.miner.peerSearchInterval
+        ) {
+          component.miner.lastPeerSearch = now;
+          component.miner.findPeersToConnect();
         }
       });
 

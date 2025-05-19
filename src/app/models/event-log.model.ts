@@ -13,7 +13,10 @@ export type ValidationType =
   | 'sync-complete'
   | 'misbehavior'
   | 'connection'
-  | 'disconnection';
+  | 'disconnection'
+  | 'peer-search'
+  | 'peer-search-complete'
+  | 'max-peers-reached';
 
 export type EventType =
   | 'block-received'
@@ -23,7 +26,9 @@ export type EventType =
   | 'block-mined'
   | 'peer-disconnected'
   | 'peer-misbehavior'
-  | 'peer-connected';
+  | 'peer-connected'
+  | 'peer-search'
+  | 'peer-search-complete';
 
 export interface EventLog {
   type: EventType;
@@ -37,6 +42,11 @@ export interface EventLog {
     total: number;
     blocksPerSecond: number;
     estimatedTimeRemaining: number;
+  };
+  peerSearch?: {
+    peersFound?: number;
+    peersConnected?: number;
+    maxPeers?: number;
   };
 }
 
@@ -60,4 +70,7 @@ export const validationMessages: Record<
   misbehavior: 'Peer desconectado por mau comportamento',
   connection: 'Peer conectado',
   disconnection: 'Peer desconectado',
+  'peer-search': 'Buscando por peers na rede',
+  'peer-search-complete': 'Busca por peers concluída',
+  'max-peers-reached': 'Máximo de peers atingido',
 };

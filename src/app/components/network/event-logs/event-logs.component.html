@@ -14,11 +14,13 @@
           'text-green-400':
             event.type === 'block-validated' ||
             event.type === 'block-mined' ||
-            event.type === 'peer-connected',
+            event.type === 'peer-connected' ||
+            event.type === 'peer-search-complete',
           'text-red-400':
             event.type === 'block-rejected' ||
             event.type === 'peer-disconnected',
-          'text-blue-400': event.type === 'block-received',
+          'text-blue-400':
+            event.type === 'block-received' || event.type === 'peer-search',
           'text-yellow-400': event.type === 'sync-progress'
         }"
       >
@@ -32,6 +34,13 @@
         <span *ngIf="event.type === 'block-mined'">⛏️</span>
         <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
         <span *ngIf="event.type === 'peer-connected'">🔗</span>
+        <span
+          *ngIf="
+            event.type === 'peer-search' ||
+            event.type === 'peer-search-complete'
+          "
+          >🌐</span
+        >
         <span class="ml-1">
           <ng-container
             *ngIf="event.type === 'peer-disconnected'; else defaultEventType"
@@ -54,6 +63,10 @@
                 ? "conectado"
                 : event.type === "peer-disconnected"
                 ? "desconectado"
+                : event.type === "peer-search"
+                ? "busca de peers"
+                : event.type === "peer-search-complete"
+                ? "busca concluída"
                 : event.type
             }}
             <span
@@ -82,10 +95,44 @@
           {{ event.reason === "misbehavior" ? "por mau comportamento" : "" }}
         </span>
         <span
+          *ngIf="event.type === 'peer-search' && event.reason === 'peer-search'"
+          class="block text-xs text-blue-400 ml-4"
+        >
+          Buscando por peers na rede
+        </span>
+        <span
+          *ngIf="
+            event.type === 'peer-search' && event.reason === 'max-peers-reached'
+          "
+          class="block text-xs text-red-300 ml-4"
+        >
+          Máximo de peers atingido ({{ event.peerSearch?.maxPeers }}).
+          Finalizando busca...
+        </span>
+        <span
+          *ngIf="event.type === 'peer-search-complete'"
+          class="block text-xs text-green-400 ml-4"
+        >
+          Busca por peers concluída
+          <ng-container *ngIf="event.peerSearch">
+            <span *ngIf="event.peerSearch.peersFound !== undefined">
+              — {{ event.peerSearch.peersFound }} peers encontrados
+            </span>
+            <span *ngIf="event.peerSearch.peersConnected !== undefined">
+              — {{ event.peerSearch.peersConnected }} conectados
+            </span>
+            <span *ngIf="event.peerSearch.maxPeers !== undefined">
+              (máx: {{ event.peerSearch.maxPeers }})
+            </span>
+          </ng-container>
+        </span>
+        <span
           *ngIf="
             event.type !== 'sync-progress' &&
             event.type !== 'peer-disconnected' &&
-            event.type !== 'peer-connected'
+            event.type !== 'peer-connected' &&
+            event.type !== 'peer-search' &&
+            event.type !== 'peer-search-complete'
           "
           class="ml-4 flex items-center gap-1.5"
         >
@@ -142,7 +189,9 @@
             event.message &&
             event.type !== 'sync-progress' &&
             event.type !== 'peer-disconnected' &&
-            event.type !== 'peer-connected'
+            event.type !== 'peer-connected' &&
+            event.type !== 'peer-search' &&
+            event.type !== 'peer-search-complete'
           "
           class="ml-4 text-red-300"
         >
@@ -196,11 +245,13 @@
             'text-green-400':
               event.type === 'block-validated' ||
               event.type === 'block-mined' ||
-              event.type === 'peer-connected',
+              event.type === 'peer-connected' ||
+              event.type === 'peer-search-complete',
             'text-red-400':
               event.type === 'block-rejected' ||
               event.type === 'peer-disconnected',
-            'text-blue-400': event.type === 'block-received',
+            'text-blue-400':
+              event.type === 'block-received' || event.type === 'peer-search',
             'text-yellow-400': event.type === 'sync-progress'
           }"
         >
@@ -214,6 +265,13 @@
           <span *ngIf="event.type === 'block-mined'">⛏️</span>
           <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
           <span *ngIf="event.type === 'peer-connected'">🔗</span>
+          <span
+            *ngIf="
+              event.type === 'peer-search' ||
+              event.type === 'peer-search-complete'
+            "
+            >��</span
+          >
           <span class="ml-1">
             <ng-container
               *ngIf="
@@ -239,6 +297,10 @@
                   ? "conectado"
                   : event.type === "peer-disconnected"
                   ? "desconectado"
+                  : event.type === "peer-search"
+                  ? "busca de peers"
+                  : event.type === "peer-search-complete"
+                  ? "busca concluída"
                   : event.type
               }}
               <span
@@ -267,10 +329,35 @@
             {{ event.reason === "misbehavior" ? "por mau comportamento" : "" }}
           </span>
           <span
+            *ngIf="event.type === 'peer-search'"
+            class="block text-xs text-blue-400 ml-4"
+          >
+            Buscando por peers na rede
+          </span>
+          <span
+            *ngIf="event.type === 'peer-search-complete'"
+            class="block text-xs text-green-400 ml-4"
+          >
+            Busca por peers concluída
+            <ng-container *ngIf="event.peerSearch">
+              <span *ngIf="event.peerSearch.peersFound !== undefined">
+                — {{ event.peerSearch.peersFound }} peers encontrados
+              </span>
+              <span *ngIf="event.peerSearch.peersConnected !== undefined">
+                — {{ event.peerSearch.peersConnected }} conectados
+              </span>
+              <span *ngIf="event.peerSearch.maxPeers !== undefined">
+                (máx: {{ event.peerSearch.maxPeers }})
+              </span>
+            </ng-container>
+          </span>
+          <span
             *ngIf="
               event.type !== 'sync-progress' &&
               event.type !== 'peer-disconnected' &&
-              event.type !== 'peer-connected'
+              event.type !== 'peer-connected' &&
+              event.type !== 'peer-search' &&
+              event.type !== 'peer-search-complete'
             "
             class="ml-4 flex items-center gap-1.5"
           >
@@ -330,7 +417,9 @@
               event.message &&
               event.type !== 'sync-progress' &&
               event.type !== 'peer-disconnected' &&
-              event.type !== 'peer-connected'
+              event.type !== 'peer-connected' &&
+              event.type !== 'peer-search' &&
+              event.type !== 'peer-search-complete'
             "
             class="ml-1 text-red-300"
           >
