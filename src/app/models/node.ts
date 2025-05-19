@@ -581,9 +581,23 @@ export class Node {
   connectToPeer(peer: Node, latency: number = 50) {
     if (!this.neighbors.some((n) => n.node.id === peer.id)) {
       this.neighbors.push({ node: peer, latency });
+      // Log de conexão
+      this.addEvent({
+        type: 'peer-connected',
+        from: peer.id,
+        timestamp: Date.now(),
+        reason: 'connection',
+      });
     }
     if (!peer.neighbors.some((n) => n.node.id === this.id)) {
       peer.neighbors.push({ node: this, latency });
+      // Log de conexão
+      peer.addEvent({
+        type: 'peer-connected',
+        from: this.id,
+        timestamp: Date.now(),
+        reason: 'connection',
+      });
     }
 
     if (this.peerBlockSubscriptions[peer.id!]) return;
@@ -607,7 +621,7 @@ export class Node {
   }
 
   // Desconecta de um peer: remove dos neighbors e faz unsubscribe
-  disconnectFromPeer(peer: Node) {
+  disconnectFromPeer(peer: Node, reason: ValidationType = 'disconnection') {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
 
@@ -615,6 +629,21 @@ export class Node {
     this.neighbors = this.neighbors.filter((n) => n.node.id !== peer.id);
     // Remove este nó da lista de vizinhos do peer
     peer.neighbors = peer.neighbors.filter((n) => n.node.id !== this.id);
+
+    // Log de desconexão
+    this.addEvent({
+      type: 'peer-disconnected',
+      from: peer.id,
+      timestamp: Date.now(),
+      reason: reason,
+    });
+
+    peer.addEvent({
+      type: 'peer-disconnected',
+      from: this.id,
+      timestamp: Date.now(),
+      reason: 'disconnection',
+    });
   }
 
   // Método centralizado para processar um bloco recebido
@@ -709,13 +738,7 @@ export class Node {
         this.misbehaviorScores[peer.id] += Node.MISBEHAVIOR_BLOCK_INVALID;
         // Se passou do limite, desconecta
         if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
-          this.disconnectFromPeer(peer);
-          this.addEvent({
-            type: 'peer-disconnected',
-            from: peer.id,
-            timestamp: Date.now(),
-            reason: 'misbehavior',
-          });
+          this.disconnectFromPeer(peer, 'misbehavior');
         }
       }
       return;

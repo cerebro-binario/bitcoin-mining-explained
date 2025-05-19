@@ -12,7 +12,9 @@
         class="py-1"
         [ngClass]="{
           'text-green-400':
-            event.type === 'block-validated' || event.type === 'block-mined',
+            event.type === 'block-validated' ||
+            event.type === 'block-mined' ||
+            event.type === 'peer-connected',
           'text-red-400':
             event.type === 'block-rejected' ||
             event.type === 'peer-disconnected',
@@ -20,7 +22,7 @@
           'text-yellow-400': event.type === 'sync-progress'
         }"
       >
-        <span class="font-mono">{{
+        <span class="font-mono mr-1">{{
           event.timestamp | date : "shortTime"
         }}</span>
         <span *ngIf="event.type === 'block-validated'">✔️</span>
@@ -29,6 +31,7 @@
         <span *ngIf="event.type === 'sync-progress'">🔄</span>
         <span *ngIf="event.type === 'block-mined'">⛏️</span>
         <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
+        <span *ngIf="event.type === 'peer-connected'">🔗</span>
         <span class="ml-1">
           <ng-container
             *ngIf="event.type === 'peer-disconnected'; else defaultEventType"
@@ -47,6 +50,10 @@
                 ? "sincronizando"
                 : event.type === "block-mined"
                 ? "minerado"
+                : event.type === "peer-connected"
+                ? "conectado"
+                : event.type === "peer-disconnected"
+                ? "desconectado"
                 : event.type
             }}
             <span
@@ -62,14 +69,23 @@
           </ng-template>
         </span>
         <span
-          *ngIf="event.type === 'peer-disconnected'"
-          class="block text-xs text-red-300 ml-4"
+          *ngIf="event.type === 'peer-connected'"
+          class="block text-xs text-blue-400 ml-4"
         >
-          Peer #{{ event.from }} desconectado por mau comportamento
+          Nova conexão com Peer #{{ event.from }}
+        </span>
+        <span
+          *ngIf="event.type === 'peer-disconnected'"
+          class="block text-xs text-red-300 ml-6"
+        >
+          Peer #{{ event.from }} desconectado
+          {{ event.reason === "misbehavior" ? "por mau comportamento" : "" }}
         </span>
         <span
           *ngIf="
-            event.type !== 'sync-progress' && event.type !== 'peer-disconnected'
+            event.type !== 'sync-progress' &&
+            event.type !== 'peer-disconnected' &&
+            event.type !== 'peer-connected'
           "
           class="ml-4 flex items-center gap-1.5"
         >
@@ -125,7 +141,8 @@
           *ngIf="
             event.message &&
             event.type !== 'sync-progress' &&
-            event.type !== 'peer-disconnected'
+            event.type !== 'peer-disconnected' &&
+            event.type !== 'peer-connected'
           "
           class="ml-4 text-red-300"
         >
@@ -177,7 +194,9 @@
           *ngFor="let event of node.eventLog"
           [ngClass]="{
             'text-green-400':
-              event.type === 'block-validated' || event.type === 'block-mined',
+              event.type === 'block-validated' ||
+              event.type === 'block-mined' ||
+              event.type === 'peer-connected',
             'text-red-400':
               event.type === 'block-rejected' ||
               event.type === 'peer-disconnected',
@@ -185,7 +204,7 @@
             'text-yellow-400': event.type === 'sync-progress'
           }"
         >
-          <span class="font-mono">{{
+          <span class="font-mono mr-1">{{
             event.timestamp | date : "shortTime"
           }}</span>
           <span *ngIf="event.type === 'block-validated'">✔️</span>
@@ -194,6 +213,7 @@
           <span *ngIf="event.type === 'sync-progress'">🔄</span>
           <span *ngIf="event.type === 'block-mined'">⛏️</span>
           <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
+          <span *ngIf="event.type === 'peer-connected'">🔗</span>
           <span class="ml-1">
             <ng-container
               *ngIf="
@@ -215,6 +235,10 @@
                   ? "sincronizando"
                   : event.type === "block-mined"
                   ? "minerado"
+                  : event.type === "peer-connected"
+                  ? "conectado"
+                  : event.type === "peer-disconnected"
+                  ? "desconectado"
                   : event.type
               }}
               <span
@@ -230,15 +254,23 @@
             </ng-template>
           </span>
           <span
+            *ngIf="event.type === 'peer-connected'"
+            class="block text-xs text-blue-400 ml-4"
+          >
+            Nova conexão com Peer #{{ event.from }}
+          </span>
+          <span
             *ngIf="event.type === 'peer-disconnected'"
             class="block text-xs text-red-300 ml-6"
           >
-            Peer #{{ event.from }} desconectado por mau comportamento
+            Peer #{{ event.from }} desconectado
+            {{ event.reason === "misbehavior" ? "por mau comportamento" : "" }}
           </span>
           <span
             *ngIf="
               event.type !== 'sync-progress' &&
-              event.type !== 'peer-disconnected'
+              event.type !== 'peer-disconnected' &&
+              event.type !== 'peer-connected'
             "
             class="ml-4 flex items-center gap-1.5"
           >
@@ -297,7 +329,8 @@
             *ngIf="
               event.message &&
               event.type !== 'sync-progress' &&
-              event.type !== 'peer-disconnected'
+              event.type !== 'peer-disconnected' &&
+              event.type !== 'peer-connected'
             "
             class="ml-1 text-red-300"
           >
