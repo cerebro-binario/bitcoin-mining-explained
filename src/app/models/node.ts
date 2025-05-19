@@ -2,12 +2,7 @@ import * as CryptoJS from 'crypto-js';
 import { Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
-import {
-  ConsensusVersion,
-  DEFAULT_CONSENSUS,
-  IConsensusEpoch,
-  IConsensusParameters,
-} from './consensus.model';
+import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
   EventLog,
   validationMessages,
@@ -135,7 +130,8 @@ export class Node {
       nonce: 0,
       hash: '',
       miningElapsed: 0,
-      consensusVersion: this.consensus.version,
+      consensusVersion:
+        this.consensus.getConsensusForHeight(blockHeight).version,
     });
 
     return this.currentBlock;
@@ -149,7 +145,7 @@ export class Node {
     }
 
     // Obtém os parâmetros de consenso para a altura específica
-    const epoch = this.getEpochForHeight(height - 1);
+    const epoch = this.consensus.getConsensusForHeight(height - 1);
     const consensus = epoch.parameters;
     const interval = consensus.difficultyAdjustmentInterval;
     const targetBlockTime = consensus.targetBlockTime; // em segundos
@@ -489,42 +485,15 @@ export class Node {
 
   // Update the difficulty adjustment interval based on block height
   getDifficultyAdjustmentInterval(height: number): number {
-    const epoch = this.consensus.epochs.find(
-      (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
-    );
+    const epoch = this.consensus.getConsensusForHeight(height);
     if (!epoch) {
       throw new Error(`No consensus parameters found for height ${height}`);
     }
     return epoch.parameters.difficultyAdjustmentInterval;
   }
 
-  getCurrentEpoch(): IConsensusEpoch {
-    return this.consensus.epochs[this.consensus.epochs.length - 1];
-  }
-
-  getEpochForHeight(height: number): IConsensusEpoch {
-    const epoch = this.consensus.epochs.find(
-      (e) => height >= e.startHeight && (!e.endHeight || height <= e.endHeight)
-    );
-    if (!epoch) {
-      throw new Error(`No consensus parameters found for height ${height}`);
-    }
-    return epoch;
-  }
-
-  // Get consensus parameters for a specific block height
-  getConsensusForHeight(height: number): IConsensusParameters {
-    const epoch = this.consensus.epochs.find(
-      (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
-    );
-    if (!epoch) {
-      throw new Error(`No consensus parameters found for height ${height}`);
-    }
-    return epoch.parameters;
-  }
-
-  getCurrentConsensusParameters(): IConsensusParameters {
-    return this.getConsensusForHeight(this.currentBlock?.height || 0);
+  getCurrentConsensusParameters(): ConsensusVersion {
+    return this.consensus.getConsensusForHeight(this.currentBlock?.height || 0);
   }
 
   // Método para validar um bloco individual
@@ -908,7 +877,8 @@ export class Node {
   } {
     // 1. Validar tamanho máximo do bloco
     const blockSize = JSON.stringify(block).length;
-    const consensusParams = this.getConsensusForHeight(block.height);
+    const consensus = this.consensus.getConsensusForHeight(block.height);
+    const consensusParams = consensus.parameters;
     const maxBlockSizeBytes = consensusParams.maxBlockSize * 1024 * 1024; // Converte MB para bytes
     if (blockSize > maxBlockSizeBytes) {
       return {

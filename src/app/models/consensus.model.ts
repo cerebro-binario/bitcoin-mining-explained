@@ -33,40 +33,22 @@ export class ConsensusParameters implements IConsensusParameters {
   }
 }
 
-export interface IConsensusEpoch {
-  startHeight: number;
-  endHeight?: number; // undefined significa "até o presente"
-  parameters: IConsensusParameters;
-}
-
-export class ConsensusEpoch implements IConsensusEpoch {
-  startHeight: number = 0;
-  endHeight?: number;
-  parameters: IConsensusParameters = new ConsensusParameters({});
-
-  constructor(data: Partial<IConsensusEpoch>) {
-    Object.assign(this, data);
-    this.parameters = ConsensusParameters.deepCopy({ ...data.parameters }!);
-  }
-
-  static deepCopy(data: Partial<IConsensusEpoch>): ConsensusEpoch {
-    return new ConsensusEpoch({ ...data });
-  }
-}
-
 export class ConsensusVersion {
   version: number = -1;
   timestamp: number = -1;
-  epochs: IConsensusEpoch[] = [];
+  startHeight: number = 0;
+  endHeight?: number;
+  parameters: IConsensusParameters = new ConsensusParameters({});
   minerId?: number;
   hash: string = '';
+  previousVersion?: ConsensusVersion;
 
   constructor(data: Partial<ConsensusVersion>) {
     Object.assign(this, data);
 
     // Deep copy dos parâmetros
-    if (data.epochs) {
-      this.epochs = data.epochs.map((e) => ConsensusEpoch.deepCopy(e));
+    if (data.parameters) {
+      this.parameters = ConsensusParameters.deepCopy(data.parameters);
     }
   }
 
@@ -74,24 +56,28 @@ export class ConsensusVersion {
     return new ConsensusVersion({ ...data });
   }
 
-  getCurrentConsensusParameters(): IConsensusParameters {
-    return this.epochs[this.epochs.length - 1].parameters;
-  }
-
   calculateHash(): string {
-    const data = JSON.stringify(this.epochs);
+    const data = JSON.stringify({
+      startHeight: this.startHeight,
+      endHeight: this.endHeight,
+      parameters: this.parameters,
+      previousVersion: this.previousVersion,
+    });
     this.hash = CryptoJS.SHA256(data).toString();
     return this.hash;
   }
 
-  getConsensusForHeight(height: number): IConsensusParameters {
-    const epoch = this.epochs.find(
-      (e) => height >= e.startHeight && (!e.endHeight || height < e.endHeight)
-    );
-    if (!epoch) {
-      throw new Error(`No consensus parameters found for height ${height}`);
+  getConsensusForHeight(height: number): ConsensusVersion {
+    if (
+      height >= this.startHeight &&
+      (!this.endHeight || height < this.endHeight)
+    ) {
+      return this;
     }
-    return epoch.parameters;
+    if (this.previousVersion) {
+      return this.previousVersion.getConsensusForHeight(height);
+    }
+    throw new Error(`No consensus parameters found for height ${height}`);
   }
 }
 
@@ -105,12 +91,9 @@ DEFAULT_CONSENSUS_PARAMETERS.calculateHash();
 export const DEFAULT_CONSENSUS: ConsensusVersion = new ConsensusVersion({
   version: 1,
   timestamp: Date.now(),
-  epochs: [
-    {
-      startHeight: 0,
-      parameters: DEFAULT_CONSENSUS_PARAMETERS,
-    },
-  ],
+  startHeight: 0,
+  parameters: DEFAULT_CONSENSUS_PARAMETERS,
+  previousVersion: undefined,
 });
 
 // Inicializa o hash da versão padrão

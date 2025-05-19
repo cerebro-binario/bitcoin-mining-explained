@@ -276,18 +276,18 @@
             </ng-container>
             <ng-template #exibeIntervalo>
               <span class="text-lg font-semibold text-zinc-100 font-mono">{{
-                paramsOnView.difficultyAdjustmentInterval
+                paramsOnView?.difficultyAdjustmentInterval
               }}</span>
               <ng-container
                 *ngIf="
                   futureOnView &&
-                  paramsOnView.difficultyAdjustmentInterval !==
-                    futureParamsOnView.difficultyAdjustmentInterval
+                  paramsOnView?.difficultyAdjustmentInterval !==
+                    futureParamsOnView?.difficultyAdjustmentInterval
                 "
               >
                 <span class="mx-1 text-zinc-400 text-lg">➔</span>
                 <span class="font-bold text-green-300 text-lg font-mono">{{
-                  futureParamsOnView.difficultyAdjustmentInterval
+                  futureParamsOnView?.difficultyAdjustmentInterval
                 }}</span>
                 <span
                   class="ml-1 text-yellow-400"
@@ -319,18 +319,18 @@
             </ng-container>
             <ng-template #exibeTx>
               <span class="text-lg font-semibold text-zinc-100 font-mono">{{
-                paramsOnView.maxTransactionsPerBlock
+                paramsOnView?.maxTransactionsPerBlock
               }}</span>
               <ng-container
                 *ngIf="
                   futureOnView &&
-                  paramsOnView.maxTransactionsPerBlock !==
-                    futureParamsOnView.maxTransactionsPerBlock
+                  paramsOnView?.maxTransactionsPerBlock !==
+                    futureParamsOnView?.maxTransactionsPerBlock
                 "
               >
                 <span class="mx-1 text-zinc-400 text-lg">➔</span>
                 <span class="font-bold text-green-300 text-lg font-mono">{{
-                  futureParamsOnView.maxTransactionsPerBlock
+                  futureParamsOnView?.maxTransactionsPerBlock
                 }}</span>
                 <span
                   class="ml-1 text-yellow-400"
@@ -363,17 +363,18 @@
             </ng-container>
             <ng-template #exibeBloco>
               <span class="text-lg font-semibold text-zinc-100 font-mono">{{
-                paramsOnView.maxBlockSize
+                paramsOnView?.maxBlockSize
               }}</span>
               <ng-container
                 *ngIf="
                   futureOnView &&
-                  paramsOnView.maxBlockSize !== futureParamsOnView.maxBlockSize
+                  paramsOnView?.maxBlockSize !==
+                    futureParamsOnView?.maxBlockSize
                 "
               >
                 <span class="mx-1 text-zinc-400 text-lg">➔</span>
                 <span class="font-bold text-green-300 text-lg font-mono">{{
-                  futureParamsOnView.maxBlockSize
+                  futureParamsOnView?.maxBlockSize
                 }}</span>
                 <span
                   class="ml-1 text-yellow-400"
@@ -406,18 +407,18 @@
             </ng-container>
             <ng-template #exibeTempo>
               <span class="text-lg font-semibold text-zinc-100 font-mono">{{
-                paramsOnView.targetBlockTime
+                paramsOnView?.targetBlockTime
               }}</span>
               <ng-container
                 *ngIf="
                   futureOnView &&
-                  paramsOnView.targetBlockTime !==
-                    futureParamsOnView.targetBlockTime
+                  paramsOnView?.targetBlockTime !==
+                    futureParamsOnView?.targetBlockTime
                 "
               >
                 <span class="mx-1 text-zinc-400 text-lg">➔</span>
                 <span class="font-bold text-green-300 text-lg font-mono">{{
-                  futureParamsOnView.targetBlockTime
+                  futureParamsOnView?.targetBlockTime
                 }}</span>
                 <span
                   class="ml-1 text-yellow-400"
@@ -452,19 +453,18 @@
           >
           <div class="text-sm text-zinc-300">
             #{{ futureOnView.startHeight }}
-            <span *ngIf="blocksToTarget !== null" class="text-zinc-500 italic"
-              >(faltam {{ blocksToTarget }} blocos)</span
+            <span class="text-zinc-500 italic"
+              >(faltam
+              {{ futureOnView.startHeight - currentHeight }} blocos)</span
             >
           </div>
         </div>
-        } @else if (epochOnView.startHeight > 0) {
+        } @else if (selected.startHeight > 0) {
         <div>
           <label class="block text-sm font-medium text-zinc-400 mb-1"
             >Início de Vigência</label
           >
-          <div class="text-sm text-zinc-300">
-            #{{ epochOnView.startHeight }}
-          </div>
+          <div class="text-sm text-zinc-300">#{{ selected.startHeight }}</div>
         </div>
         } }
       </div>
