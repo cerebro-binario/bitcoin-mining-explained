@@ -11,7 +11,6 @@ export class BitcoinNetworkService {
   nodes: Node[] = this.nodesSubject.getValue();
 
   private nextId = 1;
-  private propagatedBlocks = new Map<string, Set<number>>(); // blockHash -> nodeIds que já receberam
 
   addNode(
     isMiner: boolean,
@@ -32,69 +31,12 @@ export class BitcoinNetworkService {
     return node;
   }
 
-  connectToRandomPeers(node: Node, maxConnections: number = 3) {
-    const N = Math.min(maxConnections, this.nodes.length - 1); // -1 para excluir o próprio nó
-    const candidates = this.nodes.filter(
-      (n) =>
-        n.id !== node.id &&
-        !node.neighbors.some((neighbor) => neighbor.node === n)
-    );
-
-    for (let i = 0; i < N; i++) {
-      if (candidates.length === 0) break;
-      const idx = Math.floor(Math.random() * candidates.length);
-      const neighbor = candidates.splice(idx, 1)[0];
-      const latency = 3000 + Math.floor(Math.random() * 7001); // 3000-10000ms (3-10 segundos)
-      this.addConnection(node.id!, neighbor.id!, latency);
-    }
-  }
-
   removeNode(nodeId: number) {
     this.nodes = this.nodes.filter((n) => n.id !== nodeId);
     this.nodes.forEach((n) => {
       n.neighbors = n.neighbors.filter((nb) => nb.node.id !== nodeId);
     });
     this.nodesSubject.next(this.nodes);
-  }
-
-  addConnection(nodeId: number, neighborId: number, latency: number = 50) {
-    const node = this.nodes.find((n) => n.id === nodeId);
-    const neighbor = this.nodes.find((n) => n.id === neighborId);
-    if (node && neighbor && !node.neighbors.some((n) => n.node === neighbor)) {
-      node.connectToPeer(neighbor);
-      neighbor.connectToPeer(node);
-    }
-  }
-
-  removeConnection(nodeId: number, neighborId: number) {
-    const node = this.nodes.find((n) => n.id === nodeId);
-    const neighbor = this.nodes.find((n) => n.id === neighborId);
-    if (node && neighbor) {
-      node.disconnectFromPeer(neighbor);
-      neighbor.disconnectFromPeer(node);
-    }
-  }
-
-  updateLatency(nodeId: number, neighborId: number, latency: number) {
-    const node = this.nodes.find((n) => n.id === nodeId);
-    const neighbor = this.nodes.find((n) => n.id === neighborId);
-    if (node && neighbor) {
-      const n1 = node.neighbors.find((n) => n.node === neighbor);
-      const n2 = neighbor.neighbors.find((n) => n.node === node);
-      if (n1) n1.latency = latency;
-      if (n2) n2.latency = latency;
-    }
-  }
-
-  private hasNodeReceivedBlock(nodeId: number, blockHash: string): boolean {
-    return this.propagatedBlocks.get(blockHash)?.has(nodeId) || false;
-  }
-
-  private markBlockAsReceived(nodeId: number, blockHash: string) {
-    if (!this.propagatedBlocks.has(blockHash)) {
-      this.propagatedBlocks.set(blockHash, new Set());
-    }
-    this.propagatedBlocks.get(blockHash)!.add(nodeId);
   }
 
   propagateBlock(sourceNodeId: number, block: Block) {
