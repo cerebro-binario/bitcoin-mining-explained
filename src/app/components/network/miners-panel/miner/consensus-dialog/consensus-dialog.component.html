@@ -285,8 +285,8 @@
                     futureParamsOnView.difficultyAdjustmentInterval
                 "
               >
-                <span class="mx-1 text-zinc-400 text-xl">➔</span>
-                <span class="font-bold text-green-300 font-mono">{{
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
                   futureParamsOnView.difficultyAdjustmentInterval
                 }}</span>
                 <span
@@ -328,8 +328,8 @@
                     futureParamsOnView.maxTransactionsPerBlock
                 "
               >
-                <span class="mx-1 text-zinc-400 text-xl">➔</span>
-                <span class="font-bold text-green-300 font-mono">{{
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
                   futureParamsOnView.maxTransactionsPerBlock
                 }}</span>
                 <span
@@ -371,8 +371,8 @@
                   paramsOnView.maxBlockSize !== futureParamsOnView.maxBlockSize
                 "
               >
-                <span class="mx-1 text-zinc-400 text-xl">➔</span>
-                <span class="font-bold text-green-300 font-mono">{{
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
                   futureParamsOnView.maxBlockSize
                 }}</span>
                 <span
@@ -415,8 +415,8 @@
                     futureParamsOnView.targetBlockTime
                 "
               >
-                <span class="mx-1 text-zinc-400 text-xl">➔</span>
-                <span class="font-bold text-green-300 font-mono">{{
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
                   futureParamsOnView.targetBlockTime
                 }}</span>
                 <span
@@ -443,6 +443,30 @@
             {{ selected.timestamp | date : "dd/MM/yyyy HH:mm:ss" }}
           </div>
         </div>
+
+        <!-- Altura de Início da Epoca -->
+        @if (mode !== 'creating') { @if (futureOnView) {
+        <div>
+          <label class="block text-sm font-medium text-zinc-400 mb-1"
+            >Início de Vigência</label
+          >
+          <div class="text-sm text-zinc-300">
+            #{{ futureOnView.startHeight }}
+            <span *ngIf="blocksToTarget !== null" class="text-zinc-500 italic"
+              >(faltam {{ blocksToTarget }} blocos)</span
+            >
+          </div>
+        </div>
+        } @else if (epochOnView.startHeight > 0) {
+        <div>
+          <label class="block text-sm font-medium text-zinc-400 mb-1"
+            >Início de Vigência</label
+          >
+          <div class="text-sm text-zinc-300">
+            #{{ epochOnView.startHeight }}
+          </div>
+        </div>
+        } }
       </div>
     </div>
 
