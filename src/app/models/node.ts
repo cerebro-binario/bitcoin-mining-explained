@@ -604,6 +604,11 @@ export class Node {
   unsubscribeFromPeerBlocks(peer: Node) {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
+
+    // Remove o peer da lista de vizinhos deste nó
+    this.neighbors = this.neighbors.filter((n) => n.node.id !== peer.id);
+    // Remove este nó da lista de vizinhos do peer
+    peer.neighbors = peer.neighbors.filter((n) => n.node.id !== this.id);
   }
 
   // Método centralizado para processar um bloco recebido
