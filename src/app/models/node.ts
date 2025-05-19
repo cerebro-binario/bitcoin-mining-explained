@@ -142,8 +142,26 @@ export class Node {
     return this.currentBlock;
   }
 
+  // Função utilitária para buscar um ancestral seguindo previousHash a partir de um bloco base
+  private getAncestorBlock(
+    block: Block,
+    ancestorHeight: number,
+    blockResolver: (hash: string) => Block | undefined
+  ): Block | undefined {
+    let current: Block | undefined = block;
+    while (current && current.height > ancestorHeight) {
+      current = blockResolver(current.previousHash);
+    }
+    return current && current.height === ancestorHeight ? current : undefined;
+  }
+
   // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
-  calculateExpectedNBits(height: number): number {
+  // Permite passar um resolvedor de blocos para seguir a cadeia do bloco recebido
+  calculateExpectedNBits(
+    height: number,
+    blockResolver?: (hash: string) => Block | undefined,
+    tipBlock?: Block
+  ): number {
     // Se for o bloco gênese, retorna o valor inicial
     if (height === 0) {
       return this.INITIAL_NBITS;
@@ -158,33 +176,51 @@ export class Node {
 
     // Se não for um bloco de ajuste, mantém o nBits do bloco anterior
     if (adjustedHeight % interval !== 0) {
-      const lastBlockNode = this.heights
-        .flat()
-        .find((n) => n.block.height === height - 1 && n.isActive);
-      if (!lastBlockNode) {
+      let lastBlock: Block | undefined;
+      if (blockResolver && tipBlock) {
+        lastBlock = blockResolver(tipBlock.previousHash);
+      } else {
+        const lastBlockNode = this.heights
+          .flat()
+          .find((n) => n.block.height === height - 1 && n.isActive);
+        lastBlock = lastBlockNode?.block;
+      }
+      if (!lastBlock) {
         return this.INITIAL_NBITS;
       }
-      return lastBlockNode.block.nBits;
+      return lastBlock.nBits;
     }
 
     // Encontra o bloco do último ajuste
     const prevAdjustmentHeight = height - interval;
-    const prevAdjustmentNode = this.heights
-      .flat()
-      .find((n) => n.block.height === prevAdjustmentHeight && n.isActive);
-    const lastBlockNode = this.heights
-      .flat()
-      .find((n) => n.block.height === height - 1 && n.isActive);
-    if (!prevAdjustmentNode || !lastBlockNode) {
+    let prevAdjustmentBlock: Block | undefined;
+    let lastBlock: Block | undefined;
+    if (blockResolver && tipBlock) {
+      prevAdjustmentBlock = this.getAncestorBlock(
+        tipBlock,
+        prevAdjustmentHeight,
+        blockResolver
+      );
+      lastBlock = blockResolver(tipBlock.previousHash);
+    } else {
+      const prevAdjustmentNode = this.heights
+        .flat()
+        .find((n) => n.block.height === prevAdjustmentHeight && n.isActive);
+      prevAdjustmentBlock = prevAdjustmentNode?.block;
+      const lastBlockNode = this.heights
+        .flat()
+        .find((n) => n.block.height === height - 1 && n.isActive);
+      lastBlock = lastBlockNode?.block;
+    }
+    if (!prevAdjustmentBlock || !lastBlock) {
       return this.INITIAL_NBITS;
     }
 
-    const actualTime =
-      lastBlockNode.block.timestamp - prevAdjustmentNode.block.timestamp; // ms
+    const actualTime = lastBlock.timestamp - prevAdjustmentBlock.timestamp; // ms
     const expectedTime = interval * targetBlockTime * 1000; // ms
 
     // Converte o nBits anterior para target
-    const prevTarget = Number(prevAdjustmentNode.block.target);
+    const prevTarget = Number(prevAdjustmentBlock.target);
 
     // Calcula o fator de ajuste baseado no tempo real x tempo alvo
     let adjustmentFactor = actualTime / expectedTime;
@@ -197,17 +233,6 @@ export class Node {
 
     // Converte o target de volta para nBits
     const newNBits = this.targetToNBits(newTarget);
-
-    console.log(`Ajuste de dificuldade:
-      Altura: ${height}
-      Tempo real: ${actualTime}ms
-      Tempo esperado: ${expectedTime}ms
-      Target anterior: ${prevTarget}
-      Target novo: ${newTarget}
-      nBits anterior: ${prevAdjustmentNode.block.nBits}
-      nBits novo: ${newNBits}
-      Fator de ajuste: ${adjustmentFactor}
-    `);
 
     return newNBits;
   }
@@ -955,7 +980,16 @@ export class Node {
     }
 
     // 3. Validar ajuste de dificuldade (nBits)
-    const expectedNBits = this.calculateExpectedNBits(block.height);
+    // Para simular o Bitcoin real, use a cadeia do próprio bloco para calcular o nBits esperado
+    const blockResolver = (hash: string) => {
+      // Procura o bloco na estrutura local (pode ser melhorado para buscar em órfãos, se necessário)
+      return this.heights.flat().find((n) => n.block.hash === hash)?.block;
+    };
+    const expectedNBits = this.calculateExpectedNBits(
+      block.height,
+      blockResolver,
+      block
+    );
     if (block.nBits !== expectedNBits) {
       return {
         isValid: false,
