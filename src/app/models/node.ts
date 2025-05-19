@@ -18,7 +18,7 @@ export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
   private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
-  private readonly MAX_PEERS: number = 2;
+  private readonly MAX_PEERS: number = Math.floor(Math.random() * 2) + 2; // Random between 2 and 3
 
   peerSearchInterval: number = 60000; // 1 minute
   lastPeerSearch: number = 0;
@@ -551,46 +551,78 @@ export class Node {
     return work;
   }
 
-  // Conecta a um peer: adiciona aos neighbors e faz subscribe
-  connectToPeer(peer: Node, latency: number = 5000) {
+  // Função utilitária para escolher o vizinho a ser desconectado
+  private pickEvictionCandidate(neighbors: Neighbor[]): Neighbor {
+    if (neighbors.length === 1) return neighbors[0];
+    // Encontra o maior número de conexões entre os vizinhos
+    const maxPeers = Math.max(...neighbors.map((n) => n.node.neighbors.length));
+    // Filtra os vizinhos que têm esse número máximo de conexões
+    const candidates = neighbors.filter(
+      (n) => n.node.neighbors.length === maxPeers
+    );
+    // Se só há um, retorna ele; senão, escolhe aleatoriamente entre eles
+    if (candidates.length === 1) return candidates[0];
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  connectToPeerWithEviction(peer: Node, latency: number = 50) {
+    // Se o peer já está cheio, desconecta o vizinho mais "popular" dele
+    if (peer.neighbors.length >= peer.MAX_PEERS) {
+      const toDrop = this.pickEvictionCandidate(peer.neighbors);
+      peer.disconnectFromPeer(toDrop.node);
+    }
+    // Só conecta se ainda não estiver conectado
     if (!this.neighbors.some((n) => n.node.id === peer.id)) {
       this.neighbors.push({ node: peer, latency });
-      // Log de conexão
       this.addEvent({
         type: 'peer-connected',
         from: peer.id,
         timestamp: Date.now(),
         reason: 'connection',
       });
+      if (!this.peerBlockSubscriptions[peer.id!]) {
+        this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
+          .pipe(
+            filter((block) => this.onPeerBlockFiltering(block, peer)),
+            tap((block) => this.onPeerBlockReceiving(block, peer)),
+            delay(latency),
+            tap((block) => this.onPeerBlockProcessing(block, peer)),
+            tap((block) => this.onPeerBlockProcessingComplete(block, peer))
+          )
+          .subscribe();
+      }
+      // Sync inicial
+      const myHeight = this.getLatestBlock()?.height || -1;
+      const peerLatestBlock = peer.getLatestBlock();
+      if (peerLatestBlock && peerLatestBlock.height > myHeight) {
+        this.catchUpBlocks(myHeight + 1, peerLatestBlock.height, peer);
+      }
     }
     if (!peer.neighbors.some((n) => n.node.id === this.id)) {
       peer.neighbors.push({ node: this, latency });
-      // Log de conexão
       peer.addEvent({
         type: 'peer-connected',
         from: this.id,
         timestamp: Date.now(),
         reason: 'connection',
       });
-    }
-
-    if (this.peerBlockSubscriptions[peer.id!]) return;
-
-    this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
-      .pipe(
-        filter((block) => this.onPeerBlockFiltering(block, peer)),
-        tap((block) => this.onPeerBlockReceiving(block, peer)),
-        delay(latency),
-        tap((block) => this.onPeerBlockProcessing(block, peer)),
-        tap((block) => this.onPeerBlockProcessingComplete(block, peer))
-      )
-      .subscribe();
-
-    // Faz um sync inicial com o peer
-    const myHeight = this.getLatestBlock()?.height || -1;
-    const peerLatestBlock = peer.getLatestBlock();
-    if (peerLatestBlock && peerLatestBlock.height > myHeight) {
-      this.catchUpBlocks(myHeight + 1, peerLatestBlock.height, peer);
+      if (!peer.peerBlockSubscriptions[this.id!]) {
+        peer.peerBlockSubscriptions[this.id!] = this.blockBroadcast$
+          .pipe(
+            filter((block) => peer.onPeerBlockFiltering(block, this)),
+            tap((block) => peer.onPeerBlockReceiving(block, this)),
+            delay(latency),
+            tap((block) => peer.onPeerBlockProcessing(block, this)),
+            tap((block) => peer.onPeerBlockProcessingComplete(block, this))
+          )
+          .subscribe();
+      }
+      // Sync inicial
+      const peerHeight = peer.getLatestBlock()?.height || -1;
+      const thisLatestBlock = this.getLatestBlock();
+      if (thisLatestBlock && thisLatestBlock.height > peerHeight) {
+        peer.catchUpBlocks(peerHeight + 1, thisLatestBlock.height, this);
+      }
     }
   }
 
@@ -599,25 +631,33 @@ export class Node {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
 
+    const nBefore = this.neighbors.length;
     // Remove o peer da lista de vizinhos deste nó
     this.neighbors = this.neighbors.filter((n) => n.node.id !== peer.id);
+    const nAfter = this.neighbors.length;
+
+    if (nBefore !== nAfter) {
+      this.addEvent({
+        type: 'peer-disconnected',
+        from: peer.id,
+        timestamp: Date.now(),
+        reason: reason,
+      });
+    }
+
+    const nBeforePeer = peer.neighbors.length;
     // Remove este nó da lista de vizinhos do peer
     peer.neighbors = peer.neighbors.filter((n) => n.node.id !== this.id);
+    const nAfterPeer = peer.neighbors.length;
 
-    // Log de desconexão
-    this.addEvent({
-      type: 'peer-disconnected',
-      from: peer.id,
-      timestamp: Date.now(),
-      reason: reason,
-    });
-
-    peer.addEvent({
-      type: 'peer-disconnected',
-      from: this.id,
-      timestamp: Date.now(),
-      reason: 'disconnection',
-    });
+    if (nBeforePeer !== nAfterPeer) {
+      peer.addEvent({
+        type: 'peer-disconnected',
+        from: this.id,
+        timestamp: Date.now(),
+        reason: 'disconnection',
+      });
+    }
   }
 
   // Método centralizado para processar um bloco recebido
@@ -723,6 +763,9 @@ export class Node {
       }
       return;
     }
+
+    // Resetar score de misbehavior
+    delete this.misbehaviorScores[peer.id!];
 
     // 4. Processar o bloco
     this.processBlock(block, false, peer);
@@ -966,14 +1009,12 @@ export class Node {
     return { isValid: true };
   }
 
-  // Tenta reconectar a peers conhecidos se estiver isolado, ignorando banidos
   async searchPeersToConnect(nodes: Node[]) {
     if (this.neighbors.length >= this.MAX_PEERS) return;
     if (this.isSearchingPeers) return;
 
     this.isSearchingPeers = true;
 
-    // Log de busca por peers
     this.addEvent({
       type: 'peer-search',
       from: this.id,
@@ -987,7 +1028,15 @@ export class Node {
     let peersConnected = 0;
     let peersFound = 0;
 
-    for (const peer of nodes) {
+    const leastPopularNodes = nodes.slice().sort((a, b) => {
+      // Primeiro critério: número de conexões (menos conexões = maior prioridade)
+      const connectionsDiff = a.neighbors.length - b.neighbors.length;
+      if (connectionsDiff !== 0) return connectionsDiff;
+      // Segundo critério: aleatoriedade para desempatar
+      return Math.random() - 0.5;
+    });
+
+    for (const peer of leastPopularNodes) {
       if (
         peer.id === this.id ||
         this.neighbors.some((n) => n.node.id === peer.id)
@@ -998,7 +1047,7 @@ export class Node {
 
       if (this.isPeerConsensusCompatible(peer)) {
         const latency = 3000 + Math.floor(Math.random() * 7001); // 3000-10000ms (3-10 segundos)
-        this.connectToPeer(peer, latency);
+        this.connectToPeerWithEviction(peer, latency);
         peersConnected++;
 
         if (this.neighbors.length >= this.MAX_PEERS) {
@@ -1013,11 +1062,11 @@ export class Node {
               maxPeers: this.MAX_PEERS,
             },
           });
+          break;
         }
       }
     }
 
-    // Log de conclusão da busca por peers
     this.addEvent({
       type: 'peer-search-complete',
       from: this.id,
