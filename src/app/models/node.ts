@@ -577,11 +577,17 @@ export class Node {
     return work;
   }
 
-  // Subscribe to a peer's block broadcasts
-  subscribeToPeerBlocks(peer: Node) {
+  // Conecta a um peer: adiciona aos neighbors e faz subscribe
+  connectToPeer(peer: Node, latency: number = 50) {
+    if (!this.neighbors.some((n) => n.node.id === peer.id)) {
+      this.neighbors.push({ node: peer, latency });
+    }
+    if (!peer.neighbors.some((n) => n.node.id === this.id)) {
+      peer.neighbors.push({ node: this, latency });
+    }
+
     if (this.peerBlockSubscriptions[peer.id!]) return;
-    const neighbor = this.neighbors.find((n) => n.node.id === peer.id);
-    const latency = neighbor?.latency || 0;
+
     this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
       .pipe(
         filter((block) => this.onPeerBlockFiltering(block, peer)),
@@ -600,8 +606,8 @@ export class Node {
     }
   }
 
-  // Unsubscribe from a peer's block broadcasts
-  unsubscribeFromPeerBlocks(peer: Node) {
+  // Desconecta de um peer: remove dos neighbors e faz unsubscribe
+  disconnectFromPeer(peer: Node) {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
 
@@ -703,7 +709,7 @@ export class Node {
         this.misbehaviorScores[peer.id] += Node.MISBEHAVIOR_BLOCK_INVALID;
         // Se passou do limite, desconecta
         if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
-          this.unsubscribeFromPeerBlocks(peer);
+          this.disconnectFromPeer(peer);
           this.addEvent({
             type: 'peer-disconnected',
             from: peer.id,
