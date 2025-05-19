@@ -967,7 +967,7 @@ export class Node {
   }
 
   // Tenta reconectar a peers conhecidos se estiver isolado, ignorando banidos
-  searchPeersToConnect(nodes: Node[]) {
+  async searchPeersToConnect(nodes: Node[]) {
     if (this.neighbors.length >= this.MAX_PEERS) return;
     if (this.isSearchingPeers) return;
 
@@ -980,6 +980,9 @@ export class Node {
       timestamp: Date.now(),
       reason: 'peer-search',
     });
+
+    const searchDelay = 1000 + Math.random() * 3000;
+    await new Promise((resolve) => setTimeout(resolve, searchDelay));
 
     let peersConnected = 0;
     let peersFound = 0;
