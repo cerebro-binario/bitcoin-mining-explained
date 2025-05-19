@@ -21,7 +21,7 @@ export class Node {
   private readonly MAX_PEERS: number = 5;
 
   peerSearchInterval: number = 10000; // 10 seconds
-  lastPeerSearch: number = Date.now();
+  lastPeerSearch: number = 0;
   isSearchingPeers: boolean = false;
 
   isSyncing: boolean = false;
