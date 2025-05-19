@@ -18,9 +18,9 @@ export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
   private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
-  private readonly MAX_PEERS: number = 5;
+  private readonly MAX_PEERS: number = 2;
 
-  peerSearchInterval: number = 10000; // 10 seconds
+  peerSearchInterval: number = 60000; // 1 minute
   lastPeerSearch: number = 0;
   isSearchingPeers: boolean = false;
 
