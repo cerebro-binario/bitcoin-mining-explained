@@ -967,12 +967,13 @@ export class Node {
     // 4. Validar target time
     const previousBlock = this.getBlockByHeight(block.height - 1);
     if (previousBlock) {
-      const timeDiff = block.timestamp - previousBlock.timestamp;
-      if (timeDiff < 0) {
+      // Regra Bitcoin: timestamp deve ser maior que a mediana dos últimos 11 blocos
+      const medianTimePast = this.getMedianTimePast(block.height);
+      if (block.timestamp <= medianTimePast) {
         return {
           isValid: false,
           reason: 'invalid-timestamp',
-          message: 'Block timestamp is before previous block',
+          message: `Block timestamp (${block.timestamp}) is not greater than median of last 11 blocks (${medianTimePast})`,
         };
       }
 
@@ -1007,6 +1008,27 @@ export class Node {
     }
 
     return { isValid: true };
+  }
+
+  // Função utilitária para calcular a mediana dos timestamps dos últimos N blocos
+  private getMedianTimePast(height: number, window: number = 11): number {
+    const timestamps: number[] = [];
+    let currentHeight = height - 1;
+    while (currentHeight >= 0 && timestamps.length < window) {
+      const block = this.getBlockByHeight(currentHeight);
+      if (block) {
+        timestamps.push(block.timestamp);
+      }
+      currentHeight--;
+    }
+    if (timestamps.length === 0) return 0;
+    timestamps.sort((a, b) => a - b);
+    const mid = Math.floor(timestamps.length / 2);
+    if (timestamps.length % 2 === 0) {
+      return Math.floor((timestamps[mid - 1] + timestamps[mid]) / 2);
+    } else {
+      return timestamps[mid];
+    }
   }
 
   async searchPeersToConnect(nodes: Node[]) {
