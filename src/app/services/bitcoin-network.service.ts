@@ -23,7 +23,7 @@ export class BitcoinNetworkService {
       isMiner,
       name,
       hashRate,
-      neighbors: [],
+      peers: [],
       isCollapsed,
     });
     this.nodes.push(node);
@@ -34,7 +34,7 @@ export class BitcoinNetworkService {
   removeNode(nodeId: number) {
     this.nodes = this.nodes.filter((n) => n.id !== nodeId);
     this.nodes.forEach((n) => {
-      n.neighbors = n.neighbors.filter((nb) => nb.node.id !== nodeId);
+      n.peers = n.peers.filter((nb) => nb.node.id !== nodeId);
     });
     this.nodesSubject.next(this.nodes);
   }
@@ -72,7 +72,7 @@ export class BitcoinNetworkService {
       node.isSyncing = true;
 
       // Inicializa o rastreamento de peers
-      node.syncPeers = node.neighbors.map((neighbor) => ({
+      node.syncPeers = node.peers.map((neighbor) => ({
         nodeId: neighbor.node.id!,
         latency: neighbor.latency,
         status: 'pending',
@@ -80,7 +80,7 @@ export class BitcoinNetworkService {
 
       // Simula o download da blockchain através dos vizinhos
       // Ordena os vizinhos por latência (menor primeiro)
-      const sortedNeighbors = [...node.neighbors].sort(
+      const sortedNeighbors = [...node.peers].sort(
         (a, b) => a.latency - b.latency
       );
 

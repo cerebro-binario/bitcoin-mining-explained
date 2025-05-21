@@ -46,7 +46,7 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
 
         <ng-container *ngFor="let node of network.nodes; let i = index">
           <!-- Draw edges -->
-          <ng-container *ngFor="let neighbor of node.neighbors">
+          <ng-container *ngFor="let neighbor of node.peers">
             <line
               *ngIf="getNodeById(neighbor.node.id) as target"
               [attr.x1]="getX(i)"

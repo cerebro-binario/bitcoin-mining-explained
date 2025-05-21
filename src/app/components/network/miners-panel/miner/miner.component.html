@@ -37,7 +37,7 @@
           title="Peers Conectados"
           (click)="openPeersDialog()"
         >
-          {{ miner.neighbors.length }} peers
+          {{ miner.peers.length }} peers
           <button
             class="ml-1 p-1 rounded-full transition align-middle relative overflow-hidden"
             (click)="connectToPeers(); $event.stopPropagation()"

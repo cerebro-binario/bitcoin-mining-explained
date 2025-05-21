@@ -41,7 +41,7 @@ export class Node {
   }[] = [];
 
   id?: number;
-  neighbors: Neighbor[] = [];
+  peers: Neighbor[] = [];
 
   // Campos para minerador
   isMiner: boolean = false;
@@ -279,7 +279,7 @@ export class Node {
     ) {
       latencyA = 0;
     } else if (this.id !== undefined && aMinerId !== undefined) {
-      const neighbor = this.neighbors.find((n) => n.node.id === aMinerId);
+      const neighbor = this.peers.find((n) => n.node.id === aMinerId);
       if (neighbor) latencyA = neighbor.latency;
     }
 
@@ -290,7 +290,7 @@ export class Node {
     ) {
       latencyB = 0;
     } else if (this.id !== undefined && bMinerId !== undefined) {
-      const neighbor = this.neighbors.find((n) => n.node.id === bMinerId);
+      const neighbor = this.peers.find((n) => n.node.id === bMinerId);
       if (neighbor) latencyB = neighbor.latency;
     }
 
@@ -580,10 +580,10 @@ export class Node {
   private pickEvictionCandidate(neighbors: Neighbor[]): Neighbor {
     if (neighbors.length === 1) return neighbors[0];
     // Encontra o maior número de conexões entre os vizinhos
-    const maxPeers = Math.max(...neighbors.map((n) => n.node.neighbors.length));
+    const maxPeers = Math.max(...neighbors.map((n) => n.node.peers.length));
     // Filtra os vizinhos que têm esse número máximo de conexões
     const candidates = neighbors.filter(
-      (n) => n.node.neighbors.length === maxPeers
+      (n) => n.node.peers.length === maxPeers
     );
     // Se só há um, retorna ele; senão, escolhe aleatoriamente entre eles
     if (candidates.length === 1) return candidates[0];
@@ -592,19 +592,23 @@ export class Node {
 
   connectToPeerWithEviction(peer: Node, latency: number = 50) {
     // Se o peer já está cheio, desconecta o vizinho mais "popular" dele
-    if (peer.neighbors.length >= peer.MAX_PEERS) {
-      const toDrop = this.pickEvictionCandidate(peer.neighbors);
+    if (peer.peers.length >= peer.MAX_PEERS) {
+      const toDrop = this.pickEvictionCandidate(peer.peers);
       peer.disconnectFromPeer(toDrop.node);
     }
+
     // Só conecta se ainda não estiver conectado
-    if (!this.neighbors.some((n) => n.node.id === peer.id)) {
-      this.neighbors.push({ node: peer, latency });
+    if (!this.peers.some((n) => n.node.id === peer.id)) {
+      const neighbor = { node: peer, latency };
+      this.peers.push(neighbor);
+
       this.addEvent({
         type: 'peer-connected',
         from: peer.id,
         timestamp: Date.now(),
         reason: 'connection',
       });
+
       if (!this.peerBlockSubscriptions[peer.id!]) {
         this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
           .pipe(
@@ -622,15 +626,18 @@ export class Node {
       if (peerLatestBlock && peerLatestBlock.height > myHeight) {
         this.catchUpBlocks(myHeight + 1, peerLatestBlock.height, peer);
       }
-    }
-    if (!peer.neighbors.some((n) => n.node.id === this.id)) {
-      peer.neighbors.push({ node: this, latency });
+
+    if (!peer.peers.some((n) => n.node.id === this.id)) {
+      const neighbor = { node: this, latency };
+      peer.peers.push(neighbor);
+
       peer.addEvent({
         type: 'peer-connected',
         from: this.id,
         timestamp: Date.now(),
         reason: 'connection',
       });
+
       if (!peer.peerBlockSubscriptions[this.id!]) {
         peer.peerBlockSubscriptions[this.id!] = this.blockBroadcast$
           .pipe(
@@ -656,10 +663,10 @@ export class Node {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
 
-    const nBefore = this.neighbors.length;
+    const nBefore = this.peers.length;
     // Remove o peer da lista de vizinhos deste nó
-    this.neighbors = this.neighbors.filter((n) => n.node.id !== peer.id);
-    const nAfter = this.neighbors.length;
+    this.peers = this.peers.filter((n) => n.node.id !== peer.id);
+    const nAfter = this.peers.length;
 
     if (nBefore !== nAfter) {
       this.addEvent({
@@ -670,10 +677,10 @@ export class Node {
       });
     }
 
-    const nBeforePeer = peer.neighbors.length;
+    const nBeforePeer = peer.peers.length;
     // Remove este nó da lista de vizinhos do peer
-    peer.neighbors = peer.neighbors.filter((n) => n.node.id !== this.id);
-    const nAfterPeer = peer.neighbors.length;
+    peer.peers = peer.peers.filter((n) => n.node.id !== this.id);
+    const nAfterPeer = peer.peers.length;
 
     if (nBeforePeer !== nAfterPeer) {
       peer.addEvent({
@@ -906,7 +913,7 @@ export class Node {
     originPeer: Node
   ): Promise<Block[]> {
     const foundBlocks: Block[] = [];
-    const neighbor = this.neighbors.find((n) => n.node.id === originPeer.id);
+    const neighbor = this.peers.find((n) => n.node.id === originPeer.id);
     const latency = neighbor?.latency || 0;
 
     // Simula latência na requisição (uma única vez por lote)
@@ -927,7 +934,7 @@ export class Node {
 
   // Helper para obter o Node conectado pelo id
   private getConnectedPeerNode(peerId: number): Node | null {
-    const neighbor = this.neighbors.find((n) => n.node.id === peerId);
+    const neighbor = this.peers.find((n) => n.node.id === peerId);
     return neighbor?.node || null;
   }
 
@@ -1074,7 +1081,7 @@ export class Node {
   }
 
   async searchPeersToConnect(nodes: Node[]) {
-    if (this.neighbors.length >= this.MAX_PEERS) return;
+    if (this.peers.length >= this.MAX_PEERS) return;
     if (this.isSearchingPeers) return;
 
     this.isSearchingPeers = true;
@@ -1094,17 +1101,14 @@ export class Node {
 
     const leastPopularNodes = nodes.slice().sort((a, b) => {
       // Primeiro critério: número de conexões (menos conexões = maior prioridade)
-      const connectionsDiff = a.neighbors.length - b.neighbors.length;
+      const connectionsDiff = a.peers.length - b.peers.length;
       if (connectionsDiff !== 0) return connectionsDiff;
       // Segundo critério: aleatoriedade para desempatar
       return Math.random() - 0.5;
     });
 
     for (const peer of leastPopularNodes) {
-      if (
-        peer.id === this.id ||
-        this.neighbors.some((n) => n.node.id === peer.id)
-      )
+      if (peer.id === this.id || this.peers.some((n) => n.node.id === peer.id))
         continue;
 
       peersFound++;
@@ -1114,7 +1118,7 @@ export class Node {
         this.connectToPeerWithEviction(peer, latency);
         peersConnected++;
 
-        if (this.neighbors.length >= this.MAX_PEERS) {
+        if (this.peers.length >= this.MAX_PEERS) {
           this.addEvent({
             type: 'peer-search',
             from: this.id,

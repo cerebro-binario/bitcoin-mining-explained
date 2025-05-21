@@ -60,13 +60,13 @@ export class PeersDialogComponent implements OnInit, OnDestroy {
   }
 
   private computePeerInfos() {
-    this.peerInfos = this.miner.neighbors.map((peer) =>
+    this.peerInfos = this.miner.peers.map((peer) =>
       this.computePeerInfoForId(peer.node.id!)
     );
   }
 
   private computePeerInfoForId(peerId: number): PeerInfo {
-    const peer = this.miner.neighbors.find((p) => p.node.id === peerId);
+    const peer = this.miner.peers.find((p) => p.node.id === peerId);
     const peerNode = this.networkService.nodes.find(
       (n: any) => n.id === peerId
     );

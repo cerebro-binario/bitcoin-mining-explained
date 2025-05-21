@@ -359,7 +359,7 @@ export class MinerComponent {
 
   // Status color para o indicador de conexão
   get statusColor(): string {
-    if (this.miner.neighbors.length === 0) {
+    if (this.miner.peers.length === 0) {
       return 'red';
     }
     if (this.miner.isSyncing) {
