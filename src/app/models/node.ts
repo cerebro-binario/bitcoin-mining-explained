@@ -1,5 +1,5 @@
 import * as CryptoJS from 'crypto-js';
-import { Subject, Subscription } from 'rxjs';
+import { pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
@@ -80,8 +80,15 @@ export class Node {
 
   blockBroadcast$ = new Subject<Block>();
   private peerBlockSubscriptions: { [peerId: number]: Subscription } = {};
-  private receivedBlockHashes = new Set<string>();
   private orphanBlocks: Map<string, Block[]> = new Map(); // chave: previousHash, valor: blocos órfãos que dependem desse hash
+
+  private blockBroadcastPipe = (peer: Node) =>
+    pipe(
+      filter((block: Block) => this.onPeerBlockFiltering(block, peer)),
+      delay((Math.floor(Math.random() * 3) + 1) * 1000),
+      tap((block: Block) => this.onPeerBlockProcessing(block, peer)),
+      tap((block: Block) => this.onPeerBlockProcessingComplete(block, peer))
+    );
 
   // Adiciona campo de misbehavior para cada peer
   misbehaviorScores: { [peerId: number]: number } = {};
@@ -92,9 +99,75 @@ export class Node {
     Object.assign(this, init);
   }
 
-  private addEvent(event: Omit<EventLog, 'message'>) {
-    const message = event.reason ? validationMessages[event.reason] : undefined;
-    this.eventLog.unshift({ ...event, message });
+  addBlock(block: Block): { success: boolean; reason?: ValidationType } {
+    const blockNode = new BlockNode(block);
+
+    if (!this.heights.length) {
+      const originBlock = new Block({
+        id: -1,
+        height: -1,
+        timestamp: 0,
+        previousHash:
+          '0000000000000000000000000000000000000000000000000000000000000000',
+        hash: '0000000000000000000000000000000000000000000000000000000000000000',
+        transactions: [],
+        nBits: 0,
+        nonce: 0,
+        miningElapsed: 0,
+        minerId: this.id,
+        consensusVersion: this.consensus.version,
+      });
+      const originNode = new BlockNode(originBlock);
+      this.heights.unshift([originNode]);
+      this.genesis = originNode;
+    }
+
+    // Busca otimizada do pai: só procura em height - 1
+    const parentNode = this.findParentNode(block);
+    if (!parentNode) return { success: false, reason: 'invalid-parent' };
+
+    // Encontra a altura correta para inserir
+    const heightIndex = this.getHeightIndex(block.height);
+    const height = this.heights[heightIndex];
+
+    // Verifica se o bloco já existe na altura
+    if (height?.find((n) => n.block.hash === blockNode.block.hash)) {
+      return { success: false, reason: 'duplicate' };
+    }
+
+    // Tudo certo até aqui, marca o bloco como pai
+    blockNode.parent = parentNode;
+
+    // Adiciona como filho
+    if (
+      !parentNode.children.find((n) => n.block.hash === blockNode.block.hash)
+    ) {
+      parentNode.children.push(blockNode);
+    }
+
+    // Se a altura não existe, cria um novo array
+    if (heightIndex < 0) {
+      this.heights.unshift([blockNode]);
+    } else if (!this.heights[heightIndex]) {
+      this.heights[heightIndex] = [blockNode];
+    } else {
+      this.heights[heightIndex].push(blockNode);
+    }
+
+    // Log de bloco minerado localmente
+    if (block.minerId === this.id) {
+      this.addEvent({
+        type: 'block-mined',
+        block: block,
+        timestamp: Date.now(),
+      });
+    }
+
+    this.checkForksAndSort();
+
+    this.updateMiniBlockchain();
+
+    return { success: true };
   }
 
   initBlockTemplate(lastBlock?: Block): Block {
@@ -142,22 +215,9 @@ export class Node {
     return this.currentBlock;
   }
 
-  // Função utilitária para buscar um ancestral seguindo previousHash a partir de um bloco base
-  private getAncestorBlock(
-    block: Block,
-    ancestorHeight: number,
-    blockResolver: (hash: string) => Block | undefined
-  ): Block | undefined {
-    let current: Block | undefined = block;
-    while (current && current.height > ancestorHeight) {
-      current = blockResolver(current.previousHash);
-    }
-    return current && current.height === ancestorHeight ? current : undefined;
-  }
-
   // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
   // Permite passar um resolvedor de blocos para seguir a cadeia do bloco recebido
-  calculateExpectedNBits(
+  private calculateExpectedNBits(
     height: number,
     blockResolver?: (hash: string) => Block | undefined,
     tipBlock?: Block
@@ -258,6 +318,19 @@ export class Node {
     return Math.floor(this.SUBSIDY / Math.pow(2, halvings));
   }
 
+  // Função utilitária para buscar um ancestral seguindo previousHash a partir de um bloco base
+  private getAncestorBlock(
+    block: Block,
+    ancestorHeight: number,
+    blockResolver: (hash: string) => Block | undefined
+  ): Block | undefined {
+    let current: Block | undefined = block;
+    while (current && current.height > ancestorHeight) {
+      current = blockResolver(current.previousHash);
+    }
+    return current && current.height === ancestorHeight ? current : undefined;
+  }
+
   // Método para ordenar os blocos, movendo forks mortos para o final
   private sortBlocks(a: BlockNode, b: BlockNode): number {
     // 1. Prioriza forks ativos
@@ -306,7 +379,7 @@ export class Node {
     return 0;
   }
 
-  checkForksAndSort() {
+  private checkForksAndSort() {
     if (this.heights.length === 0) return;
 
     const heightsToReorder = new Set<number>();
@@ -355,80 +428,12 @@ export class Node {
     return this.heights.length - height - 1;
   }
 
-  addBlock(block: Block): { success: boolean; reason?: ValidationType } {
-    const blockNode = new BlockNode(block);
-
-    if (!this.heights.length) {
-      const originBlock = new Block({
-        id: -1,
-        height: -1,
-        timestamp: 0,
-        previousHash:
-          '0000000000000000000000000000000000000000000000000000000000000000',
-        hash: '0000000000000000000000000000000000000000000000000000000000000000',
-        transactions: [],
-        nBits: 0,
-        nonce: 0,
-        miningElapsed: 0,
-        minerId: this.id,
-        consensusVersion: this.consensus.version,
-      });
-      const originNode = new BlockNode(originBlock);
-      this.heights.unshift([originNode]);
-      this.genesis = originNode;
-    }
-
-    // Encontra a altura correta para inserir
-    const heightIndex = this.getHeightIndex(block.height);
-
-    // Procura o pai
-    const parent = this.findBlockNode(block.previousHash);
-    if (!parent) return { success: false, reason: 'invalid-parent' };
-
-    if (
-      this.heights[heightIndex]?.find(
-        (n) => n.block.hash === blockNode.block.hash
-      )
-    ) {
-      return { success: false, reason: 'duplicate' };
-    }
-
-    blockNode.parent = parent;
-
-    // Adiciona como filho
-    if (!parent.children.find((n) => n.block.hash === blockNode.block.hash)) {
-      parent.children.push(blockNode);
-    }
-
-    // Se a altura não existe, cria um novo array
-    if (heightIndex < 0) {
-      this.heights.unshift([blockNode]);
-    } else if (!this.heights[heightIndex]) {
-      this.heights[heightIndex] = [blockNode];
-    } else {
-      this.heights[heightIndex].push(blockNode);
-    }
-
-    // Log de bloco minerado localmente
-    if (block.minerId === this.id) {
-      this.addEvent({
-        type: 'block-mined',
-        block: block,
-        timestamp: Date.now(),
-      });
-    }
-
-    this.checkForksAndSort();
-    return { success: true };
-  }
-
-  // Encontra um bloco na estrutura heights pelo hash
-  private findBlockNode(hash: string) {
-    for (const height of this.heights) {
-      const blockNode = height.find((node) => node.block.hash === hash);
-      if (blockNode) return blockNode;
-    }
-    return undefined;
+  private findParentNode(block: Block): BlockNode | undefined {
+    const heightIndex = this.getHeightIndex(block.height - 1);
+    const parent = this.heights[heightIndex]?.find(
+      (h) => h.block.hash === block.previousHash
+    );
+    return parent;
   }
 
   // Retorna o bloco mais recente usando a estrutura heights
@@ -482,8 +487,13 @@ export class Node {
     }
   }
 
+  private updateMiniBlockchain() {
+    this.updateLastMainBlocks();
+    this.updateActiveForkHeights();
+  }
+
   // Retorna os últimos 5 blocos da main chain (excluindo o origin fake block)
-  updateLastMainBlocks() {
+  private updateLastMainBlocks() {
     const blocks = [];
     let current = this.getLatestBlock();
     let count = 0;
@@ -501,7 +511,7 @@ export class Node {
   }
 
   // Retorna as alturas dos forks ativos entre os últimos 5 blocos
-  updateActiveForkHeights() {
+  private updateActiveForkHeights() {
     const forkHeights: number[] = [];
     for (const nodes of this.heights) {
       const activeBlocks = nodes.filter((n) => n.isActive);
@@ -514,7 +524,7 @@ export class Node {
   }
 
   // Update the difficulty adjustment interval based on block height
-  getDifficultyAdjustmentInterval(height: number): number {
+  private getDifficultyAdjustmentInterval(height: number): number {
     const epoch = this.consensus.getConsensusForHeight(height);
     if (!epoch) {
       throw new Error(`No consensus parameters found for height ${height}`);
@@ -522,12 +532,16 @@ export class Node {
     return epoch.parameters.difficultyAdjustmentInterval;
   }
 
-  getCurrentConsensusParameters(): ConsensusVersion {
+  private getCurrentConsensusParameters(): ConsensusVersion {
     return this.consensus.getConsensusForHeight(this.currentBlock?.height || 0);
   }
 
   // Método para validar um bloco individual
-  validateBlock(block: Block, height: number, previousBlock?: Block): boolean {
+  private validateBlock(
+    block: Block,
+    height: number,
+    previousBlock?: Block
+  ): boolean {
     const validationResult = this.validateBlockConsensus(block);
     if (!validationResult.isValid) {
       this.addEvent({
@@ -590,7 +604,7 @@ export class Node {
     return candidates[Math.floor(Math.random() * candidates.length)];
   }
 
-  connectToPeerWithEviction(peer: Node, latency: number = 50) {
+  private connectToPeerWithEviction(peer: Node, latency: number = 50) {
     // Se o peer já está cheio, desconecta o vizinho mais "popular" dele
     if (peer.peers.length >= peer.MAX_PEERS) {
       const toDrop = this.pickEvictionCandidate(peer.peers);
@@ -611,21 +625,12 @@ export class Node {
 
       if (!this.peerBlockSubscriptions[peer.id!]) {
         this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
-          .pipe(
-            filter((block) => this.onPeerBlockFiltering(block, peer)),
-            tap((block) => this.onPeerBlockReceiving(block, peer)),
-            delay(latency),
-            tap((block) => this.onPeerBlockProcessing(block, peer)),
-            tap((block) => this.onPeerBlockProcessingComplete(block, peer))
-          )
+          .pipe(this.blockBroadcastPipe(peer))
           .subscribe();
       }
-      // Sync inicial
-      const myHeight = this.getLatestBlock()?.height || -1;
-      const peerLatestBlock = peer.getLatestBlock();
-      if (peerLatestBlock && peerLatestBlock.height > myHeight) {
-        this.catchUpBlocks(myHeight + 1, peerLatestBlock.height, peer);
-      }
+
+      this.syncWith(peer);
+    }
 
     if (!peer.peers.some((n) => n.node.id === this.id)) {
       const neighbor = { node: this, latency };
@@ -640,26 +645,19 @@ export class Node {
 
       if (!peer.peerBlockSubscriptions[this.id!]) {
         peer.peerBlockSubscriptions[this.id!] = this.blockBroadcast$
-          .pipe(
-            filter((block) => peer.onPeerBlockFiltering(block, this)),
-            tap((block) => peer.onPeerBlockReceiving(block, this)),
-            delay(latency),
-            tap((block) => peer.onPeerBlockProcessing(block, this)),
-            tap((block) => peer.onPeerBlockProcessingComplete(block, this))
-          )
+          .pipe(this.blockBroadcastPipe(peer))
           .subscribe();
       }
-      // Sync inicial
-      const peerHeight = peer.getLatestBlock()?.height || -1;
-      const thisLatestBlock = this.getLatestBlock();
-      if (thisLatestBlock && thisLatestBlock.height > peerHeight) {
-        peer.catchUpBlocks(peerHeight + 1, thisLatestBlock.height, this);
-      }
+
+      peer.syncWith(this);
     }
   }
 
   // Desconecta de um peer: remove dos neighbors e faz unsubscribe
-  disconnectFromPeer(peer: Node, reason: ValidationType = 'disconnection') {
+  private disconnectFromPeer(
+    peer: Node,
+    reason: ValidationType = 'disconnection'
+  ) {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
 
@@ -692,131 +690,100 @@ export class Node {
     }
   }
 
+  private syncWith(peer: Node) {
+    console.debug(`[${this.id}] syncing with [${peer.id}]`);
+    const lastestForks = peer.heights[0];
+    for (const fork of lastestForks) {
+      this.catchUpChain(fork.block, peer);
+    }
+  }
+
   // Método centralizado para processar um bloco recebido
-  private processBlock(
-    block: Block,
-    isOrphan: boolean = false,
-    peer?: Node
-  ): void {
+  private processBlock(block: Block, peer: Node): void {
+    // 4. Validar o bloco
+    const validationResult = this.validateBlockConsensus(block);
+    if (!validationResult.isValid) {
+      this.handleNonConsensualBlock(block, peer, validationResult.reason);
+      return;
+    }
+
+    // Resetar score de misbehavior (se chegou aqui, o bloco foi validado)
+    delete this.misbehaviorScores[peer.id!];
+
     const prevTopBlock = this.getLatestBlock();
     const result = this.addBlock(block);
-    if (result.success) {
-      this.addEvent({
-        type: 'block-validated',
-        block: block,
-        timestamp: Date.now(),
-        from: peer?.id,
-      });
-      this.updateLastMainBlocks();
-      this.updateActiveForkHeights();
 
-      // Tentar encaixar órfãos que dependem deste bloco
-      this.tryAttachOrphans(block.hash);
-
-      // Atualizar current block APENAS se o topo da main chain mudou
-      const newTopBlock = this.getLatestBlock();
-      if (
-        !prevTopBlock ||
-        !newTopBlock ||
-        newTopBlock.hash !== prevTopBlock.hash
-      ) {
-        this.initBlockTemplate(newTopBlock);
-      }
-    } else if (result.reason === 'invalid-parent') {
-      // Se não conseguiu adicionar por falta do bloco anterior, armazena como órfão
-      if (!this.orphanBlocks.has(block.previousHash)) {
-        this.orphanBlocks.set(block.previousHash, []);
-      }
-      this.orphanBlocks.get(block.previousHash)!.push(block);
-
-      // Log apenas se não for um órfão (para evitar duplicação de logs)
-      if (!isOrphan) {
-        this.addEvent({
-          type: 'block-rejected',
-          block: block,
-          timestamp: Date.now(),
-          reason: 'invalid-parent',
-        });
-      }
-    } else {
+    if (!result.success) {
       this.addEvent({
         type: 'block-rejected',
         block: block,
         timestamp: Date.now(),
         reason: result.reason,
       });
+      return;
+    }
+
+    this.addEvent({
+      type: 'block-validated',
+      reason: 'block-validated' as ValidationType,
+      block: block,
+      timestamp: Date.now(),
+      from: peer?.id,
+    });
+
+    // Atualizar current block APENAS se o topo da main chain mudou
+    const newTopBlock = this.getLatestBlock();
+    if (
+      !prevTopBlock ||
+      !newTopBlock ||
+      newTopBlock.hash !== prevTopBlock.hash
+    ) {
+      this.initBlockTemplate(newTopBlock);
     }
   }
 
   onPeerBlockFiltering(block: Block, peer: Node) {
     // Se o bloco é do próprio minerador, não processa (está recebendo o bloco do próprio minerador do peer)
-    if (block.minerId === this.id) return false;
+    if (block.minerId === this.id) {
+      console.debug(
+        `[${this.id}] received block from self ${block.hash} from ${peer.id}`
+      );
+      return false;
+    }
 
     // Deduplicação: se já recebeu esse bloco, não processa novamente
-    if (this.receivedBlockHashes.has(block.hash)) return false;
-    this.receivedBlockHashes.add(block.hash);
+    if (this.checkIfBlockExists(block)) {
+      console.debug(
+        `[${this.id}] received duplicate block ${block.hash} from ${peer.id}`
+      );
+      return false;
+    }
 
     return true;
   }
 
-  onPeerBlockReceiving(block: Block, peer: Node) {
-    // 1. Marcar como sincronizando
-    this.isSyncing = true;
-  }
-
   // Handler for when a block is received from a peer
   onPeerBlockProcessing(block: Block, peer: Node) {
-    // 2. Log de recebimento do bloco
+    //  Marcar como sincronizando
+    this.isSyncing = true;
+    //  Log de recebimento do bloco
     this.addEvent({
       type: 'block-received',
+      reason: 'block-received' as ValidationType,
       from: peer.id,
       block: block,
       timestamp: Date.now(),
     });
 
-    // 3. Validar o bloco antes de processar
-    const validationResult = this.validateBlockConsensus(block);
-    if (!validationResult.isValid) {
-      this.addEvent({
-        type: 'block-rejected',
-        from: peer.id,
-        block: block,
-        timestamp: Date.now(),
-        reason: validationResult.reason,
-      });
-
-      // Incrementa score de misbehavior
-      if (peer.id !== undefined) {
-        if (!this.misbehaviorScores[peer.id])
-          this.misbehaviorScores[peer.id] = 0;
-        this.misbehaviorScores[peer.id] += Node.MISBEHAVIOR_BLOCK_INVALID;
-        // Se passou do limite, desconecta
-        if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
-          this.disconnectFromPeer(peer, 'misbehavior');
-          this.addEvent({
-            type: 'peer-disconnected',
-            from: peer.id,
-            timestamp: Date.now(),
-            reason: 'misbehavior',
-          });
-        }
-      }
-      return;
+    // Verificar se possui pai antes de validar consenso
+    const parent = this.findParentNode(block);
+    if (!parent && block.height > 0) {
+      this.processOrphan(block, peer);
+    } else {
+      this.processBlock(block, peer);
     }
 
-    // Resetar score de misbehavior
-    delete this.misbehaviorScores[peer.id!];
-
-    // 4. Processar o bloco
-    this.processBlock(block, false, peer);
-
-    // 5. Catch-up: se o bloco recebido está à frente do topo local, busque blocos faltantes
-    const myHeight = this.getLatestBlock()?.height || -1;
-    if (block.height > myHeight + 1) {
-      this.catchUpBlocks(myHeight + 1, block.height, peer);
-    }
-
-    // 6. Repropagar para outros peers
+    // Repropagar para outros peers
     this.blockBroadcast$.next(block);
   }
 
@@ -824,118 +791,125 @@ export class Node {
     this.isSyncing = false;
   }
 
-  // Tenta encaixar órfãos que dependem de um bloco recém-adicionado
-  private tryAttachOrphans(parentHash: string) {
-    const orphans = this.orphanBlocks.get(parentHash);
-    if (!orphans) return;
-    this.orphanBlocks.delete(parentHash);
-
-    for (const orphan of orphans) {
-      this.processBlock(orphan, true);
-    }
+  private checkIfBlockExists(block: Block) {
+    const heightIndex = this.getHeightIndex(block.height);
+    return this.heights[heightIndex]?.some((h) => h.block.hash === block.hash);
   }
 
-  // Busca ativa de blocos faltantes dos peers
-  private async catchUpBlocks(
-    startHeight: number,
-    endHeight: number,
-    originPeer: Node
-  ) {
-    const BATCH_SIZE = 10; // Número de blocos por lote
-    const totalBlocks = endHeight - startHeight + 1;
-    let processedBlocks = 0;
-    const startTime = Date.now();
+  private processOrphan(orphan: Block, peer: Node) {
+    // Armazena como órfão e encerra o fluxo
+    if (!this.orphanBlocks.has(orphan.previousHash)) {
+      this.orphanBlocks.set(orphan.previousHash, []);
+    }
+    const orphans = this.orphanBlocks.get(orphan.previousHash) || [];
 
-    // Log inicial de início de sincronização
+    if (orphans.some((o) => o.hash === orphan.hash)) {
+      console.debug(
+        `[${this.id}] received duplicate orphan block ${orphan.hash} from ${peer.id}`
+      );
+      return;
+    }
+
+    this.orphanBlocks.get(orphan.previousHash)!.push(orphan);
+
+    // Log apenas se não for duplicado
     this.addEvent({
-      type: 'sync-progress',
-      from: originPeer.id,
+      type: 'block-rejected',
+      from: peer.id,
+      block: orphan,
       timestamp: Date.now(),
-      reason: 'sync-progress',
-      syncProgress: {
-        processed: 0,
-        total: totalBlocks,
-        blocksPerSecond: 0,
-        estimatedTimeRemaining: 0,
-      },
+      reason: 'invalid-parent',
     });
 
-    for (let h = startHeight; h <= endHeight; h += BATCH_SIZE) {
-      const batchEnd = Math.min(h + BATCH_SIZE - 1, endHeight);
-      const blocks = await this.requestBlockFromPeers(h, batchEnd, originPeer);
-
-      if (!blocks.length) break;
-
-      processedBlocks += blocks.length;
-      const elapsedTime = (Date.now() - startTime) / 1000; // em segundos
-      const blocksPerSecond = processedBlocks / (elapsedTime || 1);
-      const remainingBlocks = totalBlocks - processedBlocks;
-      const estimatedTimeRemaining =
-        blocksPerSecond > 0 ? remainingBlocks / blocksPerSecond : 0;
-
-      // Atualiza o log com o progresso
-      this.addEvent({
-        type: 'sync-progress',
-        from: originPeer.id,
-        timestamp: Date.now(),
-        reason: 'sync-progress',
-        syncProgress: {
-          processed: processedBlocks,
-          total: totalBlocks,
-          blocksPerSecond,
-          estimatedTimeRemaining,
-        },
-      });
-    }
-
-    // Log especial de conclusão de sincronização
-    if (processedBlocks === totalBlocks && totalBlocks > 0) {
-      this.addEvent({
-        type: 'sync-progress',
-        from: originPeer.id,
-        timestamp: Date.now(),
-        reason: 'sync-complete',
-        syncProgress: {
-          processed: processedBlocks,
-          total: totalBlocks,
-          blocksPerSecond:
-            processedBlocks / ((Date.now() - startTime) / 1000 || 1),
-          estimatedTimeRemaining: 0,
-        },
-      });
-    }
+    this.catchUpChain(orphan, peer);
   }
 
-  // Solicita todos os blocos ativos de todos os peers conectados
-  private async requestBlockFromPeers(
-    startHeight: number,
-    endHeight: number,
-    originPeer: Node
-  ): Promise<Block[]> {
-    const foundBlocks: Block[] = [];
-    const neighbor = this.peers.find((n) => n.node.id === originPeer.id);
-    const latency = neighbor?.latency || 0;
+  private handleNonConsensualBlock(
+    block: Block,
+    peer: Node,
+    reason?: ValidationType
+  ) {
+    this.addEvent({
+      type: 'block-rejected',
+      from: peer.id,
+      block: block,
+      timestamp: Date.now(),
+      reason: reason,
+    });
 
-    // Simula latência na requisição (uma única vez por lote)
-    await new Promise((resolve) => setTimeout(resolve, latency));
-
-    if (originPeer) {
-      // Busca todos os blocos do lote de uma vez
-      for (let h = startHeight; h <= endHeight; h++) {
-        const blocks = originPeer.getActiveBlocksByHeight?.(h) || [];
-        for (const block of blocks) {
-          this.onPeerBlockProcessing(block, originPeer);
-          foundBlocks.push(block);
-        }
+    // Incrementa score de misbehavior
+    if (peer.id !== undefined) {
+      if (!this.misbehaviorScores[peer.id]) this.misbehaviorScores[peer.id] = 0;
+      this.misbehaviorScores[peer.id] += Node.MISBEHAVIOR_BLOCK_INVALID;
+      // Se passou do limite, desconecta
+      if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
+        this.disconnectFromPeer(peer, 'misbehavior');
+        this.addEvent({
+          type: 'peer-disconnected',
+          from: peer.id,
+          timestamp: Date.now(),
+          reason: 'misbehavior',
+        });
       }
     }
-    return foundBlocks;
   }
 
-  // Helper para obter o Node conectado pelo id
-  private getConnectedPeerNode(peerId: number): Node | null {
-    const neighbor = this.peers.find((n) => n.node.id === peerId);
-    return neighbor?.node || null;
+  private catchUpChain(orphan: Block, origin: Node) {
+    const totalPeers = this.peers.length;
+    let round = 0;
+    const missing: { block: Block; peer: Node }[] = [
+      { block: orphan, peer: origin },
+    ];
+    let completed = false;
+    let currentBlock = orphan;
+
+    while (!completed) {
+      const peer = this.peers[round % totalPeers];
+      round++;
+
+      const parentBlock = this.downloadParentBlockFromPeer(
+        currentBlock,
+        peer.node
+      );
+      console.log(
+        `[${this.id}] downloaded parent block from [${peer.node.id}] ${parentBlock?.hash}`
+      );
+      if (!parentBlock) continue;
+
+      completed =
+        this.checkIfBlockExists(parentBlock) || parentBlock.height === -1;
+
+      if (completed) {
+        break;
+      }
+
+      missing.unshift({ block: parentBlock, peer: peer.node });
+      currentBlock = parentBlock;
+    }
+
+    // Ordena os blocos pela altura (ascendente, do mais antigo para o mais recente)
+    missing.sort((a, b) => a.block.height - b.block.height);
+
+    for (const { block, peer } of missing) {
+      this.processBlock(block, peer);
+    }
+  }
+
+  private downloadGenesisFromPeer(peer: Node) {
+    const heightIndex = peer.getHeightIndex(0);
+    return peer.heights[heightIndex]?.map((h) => h.block) || [];
+  }
+
+  private downloadBlockFromPeer(height: number, hash: string, peer: Node) {
+    const heightIndex = peer.getHeightIndex(height);
+    return peer.heights[heightIndex]?.find((h) => h.block.hash === hash)?.block;
+  }
+
+  private downloadParentBlockFromPeer(block: Block, peer: Node) {
+    const heightIndex = peer.getHeightIndex(block.height - 1);
+    return peer.heights[heightIndex]?.find(
+      (h) => h.block.hash === block.previousHash
+    )?.block;
   }
 
   // Busca um bloco local por altura
@@ -951,16 +925,9 @@ export class Node {
   }
 
   // Busca todos os blocos ativos de uma altura
-  getActiveBlocksByHeight(height: number): Block[] {
-    const blocks: Block[] = [];
-    for (const heightArr of this.heights) {
-      for (const node of heightArr) {
-        if (node.block.height === height && node.isActive) {
-          blocks.push(node.block);
-        }
-      }
-    }
-    return blocks;
+  getBlocksByHeight(height: number): Block[] {
+    const heightIndex = this.getHeightIndex(height);
+    return this.heights[heightIndex]?.map((n) => n.block) || [];
   }
 
   // Método para validação completa do bloco
@@ -1155,5 +1122,12 @@ export class Node {
   // Validar se é soft ou hard fork. Caso seja hard, não é compatível.
   private isPeerConsensusCompatible(peer: Node): boolean {
     return peer.consensus.version === this.consensus.version;
+  }
+
+  private addEvent(event: Omit<EventLog, 'message'>) {
+    const message = event.reason ? validationMessages[event.reason] : undefined;
+    this.eventLog.unshift({ ...event, message });
+
+    console.debug(`[${this.id}] ${event.type} ${message}`);
   }
 }
