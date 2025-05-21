@@ -3,11 +3,7 @@ import { pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
-import {
-  EventLog,
-  validationMessages,
-  ValidationType,
-} from './event-log.model';
+import { EventLog, EventMessageManager, EventReason } from './event-log.model';
 
 export interface Neighbor {
   latency: number;
@@ -99,7 +95,10 @@ export class Node {
     Object.assign(this, init);
   }
 
-  addBlock(block: Block): { success: boolean; reason?: ValidationType } {
+  addBlock(block: Block): {
+    success: boolean;
+    reason?: EventReason['block-rejected'];
+  } {
     const blockNode = new BlockNode(block);
 
     if (!this.heights.length) {
@@ -619,8 +618,6 @@ export class Node {
       this.addEvent({
         type: 'peer-connected',
         from: peer.id,
-        timestamp: Date.now(),
-        reason: 'connection',
       });
 
       if (!this.peerBlockSubscriptions[peer.id!]) {
@@ -639,8 +636,6 @@ export class Node {
       peer.addEvent({
         type: 'peer-connected',
         from: this.id,
-        timestamp: Date.now(),
-        reason: 'connection',
       });
 
       if (!peer.peerBlockSubscriptions[this.id!]) {
@@ -656,7 +651,7 @@ export class Node {
   // Desconecta de um peer: remove dos neighbors e faz unsubscribe
   private disconnectFromPeer(
     peer: Node,
-    reason: ValidationType = 'disconnection'
+    reason: EventReason['peer-disconnected'] = 'disconnection'
   ) {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
@@ -670,7 +665,6 @@ export class Node {
       this.addEvent({
         type: 'peer-disconnected',
         from: peer.id,
-        timestamp: Date.now(),
         reason: reason,
       });
     }
@@ -684,7 +678,6 @@ export class Node {
       peer.addEvent({
         type: 'peer-disconnected',
         from: this.id,
-        timestamp: Date.now(),
         reason: 'disconnection',
       });
     }
@@ -725,9 +718,7 @@ export class Node {
 
     this.addEvent({
       type: 'block-validated',
-      reason: 'block-validated' as ValidationType,
       block: block,
-      timestamp: Date.now(),
       from: peer?.id,
     });
 
@@ -769,10 +760,8 @@ export class Node {
     //  Log de recebimento do bloco
     this.addEvent({
       type: 'block-received',
-      reason: 'block-received' as ValidationType,
       from: peer.id,
       block: block,
-      timestamp: Date.now(),
     });
 
     // Verificar se possui pai antes de validar consenso
@@ -827,13 +816,12 @@ export class Node {
   private handleNonConsensualBlock(
     block: Block,
     peer: Node,
-    reason?: ValidationType
+    reason?: EventReason['block-rejected']
   ) {
     this.addEvent({
       type: 'block-rejected',
       from: peer.id,
       block: block,
-      timestamp: Date.now(),
       reason: reason,
     });
 
@@ -933,7 +921,7 @@ export class Node {
   // Método para validação completa do bloco
   private validateBlockConsensus(block: Block): {
     isValid: boolean;
-    reason?: ValidationType;
+    reason?: EventReason['block-rejected'];
     message?: string;
   } {
     // 1. Validar tamanho máximo do bloco
@@ -1056,8 +1044,6 @@ export class Node {
     this.addEvent({
       type: 'peer-search',
       from: this.id,
-      timestamp: Date.now(),
-      reason: 'peer-search',
     });
 
     const searchDelay = 1000 + Math.random() * 3000;
@@ -1086,17 +1072,6 @@ export class Node {
         peersConnected++;
 
         if (this.peers.length >= this.MAX_PEERS) {
-          this.addEvent({
-            type: 'peer-search',
-            from: this.id,
-            timestamp: Date.now(),
-            reason: 'max-peers-reached',
-            peerSearch: {
-              peersFound,
-              peersConnected,
-              maxPeers: this.MAX_PEERS,
-            },
-          });
           break;
         }
       }
@@ -1105,9 +1080,7 @@ export class Node {
     this.addEvent({
       type: 'peer-search-complete',
       from: this.id,
-      timestamp: Date.now(),
-      reason: 'peer-search-complete',
-      peerSearch: {
+      data: {
         peersFound,
         peersConnected,
         maxPeers: this.MAX_PEERS,
@@ -1125,9 +1098,9 @@ export class Node {
   }
 
   private addEvent(event: Omit<EventLog, 'message'>) {
-    const message = event.reason ? validationMessages[event.reason] : undefined;
-    this.eventLog.unshift({ ...event, message });
-
+    const message = EventMessageManager.generateMessage(event);
+    const timestamp = Date.now();
+    this.eventLog.unshift({ ...event, message, timestamp });
     console.debug(`[${this.id}] ${event.type} ${message}`);
   }
 }
