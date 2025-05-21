@@ -182,7 +182,7 @@ export class MinerComponent {
         this.miner.incrementHashCount();
 
         if (block.isHashBelowTarget()) {
-          this.handleValidBlock(block);
+          this.handleMinedBlock(block);
           break;
         }
       }
@@ -211,14 +211,14 @@ export class MinerComponent {
         this.miner.incrementHashCount();
 
         if (block.isHashBelowTarget()) {
-          this.handleValidBlock(block);
+          this.handleMinedBlock(block);
           break;
         }
       }
     }
   }
 
-  private handleValidBlock(block: Block) {
+  private handleMinedBlock(block: Block) {
     block.minerId = this.miner.id;
     this.miner.isAddingBlock = true;
 
@@ -228,14 +228,6 @@ export class MinerComponent {
 
       // Cria um novo bloco para continuar minerando
       this.miner.initBlockTemplate(block);
-      // Reinicia o cronômetro para o novo bloco
-      const newBlock = this.miner.currentBlock;
-      if (newBlock) {
-        newBlock.miningElapsed = 0;
-      }
-
-      this.miner.updateLastMainBlocks();
-      this.miner.updateActiveForkHeights();
 
       // Emite evento para propagar o bloco
       this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
