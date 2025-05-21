@@ -7,41 +7,8 @@
       <span class="text-xs text-zinc-400">({{ node.eventLog.length }})</span>
     </div>
     <ul class="text-xs pr-1 divide-y divide-zinc-800">
-      <li
-        *ngFor="let event of node.eventLog | slice : 0 : 15"
-        class="py-1"
-        [ngClass]="{
-          'text-green-400':
-            event.type === 'block-validated' ||
-            event.type === 'block-mined' ||
-            event.type === 'peer-connected' ||
-            event.type === 'peer-search-complete',
-          'text-red-400':
-            event.type === 'block-rejected' ||
-            event.type === 'peer-disconnected',
-          'text-blue-400':
-            event.type === 'block-received' || event.type === 'peer-search',
-          'text-yellow-400': event.type === 'sync-progress'
-        }"
-      >
-        <span class="font-mono mr-1">{{
-          event.timestamp | date : "shortTime"
-        }}</span>
-        <span *ngIf="event.type === 'block-validated'">✔️</span>
-        <span *ngIf="event.type === 'block-rejected'">❌</span>
-        <span *ngIf="event.type === 'block-received'">⬇️</span>
-        <span *ngIf="event.type === 'sync-progress'">🔄</span>
-        <span *ngIf="event.type === 'block-mined'">⛏️</span>
-        <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
-        <span *ngIf="event.type === 'peer-connected'">🔗</span>
-        <span
-          *ngIf="
-            event.type === 'peer-search' ||
-            event.type === 'peer-search-complete'
-          "
-          >🌐</span
-        >
-        <span class="ml-1">{{ event.message }}</span>
+      <li *ngFor="let event of node.eventLog | slice : 0 : 15">
+        <app-event [event]="event"></app-event>
       </li>
       <li *ngIf="node.eventLog.length === 0" class="text-zinc-500 italic">
         Nenhum evento ainda.
@@ -88,15 +55,21 @@
           *ngFor="let event of node.eventLog"
           [ngClass]="{
             'text-green-400':
-              event.type === 'block-validated' ||
-              event.type === 'block-mined' ||
-              event.type === 'peer-connected' ||
-              event.type === 'peer-search-complete',
+              event.state === 'completed' &&
+              (event.type === 'block-validated' ||
+                event.type === 'block-mined' ||
+                event.type === 'peer-connected' ||
+                event.type === 'peer-search-complete'),
             'text-red-400':
-              event.type === 'block-rejected' ||
-              event.type === 'peer-disconnected',
+              event.state === 'failed' ||
+              (event.state === 'completed' &&
+                (event.type === 'block-rejected' ||
+                  event.type === 'peer-disconnected')),
             'text-blue-400':
-              event.type === 'block-received' || event.type === 'peer-search',
+              event.state === 'processing' ||
+              (event.state === 'completed' &&
+                (event.type === 'block-received' ||
+                  event.type === 'peer-search')),
             'text-yellow-400': event.type === 'sync-progress'
           }"
         >
@@ -117,7 +90,16 @@
             "
             >🌐</span
           >
-          <span class="ml-1">{{ event.message }}</span>
+          <span>{{ event.type }}</span>
+          <span class="ml-1 flex items-center gap-2">
+            {{ event.message }}
+            <span
+              *ngIf="event.state === 'processing'"
+              class="inline-flex items-center"
+            >
+              <span class="animate-spin">⟳</span>
+            </span>
+          </span>
         </li>
       </ul>
     </div>

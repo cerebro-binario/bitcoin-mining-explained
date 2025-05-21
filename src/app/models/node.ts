@@ -3,7 +3,12 @@ import { pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
-import { EventLog, EventMessageManager, EventReason } from './event-log.model';
+import {
+  EventLog,
+  EventMessageManager,
+  EventReason,
+  EventState,
+} from './event-log.model';
 
 export interface Neighbor {
   latency: number;
@@ -157,8 +162,8 @@ export class Node {
     if (block.minerId === this.id) {
       this.addEvent({
         type: 'block-mined',
-        block: block,
-        timestamp: Date.now(),
+        data: { block },
+        state: 'completed',
       });
     }
 
@@ -545,8 +550,7 @@ export class Node {
     if (!validationResult.isValid) {
       this.addEvent({
         type: 'block-rejected',
-        block: block,
-        timestamp: Date.now(),
+        data: { block },
         reason: validationResult.reason,
       });
       return false;
@@ -617,7 +621,7 @@ export class Node {
 
       this.addEvent({
         type: 'peer-connected',
-        from: peer.id,
+        data: { peerId: peer.id },
       });
 
       if (!this.peerBlockSubscriptions[peer.id!]) {
@@ -635,7 +639,7 @@ export class Node {
 
       peer.addEvent({
         type: 'peer-connected',
-        from: this.id,
+        data: { peerId: this.id },
       });
 
       if (!peer.peerBlockSubscriptions[this.id!]) {
@@ -664,7 +668,7 @@ export class Node {
     if (nBefore !== nAfter) {
       this.addEvent({
         type: 'peer-disconnected',
-        from: peer.id,
+        data: { peerId: peer.id },
         reason: reason,
       });
     }
@@ -677,7 +681,7 @@ export class Node {
     if (nBeforePeer !== nAfterPeer) {
       peer.addEvent({
         type: 'peer-disconnected',
-        from: this.id,
+        data: { peerId: this.id },
         reason: 'disconnection',
       });
     }
@@ -706,21 +710,42 @@ export class Node {
     const prevTopBlock = this.getLatestBlock();
     const result = this.addBlock(block);
 
+    // Encontra o evento de recebimento do bloco
+    const receivedEvent = this.eventLog.find(
+      (e) =>
+        e.type === 'block-received' &&
+        e.data?.peerId === peer.id &&
+        e.data?.block?.hash === block.hash &&
+        e.state === 'processing'
+    );
+
     if (!result.success) {
-      this.addEvent({
-        type: 'block-rejected',
-        block: block,
-        timestamp: Date.now(),
-        reason: result.reason,
-      });
+      if (receivedEvent) {
+        this.updateEventState(receivedEvent, 'failed', {
+          type: 'block-rejected',
+          reason: result.reason,
+        });
+      } else {
+        this.addEvent({
+          type: 'block-rejected',
+          data: { block },
+          reason: result.reason,
+        });
+      }
       return;
     }
 
-    this.addEvent({
-      type: 'block-validated',
-      block: block,
-      from: peer?.id,
-    });
+    if (receivedEvent) {
+      this.updateEventState(receivedEvent, 'completed', {
+        type: 'block-validated',
+        data: { peerId: peer?.id },
+      });
+    } else {
+      this.addEvent({
+        type: 'block-validated',
+        data: { block, peerId: peer?.id },
+      });
+    }
 
     // Atualizar current block APENAS se o topo da main chain mudou
     const newTopBlock = this.getLatestBlock();
@@ -760,8 +785,7 @@ export class Node {
     //  Log de recebimento do bloco
     this.addEvent({
       type: 'block-received',
-      from: peer.id,
-      block: block,
+      data: { peerId: peer.id, block },
     });
 
     // Verificar se possui pai antes de validar consenso
@@ -804,9 +828,7 @@ export class Node {
     // Log apenas se não for duplicado
     this.addEvent({
       type: 'block-rejected',
-      from: peer.id,
-      block: orphan,
-      timestamp: Date.now(),
+      data: { peerId: peer.id, block: orphan },
       reason: 'invalid-parent',
     });
 
@@ -820,9 +842,8 @@ export class Node {
   ) {
     this.addEvent({
       type: 'block-rejected',
-      from: peer.id,
-      block: block,
-      reason: reason,
+      data: { peerId: peer.id, block },
+      reason,
     });
 
     // Incrementa score de misbehavior
@@ -834,8 +855,7 @@ export class Node {
         this.disconnectFromPeer(peer, 'misbehavior');
         this.addEvent({
           type: 'peer-disconnected',
-          from: peer.id,
-          timestamp: Date.now(),
+          data: { peerId: peer.id },
           reason: 'misbehavior',
         });
       }
@@ -1041,9 +1061,9 @@ export class Node {
 
     this.isSearchingPeers = true;
 
-    this.addEvent({
+    const event = this.addEvent({
       type: 'peer-search',
-      from: this.id,
+      data: { peerId: this.id },
     });
 
     const searchDelay = 1000 + Math.random() * 3000;
@@ -1077,15 +1097,17 @@ export class Node {
       }
     }
 
-    this.addEvent({
+    // Atualiza o evento existente para completed
+    this.addSequenceEvent(event, {
       type: 'peer-search-complete',
-      from: this.id,
+      state: 'completed',
       data: {
         peersFound,
         peersConnected,
         maxPeers: this.MAX_PEERS,
       },
     });
+    event.state = 'completed';
 
     this.isSearchingPeers = false;
   }
@@ -1097,10 +1119,94 @@ export class Node {
     return peer.consensus.version === this.consensus.version;
   }
 
-  private addEvent(event: Omit<EventLog, 'message'>) {
-    const message = EventMessageManager.generateMessage(event);
+  private addEvent(
+    event: Omit<EventLog, 'message' | 'id' | 'timestamp' | 'minerId'>
+  ): EventLog {
     const timestamp = Date.now();
-    this.eventLog.unshift({ ...event, message, timestamp });
-    console.debug(`[${this.id}] ${event.type} ${message}`);
+    const id = CryptoJS.SHA256(
+      `${timestamp}-${event.type}-${event.data?.block?.hash || ''}`
+    ).toString();
+
+    event.state ??= 'processing';
+
+    // Se for um evento de bloco recebido, verifica se já existe um evento em processamento
+    if (event.type === 'block-received' && event.data?.block) {
+      const existingEvent = this.eventLog.find(
+        (e) =>
+          e.type === 'block-received' &&
+          e.data?.block?.hash === event.data?.block?.hash &&
+          e.state === 'processing'
+      );
+
+      if (existingEvent) {
+        // Atualiza o evento existente
+        const updatedEvent = EventMessageManager.updateEvent(existingEvent, {
+          ...event,
+        });
+        const index = this.eventLog.indexOf(existingEvent);
+        this.eventLog[index] = updatedEvent;
+        console.debug(`[${this.id}] ${event.type} ${updatedEvent.message}`);
+        return updatedEvent;
+      }
+    }
+
+    // Cria um novo evento
+    const newEvent: EventLog = {
+      ...event,
+      minerId: this.id,
+      id,
+      timestamp,
+      message: EventMessageManager.generateMessage({
+        ...event,
+        id,
+      }),
+    };
+
+    this.eventLog.unshift(newEvent);
+    console.debug(`[${this.id}] ${event.type} ${newEvent.message}`);
+    return newEvent;
+  }
+
+  private addSequenceEvent(
+    event: EventLog,
+    sequence: Omit<EventLog, 'id' | 'timestamp' | 'message'>
+  ) {
+    const timestamp = Date.now();
+    const id = CryptoJS.SHA256(
+      `${timestamp}-${sequence.type}-${sequence.data?.block?.hash || ''}`
+    ).toString();
+
+    sequence.state ??= 'processing';
+
+    const newEvent: EventLog = {
+      ...sequence,
+      id,
+      timestamp,
+      message: EventMessageManager.generateMessage({
+        ...sequence,
+        id,
+      }),
+    };
+    event.lines = [...(event.lines || []), newEvent];
+  }
+
+  // Método para atualizar o estado de um evento
+  private updateEventState(
+    event: EventLog,
+    state: EventState,
+    updates?: Partial<Omit<EventLog, 'id' | 'timestamp' | 'state'>>
+  ): EventLog {
+    if (event) {
+      const updatedEvent = EventMessageManager.updateEvent(event, {
+        ...updates,
+        state,
+      });
+      const index = this.eventLog.indexOf(event);
+      this.eventLog[index] = updatedEvent;
+      console.debug(`[${this.id}] ${event.type} ${updatedEvent.message}`);
+      return updatedEvent;
+    }
+
+    return event;
   }
 }

@@ -11,6 +11,11 @@ export type EventType =
   | 'peer-search' // Busca por peers
   | 'peer-search-complete'; // Busca por peers concluída
 
+export type EventState =
+  | 'processing' // Evento está sendo processado
+  | 'completed' // Evento foi completado
+  | 'failed'; // Evento falhou
+
 // Razões específicas para cada tipo de evento
 export type EventReason = {
   'block-rejected':
@@ -39,13 +44,16 @@ export type EventReason = {
 
 // Interface para o log de eventos
 export interface EventLog {
+  id: string; // ID único para rastrear o evento
+  minerId?: number;
   type: EventType;
-  from?: number;
-  block?: Block;
   timestamp?: number;
-  reason?: EventReason[EventType]; // Razão específica para o tipo de evento
+  reason?: EventReason[EventType];
   message: string;
+  state?: EventState; // Estado atual do evento
   data?: {
+    peerId?: number;
+    block?: Block;
     processed?: number;
     total?: number;
     blocksPerSecond?: number;
@@ -54,6 +62,7 @@ export interface EventLog {
     peersConnected?: number;
     maxPeers?: number;
   };
+  lines?: EventLog[];
 }
 
 // Mensagens para cada tipo de evento
@@ -63,6 +72,20 @@ export const eventMessages: Record<EventType, string> = {
   'block-rejected': 'Bloco {block.hash} rejeitado: {reason}',
   'block-mined': 'Bloco {block.hash} minerado',
   'sync-progress': 'Sincronização: {data.processed}/{data.total} blocos',
+  'peer-disconnected': 'Peer {from} desconectado: {reason}',
+  'peer-connected': 'Peer {from} conectado',
+  'peer-search': 'Buscando peers...',
+  'peer-search-complete':
+    'Busca concluída: {data.peersFound} encontrados, {data.peersConnected} conectados',
+};
+
+// Mensagens de processamento para cada tipo de evento
+export const processingMessages: Record<EventType, string> = {
+  'block-received': 'Validando bloco {block.hash}...',
+  'block-validated': 'Bloco {block.hash} validado',
+  'block-rejected': 'Bloco {block.hash} rejeitado: {reason}',
+  'block-mined': 'Bloco {block.hash} minerado',
+  'sync-progress': 'Sincronizando: {data.processed}/{data.total} blocos',
   'peer-disconnected': 'Peer {from} desconectado: {reason}',
   'peer-connected': 'Peer {from} conectado',
   'peer-search': 'Buscando peers...',
@@ -96,7 +119,10 @@ export const disconnectMessages: Record<
 // Classe para gerenciar mensagens
 export class EventMessageManager {
   static generateMessage(event: Omit<EventLog, 'message'>): string {
-    let template = eventMessages[event.type];
+    const template =
+      event.state === 'processing'
+        ? processingMessages[event.type]
+        : eventMessages[event.type];
 
     // Substitui placeholders
     return template.replace(/\{([^}]+)\}/g, (match, key) => {
@@ -118,5 +144,15 @@ export class EventMessageManager {
         .reduce((obj: any, k: string) => obj?.[k], event);
       return value !== undefined ? value : match;
     });
+  }
+
+  // Método para atualizar um evento existente
+  static updateEvent(
+    event: EventLog,
+    updates: Partial<Omit<EventLog, 'id' | 'timestamp'>>
+  ): EventLog {
+    const updatedEvent = { ...event, ...updates };
+    updatedEvent.message = this.generateMessage(updatedEvent);
+    return updatedEvent;
   }
 }
