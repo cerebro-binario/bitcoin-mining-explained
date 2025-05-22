@@ -71,7 +71,7 @@ export const EVENT_LOG_VISUAL_MAP: Record<
   'block-rejected': {
     color: 'text-red-500',
     icon: 'pi pi-times-circle',
-    label: 'Bloco rejeitado',
+    label: 'Bloco rejeitado ({{reason}})',
   },
   'block-validated': {
     color: 'text-green-500',

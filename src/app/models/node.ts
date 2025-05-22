@@ -4,6 +4,7 @@ import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
+  BLOCK_REJECTED_REASONS,
   EventManager,
   eventTitles,
   NodeEvent,
@@ -734,6 +735,7 @@ export class Node {
         reason: result.reason,
       });
 
+      EventManager.fail(event);
       return;
     }
 
@@ -741,6 +743,8 @@ export class Node {
       peerId: peer?.id,
       block,
     });
+
+    EventManager.complete(event);
 
     // Atualizar current block APENAS se o topo da main chain mudou
     const newTopBlock = this.getLatestBlock();
@@ -815,6 +819,12 @@ export class Node {
       console.debug(
         `[${this.id}] received duplicate orphan block ${orphan.hash} from ${peer.id}`
       );
+      EventManager.log(event, 'block-rejected', {
+        peerId: peer.id,
+        block: orphan,
+        reason: BLOCK_REJECTED_REASONS['duplicate-orphan'],
+      });
+      EventManager.fail(event);
       return;
     }
 
@@ -824,10 +834,12 @@ export class Node {
     EventManager.log(event, 'block-rejected', {
       peerId: peer.id,
       block: orphan,
-      reason: 'invalid-parent',
+      reason: BLOCK_REJECTED_REASONS['invalid-parent'],
     });
 
     this.catchUpChain(orphan, peer, event);
+
+    EventManager.complete(event);
   }
 
   private handleNonConsensualBlock(

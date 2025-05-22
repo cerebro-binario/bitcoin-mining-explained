@@ -69,3 +69,8 @@ export class EventManager {
     event.state = 'pending';
   }
 }
+
+export const BLOCK_REJECTED_REASONS: Record<string, string> = {
+  'duplicate-orphan': 'bloco órfão duplicado',
+  'invalid-parent': 'bloco sem pai',
+};
