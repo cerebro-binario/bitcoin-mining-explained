@@ -14,6 +14,7 @@ import { EventLogVisualPipe } from '../event-log-visual.pipe';
     EventLogMessagePipe,
   ],
   templateUrl: './event-log.component.html',
+  styleUrls: ['./event-log.component.scss'],
 })
 export class EventLogComponent {
   @Input() log!: EventLog;

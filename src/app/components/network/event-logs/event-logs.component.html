@@ -6,7 +6,7 @@
       <span>Eventos</span>
       <span class="text-xs text-zinc-400">({{ node.eventLog.length }})</span>
     </div>
-    <ul class="text-xs pr-1 divide-y divide-zinc-800">
+    <ul class="text-xs pr-1">
       <li *ngFor="let event of node.eventLog | slice : 0 : 15">
         <app-event [event]="event"></app-event>
       </li>
