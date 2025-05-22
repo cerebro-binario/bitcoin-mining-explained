@@ -640,7 +640,7 @@ export class Node {
 
       if (!peer.peerBlockSubscriptions[this.id!]) {
         peer.peerBlockSubscriptions[this.id!] = this.blockBroadcast$
-          .pipe(this.blockBroadcastPipe(peer))
+          .pipe(peer.blockBroadcastPipe(this))
           .subscribe();
       }
 
