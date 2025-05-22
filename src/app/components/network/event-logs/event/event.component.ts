@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { EventLog } from '../../../../models/event-log.model';
+import { NodeEvent } from '../../../../models/event-log.model';
+import { EventLogComponent } from './event-log/event-log.component';
 
 @Component({
   selector: 'app-event',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, EventLogComponent],
   templateUrl: './event.component.html',
 })
 export class EventComponent {
-  @Input() event!: EventLog;
+  @Input() event!: NodeEvent;
 }

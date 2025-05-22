@@ -4,10 +4,10 @@ import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
-  EventLog,
-  EventMessageManager,
-  EventReason,
-  EventState,
+  EventManager,
+  eventTitles,
+  NodeEvent,
+  NodeEventType,
 } from './event-log.model';
 
 export interface Neighbor {
@@ -30,7 +30,7 @@ export class Node {
   isAddingBlock: boolean = false;
 
   // Log de eventos de propagação/validação de blocos
-  eventLog: EventLog[] = [];
+  eventLog: NodeEvent[] = [];
 
   // Rastreamento de peers durante o sync inicial
   syncPeers: {
@@ -102,7 +102,7 @@ export class Node {
 
   addBlock(block: Block): {
     success: boolean;
-    reason?: EventReason['block-rejected'];
+    reason?: string;
   } {
     const blockNode = new BlockNode(block);
 
@@ -160,11 +160,8 @@ export class Node {
 
     // Log de bloco minerado localmente
     if (block.minerId === this.id) {
-      this.addEvent({
-        type: 'block-mined',
-        data: { block },
-        state: 'completed',
-      });
+      const event = this.addEvent('block-mined', { block });
+      EventManager.complete(event);
     }
 
     this.checkForksAndSort();
@@ -548,11 +545,7 @@ export class Node {
   ): boolean {
     const validationResult = this.validateBlockConsensus(block);
     if (!validationResult.isValid) {
-      this.addEvent({
-        type: 'block-rejected',
-        data: { block },
-        reason: validationResult.reason,
-      });
+      // TODO: adicionar evento de bloco rejeitado
       return false;
     }
     return true;
@@ -607,11 +600,19 @@ export class Node {
     return candidates[Math.floor(Math.random() * candidates.length)];
   }
 
-  private connectToPeerWithEviction(peer: Node, latency: number = 50) {
+  private connectToPeerWithEviction(
+    peer: Node,
+    latency: number = 50,
+    event: NodeEvent
+  ) {
+    const peerEvent = peer.addEvent('peer-requested-connection', {
+      peerId: this.id,
+    });
+
     // Se o peer já está cheio, desconecta o vizinho mais "popular" dele
     if (peer.peers.length >= peer.MAX_PEERS) {
       const toDrop = this.pickEvictionCandidate(peer.peers);
-      peer.disconnectFromPeer(toDrop.node);
+      peer.disconnectFromPeer(toDrop.node, 'peer-rotation-needed', peerEvent);
     }
 
     // Só conecta se ainda não estiver conectado
@@ -619,10 +620,7 @@ export class Node {
       const neighbor = { node: peer, latency };
       this.peers.push(neighbor);
 
-      this.addEvent({
-        type: 'peer-connected',
-        data: { peerId: peer.id },
-      });
+      EventManager.log(event, 'peer-connected', { peerId: peer.id });
 
       if (!this.peerBlockSubscriptions[peer.id!]) {
         this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
@@ -630,17 +628,14 @@ export class Node {
           .subscribe();
       }
 
-      this.syncWith(peer);
+      this.syncWith(peer, event);
     }
 
     if (!peer.peers.some((n) => n.node.id === this.id)) {
       const neighbor = { node: this, latency };
       peer.peers.push(neighbor);
 
-      peer.addEvent({
-        type: 'peer-connected',
-        data: { peerId: this.id },
-      });
+      EventManager.log(peerEvent, 'peer-connected', { peerId: this.id });
 
       if (!peer.peerBlockSubscriptions[this.id!]) {
         peer.peerBlockSubscriptions[this.id!] = this.blockBroadcast$
@@ -648,14 +643,15 @@ export class Node {
           .subscribe();
       }
 
-      peer.syncWith(this);
+      peer.syncWith(this, peerEvent);
     }
   }
 
   // Desconecta de um peer: remove dos neighbors e faz unsubscribe
   private disconnectFromPeer(
     peer: Node,
-    reason: EventReason['peer-disconnected'] = 'disconnection'
+    reason: string = 'disconnection',
+    event?: NodeEvent
   ) {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
@@ -666,11 +662,16 @@ export class Node {
     const nAfter = this.peers.length;
 
     if (nBefore !== nAfter) {
-      this.addEvent({
-        type: 'peer-disconnected',
-        data: { peerId: peer.id },
-        reason: reason,
-      });
+      if (event) {
+        EventManager.log(event, 'peer-rotation', {
+          peerId: peer.id,
+        });
+      } else {
+        const disconnectEvent = this.addEvent('peer-disconnected', {
+          peerId: peer.id,
+        });
+        EventManager.complete(disconnectEvent);
+      }
     }
 
     const nBeforePeer = peer.peers.length;
@@ -679,28 +680,45 @@ export class Node {
     const nAfterPeer = peer.peers.length;
 
     if (nBeforePeer !== nAfterPeer) {
-      peer.addEvent({
-        type: 'peer-disconnected',
-        data: { peerId: this.id },
-        reason: 'disconnection',
+      const disconnectEvent = peer.addEvent('peer-disconnected', {
+        peerId: this.id,
+        reason,
       });
+      EventManager.complete(disconnectEvent);
     }
   }
 
-  private syncWith(peer: Node) {
+  private syncWith(peer: Node, event: NodeEvent) {
     console.debug(`[${this.id}] syncing with [${peer.id}]`);
-    const lastestForks = peer.heights[0];
-    for (const fork of lastestForks) {
-      this.catchUpChain(fork.block, peer);
+    EventManager.log(event, 'sync-started', { peerId: peer.id });
+
+    const latestForks = peer.heights[0] || [];
+    for (const fork of latestForks) {
+      this.catchUpChain(fork.block, peer, event);
     }
+
+    if (latestForks.length === 0) {
+      EventManager.log(event, 'already-in-sync', {
+        peerId: peer.id,
+      });
+    }
+
+    EventManager.log(event, 'sync-completed', { peerId: peer.id });
   }
 
   // Método centralizado para processar um bloco recebido
-  private processBlock(block: Block, peer: Node): void {
+  private processBlock(block: Block, peer: Node, event: NodeEvent): void {
+    EventManager.log(event, 'validating-block', { peerId: peer.id, block });
+
     // 4. Validar o bloco
     const validationResult = this.validateBlockConsensus(block);
     if (!validationResult.isValid) {
-      this.handleNonConsensualBlock(block, peer, validationResult.reason);
+      this.handleNonConsensualBlock(
+        block,
+        peer,
+        event,
+        validationResult.reason
+      );
       return;
     }
 
@@ -710,42 +728,19 @@ export class Node {
     const prevTopBlock = this.getLatestBlock();
     const result = this.addBlock(block);
 
-    // Encontra o evento de recebimento do bloco
-    const receivedEvent = this.eventLog.find(
-      (e) =>
-        e.type === 'block-received' &&
-        e.data?.peerId === peer.id &&
-        e.data?.block?.hash === block.hash &&
-        e.state === 'processing'
-    );
-
     if (!result.success) {
-      if (receivedEvent) {
-        this.updateEventState(receivedEvent, 'failed', {
-          type: 'block-rejected',
-          reason: result.reason,
-        });
-      } else {
-        this.addEvent({
-          type: 'block-rejected',
-          data: { block },
-          reason: result.reason,
-        });
-      }
+      EventManager.log(event, 'block-rejected', {
+        block,
+        reason: result.reason,
+      });
+
       return;
     }
 
-    if (receivedEvent) {
-      this.updateEventState(receivedEvent, 'completed', {
-        type: 'block-validated',
-        data: { peerId: peer?.id },
-      });
-    } else {
-      this.addEvent({
-        type: 'block-validated',
-        data: { block, peerId: peer?.id },
-      });
-    }
+    EventManager.log(event, 'block-validated', {
+      peerId: peer?.id,
+      block,
+    });
 
     // Atualizar current block APENAS se o topo da main chain mudou
     const newTopBlock = this.getLatestBlock();
@@ -783,17 +778,17 @@ export class Node {
     //  Marcar como sincronizando
     this.isSyncing = true;
     //  Log de recebimento do bloco
-    this.addEvent({
-      type: 'block-received',
-      data: { peerId: peer.id, block },
+    const event = this.addEvent('block-received', {
+      peerId: peer.id,
+      block,
     });
 
     // Verificar se possui pai antes de validar consenso
     const parent = this.findParentNode(block);
     if (!parent && block.height > 0) {
-      this.processOrphan(block, peer);
+      this.processOrphan(block, peer, event);
     } else {
-      this.processBlock(block, peer);
+      this.processBlock(block, peer, event);
     }
 
     // Repropagar para outros peers
@@ -809,7 +804,7 @@ export class Node {
     return this.heights[heightIndex]?.some((h) => h.block.hash === block.hash);
   }
 
-  private processOrphan(orphan: Block, peer: Node) {
+  private processOrphan(orphan: Block, peer: Node, event: NodeEvent) {
     // Armazena como órfão e encerra o fluxo
     if (!this.orphanBlocks.has(orphan.previousHash)) {
       this.orphanBlocks.set(orphan.previousHash, []);
@@ -826,23 +821,24 @@ export class Node {
     this.orphanBlocks.get(orphan.previousHash)!.push(orphan);
 
     // Log apenas se não for duplicado
-    this.addEvent({
-      type: 'block-rejected',
-      data: { peerId: peer.id, block: orphan },
+    EventManager.log(event, 'block-rejected', {
+      peerId: peer.id,
+      block: orphan,
       reason: 'invalid-parent',
     });
 
-    this.catchUpChain(orphan, peer);
+    this.catchUpChain(orphan, peer, event);
   }
 
   private handleNonConsensualBlock(
     block: Block,
     peer: Node,
-    reason?: EventReason['block-rejected']
+    event: NodeEvent,
+    reason?: string
   ) {
-    this.addEvent({
-      type: 'block-rejected',
-      data: { peerId: peer.id, block },
+    EventManager.log(event, 'block-rejected', {
+      peerId: peer.id,
+      block,
       reason,
     });
 
@@ -852,17 +848,12 @@ export class Node {
       this.misbehaviorScores[peer.id] += Node.MISBEHAVIOR_BLOCK_INVALID;
       // Se passou do limite, desconecta
       if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
-        this.disconnectFromPeer(peer, 'misbehavior');
-        this.addEvent({
-          type: 'peer-disconnected',
-          data: { peerId: peer.id },
-          reason: 'misbehavior',
-        });
+        this.disconnectFromPeer(peer, 'misbehavior', event);
       }
     }
   }
 
-  private catchUpChain(orphan: Block, origin: Node) {
+  private catchUpChain(orphan: Block, origin: Node, event: NodeEvent) {
     const totalPeers = this.peers.length;
     let round = 0;
     const missing: { block: Block; peer: Node }[] = [
@@ -879,9 +870,6 @@ export class Node {
         currentBlock,
         peer.node
       );
-      console.log(
-        `[${this.id}] downloaded parent block from [${peer.node.id}] ${parentBlock?.hash}`
-      );
       if (!parentBlock) continue;
 
       completed =
@@ -895,11 +883,22 @@ export class Node {
       currentBlock = parentBlock;
     }
 
+    if (missing.length === 0) {
+      EventManager.log(event, 'already-in-sync', { peerId: origin.id });
+
+      return;
+    }
+
+    EventManager.log(event, 'sync-progress', {
+      peerId: origin.id,
+      nMissingBlocks: missing.length,
+    });
+
     // Ordena os blocos pela altura (ascendente, do mais antigo para o mais recente)
     missing.sort((a, b) => a.block.height - b.block.height);
 
     for (const { block, peer } of missing) {
-      this.processBlock(block, peer);
+      this.processBlock(block, peer, event);
     }
   }
 
@@ -941,7 +940,7 @@ export class Node {
   // Método para validação completa do bloco
   private validateBlockConsensus(block: Block): {
     isValid: boolean;
-    reason?: EventReason['block-rejected'];
+    reason?: string;
     message?: string;
   } {
     // 1. Validar tamanho máximo do bloco
@@ -1061,10 +1060,7 @@ export class Node {
 
     this.isSearchingPeers = true;
 
-    const event = this.addEvent({
-      type: 'peer-search',
-      data: { peerId: this.id },
-    });
+    const searchPeersEvent = this.addEvent('peer-search');
 
     const searchDelay = 1000 + Math.random() * 3000;
     await new Promise((resolve) => setTimeout(resolve, searchDelay));
@@ -1086,28 +1082,25 @@ export class Node {
 
       peersFound++;
 
+      EventManager.log(searchPeersEvent, 'peer-found', { peerId: peer.id });
+
       if (this.isPeerConsensusCompatible(peer)) {
         const latency = 3000 + Math.floor(Math.random() * 7001); // 3000-10000ms (3-10 segundos)
-        this.connectToPeerWithEviction(peer, latency);
+        this.connectToPeerWithEviction(peer, latency, searchPeersEvent);
         peersConnected++;
 
         if (this.peers.length >= this.MAX_PEERS) {
+          EventManager.log(searchPeersEvent, 'max-peers-reached');
           break;
         }
       }
     }
 
-    // Atualiza o evento existente para completed
-    this.addSequenceEvent(event, {
-      type: 'peer-search-complete',
-      state: 'completed',
-      data: {
-        peersFound,
-        peersConnected,
-        maxPeers: this.MAX_PEERS,
-      },
+    EventManager.log(searchPeersEvent, 'peer-search-completed', {
+      peersFound,
+      peersConnected,
     });
-    event.state = 'completed';
+    EventManager.complete(searchPeersEvent);
 
     this.isSearchingPeers = false;
   }
@@ -1119,93 +1112,17 @@ export class Node {
     return peer.consensus.version === this.consensus.version;
   }
 
-  private addEvent(
-    event: Omit<EventLog, 'message' | 'id' | 'timestamp' | 'minerId'>
-  ): EventLog {
-    const timestamp = Date.now();
-    const id = CryptoJS.SHA256(
-      `${timestamp}-${event.type}-${event.data?.block?.hash || ''}`
-    ).toString();
-
-    event.state ??= 'processing';
-
-    // Se for um evento de bloco recebido, verifica se já existe um evento em processamento
-    if (event.type === 'block-received' && event.data?.block) {
-      const existingEvent = this.eventLog.find(
-        (e) =>
-          e.type === 'block-received' &&
-          e.data?.block?.hash === event.data?.block?.hash &&
-          e.state === 'processing'
-      );
-
-      if (existingEvent) {
-        // Atualiza o evento existente
-        const updatedEvent = EventMessageManager.updateEvent(existingEvent, {
-          ...event,
-        });
-        const index = this.eventLog.indexOf(existingEvent);
-        this.eventLog[index] = updatedEvent;
-        console.debug(`[${this.id}] ${event.type} ${updatedEvent.message}`);
-        return updatedEvent;
-      }
-    }
-
-    // Cria um novo evento
-    const newEvent: EventLog = {
-      ...event,
+  private addEvent(type: NodeEventType, data?: any) {
+    const event: NodeEvent = {
       minerId: this.id,
-      id,
-      timestamp,
-      message: EventMessageManager.generateMessage({
-        ...event,
-        id,
-      }),
+      type,
+      data,
+      title: eventTitles[type],
+      timestamp: Date.now(),
+      logs: [],
+      state: 'pending',
     };
-
-    this.eventLog.unshift(newEvent);
-    console.debug(`[${this.id}] ${event.type} ${newEvent.message}`);
-    return newEvent;
-  }
-
-  private addSequenceEvent(
-    event: EventLog,
-    sequence: Omit<EventLog, 'id' | 'timestamp' | 'message'>
-  ) {
-    const timestamp = Date.now();
-    const id = CryptoJS.SHA256(
-      `${timestamp}-${sequence.type}-${sequence.data?.block?.hash || ''}`
-    ).toString();
-
-    sequence.state ??= 'processing';
-
-    const newEvent: EventLog = {
-      ...sequence,
-      id,
-      timestamp,
-      message: EventMessageManager.generateMessage({
-        ...sequence,
-        id,
-      }),
-    };
-    event.lines = [...(event.lines || []), newEvent];
-  }
-
-  // Método para atualizar o estado de um evento
-  private updateEventState(
-    event: EventLog,
-    state: EventState,
-    updates?: Partial<Omit<EventLog, 'id' | 'timestamp' | 'state'>>
-  ): EventLog {
-    if (event) {
-      const updatedEvent = EventMessageManager.updateEvent(event, {
-        ...updates,
-        state,
-      });
-      const index = this.eventLog.indexOf(event);
-      this.eventLog[index] = updatedEvent;
-      console.debug(`[${this.id}] ${event.type} ${updatedEvent.message}`);
-      return updatedEvent;
-    }
+    this.eventLog.unshift(event);
 
     return event;
   }

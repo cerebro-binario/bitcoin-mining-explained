@@ -1,158 +1,71 @@
-import { Block } from './block.model';
-
-export type EventType =
-  | 'block-received' // Evento de recebimento de bloco
-  | 'block-validated' // Bloco foi validado com sucesso
-  | 'block-rejected' // Bloco foi rejeitado (com razão específica)
-  | 'sync-progress' // Progresso de sincronização
+export type NodeEventType =
   | 'block-mined' // Bloco foi minerado
-  | 'peer-disconnected' // Peer foi desconectado (com razão específica)
-  | 'peer-connected' // Peer foi conectado
+  | 'block-received' // Evento de recebimento de bloco
   | 'peer-search' // Busca por peers
-  | 'peer-search-complete'; // Busca por peers concluída
+  | 'peer-requested-connection' // Peer solicitou conexão
+  | 'peer-disconnected'; // Peer foi desconectado (com razão específica)
 
-export type EventState =
-  | 'processing' // Evento está sendo processado
-  | 'completed' // Evento foi completado
-  | 'failed'; // Evento falhou
+export type EventLogType =
+  | 'peer-found'
+  | 'peer-connected'
+  | 'max-peers-reached'
+  | 'peer-search-completed'
+  | 'sync-started'
+  | 'already-in-sync'
+  | 'sync-completed'
+  | 'sync-progress'
+  | 'validating-block'
+  | 'block-rejected'
+  | 'block-validated'
+  | 'peer-rotation';
 
-// Razões específicas para cada tipo de evento
-export type EventReason = {
-  'block-rejected':
-    | 'duplicate'
-    | 'invalid-parent'
-    | 'invalid-hash'
-    | 'invalid-target'
-    | 'invalid-timestamp'
-    | 'invalid-nbits'
-    | 'invalid-subsidy'
-    | 'invalid-size'
-    | 'invalid-transactions';
-
-  'peer-disconnected': 'misbehavior' | 'disconnection';
-
-  'sync-progress': 'sync-progress' | 'sync-complete';
-
-  // Tipos que não têm razões específicas
-  'block-received': never;
-  'block-validated': never;
-  'block-mined': never;
-  'peer-connected': never;
-  'peer-search': never;
-  'peer-search-complete': never;
-};
+export type EventState = 'pending' | 'completed' | 'failed';
 
 // Interface para o log de eventos
-export interface EventLog {
-  id: string; // ID único para rastrear o evento
+export interface NodeEvent {
   minerId?: number;
-  type: EventType;
-  timestamp?: number;
-  reason?: EventReason[EventType];
-  message: string;
-  state?: EventState; // Estado atual do evento
-  data?: {
-    peerId?: number;
-    block?: Block;
-    processed?: number;
-    total?: number;
-    blocksPerSecond?: number;
-    estimatedTimeRemaining?: number;
-    peersFound?: number;
-    peersConnected?: number;
-    maxPeers?: number;
-  };
-  lines?: EventLog[];
+  timestamp: number;
+  type: NodeEventType;
+  title: string;
+  data: any;
+  logs: EventLog[];
+  state: EventState;
 }
 
-// Mensagens para cada tipo de evento
-export const eventMessages: Record<EventType, string> = {
-  'block-received': 'Bloco {block.hash} recebido de {from}',
-  'block-validated': 'Bloco {block.hash} validado',
-  'block-rejected': 'Bloco {block.hash} rejeitado: {reason}',
-  'block-mined': 'Bloco {block.hash} minerado',
-  'sync-progress': 'Sincronização: {data.processed}/{data.total} blocos',
-  'peer-disconnected': 'Peer {from} desconectado: {reason}',
-  'peer-connected': 'Peer {from} conectado',
-  'peer-search': 'Buscando peers...',
-  'peer-search-complete':
-    'Busca concluída: {data.peersFound} encontrados, {data.peersConnected} conectados',
+export interface EventLog {
+  type: EventLogType;
+  timestamp?: number;
+  data?: any;
+}
+
+export const eventTitles: Record<NodeEventType, string> = {
+  'block-mined': '⛏️ Bloco minerado',
+  'block-received': '⬇️ Bloco recebido',
+  'peer-search': '🌐 Busca por peers',
+  'peer-requested-connection': '🔗 Peer solicitando conexão',
+  'peer-disconnected': '🚫 Peer desconectado',
 };
 
-// Mensagens de processamento para cada tipo de evento
-export const processingMessages: Record<EventType, string> = {
-  'block-received': 'Validando bloco {block.hash}...',
-  'block-validated': 'Bloco {block.hash} validado',
-  'block-rejected': 'Bloco {block.hash} rejeitado: {reason}',
-  'block-mined': 'Bloco {block.hash} minerado',
-  'sync-progress': 'Sincronizando: {data.processed}/{data.total} blocos',
-  'peer-disconnected': 'Peer {from} desconectado: {reason}',
-  'peer-connected': 'Peer {from} conectado',
-  'peer-search': 'Buscando peers...',
-  'peer-search-complete':
-    'Busca concluída: {data.peersFound} encontrados, {data.peersConnected} conectados',
-};
+export class EventManager {
+  static log(event: NodeEvent, logType: EventLogType, data?: any) {
+    const log: EventLog = {
+      type: logType,
+      timestamp: Date.now(),
+      data,
+    };
 
-// Mensagens para cada razão de rejeição
-export const rejectionMessages: Record<EventReason['block-rejected'], string> =
-  {
-    duplicate: 'Bloco duplicado',
-    'invalid-parent': 'Bloco órfão: bloco pai não encontrado',
-    'invalid-hash': 'Hash do bloco inválido',
-    'invalid-target': 'Bloco não atinge o target de dificuldade',
-    'invalid-timestamp': 'Timestamp do bloco inválido',
-    'invalid-nbits': 'Dificuldade (nBits) do bloco incorreta',
-    'invalid-subsidy': 'Subsídio do bloco incorreto',
-    'invalid-size': 'Tamanho do bloco excede o limite máximo',
-    'invalid-transactions': 'Número de transações excede o limite máximo',
-  };
-
-// Mensagens para cada razão de desconexão
-export const disconnectMessages: Record<
-  EventReason['peer-disconnected'],
-  string
-> = {
-  misbehavior: 'Mau comportamento',
-  disconnection: 'Desconectado',
-};
-
-// Classe para gerenciar mensagens
-export class EventMessageManager {
-  static generateMessage(event: Omit<EventLog, 'message'>): string {
-    const template =
-      event.state === 'processing'
-        ? processingMessages[event.type]
-        : eventMessages[event.type];
-
-    // Substitui placeholders
-    return template.replace(/\{([^}]+)\}/g, (match, key) => {
-      if (key === 'reason') {
-        if (event.type === 'block-rejected') {
-          return rejectionMessages[
-            event.reason as EventReason['block-rejected']
-          ];
-        }
-        if (event.type === 'peer-disconnected') {
-          return disconnectMessages[
-            event.reason as EventReason['peer-disconnected']
-          ];
-        }
-      }
-
-      const value = key
-        .split('.')
-        .reduce((obj: any, k: string) => obj?.[k], event);
-      return value !== undefined ? value : match;
-    });
+    event.logs.push(log);
   }
 
-  // Método para atualizar um evento existente
-  static updateEvent(
-    event: EventLog,
-    updates: Partial<Omit<EventLog, 'id' | 'timestamp'>>
-  ): EventLog {
-    const updatedEvent = { ...event, ...updates };
-    updatedEvent.message = this.generateMessage(updatedEvent);
-    return updatedEvent;
+  static complete(event: NodeEvent) {
+    event.state = 'completed';
+  }
+
+  static fail(event: NodeEvent) {
+    event.state = 'failed';
+  }
+
+  static pending(event: NodeEvent) {
+    event.state = 'pending';
   }
 }

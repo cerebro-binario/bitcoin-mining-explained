@@ -1,0 +1,75 @@
+.event-group {
+  background: #18181b;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 1rem 0.4rem 1rem;
+  border-bottom: 1px solid #23232a;
+  font-size: 0.97rem;
+}
+.event-header {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #60a5fa;
+  margin-bottom: 0.1rem;
+  align-items: center;
+}
+.event-icon {
+  font-size: 1.1rem;
+  margin-right: 0.2rem;
+}
+.event-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #60a5fa;
+}
+.event-peer {
+  color: #93c5fd;
+  font-size: 0.95em;
+  font-weight: 500;
+  margin-left: 0.5em;
+}
+.event-time {
+  color: #71717a;
+  font-size: 0.85em;
+  font-family: "Fira Mono", "Menlo", "Consolas", monospace;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.event-block {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  padding-left: 2.1em;
+  margin-bottom: 0.1em;
+  font-size: 0.93em;
+}
+.event-block-part {
+  font-size: 0.93em;
+}
+.event-steps {
+  padding-left: 2.7em;
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+.event-step {
+  font-size: 0.93em;
+  align-items: center;
+  margin-bottom: 0.1em;
+}
+.event-step-icon {
+  font-size: 1em;
+}
+.event-step-title {
+  font-weight: 600;
+}
+.event-step-msg {
+  color: #a1a1aa;
+  margin-left: 0.5em;
+  font-size: 0.93em;
+}
+.event-step-time {
+  color: #71717a;
+  font-size: 0.8em;
+  font-family: "Fira Mono", "Menlo", "Consolas", monospace;
+  margin-left: auto;
+}

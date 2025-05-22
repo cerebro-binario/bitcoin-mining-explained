@@ -1,0 +1,26 @@
+<div class="event-group">
+  <!-- Evento principal -->
+  @let visual = log.type | eventLogVisual;
+  <div class="event-header flex items-center gap-2" [ngClass]="visual.color">
+    <span *ngIf="log.data?.peerId" class="event-peer"
+      >[peer #{{ log.data.peerId }}]</span
+    >
+    <span class="event-icon">{{ visual.icon }}</span>
+    <span class="event-title">{{ visual.label }}</span>
+    <span class="event-time ml-auto">{{
+      log.timestamp | date : "HH:mm:ss"
+    }}</span>
+  </div>
+
+  <!-- Bloco principal -->
+  <div
+    *ngIf="!event.data?.block && log.data?.block as block"
+    class="event-block"
+  >
+    <ng-container *ngFor="let part of block | blockInfoParts">
+      <span [ngClass]="part.class" class="event-block-part">{{
+        part.value
+      }}</span>
+    </ng-container>
+  </div>
+</div>
