@@ -5,6 +5,7 @@ import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
   BLOCK_REJECTED_REASONS,
+  BlockRejectedReason,
   EventManager,
   eventTitles,
   NodeEvent,
@@ -544,8 +545,8 @@ export class Node {
     height: number,
     previousBlock?: Block
   ): boolean {
-    const validationResult = this.validateBlockConsensus(block);
-    if (!validationResult.isValid) {
+    const reason = this.validateBlockConsensus(block);
+    if (reason) {
       // TODO: adicionar evento de bloco rejeitado
       return false;
     }
@@ -712,14 +713,9 @@ export class Node {
     EventManager.log(event, 'validating-block', { peerId: peer.id, block });
 
     // 4. Validar o bloco
-    const validationResult = this.validateBlockConsensus(block);
-    if (!validationResult.isValid) {
-      this.handleNonConsensualBlock(
-        block,
-        peer,
-        event,
-        validationResult.reason
-      );
+    const reason = this.validateBlockConsensus(block);
+    if (reason) {
+      this.handleNonConsensualBlock(block, peer, event, reason);
       return;
     }
 
@@ -846,12 +842,12 @@ export class Node {
     block: Block,
     peer: Node,
     event: NodeEvent,
-    reason?: string
+    reason: BlockRejectedReason
   ) {
     EventManager.log(event, 'block-rejected', {
       peerId: peer.id,
       block,
-      reason,
+      reason: BLOCK_REJECTED_REASONS[reason],
     });
 
     // Incrementa score de misbehavior
@@ -950,22 +946,16 @@ export class Node {
   }
 
   // Método para validação completa do bloco
-  private validateBlockConsensus(block: Block): {
-    isValid: boolean;
-    reason?: string;
-    message?: string;
-  } {
+  private validateBlockConsensus(
+    block: Block
+  ): BlockRejectedReason | undefined {
     // 1. Validar tamanho máximo do bloco
     const blockSize = JSON.stringify(block).length;
     const consensus = this.consensus.getConsensusForHeight(block.height);
     const consensusParams = consensus.parameters;
     const maxBlockSizeBytes = consensusParams.maxBlockSize * 1024 * 1024; // Converte MB para bytes
     if (blockSize > maxBlockSizeBytes) {
-      return {
-        isValid: false,
-        reason: 'invalid-size',
-        message: `Block size ${blockSize} bytes exceeds maximum allowed size of ${maxBlockSizeBytes} bytes (${consensusParams.maxBlockSize} MB)`,
-      };
+      return 'invalid-size';
     }
 
     // 2. Validar número máximo de transações (0 significa sem limite)
@@ -973,11 +963,7 @@ export class Node {
       consensusParams.maxTransactionsPerBlock > 0 &&
       block.transactions.length > consensusParams.maxTransactionsPerBlock
     ) {
-      return {
-        isValid: false,
-        reason: 'invalid-transactions',
-        message: `Block contains ${block.transactions.length} transactions, exceeding maximum of ${consensusParams.maxTransactionsPerBlock}`,
-      };
+      return 'invalid-transaction-count';
     }
 
     // 3. Validar ajuste de dificuldade (nBits)
@@ -992,11 +978,7 @@ export class Node {
       block
     );
     if (block.nBits !== expectedNBits) {
-      return {
-        isValid: false,
-        reason: 'invalid-nbits',
-        message: `Block nBits ${block.nBits} does not match expected ${expectedNBits} for height ${block.height}`,
-      };
+      return 'invalid-bits';
     }
 
     // 4. Validar target time
@@ -1005,44 +987,28 @@ export class Node {
       // Regra Bitcoin: timestamp deve ser maior que a mediana dos últimos 11 blocos
       const medianTimePast = this.getMedianTimePast(block.height);
       if (block.timestamp <= medianTimePast) {
-        return {
-          isValid: false,
-          reason: 'invalid-timestamp',
-          message: `Block timestamp (${block.timestamp}) is not greater than median of last 11 blocks (${medianTimePast})`,
-        };
+        return 'invalid-timestamp';
       }
 
       // Verificar se o bloco não está muito no futuro (2 horas)
       const maxFutureTime = Date.now() + 7200000; // 2 horas em milissegundos
       if (block.timestamp > maxFutureTime) {
-        return {
-          isValid: false,
-          reason: 'invalid-timestamp',
-          message: 'Block timestamp is too far in the future',
-        };
+        return 'invalid-timestamp';
       }
     }
 
     // 5. Validar hash do bloco
     const calculatedHash = block.calculateHash();
     if (calculatedHash !== block.hash) {
-      return {
-        isValid: false,
-        reason: 'invalid-hash',
-        message: 'Block hash does not match calculated hash',
-      };
+      return 'invalid-hash';
     }
 
     // 6. Validar se o hash está abaixo do target
     if (!block.isHashBelowTarget()) {
-      return {
-        isValid: false,
-        reason: 'invalid-target',
-        message: 'Block hash is not below target',
-      };
+      return 'invalid-target';
     }
 
-    return { isValid: true };
+    return undefined;
   }
 
   // Função utilitária para calcular a mediana dos timestamps dos últimos N blocos
