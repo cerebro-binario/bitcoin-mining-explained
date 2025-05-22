@@ -1,9 +1,9 @@
-<div class="event-group">
+<div class="py-1">
   <!-- Evento principal -->
   @let visual = log.type | eventLogVisual;
-  <div class="event-header flex items-center gap-2" [ngClass]="visual.color">
-    <i [class]="visual.icon + ' mr-1'" style="font-size: 1.1em"></i>
-    <span class="event-title">{{ log.type | eventLogMessage : log.data }}</span>
+  <div class="flex items-center gap-2" [ngClass]="visual.color">
+    <i [class]="visual.icon + ' mr-1 text-xs'"></i>
+    <span>{{ log.type | eventLogMessage : log.data }}</span>
     <span
       class="flex-1 mx-2 border-dotted border-zinc-700 border-b opacity-70"
     ></span>
@@ -13,14 +13,9 @@
   </div>
 
   <!-- Bloco principal -->
-  <div
-    *ngIf="!event.data?.block && log.data?.block as block"
-    class="event-block"
-  >
+  <div *ngIf="!event.data?.block && log.data?.block as block">
     <ng-container *ngFor="let part of block | blockInfoParts">
-      <span [ngClass]="part.class" class="event-block-part">{{
-        part.value
-      }}</span>
+      <span [ngClass]="part.class">{{ part.value }}</span>
     </ng-container>
   </div>
 </div>

@@ -17,11 +17,11 @@
 >
   <!-- Header -->
   <div>
-    <span class="font-mono mr-1 text-zinc-400">{{
+    <span class="font-mono mr-2 text-zinc-400">{{
       event.timestamp | date : "shortTime"
     }}</span>
     @let visual = event.type | eventLogVisual;
-    <i [class]="visual.icon + ' mr-1'" style="font-size: 1.1em"></i>
+    <i [class]="visual.icon + ' mr-1 text-xs'"></i>
     <span>{{ event.type | eventLogMessage : event.data }}</span>
     <span *ngIf="data?.peerId && data?.peerId !== event.minerId">
       [peer #{{ data?.peerId }}]</span
@@ -58,10 +58,9 @@
     </div>
   </div>
   <!-- Logs -->
-  <app-event-log
-    *ngFor="let log of event.logs"
-    [log]="log"
-    [event]="event"
-    class="ml-4"
-  ></app-event-log>
+  <ul class="ml-4 space-y-0.5">
+    <li *ngFor="let log of event.logs">
+      <app-event-log [log]="log" [event]="event"></app-event-log>
+    </li>
+  </ul>
 </div>

@@ -6,7 +6,7 @@
       <span>Eventos</span>
       <span class="text-xs text-zinc-400">({{ node.eventLog.length }})</span>
     </div>
-    <ul class="text-xs pr-1">
+    <ul class="text-xs pr-1 space-y-1">
       <li *ngFor="let event of node.eventLog | slice : 0 : 15">
         <app-event [event]="event"></app-event>
       </li>
@@ -36,7 +36,7 @@
     (click)="closeLogs()"
   >
     <div
-      class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-lg h-[80vh] flex flex-col shadow-xl"
+      class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-4xl h-[80vh] flex flex-col shadow-xl"
       (click)="$event.stopPropagation()"
     >
       <div class="flex items-center justify-between mb-4">
