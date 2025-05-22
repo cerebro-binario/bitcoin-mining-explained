@@ -1,7 +1,7 @@
 import {
   EventLogType,
   NodeEventType,
-} from '../../../../models/event-log.model';
+} from '../../../../../models/event-log.model';
 
 export interface EventLogVisual {
   color: string; // classe CSS

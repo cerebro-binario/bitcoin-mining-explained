@@ -15,7 +15,7 @@ import { IConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
-import { EventLogsComponent } from '../../event-logs/event-logs.component';
+import { EventsComponent } from '../../events/events.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
@@ -32,7 +32,7 @@ interface HashRateOption {
     CommonModule,
     MiningBlockComponent,
     BlockchainComponent,
-    EventLogsComponent,
+    EventsComponent,
     ConsensusDialogComponent,
     ConfirmDialogModule,
     PeersDialogComponent,

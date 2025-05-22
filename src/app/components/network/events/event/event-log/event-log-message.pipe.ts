@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import {
   EventLogType,
   NodeEventType,
-} from '../../../../models/event-log.model';
+} from '../../../../../models/event-log.model';
 import { EVENT_LOG_VISUAL_MAP } from './event-log-visual-map';
 
 function getByPath(obj: any, path: string): any {

@@ -490,12 +490,12 @@
         [block]="miner.currentBlock"
         [miningElapsed]="miner.currentBlock?.miningElapsed"
       ></app-mining-block>
-      <app-event-logs
+      <app-events
         [node]="miner"
         class="h-full"
         (show)="showLogs()"
         (close)="closeLogs()"
-      ></app-event-logs>
+      ></app-events>
     </div>
 
     <!-- Blockchain Local -->

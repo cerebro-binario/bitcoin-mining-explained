@@ -4,13 +4,13 @@ import { Node } from '../../../models/node';
 import { EventComponent } from './event/event.component';
 
 @Component({
-  selector: 'app-event-logs',
+  selector: 'app-events',
   standalone: true,
   imports: [CommonModule, EventComponent],
-  templateUrl: './event-logs.component.html',
-  styleUrls: ['./event-logs.component.scss'],
+  templateUrl: './events.component.html',
+  styleUrls: ['./events.component.scss'],
 })
-export class EventLogsComponent {
+export class EventsComponent {
   @Input() node!: Node;
   @Output() show = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
