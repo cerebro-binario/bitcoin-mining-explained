@@ -13,7 +13,8 @@ export class EventLogMessagePipe implements PipeTransform {
   transform(type: EventLogType, data: any): string {
     const visual = EVENT_LOG_VISUAL_MAP[type];
     if (!visual) return '';
-    return visual.template.replace(/\{\{([\w.]+)\}\}/g, (_, key) =>
+    const template = visual.template || visual.label;
+    return template.replace(/\{\{([\w.]+)\}\}/g, (_, key) =>
       getByPath(data, key)
     );
   }

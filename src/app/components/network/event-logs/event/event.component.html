@@ -47,18 +47,12 @@
   </div>
   <!-- Body -->
   <div>
-    <div class="ml-1 flex items-center gap-1.5" *ngIf="block">
-      <span class="text-blue-400 font-semibold text-xs"
-        >#{{ block.height }}</span
-      >
-      <span class="text-zinc-400 text-xs">•</span>
-      <span class="font-mono text-zinc-400 text-xs tracking-tight">
-        {{ block.hash | slice : 0 : 32 }}...
-      </span>
-      <span class="text-zinc-400 text-xs">•</span>
-      <span class="text-purple-400 text-xs italic"
-        >v{{ block.consensusVersion || "-" }}</span
-      >
+    <div class="ml-4 flex items-center gap-1.5" *ngIf="block">
+      <ng-container *ngFor="let part of block | blockInfoParts">
+        <span [ngClass]="part.class" class="event-block-part">{{
+          part.value
+        }}</span>
+      </ng-container>
     </div>
   </div>
   <!-- Logs -->
@@ -66,6 +60,6 @@
     *ngFor="let log of event.logs"
     [log]="log"
     [event]="event"
-    class="ml-2"
+    class="ml-4"
   ></app-event-log>
 </div>

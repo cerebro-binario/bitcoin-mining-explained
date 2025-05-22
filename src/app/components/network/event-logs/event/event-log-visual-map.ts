@@ -4,7 +4,7 @@ export interface EventLogVisual {
   color: string; // classe CSS
   icon: string; // Unicode ou emoji
   label: string;
-  template: string; // template com placeholders para interpolação
+  template?: string; // template com placeholders para interpolação
 }
 
 export const EVENT_LOG_VISUAL_MAP: Record<EventLogType, EventLogVisual> = {
@@ -61,22 +61,16 @@ export const EVENT_LOG_VISUAL_MAP: Record<EventLogType, EventLogVisual> = {
     color: 'text-blue-400',
     icon: '🧩',
     label: 'Validando bloco',
-    template:
-      'Validando bloco #{{block.height}} - {{block.hash}} - peer #{{block.minerId}} - v{{block.consensusVersion}}',
   },
   'block-rejected': {
     color: 'text-red-500',
     icon: '❌',
     label: 'Bloco rejeitado',
-    template:
-      'Bloco #{{block.height}} - {{block.hash}} - peer #{{block.minerId}} - v{{block.consensusVersion}} - rejeitado: {{reason}}',
   },
   'block-validated': {
     color: 'text-green-500',
     icon: '✔️',
     label: 'Bloco validado',
-    template:
-      'Bloco #{{block.height}} - {{block.hash}} - peer #{{block.minerId}} - v{{block.consensusVersion}} - validado',
   },
   'peer-rotation': {
     color: 'text-orange-400',
