@@ -7,7 +7,6 @@ import {
   BLOCK_REJECTED_REASONS,
   BlockRejectedReason,
   EventManager,
-  eventTitles,
   NodeEvent,
   NodeEventType,
 } from './event-log.model';
@@ -1095,7 +1094,6 @@ export class Node {
       minerId: this.id,
       type,
       data,
-      title: eventTitles[type],
       timestamp: Date.now(),
       logs: [],
       state: 'pending',

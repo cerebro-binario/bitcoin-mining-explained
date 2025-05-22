@@ -26,7 +26,6 @@ export interface NodeEvent {
   minerId?: number;
   timestamp: number;
   type: NodeEventType;
-  title: string;
   data: any;
   logs: EventLog[];
   state: EventState;
@@ -37,14 +36,6 @@ export interface EventLog {
   timestamp?: number;
   data?: any;
 }
-
-export const eventTitles: Record<NodeEventType, string> = {
-  'block-mined': '⛏️ Bloco minerado',
-  'block-received': '⬇️ Bloco recebido',
-  'peer-search': '🌐 Busca por peers',
-  'peer-requested-connection': '🔗 Peer solicitando conexão',
-  'peer-disconnected': '🚫 Peer desconectado',
-};
 
 export class EventManager {
   static log(event: NodeEvent, logType: EventLogType, data?: any) {
