@@ -59,20 +59,17 @@ eventLogVisual;
   </div>
   <!-- Logs -->
   <div class="relative ml-4">
-    <!-- Linha vertical da timeline -->
-    <div class="absolute left-0 top-0 w-0.5 h-full bg-zinc-700"></div>
     <ng-container *ngFor="let log of event.logs; let last = last">
-      <div class="flex items-start relative mb-2">
+      <div class="flex items-start relative py-1">
+        <!-- Linha vertical da timeline -->
+        <div
+          *ngIf="!last"
+          class="absolute left-0 h-full w-0.5 bg-zinc-700"
+        ></div>
         <!-- Dot da timeline -->
         <div
-          class="absolute left-0 top-1/2 -translate-y-1/2 flex flex-col items-center"
-        >
-          <div
-            class="w-3 h-0.5 bg-zinc-700"
-            [ngClass]="visual.color"
-            [style.backgroundColor]="visual.color ? '' : '#60a5fa'"
-          ></div>
-        </div>
+          class="absolute left-0 w-3 h-1/2 border-l-2 border-b-2 border-zinc-700 rounded-bl"
+        ></div>
         <!-- Conteúdo do log -->
         <div class="ml-6 w-full">
           <app-event-log [log]="log" [event]="event"></app-event-log>
