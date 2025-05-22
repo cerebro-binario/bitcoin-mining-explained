@@ -1,5 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { EventLogType } from '../../../../models/event-log.model';
+import {
+  EventLogType,
+  NodeEventType,
+} from '../../../../models/event-log.model';
 import { EVENT_LOG_VISUAL_MAP } from './event-log-visual-map';
 
 function getByPath(obj: any, path: string): any {
@@ -10,7 +13,7 @@ function getByPath(obj: any, path: string): any {
 
 @Pipe({ name: 'eventLogMessage' })
 export class EventLogMessagePipe implements PipeTransform {
-  transform(type: EventLogType, data: any): string {
+  transform(type: EventLogType | NodeEventType, data: any): string {
     const visual = EVENT_LOG_VISUAL_MAP[type];
     if (!visual) return '';
     const template = visual.template || visual.label;

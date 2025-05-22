@@ -20,7 +20,9 @@
     <span class="font-mono mr-1 text-zinc-400">{{
       event.timestamp | date : "shortTime"
     }}</span>
-    <span>{{ event.title }}</span>
+    @let visual = event.type | eventLogVisual;
+    <i [class]="visual.icon + ' mr-1'" style="font-size: 1.1em"></i>
+    <span>{{ event.type | eventLogMessage : event.data }}</span>
     <span *ngIf="data?.peerId && data?.peerId !== event.minerId">
       [peer #{{ data?.peerId }}]</span
     >

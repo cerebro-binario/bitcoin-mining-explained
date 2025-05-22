@@ -1,4 +1,7 @@
-import { EventLogType } from '../../../../models/event-log.model';
+import {
+  EventLogType,
+  NodeEventType,
+} from '../../../../models/event-log.model';
 
 export interface EventLogVisual {
   color: string; // classe CSS
@@ -7,7 +10,10 @@ export interface EventLogVisual {
   template?: string; // template com placeholders para interpolação
 }
 
-export const EVENT_LOG_VISUAL_MAP: Record<EventLogType, EventLogVisual> = {
+export const EVENT_LOG_VISUAL_MAP: Record<
+  EventLogType | NodeEventType,
+  EventLogVisual
+> = {
   'peer-found': {
     color: 'text-blue-400',
     icon: 'pi pi-search',
@@ -72,10 +78,38 @@ export const EVENT_LOG_VISUAL_MAP: Record<EventLogType, EventLogVisual> = {
     icon: 'pi pi-check-circle',
     label: 'Bloco validado',
   },
+  'block-mined': {
+    color: 'text-yellow-400',
+    icon: 'pi pi-bolt',
+    label: 'Bloco minerado',
+    template: 'Bloco #{{block.height}} minerado',
+  },
+  'block-received': {
+    color: 'text-blue-400',
+    icon: 'pi pi-download',
+    label: 'Bloco recebido',
+  },
+  'peer-requested-connection': {
+    color: 'text-blue-400',
+    icon: 'pi pi-user-plus',
+    label: 'Peer solicitando conexão',
+    template: 'Peer #{{peerId}} solicitando conexão',
+  },
+  'peer-disconnected': {
+    color: 'text-red-500',
+    icon: 'pi pi-ban',
+    label: 'Peer desconectado',
+  },
   'peer-rotation': {
     color: 'text-orange-400',
     icon: 'pi pi-sync',
     label: 'Rotação de peers',
     template: 'Peer #{{peerId}} desconectado por rotação',
+  },
+  'peer-search': {
+    color: 'text-blue-400',
+    icon: 'pi pi-search',
+    label: 'Busca por peers',
+    template: 'Buscando por peers',
   },
 };

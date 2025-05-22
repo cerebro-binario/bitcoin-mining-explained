@@ -2,12 +2,19 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { NodeEvent } from '../../../../models/event-log.model';
 import { BlockInfoPartsPipe } from './block-info.pipe';
+import { EventLogMessagePipe } from './event-log-message.pipe';
+import { EventLogVisualPipe } from './event-log-visual.pipe';
 import { EventLogComponent } from './event-log/event-log.component';
-
 @Component({
   selector: 'app-event',
   standalone: true,
-  imports: [CommonModule, EventLogComponent, BlockInfoPartsPipe],
+  imports: [
+    CommonModule,
+    EventLogComponent,
+    BlockInfoPartsPipe,
+    EventLogMessagePipe,
+    EventLogVisualPipe,
+  ],
   templateUrl: './event.component.html',
 })
 export class EventComponent {
