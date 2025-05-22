@@ -6,42 +6,9 @@
       <span>Eventos</span>
       <span class="text-xs text-zinc-400">({{ node.eventLog.length }})</span>
     </div>
-    <ul class="text-xs pr-1 divide-y divide-zinc-800">
-      <li
-        *ngFor="let event of node.eventLog | slice : 0 : 15"
-        class="py-1"
-        [ngClass]="{
-          'text-green-400':
-            event.type === 'block-validated' ||
-            event.type === 'block-mined' ||
-            event.type === 'peer-connected' ||
-            event.type === 'peer-search-complete',
-          'text-red-400':
-            event.type === 'block-rejected' ||
-            event.type === 'peer-disconnected',
-          'text-blue-400':
-            event.type === 'block-received' || event.type === 'peer-search',
-          'text-yellow-400': event.type === 'sync-progress'
-        }"
-      >
-        <span class="font-mono mr-1">{{
-          event.timestamp | date : "shortTime"
-        }}</span>
-        <span *ngIf="event.type === 'block-validated'">✔️</span>
-        <span *ngIf="event.type === 'block-rejected'">❌</span>
-        <span *ngIf="event.type === 'block-received'">⬇️</span>
-        <span *ngIf="event.type === 'sync-progress'">🔄</span>
-        <span *ngIf="event.type === 'block-mined'">⛏️</span>
-        <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
-        <span *ngIf="event.type === 'peer-connected'">🔗</span>
-        <span
-          *ngIf="
-            event.type === 'peer-search' ||
-            event.type === 'peer-search-complete'
-          "
-          >🌐</span
-        >
-        <span class="ml-1">{{ event.message }}</span>
+    <ul class="text-xs pr-1 space-y-1">
+      <li *ngFor="let event of node.eventLog | slice : 0 : 15">
+        <app-event [event]="event"></app-event>
       </li>
       <li *ngIf="node.eventLog.length === 0" class="text-zinc-500 italic">
         Nenhum evento ainda.
@@ -49,11 +16,11 @@
     </ul>
     <!-- Fade and button will go here -->
     <div
-      *ngIf="node.eventLog.length > 8"
+      *ngIf="node.eventLog.length > 0"
       class="absolute left-0 right-0 bottom-0 h-1/4 pointer-events-none bg-gradient-to-t from-zinc-900 to-transparent"
     ></div>
     <button
-      *ngIf="node.eventLog.length > 8"
+      *ngIf="node.eventLog.length > 0"
       (click)="showNodeLogs()"
       class="absolute right-3 bottom-3 z-10 px-2 py-1 text-xs rounded bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition pointer-events-auto backdrop-blur-sm"
     >
@@ -69,7 +36,7 @@
     (click)="closeLogs()"
   >
     <div
-      class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-lg h-[80vh] flex flex-col shadow-xl"
+      class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-4xl h-[80vh] flex flex-col shadow-xl"
       (click)="$event.stopPropagation()"
     >
       <div class="flex items-center justify-between mb-4">
@@ -84,40 +51,8 @@
         </button>
       </div>
       <ul class="flex-1 overflow-y-auto space-y-1 text-xs pr-1">
-        <li
-          *ngFor="let event of node.eventLog"
-          [ngClass]="{
-            'text-green-400':
-              event.type === 'block-validated' ||
-              event.type === 'block-mined' ||
-              event.type === 'peer-connected' ||
-              event.type === 'peer-search-complete',
-            'text-red-400':
-              event.type === 'block-rejected' ||
-              event.type === 'peer-disconnected',
-            'text-blue-400':
-              event.type === 'block-received' || event.type === 'peer-search',
-            'text-yellow-400': event.type === 'sync-progress'
-          }"
-        >
-          <span class="font-mono mr-1">{{
-            event.timestamp | date : "shortTime"
-          }}</span>
-          <span *ngIf="event.type === 'block-validated'">✔️</span>
-          <span *ngIf="event.type === 'block-rejected'">❌</span>
-          <span *ngIf="event.type === 'block-received'">⬇️</span>
-          <span *ngIf="event.type === 'sync-progress'">🔄</span>
-          <span *ngIf="event.type === 'block-mined'">⛏️</span>
-          <span *ngIf="event.type === 'peer-disconnected'">🚫</span>
-          <span *ngIf="event.type === 'peer-connected'">🔗</span>
-          <span
-            *ngIf="
-              event.type === 'peer-search' ||
-              event.type === 'peer-search-complete'
-            "
-            >🌐</span
-          >
-          <span class="ml-1">{{ event.message }}</span>
+        <li *ngFor="let event of node.eventLog">
+          <app-event [event]="event"></app-event>
         </li>
       </ul>
     </div>
