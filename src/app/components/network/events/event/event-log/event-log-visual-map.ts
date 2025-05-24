@@ -93,13 +93,13 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     color: 'text-blue-400',
     icon: 'pi pi-user-plus',
     label: 'Peer solicitando conexão',
-    template: 'Peer #{{peerId}} solicitando conexão',
+    template: 'Peer solicitando conexão',
   },
   'peer-disconnected': {
     color: 'text-red-500',
     icon: 'pi pi-ban',
     label: 'Peer desconectado',
-    template: 'Peer #{{peerId}} desconectado ({{reason}})',
+    template: 'Peer desconectado {{reason}}',
   },
   'peer-rotation': {
     color: 'text-orange-400',
@@ -112,5 +112,23 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     icon: 'pi pi-search',
     label: 'Busca por peers',
     template: 'Buscando por peers',
+  },
+  'peer-incompatible': {
+    color: 'text-red-500',
+    icon: 'pi pi-exclamation-triangle',
+    label: 'Peer incompatível',
+    template: 'Peer #{{peerId}} incompatível',
+  },
+  'connection-timeout': {
+    color: 'text-red-500',
+    icon: 'pi pi-times-circle',
+    label: 'Conexão expirada',
+    template: 'Conexão com peer #{{peerId}} expirada',
+  },
+  misbehavior: {
+    color: 'text-red-500',
+    icon: 'pi pi-exclamation-triangle',
+    label: 'Comportamento inadequado',
+    template: 'Peer #{{peerId}} desconectado por comportamento inadequado',
   },
 };

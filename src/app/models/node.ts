@@ -6,8 +6,10 @@ import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
   BLOCK_REJECTED_REASONS,
   BlockRejectedReason,
+  EventLogType,
   EventManager,
   NodeEvent,
+  NodeEventLog,
   NodeEventType,
 } from './event-log.model';
 
@@ -105,7 +107,7 @@ export class Node {
   // Mapa para rastrear quando o broadcast foi feito
   private blockReceivedTimestamps: Map<string, number> = new Map();
 
-  private readonly CONNECTION_TTL = 5 * 60 * 1000; // 5 minutos em ms
+  private readonly CONNECTION_TTL = 1 * 60 * 1000; // 5 minutos em ms
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -634,7 +636,10 @@ export class Node {
     // Se o peer já está cheio, desconecta o vizinho mais "popular" dele
     if (peer.peers.length >= peer.MAX_PEERS) {
       const toDrop = this.pickEvictionCandidate(peer.peers);
-      peer.disconnectFromPeer(toDrop.node, 'peer-rotation-needed', peerEvent);
+      peer.disconnectFromPeer(toDrop.node, {
+        ref: peerEvent,
+        logType: 'peer-rotation',
+      });
     }
 
     // Só conecta se ainda não estiver conectado
@@ -681,8 +686,16 @@ export class Node {
   // Desconecta de um peer: remove dos neighbors e faz unsubscribe
   private disconnectFromPeer(
     peer: Node,
-    reason: string = 'disconnection',
-    event?: NodeEvent
+    event?: {
+      ref: NodeEvent;
+      logType: EventLogType;
+      reason?: string;
+    },
+    newEvent?: {
+      eventType: NodeEventType;
+      logType: EventLogType;
+      reason?: string;
+    }
   ) {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
@@ -691,25 +704,58 @@ export class Node {
     this.peers = this.peers.filter((n) => n.node.id !== peer.id);
 
     if (event) {
-      EventManager.log(event, 'peer-rotation', {
+      EventManager.log(event.ref, event.logType, {
         peerId: peer.id,
-        reason,
+        reason: event.reason,
       });
-    } else {
-      const disconnectEvent = this.addEvent('peer-disconnected', {
-        peerId: peer.id,
-        reason,
-      });
+    } else if (newEvent) {
+      const eventType = newEvent.eventType || 'peer-disconnected';
+      const logs = [
+        {
+          type: newEvent.logType,
+          timestamp: Date.now(),
+          data: { peerId: peer.id },
+        },
+      ];
+
+      const disconnectEvent = this.addEvent(
+        eventType,
+        {
+          peerId: peer.id,
+        },
+        logs
+      );
       EventManager.complete(disconnectEvent);
     }
 
     // Remove este nó da lista de vizinhos do peer
     peer.peers = peer.peers.filter((n) => n.node.id !== this.id);
 
-    const disconnectEvent = peer.addEvent('peer-disconnected', {
-      peerId: this.id,
-      reason,
-    });
+    const logs = event?.logType
+      ? [
+          {
+            type: event.logType,
+            timestamp: Date.now(),
+            data: { peerId: this.id },
+          },
+        ]
+      : newEvent?.logType
+      ? [
+          {
+            type: newEvent.logType,
+            timestamp: Date.now(),
+            data: { peerId: this.id },
+          },
+        ]
+      : [];
+
+    const disconnectEvent = peer.addEvent(
+      'peer-disconnected',
+      {
+        peerId: this.id,
+      },
+      logs
+    );
     EventManager.complete(disconnectEvent);
   }
 
@@ -875,7 +921,10 @@ export class Node {
       this.misbehaviorScores[peer.id] += Node.MISBEHAVIOR_BLOCK_INVALID;
       // Se passou do limite, desconecta
       if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
-        this.disconnectFromPeer(peer, 'misbehavior', event);
+        this.disconnectFromPeer(peer, {
+          ref: event,
+          logType: 'misbehavior',
+        });
       }
     }
   }
@@ -1052,11 +1101,7 @@ export class Node {
   }
 
   async searchPeersToConnect(nodes: Node[]) {
-    this.peers.forEach((p) => {
-      if (p.connectedAt < Date.now() - this.CONNECTION_TTL) {
-        this.disconnectFromPeer(p.node, 'connection-timeout');
-      }
-    });
+    this.checkPeerConnectionsTTL();
 
     if (this.peers.length >= this.MAX_PEERS) return;
     if (this.isSearchingPeers) return;
@@ -1098,6 +1143,11 @@ export class Node {
           });
           break;
         }
+      } else {
+        EventManager.log(searchPeersEvent, 'peer-incompatible', {
+          peerId: peer.id,
+          reason: 'consensus-incompatible',
+        });
       }
     }
 
@@ -1110,6 +1160,17 @@ export class Node {
     this.isSearchingPeers = false;
   }
 
+  private checkPeerConnectionsTTL() {
+    this.peers.forEach((p) => {
+      if (p.connectedAt < Date.now() - this.CONNECTION_TTL) {
+        this.disconnectFromPeer(p.node, undefined, {
+          eventType: 'peer-disconnected',
+          logType: 'connection-timeout',
+        });
+      }
+    });
+  }
+
   // TODO: Implementar verificação de compatibilidade de consenso não apenas pela versão,
   // mas também pelos parâmetros de consenso.
   // Validar se é soft ou hard fork. Caso seja hard, não é compatível.
@@ -1117,13 +1178,13 @@ export class Node {
     return peer.consensus.version === this.consensus.version;
   }
 
-  private addEvent(type: NodeEventType, data?: any) {
+  private addEvent(type: NodeEventType, data?: any, logs: NodeEventLog[] = []) {
     const event: NodeEvent = {
       minerId: this.id,
       type,
       data,
       timestamp: Date.now(),
-      logs: [],
+      logs,
       state: 'pending',
     };
     this.events.unshift(event);

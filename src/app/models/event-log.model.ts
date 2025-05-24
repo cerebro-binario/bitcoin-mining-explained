@@ -17,7 +17,10 @@ export type EventLogType =
   | 'validating-block'
   | 'block-rejected'
   | 'block-validated'
-  | 'peer-rotation';
+  | 'peer-rotation'
+  | 'peer-incompatible'
+  | 'connection-timeout'
+  | 'misbehavior';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 
