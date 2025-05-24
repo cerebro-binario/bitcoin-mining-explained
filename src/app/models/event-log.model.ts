@@ -14,13 +14,16 @@ export type EventLogType =
   | 'already-in-sync'
   | 'sync-completed'
   | 'sync-progress'
+  | 'sync-failed'
+  | 'block-received'
   | 'validating-block'
   | 'block-rejected'
   | 'block-validated'
   | 'peer-rotation'
   | 'peer-incompatible'
   | 'connection-timeout'
-  | 'misbehavior';
+  | 'misbehavior'
+  | 'catch-up-chain';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 
@@ -64,8 +67,9 @@ export class EventManager {
   }
 }
 
-export type BlockRejectedReason =
+export type NodeEventLogReasons =
   | 'invalid-unknown'
+  | 'duplicate'
   | 'duplicate-orphan'
   | 'invalid-parent'
   | 'invalid-proof-of-work'
@@ -108,12 +112,15 @@ export type BlockRejectedReason =
   | 'invalid-transaction-recipient-public-key-hash'
   | 'invalid-transaction-sender-public-key-hash'
   | 'invalid-transaction-recipient-signature-hash'
-  | 'invalid-transaction-sender-signature-hash';
+  | 'invalid-transaction-sender-signature-hash'
+  | 'block-not-found'
+  | 'consensus-incompatible';
 
-export const BLOCK_REJECTED_REASONS: Record<BlockRejectedReason, string> = {
+export const EVENT_LOG_REASONS: Record<NodeEventLogReasons, string> = {
   'invalid-unknown': 'Bloco rejeitado por razão não identificada',
+  duplicate: 'Bloco duplicado',
   'duplicate-orphan': 'Bloco órfão duplicado',
-  'invalid-parent': 'Bloco sem pai',
+  'invalid-parent': 'Bloco anterior não encontrado',
   'invalid-proof-of-work': 'Bloco com prova de trabalho inválida',
   'invalid-timestamp': 'Bloco com timestamp inválido',
   'invalid-merkle-root': 'Bloco com raiz de merkle inválida',
@@ -173,4 +180,6 @@ export const BLOCK_REJECTED_REASONS: Record<BlockRejectedReason, string> = {
     'Bloco com hash de assinatura de destinatário de transação inválido',
   'invalid-transaction-sender-signature-hash':
     'Bloco com hash de assinatura de remetente de transação inválido',
+  'block-not-found': 'Bloco não encontrado',
+  'consensus-incompatible': 'Consenso incompatível',
 };

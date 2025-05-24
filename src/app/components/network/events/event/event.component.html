@@ -8,9 +8,9 @@ eventLogVisual;
     }}</span>
     <i [class]="visual.icon + ' mr-2 text-xs'"></i>
     <span>{{ event.type | eventLogMessage : event.data }}</span>
-    <span *ngIf="data?.peerId && data?.peerId !== event.minerId">
+    <!-- <span *ngIf="data?.peerId && data?.peerId !== event.minerId">
       [peer #{{ data?.peerId }}]</span
-    >
+    > -->
     <span *ngIf="event.state === 'pending'" class="inline-flex items-center">
       <span class="animate-spin ml-1"
         ><svg class="w-3 h-3" viewBox="0 0 24 24">

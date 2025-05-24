@@ -4,12 +4,12 @@ import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
-  BLOCK_REJECTED_REASONS,
-  BlockRejectedReason,
+  EVENT_LOG_REASONS,
   EventLogType,
   EventManager,
   NodeEvent,
   NodeEventLog,
+  NodeEventLogReasons,
   NodeEventType,
 } from './event-log.model';
 
@@ -113,10 +113,7 @@ export class Node {
     Object.assign(this, init);
   }
 
-  addBlock(block: Block): {
-    success: boolean;
-    reason?: string;
-  } {
+  addBlock(block: Block): NodeEventLogReasons | undefined {
     const blockNode = new BlockNode(block);
 
     if (!this.heights.length) {
@@ -141,7 +138,7 @@ export class Node {
 
     // Busca otimizada do pai: só procura em height - 1
     const parentNode = this.findParentNode(block);
-    if (!parentNode) return { success: false, reason: 'invalid-parent' };
+    if (!parentNode) return 'invalid-parent';
 
     // Encontra a altura correta para inserir
     const heightIndex = this.getHeightIndex(block.height);
@@ -149,7 +146,7 @@ export class Node {
 
     // Verifica se o bloco já existe na altura
     if (height?.find((n) => n.block.hash === blockNode.block.hash)) {
-      return { success: false, reason: 'duplicate' };
+      return 'duplicate';
     }
 
     // Tudo certo até aqui, marca o bloco como pai
@@ -181,7 +178,7 @@ export class Node {
 
     this.updateMiniBlockchain();
 
-    return { success: true };
+    return undefined;
   }
 
   initBlockTemplate(lastBlock?: Block): Block {
@@ -781,7 +778,7 @@ export class Node {
     EventManager.log(event, 'validating-block', { peerId: peer.id, block });
 
     // 4. Validar o bloco
-    const reason = this.validateBlockConsensus(block);
+    let reason = this.validateBlockConsensus(block);
     if (reason) {
       this.handleNonConsensualBlock(block, peer, event, reason);
       return;
@@ -791,12 +788,12 @@ export class Node {
     delete this.misbehaviorScores[peer.id!];
 
     const prevTopBlock = this.getLatestBlock();
-    const result = this.addBlock(block);
+    reason = this.addBlock(block);
 
-    if (!result.success) {
+    if (reason) {
       EventManager.log(event, 'block-rejected', {
         block,
-        reason: result.reason,
+        reason: EVENT_LOG_REASONS[reason],
       });
 
       EventManager.fail(event);
@@ -828,11 +825,6 @@ export class Node {
     }
 
     if (this.hasReceivedFromPeer(block.hash, peer.id)) {
-      return false;
-    }
-
-    // Deduplicação: se já recebeu esse bloco, não processa novamente
-    if (this.checkIfBlockExists(block)) {
       return false;
     }
 
@@ -883,7 +875,7 @@ export class Node {
       EventManager.log(event, 'block-rejected', {
         peerId: peer.id,
         block: orphan,
-        reason: BLOCK_REJECTED_REASONS['duplicate-orphan'],
+        reason: EVENT_LOG_REASONS['duplicate-orphan'],
       });
       EventManager.fail(event);
       return;
@@ -895,7 +887,12 @@ export class Node {
     EventManager.log(event, 'block-rejected', {
       peerId: peer.id,
       block: orphan,
-      reason: BLOCK_REJECTED_REASONS['invalid-parent'],
+      reason: EVENT_LOG_REASONS['invalid-parent'],
+    });
+
+    EventManager.log(event, 'catch-up-chain', {
+      peerId: peer.id,
+      block: orphan,
     });
 
     this.catchUpChain(orphan, peer, event);
@@ -907,12 +904,12 @@ export class Node {
     block: Block,
     peer: Node,
     event: NodeEvent,
-    reason: BlockRejectedReason
+    reason: NodeEventLogReasons
   ) {
     EventManager.log(event, 'block-rejected', {
       peerId: peer.id,
       block,
-      reason: BLOCK_REJECTED_REASONS[reason],
+      reason: EVENT_LOG_REASONS[reason],
     });
 
     // Incrementa score de misbehavior
@@ -930,7 +927,6 @@ export class Node {
   }
 
   private catchUpChain(orphan: Block, origin: Node, event: NodeEvent) {
-    const totalPeers = this.peers.length;
     let round = 0;
     const missing: { block: Block; peer: Node }[] = [
       { block: orphan, peer: origin },
@@ -939,6 +935,7 @@ export class Node {
     let currentBlock = orphan;
 
     while (!completed) {
+      const totalPeers = this.peers.length;
       const peer = this.peers[round % totalPeers];
       round++;
 
@@ -946,6 +943,16 @@ export class Node {
         currentBlock,
         peer.node
       );
+
+      if (round > totalPeers * 5) {
+        EventManager.log(event, 'sync-failed', {
+          peerId: origin.id,
+          reason: EVENT_LOG_REASONS['block-not-found'],
+        });
+        EventManager.fail(event);
+        return;
+      }
+
       if (!parentBlock) continue;
 
       completed =
@@ -974,6 +981,7 @@ export class Node {
     missing.sort((a, b) => a.block.height - b.block.height);
 
     for (const { block, peer } of missing) {
+      EventManager.log(event, 'block-received', { block, peerId: peer.id });
       this.processBlock(block, peer, event);
     }
   }
@@ -1016,7 +1024,7 @@ export class Node {
   // Método para validação completa do bloco
   private validateBlockConsensus(
     block: Block
-  ): BlockRejectedReason | undefined {
+  ): NodeEventLogReasons | undefined {
     // 1. Validar tamanho máximo do bloco
     const blockSize = JSON.stringify(block).length;
     const consensus = this.consensus.getConsensusForHeight(block.height);
@@ -1146,7 +1154,7 @@ export class Node {
       } else {
         EventManager.log(searchPeersEvent, 'peer-incompatible', {
           peerId: peer.id,
-          reason: 'consensus-incompatible',
+          reason: EVENT_LOG_REASONS['consensus-incompatible'],
         });
       }
     }

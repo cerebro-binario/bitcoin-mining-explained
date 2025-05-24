@@ -57,6 +57,12 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     label: 'Sincronização concluída',
     template: 'Sincronização concluída com peer #{{peerId}}',
   },
+  'sync-failed': {
+    color: 'text-red-500',
+    icon: 'pi pi-times-circle',
+    label: 'Sincronização falhou',
+    template: 'Sincronização falhou {{reason}}',
+  },
   'sync-progress': {
     color: 'text-yellow-400',
     icon: 'pi pi-spinner',
@@ -87,19 +93,17 @@ export const EVENT_LOG_VISUAL_MAP: Record<
   'block-received': {
     color: 'text-blue-400',
     icon: 'pi pi-download',
-    label: 'Bloco recebido',
+    label: 'Bloco recebido [peer #{{peerId}}]',
   },
   'peer-requested-connection': {
     color: 'text-blue-400',
     icon: 'pi pi-user-plus',
-    label: 'Peer solicitando conexão',
-    template: 'Peer solicitando conexão',
+    label: 'Peer solicitando conexão [peer #{{peerId}}]',
   },
   'peer-disconnected': {
     color: 'text-red-500',
     icon: 'pi pi-ban',
-    label: 'Peer desconectado',
-    template: 'Peer desconectado {{reason}}',
+    label: 'Peer desconectado [peer #{{peerId}}] {{reason}}',
   },
   'peer-rotation': {
     color: 'text-orange-400',
@@ -130,5 +134,11 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     icon: 'pi pi-exclamation-triangle',
     label: 'Comportamento inadequado',
     template: 'Peer #{{peerId}} desconectado por comportamento inadequado',
+  },
+  'catch-up-chain': {
+    color: 'text-blue-400',
+    icon: 'pi pi-sync',
+    label: 'Sincronização de catch-up',
+    template: 'Iniciando sincronização de catch-up',
   },
 };

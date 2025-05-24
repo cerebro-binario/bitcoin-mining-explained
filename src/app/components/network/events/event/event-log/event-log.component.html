@@ -13,7 +13,8 @@
   </div>
 
   <!-- Bloco principal -->
-  <div *ngIf="!event.data?.block && log.data?.block as block">
+  @let block = log.data?.block;
+  <div *ngIf="(!event.data?.block && block) || log.type === 'block-received'">
     <ng-container *ngFor="let part of block | blockInfoParts">
       <span [ngClass]="part.class">{{ part.value }}</span>
     </ng-container>
