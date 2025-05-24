@@ -690,7 +690,6 @@ export class Node {
   }
 
   private syncWith(peer: Node, event: NodeEvent) {
-    console.debug(`[${this.id}] syncing with [${peer.id}]`);
     EventManager.log(event, 'sync-started', { peerId: peer.id });
 
     const latestForks = peer.heights[0] || [];
@@ -755,17 +754,11 @@ export class Node {
   onPeerBlockFiltering(block: Block, peer: Node) {
     // Se o bloco é do próprio minerador, não processa (está recebendo o bloco do próprio minerador do peer)
     if (block.minerId === this.id) {
-      console.debug(
-        `[${this.id}] received block from self ${block.hash} from ${peer.id}`
-      );
       return false;
     }
 
     // Deduplicação: se já recebeu esse bloco, não processa novamente
     if (this.checkIfBlockExists(block)) {
-      console.debug(
-        `[${this.id}] received duplicate block ${block.hash} from ${peer.id}`
-      );
       return false;
     }
 
@@ -811,9 +804,6 @@ export class Node {
     const orphans = this.orphanBlocks.get(orphan.previousHash) || [];
 
     if (orphans.some((o) => o.hash === orphan.hash)) {
-      console.debug(
-        `[${this.id}] received duplicate orphan block ${orphan.hash} from ${peer.id}`
-      );
       EventManager.log(event, 'block-rejected', {
         peerId: peer.id,
         block: orphan,
