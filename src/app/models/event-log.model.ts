@@ -19,7 +19,7 @@ export type EventLogType =
   | 'block-validated'
   | 'peer-rotation';
 
-export type EventState = 'pending' | 'completed' | 'failed';
+export type NodeEventState = 'pending' | 'completed' | 'failed';
 
 // Interface para o log de eventos
 export interface NodeEvent {
@@ -27,11 +27,11 @@ export interface NodeEvent {
   timestamp: number;
   type: NodeEventType;
   data: any;
-  logs: EventLog[];
-  state: EventState;
+  logs: NodeEventLog[];
+  state: NodeEventState;
 }
 
-export interface EventLog {
+export interface NodeEventLog {
   type: EventLogType;
   timestamp?: number;
   data?: any;
@@ -39,7 +39,7 @@ export interface EventLog {
 
 export class EventManager {
   static log(event: NodeEvent, logType: EventLogType, data?: any) {
-    const log: EventLog = {
+    const log: NodeEventLog = {
       type: logType,
       timestamp: Date.now(),
       data,

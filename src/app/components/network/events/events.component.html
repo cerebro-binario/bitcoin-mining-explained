@@ -4,23 +4,23 @@
   >
     <div class="font-semibold text-blue-400 mb-2 flex items-center gap-2">
       <span>Eventos</span>
-      <span class="text-xs text-zinc-400">({{ node.eventLog.length }})</span>
+      <span class="text-xs text-zinc-400">({{ node.events.length }})</span>
     </div>
     <ul class="text-xs pr-1 space-y-1">
-      <li *ngFor="let event of node.eventLog | slice : 0 : 15">
+      <li *ngFor="let event of node.events | slice : 0 : 15">
         <app-event [event]="event"></app-event>
       </li>
-      <li *ngIf="node.eventLog.length === 0" class="text-zinc-500 italic">
+      <li *ngIf="node.events.length === 0" class="text-zinc-500 italic">
         Nenhum evento ainda.
       </li>
     </ul>
     <!-- Fade and button will go here -->
     <div
-      *ngIf="node.eventLog.length > 0"
+      *ngIf="node.events.length > 0"
       class="absolute left-0 right-0 bottom-0 h-1/4 pointer-events-none bg-gradient-to-t from-zinc-900 to-transparent"
     ></div>
     <button
-      *ngIf="node.eventLog.length > 0"
+      *ngIf="node.events.length > 0"
       (click)="showNodeLogs()"
       class="absolute right-3 bottom-3 z-10 px-2 py-1 text-xs rounded bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition pointer-events-auto backdrop-blur-sm"
     >
@@ -51,7 +51,7 @@
         </button>
       </div>
       <ul class="flex-1 overflow-y-auto space-y-1 text-xs pr-1">
-        <li *ngFor="let event of node.eventLog">
+        <li *ngFor="let event of node.events">
           <app-event [event]="event"></app-event>
         </li>
       </ul>

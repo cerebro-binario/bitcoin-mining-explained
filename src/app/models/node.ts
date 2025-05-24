@@ -31,7 +31,7 @@ export class Node {
   isAddingBlock: boolean = false;
 
   // Log de eventos de propagação/validação de blocos
-  eventLog: NodeEvent[] = [];
+  events: NodeEvent[] = [];
 
   // Rastreamento de peers durante o sync inicial
   syncPeers: {
@@ -1089,7 +1089,7 @@ export class Node {
       logs: [],
       state: 'pending',
     };
-    this.eventLog.unshift(event);
+    this.events.unshift(event);
 
     return event;
   }
