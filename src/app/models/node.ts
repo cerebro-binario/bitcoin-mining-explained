@@ -1127,6 +1127,9 @@ export class Node {
       state: 'pending',
     };
     this.events.unshift(event);
+    while (this.events.length > 50) {
+      this.events.pop();
+    }
 
     return event;
   }
