@@ -134,7 +134,7 @@ export const EVENT_LOG_REASONS: Record<NodeEventLogReasons, string> = {
   'invalid-hash': 'Bloco com hash inválido',
   'invalid-size': 'Bloco com tamanho inválido',
   'invalid-version': 'Bloco com versão inválida',
-  'invalid-bits': 'Bloco com bits inválidos',
+  'invalid-bits': 'Bloco com dificuldade inválida',
   'invalid-target': 'Bloco com alvo inválido',
   'invalid-signature': 'Bloco com assinatura inválida',
   'invalid-transaction-signature': 'Bloco com assinatura de transação inválida',
