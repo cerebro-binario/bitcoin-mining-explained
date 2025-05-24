@@ -42,7 +42,7 @@ export class Node {
     work?: number;
   }[] = [];
 
-  id?: number;
+  id: number = 0;
   peers: Neighbor[] = [];
 
   // Campos para minerador
@@ -96,6 +96,13 @@ export class Node {
   misbehaviorScores: { [peerId: number]: number } = {};
   static MISBEHAVIOR_THRESHOLD = 250;
   static MISBEHAVIOR_BLOCK_INVALID = 50;
+
+  // Mapa para rastrear broadcasts: blockHash -> Set<nodeId>
+  private blockReceivedHistory: Map<string, Set<number>> = new Map();
+  // TTL para limpeza automática (24 horas em ms)
+  private readonly HISTORY_TTL = 2 * 60 * 1000;
+  // Mapa para rastrear quando o broadcast foi feito
+  private blockReceivedTimestamps: Map<string, number> = new Map();
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -758,10 +765,16 @@ export class Node {
       return false;
     }
 
+    if (this.hasReceivedFromPeer(block.hash, peer.id)) {
+      return false;
+    }
+
     // Deduplicação: se já recebeu esse bloco, não processa novamente
     if (this.checkIfBlockExists(block)) {
       return false;
     }
+
+    this.markReceived(block.hash, peer.id);
 
     return true;
   }
@@ -1092,5 +1105,33 @@ export class Node {
     this.events.unshift(event);
 
     return event;
+  }
+
+  private cleanupOldBlockReceivedHistory() {
+    const now = Date.now();
+    for (const [
+      blockHash,
+      timestamp,
+    ] of this.blockReceivedTimestamps.entries()) {
+      if (now - timestamp > this.HISTORY_TTL) {
+        this.blockReceivedHistory.delete(blockHash);
+        this.blockReceivedTimestamps.delete(blockHash);
+      }
+    }
+  }
+
+  private hasReceivedFromPeer(blockHash: string, peerId: number): boolean {
+    const peerSet = this.blockReceivedHistory.get(blockHash);
+    return peerSet?.has(peerId) ?? false;
+  }
+
+  private markReceived(blockHash: string, peerId: number) {
+    this.cleanupOldBlockReceivedHistory();
+
+    if (!this.blockReceivedHistory.has(blockHash)) {
+      this.blockReceivedHistory.set(blockHash, new Set());
+      this.blockReceivedTimestamps.set(blockHash, Date.now());
+    }
+    this.blockReceivedHistory.get(blockHash)!.add(peerId);
   }
 }
