@@ -79,7 +79,7 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     label: 'Bloco validado',
   },
   'block-mined': {
-    color: 'text-yellow-400',
+    color: 'text-orange-400',
     icon: 'pi pi-bolt',
     label: 'Bloco minerado',
     template: 'Bloco #{{block.height}} minerado',
