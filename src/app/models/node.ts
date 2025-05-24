@@ -781,6 +781,7 @@ export class Node {
     let reason = this.validateBlockConsensus(block);
     if (reason) {
       this.handleNonConsensualBlock(block, peer, event, reason);
+      EventManager.fail(event);
       return;
     }
 
