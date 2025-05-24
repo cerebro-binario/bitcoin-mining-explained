@@ -99,6 +99,7 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     color: 'text-red-500',
     icon: 'pi pi-ban',
     label: 'Peer desconectado',
+    template: 'Peer #{{peerId}} desconectado ({{reason}})',
   },
   'peer-rotation': {
     color: 'text-orange-400',

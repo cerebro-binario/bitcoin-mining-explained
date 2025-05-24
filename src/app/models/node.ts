@@ -14,6 +14,7 @@ import {
 export interface Neighbor {
   latency: number;
   node: Node;
+  connectedAt: number;
 }
 
 export class Node {
@@ -103,6 +104,8 @@ export class Node {
   private readonly HISTORY_TTL = 2 * 60 * 1000;
   // Mapa para rastrear quando o broadcast foi feito
   private blockReceivedTimestamps: Map<string, number> = new Map();
+
+  private readonly CONNECTION_TTL = 5 * 60 * 1000; // 5 minutos em ms
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -597,12 +600,23 @@ export class Node {
   // Função utilitária para escolher o vizinho a ser desconectado
   private pickEvictionCandidate(neighbors: Neighbor[]): Neighbor {
     if (neighbors.length === 1) return neighbors[0];
-    // Encontra o maior número de conexões entre os vizinhos
+
+    // Primeiro critério: conexões mais antigas
+    const now = Date.now();
+    const oldestConnections = neighbors.filter(
+      (n) => now - n.connectedAt > this.CONNECTION_TTL * 0.8 // 80% do TTL
+    );
+
+    if (oldestConnections.length > 0) {
+      return oldestConnections[0];
+    }
+
+    // Segundo critério: maior número de conexões
     const maxPeers = Math.max(...neighbors.map((n) => n.node.peers.length));
-    // Filtra os vizinhos que têm esse número máximo de conexões
     const candidates = neighbors.filter(
       (n) => n.node.peers.length === maxPeers
     );
+
     // Se só há um, retorna ele; senão, escolhe aleatoriamente entre eles
     if (candidates.length === 1) return candidates[0];
     return candidates[Math.floor(Math.random() * candidates.length)];
@@ -625,7 +639,11 @@ export class Node {
 
     // Só conecta se ainda não estiver conectado
     if (!this.peers.some((n) => n.node.id === peer.id)) {
-      const neighbor = { node: peer, latency };
+      const neighbor = {
+        node: peer,
+        latency,
+        connectedAt: Date.now(), // Adiciona timestamp da conexão
+      };
       this.peers.push(neighbor);
 
       EventManager.log(event, 'peer-connected', { peerId: peer.id });
@@ -640,7 +658,11 @@ export class Node {
     }
 
     if (!peer.peers.some((n) => n.node.id === this.id)) {
-      const neighbor = { node: this, latency };
+      const neighbor = {
+        node: this,
+        latency,
+        connectedAt: Date.now(), // Adiciona timestamp da conexão
+      };
       peer.peers.push(neighbor);
 
       EventManager.log(peerEvent, 'peer-connected', { peerId: this.id });
@@ -665,36 +687,30 @@ export class Node {
     this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
     delete this.peerBlockSubscriptions[peer.id!];
 
-    const nBefore = this.peers.length;
     // Remove o peer da lista de vizinhos deste nó
     this.peers = this.peers.filter((n) => n.node.id !== peer.id);
-    const nAfter = this.peers.length;
 
-    if (nBefore !== nAfter) {
-      if (event) {
-        EventManager.log(event, 'peer-rotation', {
-          peerId: peer.id,
-        });
-      } else {
-        const disconnectEvent = this.addEvent('peer-disconnected', {
-          peerId: peer.id,
-        });
-        EventManager.complete(disconnectEvent);
-      }
-    }
-
-    const nBeforePeer = peer.peers.length;
-    // Remove este nó da lista de vizinhos do peer
-    peer.peers = peer.peers.filter((n) => n.node.id !== this.id);
-    const nAfterPeer = peer.peers.length;
-
-    if (nBeforePeer !== nAfterPeer) {
-      const disconnectEvent = peer.addEvent('peer-disconnected', {
-        peerId: this.id,
+    if (event) {
+      EventManager.log(event, 'peer-rotation', {
+        peerId: peer.id,
+        reason,
+      });
+    } else {
+      const disconnectEvent = this.addEvent('peer-disconnected', {
+        peerId: peer.id,
         reason,
       });
       EventManager.complete(disconnectEvent);
     }
+
+    // Remove este nó da lista de vizinhos do peer
+    peer.peers = peer.peers.filter((n) => n.node.id !== this.id);
+
+    const disconnectEvent = peer.addEvent('peer-disconnected', {
+      peerId: this.id,
+      reason,
+    });
+    EventManager.complete(disconnectEvent);
   }
 
   private syncWith(peer: Node, event: NodeEvent) {
@@ -1036,6 +1052,12 @@ export class Node {
   }
 
   async searchPeersToConnect(nodes: Node[]) {
+    this.peers.forEach((p) => {
+      if (p.connectedAt < Date.now() - this.CONNECTION_TTL) {
+        this.disconnectFromPeer(p.node, 'connection-timeout');
+      }
+    });
+
     if (this.peers.length >= this.MAX_PEERS) return;
     if (this.isSearchingPeers) return;
 
@@ -1071,7 +1093,9 @@ export class Node {
         peersConnected++;
 
         if (this.peers.length >= this.MAX_PEERS) {
-          EventManager.log(searchPeersEvent, 'max-peers-reached');
+          EventManager.log(searchPeersEvent, 'max-peers-reached', {
+            maxPeers: this.MAX_PEERS,
+          });
           break;
         }
       }
