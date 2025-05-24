@@ -645,6 +645,7 @@ export class Node {
       }
 
       peer.syncWith(this, peerEvent);
+      EventManager.complete(peerEvent);
     }
   }
 
@@ -880,7 +881,7 @@ export class Node {
       currentBlock = parentBlock;
     }
 
-    if (missing.length === 0) {
+    if (missing.length <= 1) {
       EventManager.log(event, 'already-in-sync', { peerId: origin.id });
 
       return;
