@@ -774,7 +774,11 @@ export class Node {
   }
 
   // Método centralizado para processar um bloco recebido
-  private processBlock(block: Block, peer: Node, event: NodeEvent): void {
+  private processBlock(
+    block: Block,
+    peer: Node,
+    event: NodeEvent
+  ): NodeEventLogReasons | undefined {
     EventManager.log(event, 'validating-block', { peerId: peer.id, block });
 
     // 4. Validar o bloco
@@ -782,7 +786,7 @@ export class Node {
     if (reason) {
       this.handleNonConsensualBlock(block, peer, event, reason);
       EventManager.fail(event);
-      return;
+      return reason;
     }
 
     // Resetar score de misbehavior (se chegou aqui, o bloco foi validado)
@@ -805,7 +809,7 @@ export class Node {
       }
 
       EventManager.fail(event);
-      return;
+      return reason;
     }
 
     EventManager.log(event, 'block-validated', {
@@ -824,6 +828,8 @@ export class Node {
     ) {
       this.initBlockTemplate(newTopBlock);
     }
+
+    return undefined;
   }
 
   onPeerBlockFiltering(block: Block, peer: Node) {
@@ -954,7 +960,7 @@ export class Node {
       if (round > totalPeers * 5) {
         EventManager.log(event, 'sync-failed', {
           peerId: origin.id,
-          reason: EVENT_LOG_REASONS['block-not-found'],
+          reason: `(${EVENT_LOG_REASONS['block-not-found']})`,
         });
         EventManager.fail(event);
         return;
@@ -989,7 +995,17 @@ export class Node {
 
     for (const { block, peer } of missing) {
       EventManager.log(event, 'block-received', { block, peerId: peer.id });
-      this.processBlock(block, peer, event);
+
+      const reason = this.processBlock(block, peer, event);
+
+      if (reason) {
+        EventManager.log(event, 'sync-failed', {
+          block,
+          reason: `(${EVENT_LOG_REASONS[reason]})`,
+        });
+        EventManager.fail(event);
+        return;
+      }
     }
   }
 
