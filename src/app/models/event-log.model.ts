@@ -23,7 +23,9 @@ export type EventLogType =
   | 'peer-incompatible'
   | 'connection-timeout'
   | 'misbehavior'
-  | 'catch-up-chain';
+  | 'catch-up-chain'
+  | 'duplicate'
+  | 'duplicate-orphan';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 
@@ -70,7 +72,7 @@ export class EventManager {
 export type NodeEventLogReasons =
   | 'invalid-unknown'
   | 'duplicate'
-  | 'duplicate-orphan'
+  | 'duplicate-pending'
   | 'invalid-parent'
   | 'invalid-proof-of-work'
   | 'invalid-timestamp'
@@ -119,7 +121,7 @@ export type NodeEventLogReasons =
 export const EVENT_LOG_REASONS: Record<NodeEventLogReasons, string> = {
   'invalid-unknown': 'Bloco rejeitado por razão não identificada',
   duplicate: 'Bloco duplicado',
-  'duplicate-orphan': 'Bloco órfão duplicado',
+  'duplicate-pending': 'Bloco pendente duplicado',
   'invalid-parent': 'Bloco anterior não encontrado',
   'invalid-proof-of-work': 'Bloco com prova de trabalho inválida',
   'invalid-timestamp': 'Bloco com timestamp inválido',

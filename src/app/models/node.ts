@@ -791,10 +791,17 @@ export class Node {
     reason = this.addBlock(block);
 
     if (reason) {
-      EventManager.log(event, 'block-rejected', {
-        block,
-        reason: EVENT_LOG_REASONS[reason],
-      });
+      if (reason === 'duplicate') {
+        EventManager.log(event, 'duplicate', {
+          block,
+          reason: EVENT_LOG_REASONS[reason],
+        });
+      } else {
+        EventManager.log(event, 'block-rejected', {
+          block,
+          reason: EVENT_LOG_REASONS[reason],
+        });
+      }
 
       EventManager.fail(event);
       return;
@@ -872,10 +879,9 @@ export class Node {
     const orphans = this.orphanBlocks.get(orphan.previousHash) || [];
 
     if (orphans.some((o) => o.hash === orphan.hash)) {
-      EventManager.log(event, 'block-rejected', {
+      EventManager.log(event, 'duplicate-orphan', {
         peerId: peer.id,
         block: orphan,
-        reason: EVENT_LOG_REASONS['duplicate-orphan'],
       });
       EventManager.fail(event);
       return;

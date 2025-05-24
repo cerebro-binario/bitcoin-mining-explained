@@ -74,6 +74,16 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     icon: 'pi pi-cog',
     label: 'Validando bloco',
   },
+  duplicate: {
+    color: 'text-amber-400',
+    icon: 'pi pi-exclamation-triangle',
+    label: 'Bloco já recebido (ignorando...)',
+  },
+  'duplicate-orphan': {
+    color: 'text-amber-400',
+    icon: 'pi pi-exclamation-triangle',
+    label: 'Bloco órfão já recebido (ignorando...)',
+  },
   'block-rejected': {
     color: 'text-red-500',
     icon: 'pi pi-times-circle',
