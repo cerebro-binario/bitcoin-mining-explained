@@ -779,7 +779,14 @@ export class Node {
     peer: Node,
     event: NodeEvent
   ): NodeEventLogReasons | undefined {
-    EventManager.log(event, 'validating-block', { peerId: peer.id, block });
+    const lastLogType = event.logs[event.logs.length - 1]?.type || event.type;
+    // Não mostrar o bloco se o último log for block-received (já foi mostrado)
+    const showBlock = lastLogType !== 'block-received' ? block : undefined;
+
+    EventManager.log(event, 'validating-block', {
+      peerId: peer.id,
+      block: showBlock,
+    });
 
     // 4. Validar o bloco
     let reason = this.validateBlockConsensus(block);
@@ -814,7 +821,7 @@ export class Node {
 
     EventManager.log(event, 'block-validated', {
       peerId: peer?.id,
-      block,
+      block: showBlock,
     });
 
     EventManager.complete(event);
