@@ -637,6 +637,10 @@ export class Node {
         ref: peerEvent,
         logType: 'peer-rotation',
       });
+      toDrop.node.disconnectFromPeer(peer, undefined, {
+        eventType: 'peer-disconnected',
+        logType: 'peer-rotation',
+      });
     }
 
     // Só conecta se ainda não estiver conectado
@@ -724,36 +728,6 @@ export class Node {
       );
       EventManager.complete(disconnectEvent);
     }
-
-    // Remove este nó da lista de vizinhos do peer
-    peer.peers = peer.peers.filter((n) => n.node.id !== this.id);
-
-    const logs = event?.logType
-      ? [
-          {
-            type: event.logType,
-            timestamp: Date.now(),
-            data: { peerId: this.id },
-          },
-        ]
-      : newEvent?.logType
-      ? [
-          {
-            type: newEvent.logType,
-            timestamp: Date.now(),
-            data: { peerId: this.id },
-          },
-        ]
-      : [];
-
-    const disconnectEvent = peer.addEvent(
-      'peer-disconnected',
-      {
-        peerId: this.id,
-      },
-      logs
-    );
-    EventManager.complete(disconnectEvent);
   }
 
   private syncWith(peer: Node, event: NodeEvent) {
@@ -940,6 +914,11 @@ export class Node {
       if (this.misbehaviorScores[peer.id] >= Node.MISBEHAVIOR_THRESHOLD) {
         this.disconnectFromPeer(peer, {
           ref: event,
+          logType: 'misbehavior',
+        });
+
+        peer.disconnectFromPeer(this, undefined, {
+          eventType: 'peer-disconnected',
           logType: 'misbehavior',
         });
       }
@@ -1210,6 +1189,11 @@ export class Node {
     this.peers.forEach((p) => {
       if (p.connectedAt < Date.now() - this.CONNECTION_TTL) {
         this.disconnectFromPeer(p.node, undefined, {
+          eventType: 'peer-disconnected',
+          logType: 'connection-timeout',
+        });
+
+        p.node.disconnectFromPeer(this, undefined, {
           eventType: 'peer-disconnected',
           logType: 'connection-timeout',
         });
