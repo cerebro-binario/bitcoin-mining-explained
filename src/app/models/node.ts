@@ -980,6 +980,9 @@ export class Node {
         continue;
       }
 
+      // Resetar contador de blocos não encontrados (se chegou aqui, o bloco foi encontrado)
+      notFoundCount = 0;
+
       completed =
         this.checkIfBlockExists(parentBlock) || parentBlock.height === -1;
 
