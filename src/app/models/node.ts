@@ -1205,7 +1205,34 @@ export class Node {
   // mas também pelos parâmetros de consenso.
   // Validar se é soft ou hard fork. Caso seja hard, não é compatível.
   private isPeerConsensusCompatible(peer: Node): boolean {
-    return peer.consensus.version === this.consensus.version;
+    // Se as versões são idênticas, são compatíveis
+    if (peer.consensus.version === this.consensus.version) {
+      return true;
+    }
+
+    // Obtém os parâmetros atuais de ambos os nós
+    const myParams = this.consensus.parameters;
+    const peerParams = peer.consensus.parameters;
+
+    // Verifica se as mudanças constituem um hard fork
+    // Um hard fork ocorre quando:
+    // 1. O tamanho máximo do bloco é aumentado (eu não aceitarei blocos maiores que meu limite)
+    // 2. O intervalo de ajuste de dificuldade é alterado (afeta a validação de blocos)
+    // 3. O tempo alvo do bloco é alterado (afeta a validação de blocos)
+    if (
+      peerParams.maxBlockSize > myParams.maxBlockSize ||
+      peerParams.difficultyAdjustmentInterval !==
+        myParams.difficultyAdjustmentInterval ||
+      peerParams.targetBlockTime !== myParams.targetBlockTime
+    ) {
+      return false;
+    }
+
+    // Se chegou aqui, as mudanças são compatíveis (soft fork)
+    // Exemplos de soft forks:
+    // 1. Redução do tamanho máximo do bloco (eu aceito blocos menores)
+    // 2. Redução do número máximo de transações (eu aceito menos transações)
+    return true;
   }
 
   private addEvent(type: NodeEventType, data?: any, logs: NodeEventLog[] = []) {
