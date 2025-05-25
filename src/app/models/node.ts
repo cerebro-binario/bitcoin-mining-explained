@@ -946,6 +946,7 @@ export class Node {
     ];
     let completed = false;
     let currentBlock = orphan;
+    let notFoundCount = 0;
 
     while (!completed) {
       const totalPeers = this.peers.length;
@@ -957,16 +958,20 @@ export class Node {
         peer.node
       );
 
-      if (round > totalPeers * 5) {
-        EventManager.log(event, 'sync-failed', {
-          peerId: origin.id,
-          reason: `(${EVENT_LOG_REASONS['block-not-found']})`,
-        });
-        EventManager.fail(event);
-        return;
-      }
+      if (!parentBlock) {
+        notFoundCount++;
 
-      if (!parentBlock) continue;
+        if (notFoundCount > totalPeers * 5) {
+          EventManager.log(event, 'sync-failed', {
+            peerId: origin.id,
+            reason: `(${EVENT_LOG_REASONS['block-not-found']})`,
+          });
+          EventManager.fail(event);
+          return;
+        }
+
+        continue;
+      }
 
       completed =
         this.checkIfBlockExists(parentBlock) || parentBlock.height === -1;
