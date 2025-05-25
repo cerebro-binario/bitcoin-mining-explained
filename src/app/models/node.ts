@@ -1210,9 +1210,14 @@ export class Node {
       return true;
     }
 
-    // Obtém os parâmetros atuais de ambos os nós
-    const myParams = this.consensus.parameters;
-    const peerParams = peer.consensus.parameters;
+    // Obtém a altura atual
+    const currentHeight = this.getLatestBlock()?.height || 0;
+
+    // Obtém os parâmetros de consenso em vigor para a altura atual
+    const myParams =
+      this.consensus.getConsensusForHeight(currentHeight).parameters;
+    const peerParams =
+      peer.consensus.getConsensusForHeight(currentHeight).parameters;
 
     // Verifica se as mudanças constituem um hard fork
     // Um hard fork ocorre quando:
