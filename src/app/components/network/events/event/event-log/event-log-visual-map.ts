@@ -151,4 +151,28 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     label: 'Sincronização de catch-up',
     template: 'Iniciando sincronização de catch-up',
   },
+  'consensus-change': {
+    color: 'text-orange-400',
+    icon: 'pi pi-sync',
+    label: 'Atualização de consenso',
+    template:
+      'Consenso alterado de v{{oldConsensus.version}} para v{{newConsensus.version}}',
+  },
+  'removing-incompatible-blocks': {
+    color: 'text-yellow-400',
+    icon: 'pi pi-trash',
+    label: 'Removendo blocos incompatíveis',
+    template: 'Removendo blocos incompatíveis com v{{newConsensus.version}}',
+  },
+  'removing-incompatible-blocks-completed': {
+    color: 'text-green-400',
+    icon: 'pi pi-check',
+    label: 'Blocos incompatíveis removidos',
+  },
+  'future-consensus-change': {
+    color: 'text-yellow-400',
+    icon: 'pi pi-exclamation-triangle',
+    label:
+      'As regras entram em vigor no bloco #{{blockHeight}} (faltam {{nBlocksToGo}} blocos)',
+  },
 };

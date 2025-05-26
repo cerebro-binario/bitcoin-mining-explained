@@ -1,9 +1,10 @@
 export type NodeEventType =
-  | 'block-mined' // Bloco foi minerado
-  | 'block-received' // Evento de recebimento de bloco
-  | 'peer-search' // Busca por peers
-  | 'peer-requested-connection' // Peer solicitou conexão
-  | 'peer-disconnected'; // Peer foi desconectado (com razão específica)
+  | 'block-mined'
+  | 'block-received'
+  | 'peer-search'
+  | 'peer-requested-connection'
+  | 'peer-disconnected'
+  | 'consensus-change';
 
 export type EventLogType =
   | 'peer-found'
@@ -25,7 +26,10 @@ export type EventLogType =
   | 'misbehavior'
   | 'catch-up-chain'
   | 'duplicate'
-  | 'duplicate-orphan';
+  | 'duplicate-orphan'
+  | 'future-consensus-change'
+  | 'removing-incompatible-blocks'
+  | 'removing-incompatible-blocks-completed';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 

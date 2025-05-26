@@ -1256,4 +1256,93 @@ export class Node {
     }
     this.blockReceivedHistory.get(blockHash)!.add(peerId);
   }
+
+  private syncCompatibleChainOnConsensusChange(
+    newConsensus: ConsensusVersion,
+    event: NodeEvent
+  ) {
+    // Obtém a altura atual
+    const currentHeight = this.getLatestBlock()?.height || 0;
+
+    const compatible = areConsensusVersionsCompatible(
+      this.consensus,
+      newConsensus,
+      currentHeight
+    );
+
+    // Se as versões são compatíveis (soft fork), apenas atualiza o consenso
+    if (compatible) {
+      this.consensus = newConsensus;
+      return;
+    }
+
+    // Se chegou aqui, as versões são incompatíveis (hard fork)
+
+    EventManager.log(event, 'removing-incompatible-blocks', {
+      newConsensus,
+      oldConsensus: this.consensus,
+    });
+
+    // Encontra o ponto de divergência (altura onde o consenso mudou)
+    let highestVersion =
+      newConsensus.version > this.consensus.version
+        ? newConsensus
+        : this.consensus;
+    const lowestVersion =
+      newConsensus.version > this.consensus.version
+        ? this.consensus
+        : newConsensus;
+
+    // algoritmo para procurar a divergência entre as duas versões
+    while (highestVersion.previousVersion?.hash !== lowestVersion.hash) {
+      if (highestVersion.previousVersion) {
+        highestVersion = highestVersion.previousVersion;
+      } else {
+        throw new Error('Incompatible consensus versions');
+      }
+    }
+
+    const divergenceHeight = highestVersion.startHeight;
+
+    // Remove todos os blocos após o ponto de divergência
+    const divergenceIndex = this.getHeightIndex(divergenceHeight);
+    if (divergenceIndex >= 0) {
+      for (let i = 0; i < divergenceIndex; i++) {
+        for (let j = 0; j < this.heights[i].length; j++) {
+          delete this.heights[i][j];
+        }
+      }
+      this.heights = this.heights.slice(divergenceIndex);
+      this.heights[0].forEach((h) => (h.children = []));
+    }
+
+    // Atualiza o consenso
+    this.consensus = newConsensus;
+
+    EventManager.log(event, 'removing-incompatible-blocks-completed', {
+      newConsensus,
+      oldConsensus: this.consensus,
+    });
+  }
+
+  // Método público para mudar o consenso
+  changeConsensus(newConsensus: ConsensusVersion) {
+    const event = this.addEvent('consensus-change', {
+      newConsensus,
+      oldConsensus: this.consensus,
+    });
+
+    const currentHeight = this.getLatestBlock()?.height || 0;
+
+    // Verificar se nova versão entra em vigência no futuro
+    if (newConsensus.startHeight > currentHeight) {
+      EventManager.log(event, 'future-consensus-change', {
+        blockHeight: newConsensus.startHeight,
+        nBlocksToGo: newConsensus.startHeight - currentHeight,
+      });
+    }
+
+    this.syncCompatibleChainOnConsensusChange(newConsensus, event);
+    EventManager.complete(event);
+  }
 }

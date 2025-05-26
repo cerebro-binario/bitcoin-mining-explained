@@ -306,7 +306,7 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
-    this.miner.consensus = this.selected;
+    this.miner.changeConsensus(this.selected);
     this.mode = 'viewing';
     this.clearMessages();
     this.messageService.add({
