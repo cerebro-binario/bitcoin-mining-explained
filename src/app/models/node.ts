@@ -13,6 +13,8 @@ import {
   NodeEventType,
 } from './event-log.model';
 
+import { areConsensusVersionsCompatible } from './consensus.model';
+
 export interface Neighbor {
   latency: number;
   node: Node;
