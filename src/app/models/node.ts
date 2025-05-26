@@ -1201,43 +1201,15 @@ export class Node {
     });
   }
 
-  // TODO: Implementar verificação de compatibilidade de consenso não apenas pela versão,
-  // mas também pelos parâmetros de consenso.
-  // Validar se é soft ou hard fork. Caso seja hard, não é compatível.
   private isPeerConsensusCompatible(peer: Node): boolean {
-    // Se as versões são idênticas, são compatíveis
-    if (peer.consensus.version === this.consensus.version) {
-      return true;
-    }
-
     // Obtém a altura atual
     const currentHeight = this.getLatestBlock()?.height || 0;
 
-    // Obtém os parâmetros de consenso em vigor para a altura atual
-    const myParams =
-      this.consensus.getConsensusForHeight(currentHeight).parameters;
-    const peerParams =
-      peer.consensus.getConsensusForHeight(currentHeight).parameters;
-
-    // Verifica se as mudanças constituem um hard fork
-    // Um hard fork ocorre quando:
-    // 1. O tamanho máximo do bloco é aumentado (eu não aceitarei blocos maiores que meu limite)
-    // 2. O intervalo de ajuste de dificuldade é alterado (afeta a validação de blocos)
-    // 3. O tempo alvo do bloco é alterado (afeta a validação de blocos)
-    if (
-      peerParams.maxBlockSize > myParams.maxBlockSize ||
-      peerParams.difficultyAdjustmentInterval !==
-        myParams.difficultyAdjustmentInterval ||
-      peerParams.targetBlockTime !== myParams.targetBlockTime
-    ) {
-      return false;
-    }
-
-    // Se chegou aqui, as mudanças são compatíveis (soft fork)
-    // Exemplos de soft forks:
-    // 1. Redução do tamanho máximo do bloco (eu aceito blocos menores)
-    // 2. Redução do número máximo de transações (eu aceito menos transações)
-    return true;
+    return areConsensusVersionsCompatible(
+      this.consensus,
+      peer.consensus,
+      currentHeight
+    );
   }
 
   private addEvent(type: NodeEventType, data?: any, logs: NodeEventLog[] = []) {

@@ -98,3 +98,38 @@ export const DEFAULT_CONSENSUS: ConsensusVersion = new ConsensusVersion({
 
 // Inicializa o hash da versão padrão
 DEFAULT_CONSENSUS.calculateHash();
+
+export function areConsensusVersionsCompatible(
+  version1: ConsensusVersion,
+  version2: ConsensusVersion,
+  height: number
+): boolean {
+  // Se as versões são idênticas, são compatíveis
+  if (version1.version === version2.version) {
+    return true;
+  }
+
+  // Obtém os parâmetros de consenso em vigor para a altura
+  const params1 = version1.getConsensusForHeight(height).parameters;
+  const params2 = version2.getConsensusForHeight(height).parameters;
+
+  // Verifica se as mudanças constituem um hard fork
+  // Um hard fork ocorre quando:
+  // 1. O tamanho máximo do bloco é aumentado (eu não aceitarei blocos maiores que meu limite)
+  // 2. O intervalo de ajuste de dificuldade é alterado (afeta a validação de blocos)
+  // 3. O tempo alvo do bloco é alterado (afeta a validação de blocos)
+  if (
+    params2.maxBlockSize > params1.maxBlockSize ||
+    params2.difficultyAdjustmentInterval !==
+      params1.difficultyAdjustmentInterval ||
+    params2.targetBlockTime !== params1.targetBlockTime
+  ) {
+    return false;
+  }
+
+  // Se chegou aqui, as mudanças são compatíveis (soft fork)
+  // Exemplos de soft forks:
+  // 1. Redução do tamanho máximo do bloco (eu aceito blocos menores)
+  // 2. Redução do número máximo de transações (eu aceito menos transações)
+  return true;
+}
