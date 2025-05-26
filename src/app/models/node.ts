@@ -170,12 +170,6 @@ export class Node {
       this.heights[heightIndex].push(blockNode);
     }
 
-    // Log de bloco minerado localmente
-    if (block.minerId === this.id) {
-      const event = this.addEvent('block-mined', { block });
-      EventManager.complete(event);
-    }
-
     this.checkForksAndSort();
 
     this.updateMiniBlockchain();
@@ -1214,7 +1208,7 @@ export class Node {
     );
   }
 
-  private addEvent(type: NodeEventType, data?: any, logs: NodeEventLog[] = []) {
+  addEvent(type: NodeEventType, data?: any, logs: NodeEventLog[] = []) {
     const event: NodeEvent = {
       minerId: this.id,
       type,

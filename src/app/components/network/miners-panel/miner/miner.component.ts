@@ -19,6 +19,7 @@ import { EventsComponent } from '../../events/events.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
+import { EventManager } from '../../../../models/event-log.model';
 
 interface HashRateOption {
   label: string;
@@ -224,10 +225,15 @@ export class MinerComponent {
 
     setTimeout(() => {
       this.miner.addBlock(block);
+
       this.miner.isAddingBlock = false;
 
       // Cria um novo bloco para continuar minerando
       this.miner.initBlockTemplate(block);
+
+      // Log de bloco minerado localmente
+      const event = this.miner.addEvent('block-mined', { block });
+      EventManager.complete(event);
 
       // Emite evento para propagar o bloco
       this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
