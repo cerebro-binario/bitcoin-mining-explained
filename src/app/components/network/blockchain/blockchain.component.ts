@@ -53,7 +53,7 @@ export class BlockchainComponent {
   // Método chamado após a view ser inicializada
   ngAfterViewInit() {
     // Verifica se existe algum bloco minerado
-    const hasBlocks = this.miner.heights.length > 0;
+    const hasBlocks = this.miner.heights.length > 1;
     if (hasBlocks) {
       requestAnimationFrame(() => {
         this.calculateGaps();
