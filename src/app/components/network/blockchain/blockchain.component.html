@@ -3,19 +3,18 @@
     <div
       id="miners-panel-container"
       class="flex flex-row gap-16 items-stretch px-16"
+      [@slideRightAnimation]="{
+        value: miner.heights.length,
+        params: {
+          slideXValue
+        }
+      }"
     >
       <!-- Bloco atual -->
       <ng-container *ngFor="let nodes of miner.heights; let height = index">
         @if(nodes[0].block.height === -1) { @let nChains =
         nodes[0].children.length;
-        <div
-          class="relative flex flex-col"
-          @blockAnimation
-          [@slideRightAnimation]="{
-            value: miner.isAddingBlock ? 'moved' : 'default',
-            params: { slideXValue }
-          }"
-        >
+        <div class="relative flex flex-col" @blockAnimation>
           <div
             *ngIf="nChains > 1"
             [id]="'originBlock-' + miner.id"
@@ -26,14 +25,7 @@
           ></div>
         </div>
         } @else { @let h = miner.getHeightIndex(height);
-        <div
-          class="relative height-element"
-          @blockAnimation
-          [@slideRightAnimation]="{
-            value: miner.isAddingBlock ? 'moved' : 'default',
-            params: { slideXValue }
-          }"
-        >
+        <div class="relative height-element">
           <div
             class="relative py-2 flex flex-col gap-4 height-element-container"
           >
@@ -44,6 +36,8 @@
                 getBlockBackgroundColor(node),
                 getBlockBorderColor(node)
               ]"
+              @blockAnimation
+              (@blockAnimation.done)="calculateGaps()"
             >
               <div class="flex items-center justify-between mb-1">
                 <div class="flex items-center gap-2">

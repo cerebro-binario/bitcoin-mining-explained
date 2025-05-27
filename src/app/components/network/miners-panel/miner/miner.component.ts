@@ -12,6 +12,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
 import { IConsensusParameters } from '../../../../models/consensus.model';
+import { EventManager } from '../../../../models/event-log.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
@@ -19,7 +20,6 @@ import { EventsComponent } from '../../events/events.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
-import { EventManager } from '../../../../models/event-log.model';
 
 interface HashRateOption {
   label: string;
@@ -156,12 +156,7 @@ export class MinerComponent {
 
   // Processa um tick de mineração
   processMiningTick(now: number, batchSize: number) {
-    if (
-      !this.miner.isMining ||
-      !this.miner.currentBlock ||
-      this.miner.isAddingBlock
-    )
-      return;
+    if (!this.miner.isMining || !this.miner.currentBlock) return;
 
     const block = this.miner.currentBlock;
     const hashRate = this.miner.hashRate;
@@ -221,23 +216,18 @@ export class MinerComponent {
 
   private handleMinedBlock(block: Block) {
     block.minerId = this.miner.id;
-    this.miner.isAddingBlock = true;
 
-    setTimeout(() => {
-      this.miner.addBlock(block);
+    this.miner.addBlock(block);
 
-      this.miner.isAddingBlock = false;
+    // Cria um novo bloco para continuar minerando
+    this.miner.initBlockTemplate(block);
 
-      // Cria um novo bloco para continuar minerando
-      this.miner.initBlockTemplate(block);
+    // Log de bloco minerado localmente
+    const event = this.miner.addEvent('block-mined', { block });
+    EventManager.complete(event);
 
-      // Log de bloco minerado localmente
-      const event = this.miner.addEvent('block-mined', { block });
-      EventManager.complete(event);
-
-      // Emite evento para propagar o bloco
-      this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
-    }, 600);
+    // Emite evento para propagar o bloco
+    this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
   }
 
   createTransaction() {
