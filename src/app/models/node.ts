@@ -922,6 +922,11 @@ export class Node {
   }
 
   private catchUpChain(orphan: Block, origin: Node, event: NodeEvent) {
+    if (this.checkIfBlockExists(orphan)) {
+      EventManager.log(event, 'already-in-sync', { peerId: origin.id });
+      return;
+    }
+
     let round = 0;
     const missing: { block: Block; peer: Node }[] = [
       { block: orphan, peer: origin },
@@ -967,12 +972,6 @@ export class Node {
 
       missing.unshift({ block: parentBlock, peer: peer.node });
       currentBlock = parentBlock;
-    }
-
-    if (missing.length <= 1) {
-      EventManager.log(event, 'already-in-sync', { peerId: origin.id });
-
-      return;
     }
 
     EventManager.log(event, 'sync-progress', {
