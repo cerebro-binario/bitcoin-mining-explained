@@ -1016,15 +1016,9 @@ export class Node {
   }
 
   // Busca um bloco local por altura
-  getBlockByHeight(height: number): Block | null {
-    for (const heightArr of this.heights) {
-      for (const node of heightArr) {
-        if (node.block.height === height) {
-          return node.block;
-        }
-      }
-    }
-    return null;
+  getBlockByHeight(height: number, hash: string): Block | undefined {
+    const heightIndex = this.getHeightIndex(height);
+    return this.heights[heightIndex]?.find((h) => h.block.hash === hash)?.block;
   }
 
   // Busca todos os blocos ativos de uma altura
@@ -1070,10 +1064,13 @@ export class Node {
     }
 
     // 4. Validar target time
-    const previousBlock = this.getBlockByHeight(block.height - 1);
+    const previousBlock = this.getBlockByHeight(
+      block.height - 1,
+      block.previousHash
+    );
     if (previousBlock) {
       // Regra Bitcoin: timestamp deve ser maior que a mediana dos últimos 11 blocos
-      const medianTimePast = this.getMedianTimePast(block.height);
+      const medianTimePast = this.getMedianTimePast(block.height, block.hash);
       if (block.timestamp <= medianTimePast) {
         return 'invalid-timestamp';
       }
@@ -1100,11 +1097,15 @@ export class Node {
   }
 
   // Função utilitária para calcular a mediana dos timestamps dos últimos N blocos
-  private getMedianTimePast(height: number, window: number = 11): number {
+  private getMedianTimePast(
+    height: number,
+    hash: string,
+    window: number = 11
+  ): number {
     const timestamps: number[] = [];
     let currentHeight = height - 1;
     while (currentHeight >= 0 && timestamps.length < window) {
-      const block = this.getBlockByHeight(currentHeight);
+      const block = this.getBlockByHeight(currentHeight, hash);
       if (block) {
         timestamps.push(block.timestamp);
       }
