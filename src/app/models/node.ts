@@ -1253,22 +1253,26 @@ export class Node {
     this.blockReceivedHistory.get(blockHash)!.add(peerId);
   }
 
-  private syncCompatibleChainOnConsensusChange(
+  private removeIncompatibleBlocksOnConsensusChange(
     newConsensus: ConsensusVersion,
     event: NodeEvent
   ) {
+    const oldConsensus = this.consensus;
+
+    // Atualiza o consenso
+    this.consensus = newConsensus;
+
     // Obtém a altura atual
     const currentHeight = this.getLatestBlock()?.height || 0;
 
     const compatible = areConsensusVersionsCompatible(
-      this.consensus,
+      oldConsensus,
       newConsensus,
       currentHeight
     );
 
     // Se as versões são compatíveis (soft fork), apenas atualiza o consenso
     if (compatible) {
-      this.consensus = newConsensus;
       return;
     }
 
@@ -1276,20 +1280,16 @@ export class Node {
 
     EventManager.log(event, 'removing-incompatible-blocks', {
       newConsensus,
-      oldConsensus: this.consensus,
+      oldConsensus,
     });
 
     // Encontra o ponto de divergência (altura onde o consenso mudou)
     let highestVersion =
-      newConsensus.version > this.consensus.version
-        ? newConsensus
-        : this.consensus;
+      newConsensus.version > oldConsensus.version ? newConsensus : oldConsensus;
     const lowestVersion =
-      newConsensus.version > this.consensus.version
-        ? this.consensus
-        : newConsensus;
+      newConsensus.version > oldConsensus.version ? oldConsensus : newConsensus;
 
-    // algoritmo para procurar a divergência entre as duas versões
+    // algoritmo para procurar a altura de mudança de consenso entre as duas versões
     while (highestVersion.previousVersion?.hash !== lowestVersion.hash) {
       if (highestVersion.previousVersion) {
         highestVersion = highestVersion.previousVersion;
@@ -1298,26 +1298,32 @@ export class Node {
       }
     }
 
-    const divergenceHeight = highestVersion.startHeight;
+    const changeStartHeight = highestVersion.startHeight;
 
-    // Remove todos os blocos após o ponto de divergência
-    const divergenceIndex = this.getHeightIndex(divergenceHeight);
-    if (divergenceIndex >= 0) {
-      for (let i = 0; i < divergenceIndex; i++) {
+    // Remove todos os blocos após o ponto de divergência (não necessariamente é a altura de mudança de consenso)
+    // Procurar pelo último bloco compatível com o consenso antigo
+    const changeStartIndex = this.getHeightIndex(changeStartHeight);
+    let lastCompatibleIndex = undefined;
+
+    for (let i = changeStartIndex; i >= 0; i--) {
         for (let j = 0; j < this.heights[i].length; j++) {
+        const block = this.heights[i][j].block;
+        const reason = this.validateBlockConsensus(block);
+        if (reason) {
           delete this.heights[i][j];
+        } else {
+          lastCompatibleIndex = i;
         }
       }
-      this.heights = this.heights.slice(divergenceIndex);
-      this.heights[0].forEach((h) => (h.children = []));
     }
 
-    // Atualiza o consenso
-    this.consensus = newConsensus;
+    lastCompatibleIndex ??= changeStartIndex;
+    this.heights = this.heights.slice(lastCompatibleIndex);
+    this.heights[0].forEach((h) => (h.children = []));
 
     EventManager.log(event, 'removing-incompatible-blocks-completed', {
       newConsensus,
-      oldConsensus: this.consensus,
+      oldConsensus,
     });
   }
 
@@ -1338,7 +1344,7 @@ export class Node {
       });
     }
 
-    this.syncCompatibleChainOnConsensusChange(newConsensus, event);
+    this.removeIncompatibleBlocksOnConsensusChange(newConsensus, event);
     EventManager.complete(event);
   }
 }
