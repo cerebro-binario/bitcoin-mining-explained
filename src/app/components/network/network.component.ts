@@ -88,6 +88,8 @@ export class NetworkComponent {
   }
 
   onStatsChange(stats: MinersStats) {
-    this.stats = stats;
+    requestAnimationFrame(() => {
+      this.stats = { ...stats };
+    });
   }
 }

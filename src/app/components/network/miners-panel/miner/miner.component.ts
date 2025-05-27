@@ -11,13 +11,15 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
 import { Block, Transaction } from '../../../../models/block.model';
-import { ConsensusParameters } from '../../../../models/consensus.model';
+import { IConsensusParameters } from '../../../../models/consensus.model';
+import { EventManager } from '../../../../models/event-log.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
-import { EventLogsComponent } from '../../event-logs/event-logs.component';
+import { EventsComponent } from '../../events/events.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
+import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
 
 interface HashRateOption {
   label: string;
@@ -31,9 +33,10 @@ interface HashRateOption {
     CommonModule,
     MiningBlockComponent,
     BlockchainComponent,
-    EventLogsComponent,
+    EventsComponent,
     ConsensusDialogComponent,
     ConfirmDialogModule,
+    PeersDialogComponent,
   ],
   templateUrl: './miner.component.html',
   styleUrls: ['./miner.component.scss'],
@@ -43,7 +46,7 @@ export class MinerComponent {
   slideXValue = 'translateX(100%)';
   isBlockchainVisible = true;
 
-  networkVersions$!: Observable<ConsensusParameters[]>;
+  networkVersions$!: Observable<IConsensusParameters[]>;
 
   @Input() miner!: Node;
   @Output() miningChanged = new EventEmitter<Node>();
@@ -60,6 +63,7 @@ export class MinerComponent {
     minerId: number;
     transaction: Transaction;
   }>();
+  @Output() connectToPeersRequested = new EventEmitter<Node>();
 
   isCollapsedHashRateSelectorOpen = false;
 
@@ -71,6 +75,7 @@ export class MinerComponent {
   ];
 
   showConsensusDialog = false;
+  showPeersDialog = false;
 
   constructor(
     private addressService: AddressService,
@@ -151,12 +156,7 @@ export class MinerComponent {
 
   // Processa um tick de mineração
   processMiningTick(now: number, batchSize: number) {
-    if (
-      !this.miner.isMining ||
-      !this.miner.currentBlock ||
-      this.miner.isAddingBlock
-    )
-      return;
+    if (!this.miner.isMining || !this.miner.currentBlock) return;
 
     const block = this.miner.currentBlock;
     const hashRate = this.miner.hashRate;
@@ -177,8 +177,8 @@ export class MinerComponent {
         block.hash = block.calculateHash();
         this.miner.incrementHashCount();
 
-        if (block.isValid()) {
-          this.handleValidBlock(block);
+        if (block.isHashBelowTarget()) {
+          this.handleMinedBlock(block);
           break;
         }
       }
@@ -206,36 +206,28 @@ export class MinerComponent {
         block.hash = block.calculateHash();
         this.miner.incrementHashCount();
 
-        if (block.isValid()) {
-          this.handleValidBlock(block);
+        if (block.isHashBelowTarget()) {
+          this.handleMinedBlock(block);
           break;
         }
       }
     }
   }
 
-  private handleValidBlock(block: Block) {
+  private handleMinedBlock(block: Block) {
     block.minerId = this.miner.id;
-    this.miner.isAddingBlock = true;
 
-    setTimeout(() => {
-      this.miner.addBlock(block);
-      this.miner.isAddingBlock = false;
-
-      this.miner.updateLastMainBlocks();
-      this.miner.updateActiveForkHeights();
-
-      // Emite evento para propagar o bloco
-      this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
-    }, 600);
+    this.miner.addBlock(block);
 
     // Cria um novo bloco para continuar minerando
     this.miner.initBlockTemplate(block);
-    // Reinicia o cronômetro para o novo bloco
-    const newBlock = this.miner.currentBlock;
-    if (newBlock) {
-      newBlock.miningElapsed = 0;
-    }
+
+    // Log de bloco minerado localmente
+    const event = this.miner.addEvent('block-mined', { block });
+    EventManager.complete(event);
+
+    // Emite evento para propagar o bloco
+    this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
   }
 
   createTransaction() {
@@ -316,23 +308,6 @@ export class MinerComponent {
     this.showConsensusDialog = false;
   }
 
-  onConsensusDialogSave(newParams: ConsensusParameters) {
-    const version = this.miner.localConsensusVersions.find(
-      (c) => c.hash === newParams.hash
-    );
-
-    if (!version) {
-      newParams.isLocal = true;
-      this.miner.consensus = { ...newParams };
-      this.miner.localConsensusVersions = [
-        ...this.miner.localConsensusVersions,
-        { ...newParams },
-      ];
-    } else {
-      this.miner.consensus = version;
-    }
-  }
-
   confirmRemoveMiner() {
     this.confirmationService.confirm({
       message:
@@ -348,5 +323,36 @@ export class MinerComponent {
         this.minerRemoved.emit(this.miner);
       },
     });
+  }
+
+  onConsensusVersionChange() {
+    // Recomeçar a mineração do bloco atual para que seja gerado com a nova versão do consenso
+    const lastBlock = this.miner.heights[0]?.[0];
+    this.miner.currentBlock = this.miner.initBlockTemplate(lastBlock?.block);
+  }
+
+  connectToPeers() {
+    if (this.miner.isSearchingPeers) return;
+
+    this.connectToPeersRequested.emit(this.miner);
+  }
+
+  openPeersDialog() {
+    this.showPeersDialog = true;
+  }
+
+  closePeersDialog() {
+    this.showPeersDialog = false;
+  }
+
+  // Status color para o indicador de conexão
+  get statusColor(): string {
+    if (this.miner.peers.length === 0) {
+      return 'red';
+    }
+    if (this.miner.isSyncing) {
+      return 'blue';
+    }
+    return 'green';
   }
 }

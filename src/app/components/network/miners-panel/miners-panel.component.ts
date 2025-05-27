@@ -38,7 +38,7 @@ export type MinersStats = {
 })
 export class MinersPanelComponent implements OnDestroy {
   private readonly DEFAULT_HASH_RATE: number | null = 1000;
-  private miningInterval?: any;
+  private miningTimeout: any;
   private readonly MINING_INTERVAL = 1; // ms
   private readonly TARGET_FRAME_TIME = 16; // ms (60 FPS)
   private readonly MIN_BATCH_SIZE = 100;
@@ -50,6 +50,8 @@ export class MinersPanelComponent implements OnDestroy {
   private readonly FRAME_TIME_HISTORY_SIZE = 10;
   private lastHashRateUpdate = 0;
   private readonly HASH_RATE_UPDATE_INTERVAL = 1000; // ms
+  private lastReconnectPeersTime = 0;
+  private readonly RECONNECT_PEERS_INTERVAL = 6000; // ms
 
   miners$!: Observable<Node[]>;
   minersStats: MinersStats = {
@@ -76,22 +78,16 @@ export class MinersPanelComponent implements OnDestroy {
     private renderer: Renderer2,
     @Inject(DOCUMENT) private document: Document
   ) {
-    this.startMiningInterval();
     this.miners$ = this.network.nodes$.pipe(
       map((nodes) => nodes.filter((n) => n.isMiner)),
       tap((miners) => {
         this.updateStats(miners);
-
-        const toInitialize = miners.filter(
-          (miner) => !miner.initialSyncComplete
-        );
-        Promise.all(
-          toInitialize.map((miner) => this.network.initializeNode(miner))
-        ).then(() => {
-          this.updateStats(miners);
-        });
       })
     );
+  }
+
+  ngAfterViewInit() {
+    this.startMiningLoop();
   }
 
   addMiner() {
@@ -107,12 +103,7 @@ export class MinersPanelComponent implements OnDestroy {
 
   startAllMiners() {
     const miners = this.minerComponents.map((minerComponent) => {
-      if (
-        !minerComponent.miner.isSyncing ||
-        minerComponent.miner.initialSyncComplete
-      ) {
-        minerComponent.startMining();
-      }
+      minerComponent.startMining();
 
       return minerComponent.miner;
     });
@@ -152,6 +143,10 @@ export class MinersPanelComponent implements OnDestroy {
 
   onMinerRemoved(miner: Node) {
     this.network.removeNode(miner.id!);
+  }
+
+  onConnectToPeersRequested(miner: Node) {
+    miner.searchPeersToConnect(this.network.nodes);
   }
 
   onMiningChanged(miner: Node) {
@@ -240,10 +235,7 @@ export class MinersPanelComponent implements OnDestroy {
         acc.toExpand += miner.isCollapsed ? 1 : 0;
         acc.nTotal++;
         acc.nMining += miner.isMining ? 1 : 0;
-        acc.nCanStart +=
-          !miner.isMining && (!miner.isSyncing || miner.initialSyncComplete)
-            ? 1
-            : 0;
+        acc.nCanStart += !miner.isMining ? 1 : 0;
         acc.nCanPause += miner.isMining ? 1 : 0;
         acc.totalHashRate += miner.currentHashRate;
         return acc;
@@ -272,33 +264,61 @@ export class MinersPanelComponent implements OnDestroy {
     this.statsChange.emit(this.minersStats);
   }
 
-  private startMiningInterval() {
-    this.miningInterval = setInterval(() => {
-      const startTime = performance.now();
-      const now = Date.now();
+  private runMiningLoop = () => {
+    const startTime = performance.now();
+    const now = Date.now();
 
-      // Calcula o batch size adaptativo
-      const adaptiveBatchSize = this.calculateAdaptiveBatchSize();
+    // Calcula o batch size adaptativo
+    const adaptiveBatchSize = this.calculateAdaptiveBatchSize();
 
-      let currentHashRate = 0;
-      this.minerComponents.forEach((component) => {
-        if (component && component.miner.isMining) {
-          component.processMiningTick(now, adaptiveBatchSize);
-          currentHashRate += component.miner.currentHashRate;
-        }
-      });
+    let currentHashRate = 0;
+    this.minerComponents.forEach((component) => {
+      if (!component) return;
 
-      // Só atualiza o totalHashRate a cada HASH_RATE_UPDATE_INTERVAL ms
-      if (now - this.lastHashRateUpdate >= this.HASH_RATE_UPDATE_INTERVAL) {
-        this.minersStats.totalHashRate = currentHashRate;
-        this.statsChange.emit(this.minersStats);
-        this.lastHashRateUpdate = now;
+      if (component.miner.isMining) {
+        component.processMiningTick(now, adaptiveBatchSize);
+        currentHashRate += component.miner.currentHashRate;
       }
 
-      // Mede o tempo de execução do frame
-      const frameTime = performance.now() - startTime;
-      this.updateFrameTime(frameTime);
-    }, this.MINING_INTERVAL);
+      // Autobusca de peers (com cooldown)
+      if (
+        now - component.miner.lastPeerSearch >
+        component.miner.peerSearchInterval
+      ) {
+        component.miner.lastPeerSearch = now;
+        component.miner.searchPeersToConnect(this.network.nodes);
+      }
+    });
+
+    // Só atualiza o totalHashRate a cada HASH_RATE_UPDATE_INTERVAL ms
+    if (now - this.lastHashRateUpdate >= this.HASH_RATE_UPDATE_INTERVAL) {
+      this.minersStats.totalHashRate = currentHashRate;
+      this.statsChange.emit(this.minersStats);
+      this.lastHashRateUpdate = now;
+    }
+
+    // Mede o tempo de execução do frame
+    const frameTime = performance.now() - startTime;
+    this.updateFrameTime(frameTime);
+
+    // Agenda o próximo ciclo
+    this.miningTimeout = setTimeout(this.runMiningLoop, this.MINING_INTERVAL);
+  };
+
+  // Método para iniciar o loop de mineração
+  startMiningLoop() {
+    if (this.miningTimeout) {
+      clearTimeout(this.miningTimeout);
+    }
+    this.runMiningLoop();
+  }
+
+  // Método para parar o loop de mineração
+  stopMiningLoop() {
+    if (this.miningTimeout) {
+      clearTimeout(this.miningTimeout);
+      this.miningTimeout = null;
+    }
   }
 
   private calculateAdaptiveBatchSize(): number {
@@ -350,8 +370,8 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.miningInterval) {
-      clearInterval(this.miningInterval);
+    if (this.miningTimeout) {
+      clearTimeout(this.miningTimeout);
     }
     this.renderer.removeClass(this.document.body, 'overflow-hidden');
   }

@@ -1,15 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Node } from '../../../models/node';
+import { EventComponent } from './event/event.component';
 
 @Component({
-  selector: 'app-event-logs',
+  selector: 'app-events',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './event-logs.component.html',
-  styleUrls: ['./event-logs.component.scss'],
+  imports: [CommonModule, EventComponent],
+  templateUrl: './events.component.html',
+  styleUrls: ['./events.component.scss'],
 })
-export class EventLogsComponent {
+export class EventsComponent {
   @Input() node!: Node;
   @Output() show = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();

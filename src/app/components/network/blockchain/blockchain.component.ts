@@ -1,10 +1,4 @@
-import {
-  animate,
-  state,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { BlockNode } from '../../../models/block.model';
@@ -23,21 +17,24 @@ import { Node } from '../../../models/node';
       ]),
     ]),
     trigger('slideRightAnimation', [
-      state('default', style({ transform: 'translateX(0)' })),
-      state('moved', style({ transform: '{{slideXValue}}' }), {
-        params: { slideXValue: 'translateX(100%)' },
-      }),
-      transition('default => moved', [animate('0.5s ease-out')]),
-      transition('moved => default', [animate('0s ease-out')]),
+      transition(
+        ':increment',
+        [style({ transform: '{{slideXValue}}' }), animate('0.5s ease-out')],
+        {
+          params: {
+            slideXValue: 'translateX(0)',
+          },
+        }
+      ),
     ]),
   ],
 })
 export class BlockchainComponent {
   @Input() miner!: Node;
-  @Input() slideXValue = 'translateX(100%)';
+  slideXValue = 'translateX(0)';
 
   // Propriedades para o cálculo de gaps
-  private hasCalculatedGaps = false;
+  hasCalculatedGaps = false;
   connectorViewbox = { w: 100, h: 100 };
   gap = {
     x: {
@@ -53,7 +50,7 @@ export class BlockchainComponent {
   // Método chamado após a view ser inicializada
   ngAfterViewInit() {
     // Verifica se existe algum bloco minerado
-    const hasBlocks = this.miner.heights.length > 0;
+    const hasBlocks = this.miner.heights.length > 1;
     if (hasBlocks) {
       requestAnimationFrame(() => {
         this.calculateGaps();
@@ -63,6 +60,8 @@ export class BlockchainComponent {
 
   // Método para calcular os gaps
   calculateGaps() {
+    if (this.hasCalculatedGaps) return;
+
     const container = document.querySelector(
       '#miners-panel-container'
     ) as HTMLElement;
@@ -99,8 +98,10 @@ export class BlockchainComponent {
     this.connectorViewbox = { w: blockWidth, h: blockHeight };
 
     requestAnimationFrame(() => {
-      this.slideXValue = `translateX(calc(${this.connectorViewbox.w}px + ${this.gap.x.value}px))`;
+      this.slideXValue = `translateX(calc(-1 * (${this.connectorViewbox.w}px + ${this.gap.x.value}px)))`;
     });
+
+    this.hasCalculatedGaps = true;
   }
 
   // Método para obter a cor de fundo do bloco
@@ -117,11 +118,6 @@ export class BlockchainComponent {
 
   // Calcula o caminho curvo para a conexão
   getCurvedPath(miner: Node, node: BlockNode, height: number): string {
-    if (!this.hasCalculatedGaps) {
-      this.calculateGaps();
-      this.hasCalculatedGaps = true;
-    }
-
     const parent = node.parent;
     if (!parent) return '';
 

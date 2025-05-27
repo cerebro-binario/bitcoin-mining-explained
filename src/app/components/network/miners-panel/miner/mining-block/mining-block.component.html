@@ -1,4 +1,6 @@
-<div class="bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700">
+<div
+  class="h-full w-full bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700"
+>
   <div class="flex items-center justify-between mb-2">
     <h3 class="text-lg font-semibold text-blue-400">Bloco Atual</h3>
     <span
@@ -53,6 +55,13 @@
           <span class="font-mono text-sm text-white block">{{
             block?.nonce | number
           }}</span>
+        </div>
+
+        <div>
+          <span class="text-xs text-zinc-400">Consenso:</span>
+          <span class="font-mono text-sm text-white block"
+            >v{{ block?.consensusVersion }}</span
+          >
         </div>
       </div>
     </div>

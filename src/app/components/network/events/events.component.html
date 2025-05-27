@@ -1,0 +1,60 @@
+<div class="flex flex-col w-full h-full">
+  <div
+    class="relative overflow-hidden bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex-1 h-full flex flex-col"
+  >
+    <div class="font-semibold text-blue-400 mb-2 flex items-center gap-2">
+      <span>Eventos</span>
+      <span class="text-xs text-zinc-400">({{ node.events.length }})</span>
+    </div>
+    <ul class="text-xs pr-1 space-y-1">
+      <li *ngFor="let event of node.events | slice : 0 : 15">
+        <app-event [event]="event"></app-event>
+      </li>
+      <li *ngIf="node.events.length === 0" class="text-zinc-500 italic">
+        Nenhum evento ainda.
+      </li>
+    </ul>
+    <!-- Fade and button will go here -->
+    <div
+      *ngIf="node.events.length > 0"
+      class="absolute left-0 right-0 bottom-0 h-1/4 pointer-events-none bg-gradient-to-t from-zinc-900 to-transparent"
+    ></div>
+    <button
+      *ngIf="node.events.length > 0"
+      (click)="showNodeLogs()"
+      class="absolute right-3 bottom-3 z-10 px-2 py-1 text-xs rounded bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition pointer-events-auto backdrop-blur-sm"
+    >
+      Ver tudo
+    </button>
+  </div>
+</div>
+
+<!-- Dialog de todos os logs -->
+<ng-template [ngIf]="showAllLogs && node">
+  <div
+    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 !m-0 backdrop-blur"
+    (click)="closeLogs()"
+  >
+    <div
+      class="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-4xl h-[80vh] flex flex-col shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <span class="font-semibold text-blue-400"
+          >Eventos do Nó #{{ node.id }}</span
+        >
+        <button
+          (click)="closeLogs()"
+          class="text-zinc-400 hover:text-red-400 text-xl"
+        >
+          &times;
+        </button>
+      </div>
+      <ul class="flex-1 overflow-y-auto space-y-1 text-xs pr-1">
+        <li *ngFor="let event of node.events">
+          <app-event [event]="event"></app-event>
+        </li>
+      </ul>
+    </div>
+  </div>
+</ng-template>

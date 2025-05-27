@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
-import { EventLogsComponent } from '../event-logs/event-logs.component';
+import { EventsComponent } from '../events/events.component';
 
 @Component({
   selector: 'app-nodes-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule, EventLogsComponent],
+  imports: [CommonModule, FormsModule, EventsComponent],
   templateUrl: './nodes-panel.component.html',
   styleUrls: ['./nodes-panel.component.scss'],
 })

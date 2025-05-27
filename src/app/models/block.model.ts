@@ -11,6 +11,7 @@ export class Block {
   nBits: number = 0; // Compact representation of target
   private _target: string = '0'; // Store target as string for JSON serialization
   minerId?: number; // ID do minerador que minerou o bloco
+  consensusVersion: number = 1; // Versão do consenso que o bloco foi minerado
 
   // Cronômetro de mineração
   miningElapsed: number = 0;
@@ -75,7 +76,7 @@ export class Block {
     return sha256(JSON.stringify(data));
   }
 
-  public isValid(): boolean {
+  public isHashBelowTarget(): boolean {
     if (!this.hash) return false;
 
     // Convert hash to BigInt for comparison

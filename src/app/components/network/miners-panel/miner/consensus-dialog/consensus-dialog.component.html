@@ -1,12 +1,13 @@
 <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
   <div
-    class="flex flex-col bg-zinc-800 rounded-lg shadow-xl w-full max-w-2xl h-5/6 mx-4"
+    class="flex flex-col bg-zinc-800 rounded-lg shadow-xl w-full max-w-4xl h-5/6 mx-4"
   >
     <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-zinc-700">
       <h3 class="text-lg font-semibold text-blue-400">
         Parâmetros de Consenso
       </h3>
+
       <button
         class="text-zinc-400 hover:text-zinc-200 transition"
         (click)="close.emit()"
@@ -30,43 +31,20 @@
     <!-- Content -->
     <div class="p-6 space-y-4 flex-1 overflow-y-auto">
       <div class="space-y-6">
-        <div *ngIf="mode === 'creating'">
+        <div *ngIf="mode === 'creating'" class="flex items-center gap-2">
           <h3 class="text-lg font-semibold text-blue-400">
-            Nova versão
+            {{ isEditingFutureEpoch ? "Editando versão" : "Nova versão" }}
             <span class="text-xs text-zinc-400 ml-2 italic"
-              >(baseada em v{{ editingParams.version }})</span
+              >(baseada em v{{ selected.version }})</span
             >
           </h3>
-
-          <ng-container *ngIf="existingVersion && paramChanged">
-            <ng-container
-              *ngTemplateOutlet="existingVersionInfo"
-            ></ng-container>
-          </ng-container>
-        </div>
-
-        <!-- Alerta de conflito de versões locais -->
-        <div
-          *ngIf="hasAnyConflict && mode !== 'creating'"
-          class="mt-4 p-3 rounded bg-orange-900/40 border border-orange-700 flex items-center gap-3"
-        >
-          <span class="text-orange-300">
-            <b>Conflito de versão local:</b>
-            Você possui uma ou mais versões locais com os mesmos parâmetros de
-            uma versão já publicada na rede.
-            <span class="block text-xs text-orange-200 mt-1">
-              Para evitar inconsistências, sincronize suas versões locais com a
-              rede.
-            </span>
-          </span>
-          <a
-            class="underline ml-4 text-orange-400 hover:text-orange-300 focus:text-orange-200 transition-colors italic cursor-pointer outline-none"
-            (click)="syncAllConflicts()"
-            role="button"
-            tabindex="0"
+          <!-- Editando nova versão local -->
+          <div
+            *ngIf="isEditingFutureEpoch"
+            class="mb-2 p-2 rounded bg-blue-900/40 border border-blue-700 text-blue-200 text-sm"
           >
-            Sincronizar Tudo
-          </a>
+            Editando época futura já programada para altura {{ startHeight }}.
+          </div>
         </div>
 
         <!-- Versão do Consenso -->
@@ -76,71 +54,51 @@
               Versão do Consenso
             </label>
             <div class="flex items-center gap-2">
-              <!-- Sincronizar -->
-              <button
-                *ngIf="editingParams.conflictVersion"
-                type="button"
-                class="text-orange-400 hover:text-orange-600 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
-                (click)="syncCurrentConflict()"
-                aria-label="Sincronizar este consenso local em conflito"
-                title="Sincronizar este consenso local em conflito"
+              <ng-container
+                *ngIf="
+                  selected &&
+                    futureInfoByVersion[selected.hash]?.nextFutureEpochHeight;
+                  else criarNovaVersao
+                "
               >
-                Sincronizar
-              </button>
-              <!-- Publicar e Criar versão -->
-              <button
-                *ngIf="editingParams.isLocal && !editingParams.conflictVersion"
-                type="button"
-                class="text-green-500 hover:text-green-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
-                (click)="publishVersion()"
-                aria-label="Publicar esta versão na rede"
-                title="Tornar esta versão visível para todos os nodes da rede"
-              >
-                <svg
-                  class="inline w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
+                <button
+                  type="button"
+                  class="text-blue-500 hover:text-blue-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
+                  (click)="startEditing()"
+                  aria-label="Editar versão de consenso"
+                  title="Editar versão de consenso"
                 >
-                  <path
-                    d="M12 19V5M5 12l7-7 7 7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-                Publicar na rede
-              </button>
-              <button
-                type="button"
-                class="text-blue-500 hover:text-blue-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
-                (click)="startEditing()"
-                aria-label="Criar nova versão de consenso"
-                title="Criar nova versão de consenso"
-              >
-                Criar nova versão
-              </button>
+                  Editar versão
+                </button>
+              </ng-container>
+              <ng-template #criarNovaVersao>
+                <button
+                  type="button"
+                  class="text-blue-500 hover:text-blue-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
+                  (click)="startEditing()"
+                  aria-label="Criar nova versão de consenso"
+                  title="Criar nova versão de consenso"
+                >
+                  Criar nova versão
+                </button>
+              </ng-template>
             </div>
           </div>
           <div class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
               <p-select
-                [options]="isGrouped ? versionsByGroup : versions"
-                [(ngModel)]="editingParams"
+                [options]="items"
+                [(ngModel)]="selected"
                 (onChange)="onVersionSelect($event)"
                 optionLabel="version"
-                dataKey="instanceHash"
-                [group]="isGrouped"
+                dataKey="hash"
                 class="w-full bg-zinc-900 border border-zinc-700"
               >
                 <!-- Selecionado -->
                 <ng-template #selectedItem let-selectedOption>
                   <div class="flex items-center">
                     <span
-                      *ngIf="
-                        selectedOption.instanceHash ===
-                        miner.consensus.instanceHash
-                      "
+                      *ngIf="selectedOption.hash === miner.consensus.hash"
                       class="mr-2 text-green-400 flex items-center"
                     >
                       <svg
@@ -162,46 +120,39 @@
                       >v{{ selectedOption.version }}</span
                     >
                     <span
-                      *ngIf="selectedOption.isLocal"
-                      class="ml-2 text-xs text-zinc-400 italic"
+                      *ngIf="
+                        futureInfoByVersion[selectedOption.hash]
+                          ?.nextFutureEpochHeight
+                      "
+                      class="ml-2 text-yellow-400 text-xs flex items-center"
+                      title="Possui parâmetros futuros"
                     >
-                      (local)</span
-                    >
-                    <span
-                      *ngIf="selectedOption.conflictVersion"
-                      class="ml-2 text-orange-400 flex items-center gap-1"
-                      title="Esta versão local está em conflito com uma versão publicada na rede"
-                    >
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      ⏳ Mudança programada para altura
+                      {{
+                        futureInfoByVersion[selectedOption.hash]
+                          .nextFutureEpochHeight
+                      }}
+                      <em
+                        *ngIf="
+                          futureInfoByVersion[selectedOption.hash].blocksToGo
+                        "
+                        class="ml-1 text-xs text-yellow-200 italic"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
-                      <span class="text-xs">(conflito)</span>
+                        (Faltam
+                        {{
+                          futureInfoByVersion[selectedOption.hash].blocksToGo
+                        }}
+                        blocos)
+                      </em>
                     </span>
                   </div>
                 </ng-template>
-                <!-- Grupo -->
-                <ng-template let-group pTemplate="group">
-                  <div class="flex items-center">
-                    <span class="text-zinc-400">{{ group.label }}</span>
-                  </div>
-                </ng-template>
-                <!-- Item -->
+
+                <!-- Item da lista -->
                 <ng-template let-consensus pTemplate="item">
                   <div class="flex items-center">
                     <span
-                      *ngIf="
-                        consensus.instanceHash === miner.consensus.instanceHash
-                      "
+                      *ngIf="consensus.hash === miner.consensus.hash"
                       class="mr-2 text-green-400 flex items-center"
                     >
                       <svg
@@ -221,30 +172,26 @@
                     </span>
                     <span class="text-white">v{{ consensus.version }}</span>
                     <span
-                      *ngIf="consensus.isLocal"
-                      class="ml-2 text-xs text-zinc-400 italic"
+                      *ngIf="
+                        futureInfoByVersion[consensus.hash]
+                          ?.nextFutureEpochHeight
+                      "
+                      class="ml-2 text-yellow-400 text-xs flex items-center"
+                      title="Possui parâmetros futuros"
                     >
-                      (local)
-                    </span>
-                    <span
-                      *ngIf="consensus.conflictVersion"
-                      class="ml-2 text-orange-400 flex items-center gap-1"
-                      title="Esta versão local está em conflito com uma versão publicada na rede"
-                    >
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      ⏳ Mudança programada para altura
+                      {{
+                        futureInfoByVersion[consensus.hash]
+                          .nextFutureEpochHeight
+                      }}
+                      <em
+                        *ngIf="futureInfoByVersion[consensus.hash].blocksToGo"
+                        class="ml-1 text-xs text-yellow-200 italic"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
-                      <span class="text-xs">(conflito)</span>
+                        (Faltam
+                        {{ futureInfoByVersion[consensus.hash].blocksToGo }}
+                        blocos)
+                      </em>
                     </span>
                   </div>
                 </ng-template>
@@ -256,118 +203,270 @@
           </div>
         </div>
 
-        <!-- Intervalo de Ajuste de Dificuldade -->
-        <div class="mb-4">
-          <div class="flex items-baseline gap-2">
-            <span class="text-sm font-medium text-zinc-400"
+        <!-- Parâmetros de Consenso -->
+        <div class="space-y-4">
+          <!-- Opção de Aplicação -->
+          <div *ngIf="mode === 'creating'" class="mb-4">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-medium text-zinc-400"
+                >Aplicar Parâmetros</span
+              >
+            </div>
+            <div class="flex flex-col gap-2 mt-1">
+              <label class="inline-flex items-center">
+                <input
+                  type="radio"
+                  [(ngModel)]="applyImmediately"
+                  [value]="true"
+                  class="form-radio text-blue-500"
+                  (ngModelChange)="onApplyImmediatelyChange()"
+                />
+                <span class="ml-2 text-zinc-100"
+                  >Aplicar imediatamente (altura {{ currentHeight }})</span
+                >
+              </label>
+              <label class="inline-flex items-center">
+                <input
+                  type="radio"
+                  [(ngModel)]="applyImmediately"
+                  [value]="false"
+                  class="form-radio text-blue-500"
+                  (ngModelChange)="onApplyImmediatelyChange()"
+                />
+                <span class="ml-2 text-zinc-100"
+                  >Definir altura específica</span
+                >
+                <label class="text-sm text-zinc-400 ml-2 mr-2" for="alturaInput"
+                  >Altura</label
+                >
+                <input
+                  id="alturaInput"
+                  type="number"
+                  [(ngModel)]="startHeight"
+                  [min]="currentHeight"
+                  (ngModelChange)="onStartHeightChange($event)"
+                  class="w-24 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:border-zinc-700 disabled:text-zinc-500 disabled:placeholder-zinc-500 disabled:hover:border-zinc-700 disabled:hover:bg-zinc-800 disabled:hover:text-zinc-500 disabled:hover:opacity-50"
+                  placeholder="Altura"
+                  [disabled]="applyImmediately"
+                />
+              </label>
+            </div>
+            <p class="mt-1 text-xs text-zinc-500">
+              Altura atual: {{ currentHeight }}
+              <span *ngIf="blocksToTarget !== null">
+                &nbsp;|&nbsp;Faltam {{ blocksToTarget }} blocos para atingir a
+                altura
+              </span>
+            </p>
+          </div>
+
+          <!-- Intervalo de Ajuste de Dificuldade -->
+          <div class="mb-4 flex items-baseline gap-2">
+            <span class="text-sm font-medium text-zinc-400 w-64"
               >Intervalo de Ajuste de Dificuldade</span
             >
-            <span
-              *ngIf="isParamInFork('difficultyAdjustmentInterval')"
-              class="text-yellow-400"
-              title="Este parâmetro está causando o fork!"
-              >⚠️</span
-            >
+            <ng-container *ngIf="mode === 'creating'; else exibeIntervalo">
+              <input
+                type="number"
+                [(ngModel)]="newParams.difficultyAdjustmentInterval"
+                (ngModelChange)="onIntervalChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="1"
+              />
+            </ng-container>
+            <ng-template #exibeIntervalo>
+              <span class="text-lg font-semibold text-zinc-100 font-mono">{{
+                paramsOnView?.difficultyAdjustmentInterval
+              }}</span>
+              <ng-container
+                *ngIf="
+                  futureOnView &&
+                  paramsOnView?.difficultyAdjustmentInterval !==
+                    futureParamsOnView?.difficultyAdjustmentInterval
+                "
+              >
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
+                  futureParamsOnView?.difficultyAdjustmentInterval
+                }}</span>
+                <span
+                  class="ml-1 text-yellow-400"
+                  title="Mudança programada para altura {{
+                    futureOnView.startHeight
+                  }} (faltam {{
+                    futureOnView.startHeight - currentHeight
+                  }} blocos)"
+                  >⏳</span
+                >
+              </ng-container>
+            </ng-template>
+            <span class="text-sm text-zinc-400 ml-2">blocos</span>
           </div>
-          <div class="flex items-baseline gap-2 mt-1">
-            <input
-              *ngIf="mode === 'creating'"
-              type="number"
-              [value]="editingParams.difficultyAdjustmentInterval"
-              (input)="onIntervalChange($event)"
-              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-              min="1"
-            />
-            <span
-              *ngIf="mode !== 'creating'"
-              class="text-lg font-semibold text-zinc-100"
-              >{{ editingParams.difficultyAdjustmentInterval }}</span
-            >
-            <span class="text-sm text-zinc-400">blocos</span>
-          </div>
-          <p class="mt-1 text-xs text-zinc-500">
-            Número de blocos entre cada ajuste de dificuldade
-          </p>
-        </div>
 
-        <!-- Máximo de Transações -->
-        <div class="mb-4">
-          <div class="flex items-baseline gap-2">
-            <span class="text-sm font-medium text-zinc-400"
+          <!-- Máximo de Transações por Bloco -->
+          <div class="mb-4 flex items-baseline gap-2">
+            <span class="text-sm font-medium text-zinc-400 w-64"
               >Máximo de Transações por Bloco</span
             >
-            <span
-              *ngIf="isParamInFork('maxTransactionsPerBlock')"
-              class="text-yellow-400"
-              title="Este parâmetro está causando o fork!"
-              >⚠️</span
-            >
+            <ng-container *ngIf="mode === 'creating'; else exibeTx">
+              <input
+                type="number"
+                [(ngModel)]="newParams.maxTransactionsPerBlock"
+                (ngModelChange)="onMaxTransactionsChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="0"
+              />
+            </ng-container>
+            <ng-template #exibeTx>
+              <span class="text-lg font-semibold text-zinc-100 font-mono">{{
+                paramsOnView?.maxTransactionsPerBlock
+              }}</span>
+              <ng-container
+                *ngIf="
+                  futureOnView &&
+                  paramsOnView?.maxTransactionsPerBlock !==
+                    futureParamsOnView?.maxTransactionsPerBlock
+                "
+              >
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
+                  futureParamsOnView?.maxTransactionsPerBlock
+                }}</span>
+                <span
+                  class="ml-1 text-yellow-400"
+                  title="Mudança programada para altura {{
+                    futureOnView.startHeight
+                  }} (faltam {{
+                    futureOnView.startHeight - currentHeight
+                  }} blocos)"
+                  >⏳</span
+                >
+              </ng-container>
+            </ng-template>
+            <span class="text-sm text-zinc-400 ml-2">transações</span>
           </div>
-          <div class="flex items-baseline gap-2 mt-1">
-            <input
-              *ngIf="mode === 'creating'"
-              type="number"
-              [value]="editingParams.maxTransactionsPerBlock"
-              (input)="onMaxTransactionsChange($event)"
-              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-              min="0"
-            />
-            <span
-              *ngIf="mode !== 'creating'"
-              class="text-lg font-semibold text-zinc-100"
-              >{{ editingParams.maxTransactionsPerBlock }}</span
-            >
-            <span class="text-sm text-zinc-400">transações</span>
-          </div>
-          <p class="mt-1 text-xs text-zinc-500">
-            Limite de transações por bloco (0 = sem limite)
-          </p>
-        </div>
 
-        <!-- Tamanho Máximo do Bloco -->
-        <div class="mb-4">
-          <div class="flex items-baseline gap-2">
-            <span class="text-sm font-medium text-zinc-400"
+          <!-- Tamanho Máximo do Bloco -->
+          <div class="mb-4 flex items-baseline gap-2">
+            <span class="text-sm font-medium text-zinc-400 w-64"
               >Tamanho Máximo do Bloco</span
             >
-            <span
-              *ngIf="isParamInFork('maxBlockSize')"
-              class="text-yellow-400"
-              title="Este parâmetro está causando o fork!"
-              >⚠️</span
-            >
+            <ng-container *ngIf="mode === 'creating'; else exibeBloco">
+              <input
+                type="number"
+                [(ngModel)]="newParams.maxBlockSize"
+                (ngModelChange)="onMaxBlockSizeChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="0.1"
+                step="0.1"
+              />
+            </ng-container>
+            <ng-template #exibeBloco>
+              <span class="text-lg font-semibold text-zinc-100 font-mono">{{
+                paramsOnView?.maxBlockSize
+              }}</span>
+              <ng-container
+                *ngIf="
+                  futureOnView &&
+                  paramsOnView?.maxBlockSize !==
+                    futureParamsOnView?.maxBlockSize
+                "
+              >
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
+                  futureParamsOnView?.maxBlockSize
+                }}</span>
+                <span
+                  class="ml-1 text-yellow-400"
+                  title="Mudança programada para altura {{
+                    futureOnView.startHeight
+                  }} (faltam {{
+                    futureOnView.startHeight - currentHeight
+                  }} blocos)"
+                  >⏳</span
+                >
+              </ng-container>
+            </ng-template>
+            <span class="text-sm text-zinc-400 ml-2">MB</span>
           </div>
-          <div class="flex items-baseline gap-2 mt-1">
-            <input
-              *ngIf="mode === 'creating'"
-              type="number"
-              [value]="editingParams.maxBlockSize"
-              (input)="onMaxBlockSizeChange($event)"
-              class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-              min="0.1"
-              step="0.1"
-            />
-            <span
-              *ngIf="mode !== 'creating'"
-              class="text-lg font-semibold text-zinc-100"
-              >{{ editingParams.maxBlockSize }}</span
+
+          <!-- Tempo Alvo de Bloco -->
+          <div class="mb-4 flex items-baseline gap-2">
+            <span class="text-sm font-medium text-zinc-400 w-64"
+              >Tempo Alvo de Bloco</span
             >
-            <span class="text-sm text-zinc-400">MB</span>
+            <ng-container *ngIf="mode === 'creating'; else exibeTempo">
+              <input
+                type="number"
+                [(ngModel)]="newParams.targetBlockTime"
+                (ngModelChange)="onTargetBlockTimeChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="1"
+                step="1"
+              />
+            </ng-container>
+            <ng-template #exibeTempo>
+              <span class="text-lg font-semibold text-zinc-100 font-mono">{{
+                paramsOnView?.targetBlockTime
+              }}</span>
+              <ng-container
+                *ngIf="
+                  futureOnView &&
+                  paramsOnView?.targetBlockTime !==
+                    futureParamsOnView?.targetBlockTime
+                "
+              >
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
+                  futureParamsOnView?.targetBlockTime
+                }}</span>
+                <span
+                  class="ml-1 text-yellow-400"
+                  title="Mudança programada para altura {{
+                    futureOnView.startHeight
+                  }} (faltam {{
+                    futureOnView.startHeight - currentHeight
+                  }} blocos)"
+                  >⏳</span
+                >
+              </ng-container>
+            </ng-template>
+            <span class="text-sm text-zinc-400 ml-2">segundos</span>
           </div>
-          <p class="mt-1 text-xs text-zinc-500">
-            Tamanho máximo do bloco em megabytes
-          </p>
         </div>
 
         <!-- Última Atualização -->
         <div>
-          <label class="block text-sm font-medium text-zinc-400 mb-1">
-            Última Atualização
-          </label>
+          <label class="block text-sm font-medium text-zinc-400 mb-1"
+            >Última Atualização</label
+          >
           <div class="text-sm text-zinc-300">
-            {{ editingParams.timestamp | date : "dd/MM/yyyy HH:mm:ss" }}
+            {{ selected.timestamp | date : "dd/MM/yyyy HH:mm:ss" }}
           </div>
         </div>
+
+        <!-- Altura de Início da Epoca -->
+        @if (mode !== 'creating') { @if (futureOnView) {
+        <div>
+          <label class="block text-sm font-medium text-zinc-400 mb-1"
+            >Início de Vigência</label
+          >
+          <div class="text-sm text-zinc-300">
+            #{{ futureOnView.startHeight }}
+            <span class="text-zinc-500 italic"
+              >(faltam
+              {{ futureOnView.startHeight - currentHeight }} blocos)</span
+            >
+          </div>
+        </div>
+        } @else if (selected.startHeight > 0) {
+        <div>
+          <label class="block text-sm font-medium text-zinc-400 mb-1"
+            >Início de Vigência</label
+          >
+          <div class="text-sm text-zinc-300">#{{ selected.startHeight }}</div>
+        </div>
+        } }
       </div>
     </div>
 
@@ -385,16 +484,12 @@
             <b>{{ consolidatedFork.params.join(", ") }}</b>
           </div>
         </app-fork-warning>
-        <ng-container *ngIf="existingVersion && paramChanged">
-          <ng-container *ngTemplateOutlet="existingVersionInfo"></ng-container>
-        </ng-container>
         <p-message severity="error" *ngIf="error">
           {{ error }}
         </p-message>
       </div>
       <div class="h-full flex items-end gap-3 whitespace-nowrap">
         @switch (mode) { @case ('creating') {
-        <!-- Editando nova versão local -->
         <button
           class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
           (click)="cancelEdit()"
@@ -402,11 +497,13 @@
           Cancelar
         </button>
         <button
-          [disabled]="existingVersion"
+          [disabled]="!touched || sameParams"
           class="px-4 py-2 rounded bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white not-disabled:hover:bg-green-700 transition"
           (click)="confirmEdit()"
         >
-          Confirmar nova versão
+          {{
+            isEditingFutureEpoch ? "Salvar alterações" : "Confirmar nova versão"
+          }}
         </button>
         } @case ('confirming') {
         <!-- Mudando versão local para uma versão existente -->
@@ -420,7 +517,7 @@
           class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
           (click)="confirmVersionChange()"
         >
-          Confirmar
+          Usar essa versão
         </button>
         } @case('viewing'){
         <!-- Estado padrão inicial do dialog -->
@@ -434,37 +531,5 @@
     </div>
   </div>
 </div>
-
-<ng-template #existingVersionInfo>
-  <div
-    *ngIf="existingVersion"
-    class="mt-4 p-3 rounded bg-blue-900/40 border border-blue-700 flex items-center gap-3"
-  >
-    <span class="text-blue-300">
-      Já existe uma versão idêntica:
-      <b>v{{ existingVersion.version }}</b>
-      <i
-        *ngIf="existingVersion.isLocal"
-        class="ml-2 text-xs text-zinc-400 italic"
-        >(local)</i
-      >
-    </span>
-    <a
-      *ngIf="
-        existingVersion.version !== miner.consensus.version;
-        else sameVersion
-      "
-      class="underline ml-4 text-blue-400 hover:text-blue-300 focus:text-blue-200 transition-colors italic cursor-pointer outline-none"
-      (click)="useExistingVersion()"
-      role="button"
-      tabindex="0"
-    >
-      Usar esta versão
-    </a>
-    <ng-template #sameVersion>
-      <span class="ml-4 text-blue-300 italic">(atualmente em uso)</span>
-    </ng-template>
-  </div>
-</ng-template>
 
 <p-toast position="bottom-center" />
