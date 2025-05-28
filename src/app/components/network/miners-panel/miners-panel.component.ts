@@ -37,20 +37,6 @@ export type MinersStats = {
 })
 export class MinersPanelComponent implements OnDestroy {
   private readonly DEFAULT_HASH_RATE: number | null = 1000;
-  private miningTimeout: any;
-  private readonly MINING_INTERVAL = 1; // ms
-  private readonly TARGET_FRAME_TIME = 16; // ms (60 FPS)
-  private readonly MIN_BATCH_SIZE = 100;
-  private readonly MAX_BATCH_SIZE = 10000;
-  private readonly ADJUSTMENT_INTERVAL = 1000; // ms
-  private lastAdjustmentTime = 0;
-  private currentBatchSize = 1000;
-  private frameTimes: number[] = [];
-  private readonly FRAME_TIME_HISTORY_SIZE = 10;
-  private lastHashRateUpdate = 0;
-  private readonly HASH_RATE_UPDATE_INTERVAL = 1000; // ms
-  private lastReconnectPeersTime = 0;
-  private readonly RECONNECT_PEERS_INTERVAL = 6000; // ms
 
   miners$!: Observable<Node[]>;
   miners: Node[] = [];
@@ -85,10 +71,6 @@ export class MinersPanelComponent implements OnDestroy {
         this.updateStats(miners);
       })
     );
-  }
-
-  ngAfterViewInit() {
-    this.startMiningLoop();
   }
 
   addMiner() {
@@ -229,115 +211,7 @@ export class MinersPanelComponent implements OnDestroy {
     this.statsChange.emit(this.minersStats);
   }
 
-  private runMiningLoop = () => {
-    const startTime = performance.now();
-    const now = Date.now();
-
-    // Calcula o batch size adaptativo
-    const adaptiveBatchSize = this.calculateAdaptiveBatchSize();
-
-    let currentHashRate = 0;
-    this.minerComponents.forEach((component) => {
-      if (!component) return;
-
-      if (component.miner.isMining) {
-        component.processMiningTick(now, adaptiveBatchSize);
-        currentHashRate += component.miner.currentHashRate;
-      }
-
-      // Autobusca de peers (com cooldown)
-      if (
-        now - component.miner.lastPeerSearch >
-        component.miner.peerSearchInterval
-      ) {
-        component.miner.lastPeerSearch = now;
-        component.miner.searchPeersToConnect(this.network.nodes);
-      }
-    });
-
-    // Só atualiza o totalHashRate a cada HASH_RATE_UPDATE_INTERVAL ms
-    if (now - this.lastHashRateUpdate >= this.HASH_RATE_UPDATE_INTERVAL) {
-      this.minersStats.totalHashRate = currentHashRate;
-      this.statsChange.emit(this.minersStats);
-      this.lastHashRateUpdate = now;
-    }
-
-    // Mede o tempo de execução do frame
-    const frameTime = performance.now() - startTime;
-    this.updateFrameTime(frameTime);
-
-    // Agenda o próximo ciclo
-    this.miningTimeout = setTimeout(this.runMiningLoop, this.MINING_INTERVAL);
-  };
-
-  // Método para iniciar o loop de mineração
-  startMiningLoop() {
-    if (this.miningTimeout) {
-      clearTimeout(this.miningTimeout);
-    }
-    this.runMiningLoop();
-  }
-
-  // Método para parar o loop de mineração
-  stopMiningLoop() {
-    if (this.miningTimeout) {
-      clearTimeout(this.miningTimeout);
-      this.miningTimeout = null;
-    }
-  }
-
-  private calculateAdaptiveBatchSize(): number {
-    const now = Date.now();
-
-    // Ajusta o batch size periodicamente
-    if (now - this.lastAdjustmentTime >= this.ADJUSTMENT_INTERVAL) {
-      this.lastAdjustmentTime = now;
-
-      // Calcula a média dos últimos tempos de frame
-      const avgFrameTime =
-        this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
-
-      // Ajusta o batch size baseado no tempo médio de frame
-      if (avgFrameTime > this.TARGET_FRAME_TIME) {
-        // Reduz o batch size se estiver muito lento
-        this.currentBatchSize = Math.max(
-          this.MIN_BATCH_SIZE,
-          Math.floor(this.currentBatchSize * 0.8)
-        );
-      } else if (avgFrameTime < this.TARGET_FRAME_TIME * 0.8) {
-        // Aumenta o batch size se estiver muito rápido
-        this.currentBatchSize = Math.min(
-          this.MAX_BATCH_SIZE,
-          Math.floor(this.currentBatchSize * 1.2)
-        );
-      }
-
-      // Limpa o histórico de tempos
-      this.frameTimes = [];
-    }
-
-    // Ajusta o batch size baseado no número de miners
-    const activeMiners = this.minerComponents.filter(
-      (m) => m.miner.isMining
-    ).length;
-    const minerAdjustedBatchSize = Math.floor(
-      this.currentBatchSize / Math.max(1, activeMiners)
-    );
-
-    return Math.max(this.MIN_BATCH_SIZE, minerAdjustedBatchSize);
-  }
-
-  private updateFrameTime(frameTime: number) {
-    this.frameTimes.push(frameTime);
-    if (this.frameTimes.length > this.FRAME_TIME_HISTORY_SIZE) {
-      this.frameTimes.shift();
-    }
-  }
-
   ngOnDestroy() {
-    if (this.miningTimeout) {
-      clearTimeout(this.miningTimeout);
-    }
     this.renderer.removeClass(this.document.body, 'overflow-hidden');
   }
 }

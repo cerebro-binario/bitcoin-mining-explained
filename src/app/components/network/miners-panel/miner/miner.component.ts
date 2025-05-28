@@ -10,9 +10,8 @@ import {
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
-import { Block, Transaction } from '../../../../models/block.model';
+import { Transaction } from '../../../../models/block.model';
 import { IConsensusParameters } from '../../../../models/consensus.model';
-import { EventManager } from '../../../../models/event-log.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
@@ -148,86 +147,6 @@ export class MinerComponent {
     }
 
     this.hashRateChange.emit(rate);
-  }
-
-  // Processa um tick de mineração
-  processMiningTick(now: number, batchSize: number) {
-    if (!this.miner.isMining || !this.miner.currentBlock) return;
-
-    const block = this.miner.currentBlock;
-    const hashRate = this.miner.hashRate;
-
-    // Atualiza o tempo decorrido
-    if (!this.miner.miningLastTickTime) {
-      this.miner.miningLastTickTime = now;
-    }
-
-    const tickTime = now - this.miner.miningLastTickTime;
-    block.miningElapsed += tickTime;
-    this.miner.miningLastTickTime = now;
-
-    if (hashRate === null) {
-      // Modo máximo - processa o batch size adaptativo
-      for (let i = 0; i < batchSize + 1; i++) {
-        block.nonce++;
-        block.hash = block.calculateHash();
-        this.miner.incrementHashCount();
-
-        if (block.isHashBelowTarget()) {
-          this.handleMinedBlock(block);
-          break;
-        }
-      }
-    } else {
-      if (this.miner.miningLastHashTime === null) {
-        this.miner.miningLastHashTime = 0;
-      }
-
-      this.miner.miningLastHashTime += tickTime;
-
-      // Modo com hash rate controlado
-      const timeNeededForOneHash = 1000 / hashRate; // tempo em ms para 1 hash
-      const hashesToProcess =
-        this.miner.miningLastHashTime >= timeNeededForOneHash
-          ? Math.floor(this.miner.miningLastHashTime / timeNeededForOneHash)
-          : 0;
-
-      // Se houver hashes para processar, atualiza o tempo restante
-      if (hashesToProcess > 0) {
-        this.miner.miningLastHashTime -= timeNeededForOneHash * hashesToProcess;
-      }
-
-      for (let i = 0; i < hashesToProcess; i++) {
-        block.nonce++;
-        block.hash = block.calculateHash();
-        this.miner.incrementHashCount();
-
-        if (block.isHashBelowTarget()) {
-          this.handleMinedBlock(block);
-          break;
-        }
-      }
-    }
-  }
-
-  private handleMinedBlock(block: Block) {
-    block.minerId = this.miner.id;
-
-    this.miner.addBlock(block);
-
-    // Log de bloco minerado localmente
-    const event = this.miner.addEvent('block-mined', { block });
-
-    this.miner.checkDifficultyAdjustment(block, event);
-    this.miner.checkHalving(block, event);
-
-    EventManager.complete(event);
-
-    // Cria um novo bloco para continuar minerando
-    this.miner.initBlockTemplate(block);
-
-    // Emite evento para propagar o bloco
-    this.miner.blockBroadcast$.next(block);
   }
 
   createTransaction() {

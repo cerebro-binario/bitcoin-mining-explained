@@ -236,6 +236,84 @@ export class Node {
     });
 
     return this.currentBlock;
+  } // Processa um tick de mineração
+  processMiningTick(now: number, batchSize: number) {
+    if (!this.isMining || !this.currentBlock) return;
+
+    const block = this.currentBlock;
+    const hashRate = this.hashRate;
+
+    // Atualiza o tempo decorrido
+    if (!this.miningLastTickTime) {
+      this.miningLastTickTime = now;
+    }
+
+    const tickTime = now - this.miningLastTickTime;
+    block.miningElapsed += tickTime;
+    this.miningLastTickTime = now;
+
+    if (hashRate === null) {
+      // Modo máximo - processa o batch size adaptativo
+      for (let i = 0; i < batchSize + 1; i++) {
+        block.nonce++;
+        block.hash = block.calculateHash();
+        this.incrementHashCount();
+
+        if (block.isHashBelowTarget()) {
+          this.handleMinedBlock(block);
+          break;
+        }
+      }
+    } else {
+      if (this.miningLastHashTime === null) {
+        this.miningLastHashTime = 0;
+      }
+
+      this.miningLastHashTime += tickTime;
+
+      // Modo com hash rate controlado
+      const timeNeededForOneHash = 1000 / hashRate; // tempo em ms para 1 hash
+      const hashesToProcess =
+        this.miningLastHashTime >= timeNeededForOneHash
+          ? Math.floor(this.miningLastHashTime / timeNeededForOneHash)
+          : 0;
+
+      // Se houver hashes para processar, atualiza o tempo restante
+      if (hashesToProcess > 0) {
+        this.miningLastHashTime -= timeNeededForOneHash * hashesToProcess;
+      }
+
+      for (let i = 0; i < hashesToProcess; i++) {
+        block.nonce++;
+        block.hash = block.calculateHash();
+        this.incrementHashCount();
+
+        if (block.isHashBelowTarget()) {
+          this.handleMinedBlock(block);
+          break;
+        }
+      }
+    }
+  }
+
+  private handleMinedBlock(block: Block) {
+    block.minerId = this.id;
+
+    this.addBlock(block);
+
+    // Log de bloco minerado localmente
+    const event = this.addEvent('block-mined', { block });
+
+    this.checkDifficultyAdjustment(block, event);
+    this.checkHalving(block, event);
+
+    EventManager.complete(event);
+
+    // Cria um novo bloco para continuar minerando
+    this.initBlockTemplate(block);
+
+    // Emite evento para propagar o bloco
+    this.blockBroadcast$.next(block);
   }
 
   // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
