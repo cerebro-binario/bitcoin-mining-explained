@@ -112,6 +112,8 @@ export class Node {
 
   private readonly CONNECTION_TTL = 1 * 60 * 1000; // 5 minutos em ms
 
+  private pendingConsensusEvents: { height: number; event: NodeEvent }[] = [];
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }
@@ -173,12 +175,15 @@ export class Node {
         blocks: [blockNode],
         events: [],
       });
+      // Verifica eventos pendentes para esse height
+      this.addPendingEventsToHeight(block.height);
     } else if (!this.heights[heightIndex]) {
       this.heights[heightIndex] = {
         n: block.height,
         blocks: [blockNode],
         events: [],
       };
+      this.addPendingEventsToHeight(block.height);
     } else {
       this.heights[heightIndex].blocks.push(blockNode);
     }
@@ -1367,6 +1372,12 @@ export class Node {
     const heightIndex = this.getHeightIndex(newConsensus.startHeight);
     if (heightIndex >= 0 && this.heights[heightIndex]) {
       this.heights[heightIndex].events.push(event);
+    } else {
+      // Salva para adicionar depois
+      this.pendingConsensusEvents.push({
+        height: newConsensus.startHeight - 1,
+        event,
+      });
     }
 
     this.removeIncompatibleBlocksOnConsensusChange(newConsensus, event);
@@ -1436,6 +1447,22 @@ export class Node {
         heightIndex
       ].events.filter((e) => e.type !== 'difficulty-adjustment');
       this.heights[heightIndex].events.push(...blockNode.events);
+    }
+  }
+
+  private addPendingEventsToHeight(height: number) {
+    const idx = this.getHeightIndex(height);
+    if (idx >= 0 && this.heights[idx]) {
+      const toAdd = this.pendingConsensusEvents.filter(
+        (e) => e.height === height
+      );
+      for (const { event } of toAdd) {
+        this.heights[idx].events.push(event);
+      }
+      // Remove os eventos já adicionados
+      this.pendingConsensusEvents = this.pendingConsensusEvents.filter(
+        (e) => e.height !== height
+      );
     }
   }
 }
