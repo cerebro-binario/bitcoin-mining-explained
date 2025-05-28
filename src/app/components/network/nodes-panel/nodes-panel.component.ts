@@ -60,4 +60,8 @@ export class NodesPanelComponent {
     }
     return 'green';
   }
+
+  searchPeers(node: Node) {
+    node.searchPeersToConnect(this.network.nodes);
+  }
 }
