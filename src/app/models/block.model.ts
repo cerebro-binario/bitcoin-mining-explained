@@ -1,4 +1,5 @@
 import { sha256 } from 'js-sha256';
+import { NodeEvent, NodeEventLog } from './event-log.model';
 
 export class Block {
   id: number = 0;
@@ -111,6 +112,7 @@ export class BlockNode {
   children: BlockNode[] = [];
   parent?: BlockNode;
   isActive: boolean = true; // Flag para indicar se o bloco faz parte de uma chain válida
+  events: (NodeEvent | NodeEventLog)[] = [];
 
   constructor(block: Block, parent?: BlockNode) {
     this.block = block;

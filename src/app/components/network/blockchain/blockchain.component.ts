@@ -3,12 +3,15 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { BlockNode } from '../../../models/block.model';
 import { Node } from '../../../models/node';
+import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
+import { EventLogMessagePipe } from '../events/event/event-log/event-log-message.pipe';
 
 @Component({
   selector: 'app-blockchain',
   templateUrl: './blockchain.component.html',
   styleUrls: ['./blockchain.component.scss'],
-  imports: [CommonModule],
+  standalone: true,
+  imports: [CommonModule, EventLogVisualPipe, EventLogMessagePipe],
   animations: [
     trigger('blockAnimation', [
       transition(':enter', [

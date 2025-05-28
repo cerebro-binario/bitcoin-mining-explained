@@ -25,7 +25,34 @@
           ></div>
         </div>
         } @else {
-        <div class="relative height-element">
+        <div class="relative height-element flex gap-2">
+          <!-- Coluna de eventos entre os blocos (após o primeiro bloco) -->
+          <ng-container *ngIf="height.events.length > 0">
+            <div
+              class="h-full absolute flex flex-col items-center select-none -translate-x-1/2"
+              [ngStyle]="{
+                left: '-' + gap.x.value / 2 + 'px',
+              }"
+            >
+              <div
+                class="absolute h-full border-l-2 border-zinc-700/50 border-dotted -z-50"
+              ></div>
+              <div class="flex flex-col items-center gap-2 my-2 z-50">
+                <ng-container *ngFor="let event of height.events">
+                  <span
+                    class="inline-flex items-center justify-center bg-zinc-900 border-4 border-zinc-800 p-2 text-xs rounded-full"
+                    [ngClass]="(event.type | eventLogVisual).color"
+                    [title]="event.type | eventLogMessage : event.data"
+                    style="cursor: pointer"
+                  >
+                    <i
+                      [class]="(event.type | eventLogVisual).icon + ' text-xs'"
+                    ></i>
+                  </span>
+                </ng-container>
+              </div>
+            </div>
+          </ng-container>
           <div
             class="relative py-2 flex flex-col gap-4 height-element-container"
           >
@@ -111,7 +138,7 @@
                   blockNode.parent.block.height !== -1 ||
                   blockNode.parent.children.length > 1
                 "
-                class="absolute h-full w-full top-0 right-0 bottom-0 left-0 pointer-events-none overflow-visible"
+                class="absolute h-full w-full top-0 right-0 bottom-0 left-0 pointer-events-none overflow-visible z-0"
               >
                 <path
                   [attr.d]="getCurvedPath(miner, blockNode, hIndex)"

@@ -252,7 +252,7 @@ export class Node {
     const consensus = epoch.parameters;
     const interval = consensus.difficultyAdjustmentInterval;
     const targetBlockTime = consensus.targetBlockTime; // em segundos
-    const adjustedHeight = height - epoch.startHeight;
+    const adjustedHeight = height - epoch.startHeight + 1;
 
     // Se não for um bloco de ajuste, mantém o nBits do bloco anterior
     if (adjustedHeight % interval !== 0) {
@@ -272,7 +272,7 @@ export class Node {
     }
 
     // Encontra o bloco do último ajuste
-    const prevAdjustmentHeight = height - interval;
+    const prevAdjustmentHeight = adjustedHeight - interval;
     let prevAdjustmentBlock: Block | undefined;
     let lastBlock: Block | undefined;
     if (blockResolver && tipBlock) {
@@ -804,6 +804,8 @@ export class Node {
       peerId: peer?.id,
       block: showBlock,
     });
+
+    this.checkDifficultyAdjustment(block, event);
 
     EventManager.complete(event);
 
@@ -1363,5 +1365,71 @@ export class Node {
 
     this.removeIncompatibleBlocksOnConsensusChange(newConsensus, event);
     EventManager.complete(event);
+  }
+
+  /**
+   * Cria e adiciona o evento de ajuste de dificuldade ao BlockNode, se aplicável.
+   */
+  checkDifficultyAdjustment(block: Block, event?: NodeEvent) {
+    if (block.height === 0) {
+      return;
+    }
+
+    const heightIndex = this.getHeightIndex(block.height);
+    const blockNode = this.heights[heightIndex].blocks.find(
+      (b) => b.block.hash === block.hash
+    );
+
+    if (!blockNode) {
+      return;
+    }
+
+    const epoch = this.consensus.getConsensusForHeight(block.height - 1);
+    const interval = epoch.parameters.difficultyAdjustmentInterval;
+    const adjustedHeight = block.height - epoch.startHeight + 1;
+    if (adjustedHeight % interval === 0) {
+      const prevAdjustmentHeight = block.height - interval;
+      const prevIndex = this.getHeightIndex(prevAdjustmentHeight);
+      let prevAdjustmentBlock: Block | undefined = undefined;
+      if (prevIndex >= 0 && this.heights[prevIndex]) {
+        // Procura entre os blocos da altura o ancestral correto
+        for (const candidate of this.heights[prevIndex].blocks) {
+          let current: Block | undefined = block;
+          while (current && current.height > prevAdjustmentHeight) {
+            current = this.findParentNode(current)?.block;
+          }
+          if (current && current.hash === candidate.block.hash) {
+            prevAdjustmentBlock = candidate.block;
+            break;
+          }
+        }
+      }
+      if (prevAdjustmentBlock) {
+        const actualTime = block.timestamp - prevAdjustmentBlock.timestamp;
+        const expectedTime = interval * epoch.parameters.targetBlockTime * 1000;
+        const adjustmentFactor = actualTime / expectedTime;
+        const eventData = {
+          oldDifficulty: prevAdjustmentBlock.nBits || this.INITIAL_NBITS,
+          newDifficulty: block.nBits,
+          adjustmentFactor: Math.max(
+            0.25,
+            Math.min(adjustmentFactor, 4)
+          ).toFixed(2),
+          height: block.height,
+        };
+        const adjustEvent = event
+          ? EventManager.log(event, 'difficulty-adjustment', eventData)
+          : this.addEvent('difficulty-adjustment', eventData);
+
+        blockNode.events = blockNode.events || [];
+        blockNode.events.push(adjustEvent);
+      }
+
+      // Organize height events
+      this.heights[heightIndex].events = this.heights[
+        heightIndex
+      ].events.filter((e) => e.type !== 'difficulty-adjustment');
+      this.heights[heightIndex].events.push(...blockNode.events);
+    }
   }
 }

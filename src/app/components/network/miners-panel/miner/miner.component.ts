@@ -219,12 +219,15 @@ export class MinerComponent {
 
     this.miner.addBlock(block);
 
-    // Cria um novo bloco para continuar minerando
-    this.miner.initBlockTemplate(block);
-
     // Log de bloco minerado localmente
     const event = this.miner.addEvent('block-mined', { block });
+
+    this.miner.checkDifficultyAdjustment(block, event);
+
     EventManager.complete(event);
+
+    // Cria um novo bloco para continuar minerando
+    this.miner.initBlockTemplate(block);
 
     // Emite evento para propagar o bloco
     this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
