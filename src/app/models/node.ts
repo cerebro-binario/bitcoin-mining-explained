@@ -187,7 +187,8 @@ export class Node {
       this.heights[heightIndex].blocks.push(blockNode);
     }
 
-    this.checkForksAndSort();
+    const finalHeightIndex = this.getHeightIndex(block.height);
+    this.checkForksAndSortFrom(finalHeightIndex);
     this.updateMiniBlockchain();
     return undefined;
   }
@@ -403,45 +404,49 @@ export class Node {
     return 0;
   }
 
-  private checkForksAndSort() {
-    if (this.heights.length === 0) return;
+  /**
+   * Otimizado: Atualiza forks e eventos apenas a partir da altura afetada, propagando para cima até não haver mais mudanças.
+   * Use este método ao invés de percorrer todo o array de heights.
+   * Se não for passado um índice, começa do bloco mais baixo (default antigo).
+   */
+  private checkForksAndSortFrom(heightIndexStart: number = 1) {
+    let changed = true;
+    let heightIndex = heightIndexStart;
 
-    const heightsToReorder = new Set<number>();
+    while (changed && heightIndex < this.heights.length) {
+      if (heightIndex <= 0) {
+        heightIndex++;
+        continue;
+      }
 
-    this.heights.forEach((height, heightIndex) => {
-      if (heightIndex === 0) return;
+      changed = false;
+      const height = this.heights[heightIndex];
 
       height.blocks.forEach((block) => {
+        const wasActive = block.isActive;
         if (
           block.children.length === 0 ||
           block.children.every((c) => !c.isActive)
         ) {
           block.isActive = false;
-          heightsToReorder.add(heightIndex);
-          //   this.markAsDeadFork(block, heightsToReorder, heightIndex);
         } else {
           block.isActive = true;
         }
+        if (block.isActive !== wasActive) {
+          changed = true;
+        }
       });
-    });
 
-    // Passo 2: Reordenar todos os heights afetados
-    heightsToReorder.forEach((height) => {
-      this.heights[height].blocks = this.heights[height].blocks.sort(
-        this.sortBlocks.bind(this)
-      );
-    });
+      // Reordena e atualiza eventos só se houve mudança
+      if (changed) {
+        height.blocks = height.blocks.sort(this.sortBlocks.bind(this));
+        height.blocks.forEach((block) => {
+          block.parent?.children.sort(this.sortBlocks.bind(this));
+        });
+        this.updateHeightEvents(heightIndex);
+      }
 
-    // Passo 3: Reordenar também os arrays `next[]` dentro de cada bloco
-    this.heights.forEach((height) => {
-      height.blocks.forEach((block) => {
-        block.children.sort(this.sortBlocks.bind(this));
-      });
-    });
-
-    // Passo 4: Atualizar eventos dos heights para refletir apenas os dos blocos ativos
-    for (let i = 0; i < this.heights.length; i++) {
-      this.updateHeightEvents(i);
+      heightIndex++;
     }
   }
 
