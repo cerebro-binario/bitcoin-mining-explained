@@ -5,7 +5,8 @@ export type NodeEventType =
   | 'peer-requested-connection'
   | 'peer-disconnected'
   | 'consensus-change'
-  | 'difficulty-adjustment';
+  | 'difficulty-adjustment'
+  | 'halving';
 
 export type EventLogType =
   | 'peer-found'
@@ -31,7 +32,8 @@ export type EventLogType =
   | 'future-consensus-change'
   | 'removing-incompatible-blocks'
   | 'removing-incompatible-blocks-completed'
-  | 'difficulty-adjustment';
+  | 'difficulty-adjustment'
+  | 'halving';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 

@@ -182,4 +182,11 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     template:
       'Dificuldade ajustada: {{oldDifficulty}} -> {{newDifficulty}} (fator: {{adjustmentFactor}}x)',
   },
+  halving: {
+    color: 'text-orange-400',
+    icon: 'pi pi-percentage',
+    label: 'Halving',
+    template:
+      'Recompensa reduzida pela metade: {{oldSubsidy}} -> {{newSubsidy}} BTC',
+  },
 };

@@ -4,7 +4,7 @@ export const environment = {
     difficultyAdjustmentInterval: 10, // 10 blocos para ajuste de dificuldade
     targetBlockTime: 10, // 10 segundos por bloco
     maxTransactionsPerBlock: 0, // sem limite
-    maxBlockSize: 1, // 1MB
-    halvingInterval: 210000, // padrão Bitcoin
+    maxBlockSize: 4, // 4MB
+    halvingInterval: 10, // padrão Bitcoin
   },
 };

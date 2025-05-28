@@ -223,6 +223,7 @@ export class MinerComponent {
     const event = this.miner.addEvent('block-mined', { block });
 
     this.miner.checkDifficultyAdjustment(block, event);
+    this.miner.checkHalving(block, event);
 
     EventManager.complete(event);
 

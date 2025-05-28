@@ -25,7 +25,6 @@ export interface Neighbor {
 export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
-  private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
   private readonly MAX_PEERS: number = Math.floor(Math.random() * 2) + 2; // Random between 2 and 3
 
   peerSearchInterval: number = 60000; // 1 minute
@@ -189,9 +188,7 @@ export class Node {
     }
 
     this.checkForksAndSort();
-
     this.updateMiniBlockchain();
-
     return undefined;
   }
 
@@ -339,7 +336,9 @@ export class Node {
   }
 
   private calculateBlockSubsidy(blockHeight: number): number {
-    const halvings = Math.floor(blockHeight / this.HALVING_INTERVAL);
+    const halvings = Math.floor(
+      blockHeight / this.consensus.parameters.halvingInterval
+    );
     return Math.floor(this.SUBSIDY / Math.pow(2, halvings));
   }
 
@@ -811,6 +810,7 @@ export class Node {
     });
 
     this.checkDifficultyAdjustment(block, event);
+    this.checkHalving(block, event);
 
     EventManager.complete(event);
 
@@ -1397,7 +1397,7 @@ export class Node {
       (b) => b.block.hash === block.hash
     );
 
-    if (!blockNode) {
+    if (!blockNode || !blockNode.isActive) {
       return;
     }
 
@@ -1446,7 +1446,54 @@ export class Node {
       this.heights[heightIndex].events = this.heights[
         heightIndex
       ].events.filter((e) => e.type !== 'difficulty-adjustment');
-      this.heights[heightIndex].events.push(...blockNode.events);
+      this.heights[heightIndex].events.push(
+        ...blockNode.events.filter((e) => e.type === 'difficulty-adjustment')
+      );
+    }
+  }
+
+  /**
+   * Verifica se o bloco é um bloco de halving e adiciona o evento correspondente.
+   */
+  checkHalving(block: Block, event?: NodeEvent) {
+    if (block.height === 0) {
+      return;
+    }
+
+    const heightIndex = this.getHeightIndex(block.height);
+    const blockNode = this.heights[heightIndex].blocks.find(
+      (b) => b.block.hash === block.hash
+    );
+
+    if (!blockNode || !blockNode.isActive) {
+      return;
+    }
+
+    if (
+      block.height > 0 &&
+      (block.height + 1) % this.consensus.parameters.halvingInterval === 0
+    ) {
+      const oldSubsidy = this.calculateBlockSubsidy(block.height);
+      const newSubsidy = this.calculateBlockSubsidy(block.height + 1);
+      const eventData = {
+        oldSubsidy: oldSubsidy / 100000000, // Convertendo de satoshis para BTC
+        newSubsidy: newSubsidy / 100000000,
+        height: block.height,
+      };
+      const halvingEvent = event
+        ? EventManager.log(event, 'halving', eventData)
+        : this.addEvent('halving', eventData);
+
+      blockNode.events = blockNode.events || [];
+      blockNode.events.push(halvingEvent);
+
+      // Organize height events
+      this.heights[heightIndex].events = this.heights[
+        heightIndex
+      ].events.filter((e) => e.type !== 'halving');
+      this.heights[heightIndex].events.push(
+        ...blockNode.events.filter((e) => e.type === 'halving')
+      );
     }
   }
 
