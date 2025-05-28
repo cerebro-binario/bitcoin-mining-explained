@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { map, Observable, tap } from 'rxjs';
-import { Block } from '../../../models/block.model';
 import { Node } from '../../../models/node';
 import { AddressService } from '../../../services/address.service';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
@@ -135,10 +134,6 @@ export class MinersPanelComponent implements OnDestroy {
     this.minerComponents.forEach((component) => {
       component.setHashRate(hashRate);
     });
-  }
-
-  onBlockBroadcasted(event: { minerId: number; block: Block }) {
-    this.network.propagateBlock(event.minerId, event.block);
   }
 
   onMinerRemoved(miner: Node) {

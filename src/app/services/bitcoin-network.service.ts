@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Block, BlockNode } from '../models/block.model';
+import { BlockNode } from '../models/block.model';
 import { Node } from '../models/node';
 
 @Injectable({ providedIn: 'root' })
@@ -37,12 +37,6 @@ export class BitcoinNetworkService {
       n.peers = n.peers.filter((nb) => nb.node.id !== nodeId);
     });
     this.nodesSubject.next(this.nodes);
-  }
-
-  propagateBlock(sourceNodeId: number, block: Block) {
-    const sourceNode = this.nodes.find((n) => n.id === sourceNodeId);
-    if (!sourceNode) return;
-    sourceNode.blockBroadcast$.next(block);
   }
 
   // Método para contar o número total de blocos em uma blockchain

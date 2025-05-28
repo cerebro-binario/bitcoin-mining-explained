@@ -55,10 +55,6 @@ export class MinerComponent {
   @Output() maximizedChange = new EventEmitter<Node>();
   @Output() logsMaximizedChange = new EventEmitter<Node>();
   @Output() hashRateChange = new EventEmitter<number | null>();
-  @Output() blockBroadcasted = new EventEmitter<{
-    minerId: number;
-    block: Block;
-  }>();
   @Output() transactionBroadcasted = new EventEmitter<{
     minerId: number;
     transaction: Transaction;
@@ -231,7 +227,7 @@ export class MinerComponent {
     this.miner.initBlockTemplate(block);
 
     // Emite evento para propagar o bloco
-    this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
+    this.miner.blockBroadcast$.next(block);
   }
 
   createTransaction() {
