@@ -4,7 +4,9 @@ export type NodeEventType =
   | 'peer-search'
   | 'peer-requested-connection'
   | 'peer-disconnected'
-  | 'consensus-change';
+  | 'consensus-change'
+  | 'difficulty-adjustment'
+  | 'halving';
 
 export type EventLogType =
   | 'peer-found'
@@ -29,7 +31,9 @@ export type EventLogType =
   | 'duplicate-orphan'
   | 'future-consensus-change'
   | 'removing-incompatible-blocks'
-  | 'removing-incompatible-blocks-completed';
+  | 'removing-incompatible-blocks-completed'
+  | 'difficulty-adjustment'
+  | 'halving';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 
@@ -58,6 +62,8 @@ export class EventManager {
     };
 
     event.logs.push(log);
+
+    return log;
   }
 
   static complete(event: NodeEvent) {

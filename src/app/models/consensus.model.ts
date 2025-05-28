@@ -6,6 +6,7 @@ export interface IConsensusParameters {
   maxTransactionsPerBlock: number;
   maxBlockSize: number;
   targetBlockTime: number;
+  halvingInterval: number;
   hash: string;
 }
 
@@ -14,6 +15,7 @@ export class ConsensusParameters implements IConsensusParameters {
   maxTransactionsPerBlock: number = 0;
   maxBlockSize: number = 0;
   targetBlockTime: number = 0;
+  halvingInterval: number = 210000;
   hash: string = '';
 
   constructor(data: Partial<IConsensusParameters>) {

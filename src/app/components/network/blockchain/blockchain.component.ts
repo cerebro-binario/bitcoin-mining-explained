@@ -3,12 +3,15 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { BlockNode } from '../../../models/block.model';
 import { Node } from '../../../models/node';
+import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
+import { EventLogMessagePipe } from '../events/event/event-log/event-log-message.pipe';
 
 @Component({
   selector: 'app-blockchain',
   templateUrl: './blockchain.component.html',
   styleUrls: ['./blockchain.component.scss'],
-  imports: [CommonModule],
+  standalone: true,
+  imports: [CommonModule, EventLogVisualPipe, EventLogMessagePipe],
   animations: [
     trigger('blockAnimation', [
       transition(':enter', [
@@ -124,10 +127,10 @@ export class BlockchainComponent {
     let hTotal = parent.children.length;
     let h = parent.children.findIndex((c) => c.block.hash === node.block.hash);
 
-    const prevPosition = miner.heights[height + 1]?.findIndex(
+    const prevPosition = miner.heights[height + 1]?.blocks.findIndex(
       (b) => b.block.hash === parent.block.hash
     );
-    const currPosition = miner.heights[height]?.findIndex(
+    const currPosition = miner.heights[height]?.blocks.findIndex(
       (b) => b.block.hash === node.block.hash
     );
     const startX = this.connectorViewbox.w;
@@ -175,7 +178,7 @@ export class BlockchainComponent {
 
   // Verifica se a altura está resolvida (todos os blocos da altura estão na main chain)
   isHeightResolved(height: number): boolean {
-    const blocks = this.miner.heights[height];
+    const blocks = this.miner.heights[height]?.blocks;
     const activeBlocks = blocks.filter((b) => b.isActive).length; // Conta apenas blocos ativos
     return activeBlocks === 1;
   }

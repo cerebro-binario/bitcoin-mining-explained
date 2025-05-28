@@ -175,4 +175,18 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     label:
       'As regras entram em vigor no bloco #{{blockHeight}} (faltam {{nBlocksToGo}} blocos)',
   },
+  'difficulty-adjustment': {
+    color: 'text-purple-400',
+    icon: 'pi pi-chart-line',
+    label: 'Ajuste de Dificuldade',
+    template:
+      'Dificuldade ajustada: {{oldDifficulty}} -> {{newDifficulty}} (fator: {{adjustmentFactor}}x)',
+  },
+  halving: {
+    color: 'text-orange-400',
+    icon: 'pi pi-percentage',
+    label: 'Halving',
+    template:
+      'Halving: Recompensa reduzida pela metade: {{oldSubsidy}} -> {{newSubsidy}} BTC',
+  },
 };

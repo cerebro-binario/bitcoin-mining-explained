@@ -303,6 +303,49 @@
             <span class="text-sm text-zinc-400 ml-2">blocos</span>
           </div>
 
+          <!-- Intervalo de Halving -->
+          <div class="mb-4 flex items-baseline gap-2">
+            <span class="text-sm font-medium text-zinc-400 w-64"
+              >Intervalo de Halving</span
+            >
+            <ng-container *ngIf="mode === 'creating'; else showHalvingInterval">
+              <input
+                type="number"
+                [(ngModel)]="newParams.halvingInterval"
+                (ngModelChange)="onHalvingIntervalChange($event)"
+                class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                min="1"
+              />
+            </ng-container>
+            <ng-template #showHalvingInterval>
+              <span class="text-lg font-semibold text-zinc-100 font-mono">{{
+                paramsOnView?.halvingInterval
+              }}</span>
+              <ng-container
+                *ngIf="
+                  futureOnView &&
+                  paramsOnView?.halvingInterval !==
+                    futureParamsOnView?.halvingInterval
+                "
+              >
+                <span class="mx-1 text-zinc-400 text-lg">➔</span>
+                <span class="font-bold text-green-300 text-lg font-mono">{{
+                  futureParamsOnView?.halvingInterval
+                }}</span>
+                <span
+                  class="ml-1 text-yellow-400"
+                  title="Mudança programada para altura {{
+                    futureOnView.startHeight
+                  }} (faltam {{
+                    futureOnView.startHeight - currentHeight
+                  }} blocos)"
+                  >⏳</span
+                >
+              </ng-container>
+            </ng-template>
+            <span class="text-sm text-zinc-400 ml-2">blocos</span>
+          </div>
+
           <!-- Máximo de Transações por Bloco -->
           <div class="mb-4 flex items-baseline gap-2">
             <span class="text-sm font-medium text-zinc-400 w-64"
@@ -344,6 +387,9 @@
               </ng-container>
             </ng-template>
             <span class="text-sm text-zinc-400 ml-2">transações</span>
+            <span class="text-xs text-zinc-400 ml-2 italic">
+              (0 = sem limite)</span
+            >
           </div>
 
           <!-- Tamanho Máximo do Bloco -->

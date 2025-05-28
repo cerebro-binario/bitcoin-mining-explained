@@ -5,6 +5,7 @@ export interface ConsensusConfig {
   targetBlockTime: number;
   maxTransactionsPerBlock: number;
   maxBlockSize: number;
+  halvingInterval: number;
 }
 
 // Usa a configuração do environment atual

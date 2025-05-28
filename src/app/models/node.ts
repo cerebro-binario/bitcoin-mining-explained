@@ -14,6 +14,7 @@ import {
 } from './event-log.model';
 
 import { areConsensusVersionsCompatible } from './consensus.model';
+import { Height } from './height.model';
 
 export interface Neighbor {
   latency: number;
@@ -24,7 +25,6 @@ export interface Neighbor {
 export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
-  private readonly HALVING_INTERVAL = 210000; // Blocos até próximo halving
   private readonly MAX_PEERS: number = Math.floor(Math.random() * 2) + 2; // Random between 2 and 3
 
   peerSearchInterval: number = 60000; // 1 minute
@@ -70,7 +70,7 @@ export class Node {
   genesis?: BlockNode;
 
   // Estrutura para organizar blocos por altura
-  heights: BlockNode[][] = [];
+  heights: Height[] = [];
 
   // Estrutura para rastrear blocos em fork ativamente
   activeFork?: number; // height -> blocos em fork
@@ -111,6 +111,8 @@ export class Node {
 
   private readonly CONNECTION_TTL = 1 * 60 * 1000; // 5 minutos em ms
 
+  private pendingConsensusEvents: { height: number; event: NodeEvent }[] = [];
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }
@@ -134,7 +136,11 @@ export class Node {
         consensusVersion: this.consensus.version,
       });
       const originNode = new BlockNode(originBlock);
-      this.heights.unshift([originNode]);
+      this.heights.unshift({
+        n: -1,
+        blocks: [originNode],
+        events: [],
+      });
       this.genesis = originNode;
     }
 
@@ -147,7 +153,7 @@ export class Node {
     const height = this.heights[heightIndex];
 
     // Verifica se o bloco já existe na altura
-    if (height?.find((n) => n.block.hash === blockNode.block.hash)) {
+    if (height?.blocks.find((n) => n.block.hash === blockNode.block.hash)) {
       return 'duplicate';
     }
 
@@ -163,17 +169,27 @@ export class Node {
 
     // Se a altura não existe, cria um novo array
     if (heightIndex < 0) {
-      this.heights.unshift([blockNode]);
+      this.heights.unshift({
+        n: block.height,
+        blocks: [blockNode],
+        events: [],
+      });
+      // Verifica eventos pendentes para esse height
+      this.addPendingEventsToHeight(block.height);
     } else if (!this.heights[heightIndex]) {
-      this.heights[heightIndex] = [blockNode];
+      this.heights[heightIndex] = {
+        n: block.height,
+        blocks: [blockNode],
+        events: [],
+      };
+      this.addPendingEventsToHeight(block.height);
     } else {
-      this.heights[heightIndex].push(blockNode);
+      this.heights[heightIndex].blocks.push(blockNode);
     }
 
-    this.checkForksAndSort();
-
+    const finalHeightIndex = this.getHeightIndex(block.height);
+    this.checkForksAndSortFrom(finalHeightIndex);
     this.updateMiniBlockchain();
-
     return undefined;
   }
 
@@ -239,7 +255,7 @@ export class Node {
     const consensus = epoch.parameters;
     const interval = consensus.difficultyAdjustmentInterval;
     const targetBlockTime = consensus.targetBlockTime; // em segundos
-    const adjustedHeight = height - epoch.startHeight;
+    const adjustedHeight = height - epoch.startHeight + 1;
 
     // Se não for um bloco de ajuste, mantém o nBits do bloco anterior
     if (adjustedHeight % interval !== 0) {
@@ -248,7 +264,7 @@ export class Node {
         lastBlock = blockResolver(tipBlock.previousHash);
       } else {
         const lastBlockNode = this.heights
-          .flat()
+          .flatMap((h) => h.blocks)
           .find((n) => n.block.height === height - 1 && n.isActive);
         lastBlock = lastBlockNode?.block;
       }
@@ -259,7 +275,7 @@ export class Node {
     }
 
     // Encontra o bloco do último ajuste
-    const prevAdjustmentHeight = height - interval;
+    const prevAdjustmentHeight = adjustedHeight - interval;
     let prevAdjustmentBlock: Block | undefined;
     let lastBlock: Block | undefined;
     if (blockResolver && tipBlock) {
@@ -271,11 +287,11 @@ export class Node {
       lastBlock = blockResolver(tipBlock.previousHash);
     } else {
       const prevAdjustmentNode = this.heights
-        .flat()
+        .flatMap((h) => h.blocks)
         .find((n) => n.block.height === prevAdjustmentHeight && n.isActive);
       prevAdjustmentBlock = prevAdjustmentNode?.block;
       const lastBlockNode = this.heights
-        .flat()
+        .flatMap((h) => h.blocks)
         .find((n) => n.block.height === height - 1 && n.isActive);
       lastBlock = lastBlockNode?.block;
     }
@@ -321,7 +337,9 @@ export class Node {
   }
 
   private calculateBlockSubsidy(blockHeight: number): number {
-    const halvings = Math.floor(blockHeight / this.HALVING_INTERVAL);
+    const halvings = Math.floor(
+      blockHeight / this.consensus.parameters.halvingInterval
+    );
     return Math.floor(this.SUBSIDY / Math.pow(2, halvings));
   }
 
@@ -386,50 +404,56 @@ export class Node {
     return 0;
   }
 
-  private checkForksAndSort() {
-    if (this.heights.length === 0) return;
+  /**
+   * Otimizado: Atualiza forks e eventos apenas a partir da altura afetada, propagando para cima até não haver mais mudanças.
+   * Use este método ao invés de percorrer todo o array de heights.
+   * Se não for passado um índice, começa do bloco mais baixo (default antigo).
+   */
+  private checkForksAndSortFrom(heightIndexStart: number = 1) {
+    let changed = true;
+    let heightIndex = heightIndexStart;
 
-    const heightsToReorder = new Set<number>();
+    while (changed && heightIndex < this.heights.length) {
+      if (heightIndex <= 0) {
+        heightIndex++;
+        continue;
+      }
 
-    this.heights.forEach((height, heightIndex) => {
-      if (heightIndex === 0) return;
+      changed = false;
+      const height = this.heights[heightIndex];
 
-      height.forEach((block) => {
+      height.blocks.forEach((block) => {
+        const wasActive = block.isActive;
         if (
           block.children.length === 0 ||
           block.children.every((c) => !c.isActive)
         ) {
           block.isActive = false;
-          heightsToReorder.add(heightIndex);
-          //   this.markAsDeadFork(block, heightsToReorder, heightIndex);
         } else {
           block.isActive = true;
         }
+        if (block.isActive !== wasActive) {
+          changed = true;
+        }
       });
-    });
 
-    // Passo 2: Reordenar todos os heights afetados
-    heightsToReorder.forEach((height) => {
-      this.heights[height] = this.heights[height].sort(
-        this.sortBlocks.bind(this)
-      );
-    });
+      // Reordena e atualiza eventos só se houve mudança
+      if (changed) {
+        height.blocks = height.blocks.sort(this.sortBlocks.bind(this));
+        height.blocks.forEach((block) => {
+          block.parent?.children.sort(this.sortBlocks.bind(this));
+        });
+        this.updateHeightEvents(heightIndex);
+      }
 
-    // Passo 3: Reordenar também os arrays `next[]` dentro de cada bloco
-    this.heights.forEach((blocks) => {
-      blocks.forEach((block) => {
-        block.children.sort(this.sortBlocks.bind(this));
-      });
-    });
+      heightIndex++;
+    }
   }
 
   // Método centralizado para calcular o índice na estrutura heights (ordem inversa)
   getHeightIndex(height: number): number {
     const lastIndex = this.heights.length - 1;
-    if (
-      this.heights.length > 0 &&
-      this.heights[lastIndex][0]?.block.height === -1
-    ) {
+    if (this.heights.length > 0 && this.heights[lastIndex].n === -1) {
       return this.heights.length - height - 2;
     }
     return this.heights.length - height - 1;
@@ -437,7 +461,7 @@ export class Node {
 
   private findParentNode(block: Block): BlockNode | undefined {
     const heightIndex = this.getHeightIndex(block.height - 1);
-    const parent = this.heights[heightIndex]?.find(
+    const parent = this.heights[heightIndex]?.blocks.find(
       (h) => h.block.hash === block.previousHash
     );
     return parent;
@@ -449,9 +473,9 @@ export class Node {
 
     // Percorre as alturas da mais alta para a mais baixa
     for (const height of this.heights) {
-      if (height.length > 0 && height[0].block.height !== -1) {
+      if (height.blocks.length > 0 && height.n !== -1) {
         // Retorna o primeiro bloco da altura mais alta, ignorando o origin block
-        return height[0].block;
+        return height.blocks[0].block;
       }
     }
 
@@ -465,15 +489,19 @@ export class Node {
       return;
     }
     // Percorre a main chain do gênesis até o topo
-    const heights: BlockNode[][] = [];
-    let height: BlockNode[] = [this.genesis];
-    while (height.length > 0) {
-      heights.unshift(height);
-      height.forEach((block) => {
+    const heights: Height[] = [];
+    let blocks: BlockNode[] = [this.genesis];
+    while (blocks.length > 0) {
+      heights.unshift({
+        n: blocks[0].block.height,
+        blocks: blocks,
+        events: [],
+      });
+      blocks.forEach((block) => {
         block.children = block.children.filter((child) => child.isActive);
       });
       // Avança para o próximo bloco na main chain (primeiro filho)
-      height = height.flatMap((block) => block.children);
+      blocks = blocks.flatMap((block) => block.children);
     }
     this.heights = heights;
   }
@@ -509,7 +537,7 @@ export class Node {
       // Encontra o bloco anterior na main chain
       const prevHash = current.previousHash;
       const prevNode = this.heights
-        .flat()
+        .flatMap((h) => h.blocks)
         .find((n) => n.block.hash === prevHash);
       current = prevNode?.block;
       count++;
@@ -520,11 +548,10 @@ export class Node {
   // Retorna as alturas dos forks ativos entre os últimos 5 blocos
   private updateActiveForkHeights() {
     const forkHeights: number[] = [];
-    for (const nodes of this.heights) {
-      const activeBlocks = nodes.filter((n) => n.isActive);
+    for (const height of this.heights) {
+      const activeBlocks = height.blocks.filter((n) => n.isActive);
       if (activeBlocks.length > 1) {
-        const height = nodes[0].block.height;
-        if (height >= 0) forkHeights.push(height);
+        if (height.n >= 0) forkHeights.push(height.n);
       }
     }
     this.activeForkHeights = forkHeights;
@@ -729,15 +756,13 @@ export class Node {
   private syncWith(peer: Node, event: NodeEvent) {
     EventManager.log(event, 'sync-started', { peerId: peer.id });
 
-    const latestForks = peer.heights[0] || [];
+    const latestForks = peer.heights[0]?.blocks || [];
     for (const fork of latestForks) {
       this.catchUpChain(fork.block, peer, event);
     }
 
     if (latestForks.length === 0) {
-      EventManager.log(event, 'already-in-sync', {
-        peerId: peer.id,
-      });
+      EventManager.log(event, 'already-in-sync', { peerId: peer.id });
     }
 
     EventManager.log(event, 'sync-completed', { peerId: peer.id });
@@ -793,6 +818,9 @@ export class Node {
       peerId: peer?.id,
       block: showBlock,
     });
+
+    this.checkDifficultyAdjustment(block, event);
+    this.checkHalving(block, event);
 
     EventManager.complete(event);
 
@@ -852,7 +880,9 @@ export class Node {
 
   private checkIfBlockExists(block: Block) {
     const heightIndex = this.getHeightIndex(block.height);
-    return this.heights[heightIndex]?.some((h) => h.block.hash === block.hash);
+    return this.heights[heightIndex]?.blocks.some(
+      (h) => h.block.hash === block.hash
+    );
   }
 
   private processOrphan(orphan: Block, peer: Node, event: NodeEvent) {
@@ -1000,17 +1030,18 @@ export class Node {
 
   private downloadGenesisFromPeer(peer: Node) {
     const heightIndex = peer.getHeightIndex(0);
-    return peer.heights[heightIndex]?.map((h) => h.block) || [];
+    return peer.heights[heightIndex]?.blocks.map((h) => h.block) || [];
   }
 
   private downloadBlockFromPeer(height: number, hash: string, peer: Node) {
     const heightIndex = peer.getHeightIndex(height);
-    return peer.heights[heightIndex]?.find((h) => h.block.hash === hash)?.block;
+    return peer.heights[heightIndex]?.blocks.find((h) => h.block.hash === hash)
+      ?.block;
   }
 
   private downloadParentBlockFromPeer(block: Block, peer: Node) {
     const heightIndex = peer.getHeightIndex(block.height - 1);
-    return peer.heights[heightIndex]?.find(
+    return peer.heights[heightIndex]?.blocks.find(
       (h) => h.block.hash === block.previousHash
     )?.block;
   }
@@ -1018,13 +1049,14 @@ export class Node {
   // Busca um bloco local por altura
   getBlockByHeight(height: number, hash: string): Block | undefined {
     const heightIndex = this.getHeightIndex(height);
-    return this.heights[heightIndex]?.find((h) => h.block.hash === hash)?.block;
+    return this.heights[heightIndex]?.blocks.find((h) => h.block.hash === hash)
+      ?.block;
   }
 
   // Busca todos os blocos ativos de uma altura
   getBlocksByHeight(height: number): Block[] {
     const heightIndex = this.getHeightIndex(height);
-    return this.heights[heightIndex]?.map((n) => n.block) || [];
+    return this.heights[heightIndex]?.blocks.map((n) => n.block) || [];
   }
 
   // Método para validação completa do bloco
@@ -1052,7 +1084,9 @@ export class Node {
     // Para simular o Bitcoin real, use a cadeia do próprio bloco para calcular o nBits esperado
     const blockResolver = (hash: string) => {
       // Procura o bloco na estrutura local (pode ser melhorado para buscar em órfãos, se necessário)
-      return this.heights.flat().find((n) => n.block.hash === hash)?.block;
+      return this.heights
+        .flatMap((h) => h.blocks)
+        .find((n) => n.block.hash === hash)?.block;
     };
     const expectedNBits = this.calculateExpectedNBits(
       block.height,
@@ -1306,11 +1340,11 @@ export class Node {
     let lastCompatibleIndex = undefined;
 
     for (let i = changeStartIndex; i >= 0; i--) {
-        for (let j = 0; j < this.heights[i].length; j++) {
-        const block = this.heights[i][j].block;
+      for (let j = 0; j < this.heights[i].blocks.length; j++) {
+        const block = this.heights[i].blocks[j].block;
         const reason = this.validateBlockConsensus(block);
         if (reason) {
-          delete this.heights[i][j];
+          delete this.heights[i].blocks[j];
         } else {
           lastCompatibleIndex = i;
         }
@@ -1319,7 +1353,7 @@ export class Node {
 
     lastCompatibleIndex ??= changeStartIndex;
     this.heights = this.heights.slice(lastCompatibleIndex);
-    this.heights[0].forEach((h) => (h.children = []));
+    this.heights[0].blocks.forEach((h) => (h.children = []));
 
     EventManager.log(event, 'removing-incompatible-blocks-completed', {
       newConsensus,
@@ -1344,7 +1378,179 @@ export class Node {
       });
     }
 
+    // Adiciona evento no height correspondente à mudança de consenso
+    const heightIndex = this.getHeightIndex(newConsensus.startHeight);
+    if (heightIndex >= 0 && this.heights[heightIndex]) {
+      this.heights[heightIndex].events.push(event);
+    } else {
+      // Salva para adicionar depois
+      this.pendingConsensusEvents.push({
+        height: newConsensus.startHeight - 1,
+        event,
+      });
+    }
+
     this.removeIncompatibleBlocksOnConsensusChange(newConsensus, event);
     EventManager.complete(event);
+  }
+
+  /**
+   * Cria e adiciona o evento de ajuste de dificuldade ao BlockNode, se aplicável.
+   */
+  checkDifficultyAdjustment(block: Block, event?: NodeEvent) {
+    if (block.height === 0) {
+      return;
+    }
+
+    const heightIndex = this.getHeightIndex(block.height);
+    const blockNode = this.heights[heightIndex].blocks.find(
+      (b) => b.block.hash === block.hash
+    );
+
+    if (!blockNode || !blockNode.isActive) {
+      return;
+    }
+
+    const epoch = this.consensus.getConsensusForHeight(block.height - 1);
+    const interval = epoch.parameters.difficultyAdjustmentInterval;
+    const adjustedHeight = block.height - epoch.startHeight + 1;
+    if (adjustedHeight % interval === 0) {
+      const prevAdjustmentHeight = block.height - interval;
+      const prevIndex = this.getHeightIndex(prevAdjustmentHeight);
+      let prevAdjustmentBlock: Block | undefined = undefined;
+      if (prevIndex >= 0 && this.heights[prevIndex]) {
+        // Procura entre os blocos da altura o ancestral correto
+        for (const candidate of this.heights[prevIndex].blocks) {
+          let current: Block | undefined = block;
+          while (current && current.height > prevAdjustmentHeight) {
+            current = this.findParentNode(current)?.block;
+          }
+          if (current && current.hash === candidate.block.hash) {
+            prevAdjustmentBlock = candidate.block;
+            break;
+          }
+        }
+      }
+      if (prevAdjustmentBlock) {
+        const actualTime = block.timestamp - prevAdjustmentBlock.timestamp;
+        const expectedTime = interval * epoch.parameters.targetBlockTime * 1000;
+        const adjustmentFactor = actualTime / expectedTime;
+        const eventData = {
+          oldDifficulty: prevAdjustmentBlock.nBits || this.INITIAL_NBITS,
+          newDifficulty: block.nBits,
+          adjustmentFactor: Math.max(
+            0.25,
+            Math.min(adjustmentFactor, 4)
+          ).toFixed(2),
+          height: block.height,
+        };
+        const adjustEvent = event
+          ? EventManager.log(event, 'difficulty-adjustment', eventData)
+          : this.addEvent('difficulty-adjustment', eventData);
+
+        blockNode.events = blockNode.events || [];
+        blockNode.events.push(adjustEvent);
+      }
+
+      // Organize height events
+      this.heights[heightIndex].events = this.heights[
+        heightIndex
+      ].events.filter((e) => e.type !== 'difficulty-adjustment');
+      this.heights[heightIndex].events.push(
+        ...blockNode.events.filter((e) => e.type === 'difficulty-adjustment')
+      );
+    }
+  }
+
+  /**
+   * Verifica se o bloco é um bloco de halving e adiciona o evento correspondente.
+   */
+  checkHalving(block: Block, event?: NodeEvent) {
+    if (block.height === 0) {
+      return;
+    }
+
+    const heightIndex = this.getHeightIndex(block.height);
+    const blockNode = this.heights[heightIndex].blocks.find(
+      (b) => b.block.hash === block.hash
+    );
+
+    if (!blockNode || !blockNode.isActive) {
+      return;
+    }
+
+    if (
+      block.height > 0 &&
+      (block.height + 1) % this.consensus.parameters.halvingInterval === 0
+    ) {
+      const oldSubsidy = this.calculateBlockSubsidy(block.height);
+      const newSubsidy = this.calculateBlockSubsidy(block.height + 1);
+      const eventData = {
+        oldSubsidy: oldSubsidy / 100000000, // Convertendo de satoshis para BTC
+        newSubsidy: newSubsidy / 100000000,
+        height: block.height,
+      };
+      const halvingEvent = event
+        ? EventManager.log(event, 'halving', eventData)
+        : this.addEvent('halving', eventData);
+
+      blockNode.events = blockNode.events || [];
+      blockNode.events.push(halvingEvent);
+
+      // Organize height events
+      this.heights[heightIndex].events = this.heights[
+        heightIndex
+      ].events.filter((e) => e.type !== 'halving');
+      this.heights[heightIndex].events.push(
+        ...blockNode.events.filter((e) => e.type === 'halving')
+      );
+    }
+  }
+
+  private addPendingEventsToHeight(height: number) {
+    const idx = this.getHeightIndex(height);
+    if (idx >= 0 && this.heights[idx]) {
+      const toAdd = this.pendingConsensusEvents.filter(
+        (e) => e.height === height
+      );
+      for (const { event } of toAdd) {
+        this.heights[idx].events.push(event);
+      }
+      // Remove os eventos já adicionados
+      this.pendingConsensusEvents = this.pendingConsensusEvents.filter(
+        (e) => e.height !== height
+      );
+    }
+  }
+
+  /**
+   * Atualiza os eventos do height para refletir apenas os eventos especiais do bloco principal,
+   * preservando eventos que foram adicionados diretamente ao nível da altura.
+   */
+  private updateHeightEvents(heightIndex: number) {
+    const height = this.heights[heightIndex];
+    if (!height) return;
+
+    const specialTypes = ['difficulty-adjustment', 'halving'];
+    // Pega o primeiro bloco (main chain) na altura
+    const mainBlock = height.blocks[0];
+    if (!mainBlock || !mainBlock.isActive) {
+      // Mantém apenas eventos não especiais
+      height.events = height.events.filter(
+        (e) => !specialTypes.includes(e.type)
+      );
+      return;
+    }
+
+    // Filtra eventos não especiais já presentes na altura
+    const nonSpecialEvents = height.events.filter(
+      (e) => !specialTypes.includes(e.type)
+    );
+    // Coleta eventos especiais do bloco principal
+    const specialEvents = (mainBlock.events || []).filter((e) =>
+      specialTypes.includes(e.type)
+    );
+    // Atualiza os eventos da altura: mantém os não especiais e adiciona os especiais do bloco
+    height.events = [...nonSpecialEvents, ...specialEvents];
   }
 }

@@ -219,12 +219,16 @@ export class MinerComponent {
 
     this.miner.addBlock(block);
 
-    // Cria um novo bloco para continuar minerando
-    this.miner.initBlockTemplate(block);
-
     // Log de bloco minerado localmente
     const event = this.miner.addEvent('block-mined', { block });
+
+    this.miner.checkDifficultyAdjustment(block, event);
+    this.miner.checkHalving(block, event);
+
     EventManager.complete(event);
+
+    // Cria um novo bloco para continuar minerando
+    this.miner.initBlockTemplate(block);
 
     // Emite evento para propagar o bloco
     this.blockBroadcasted.emit({ minerId: this.miner.id!, block });
@@ -327,8 +331,8 @@ export class MinerComponent {
 
   onConsensusVersionChange() {
     // Recomeçar a mineração do bloco atual para que seja gerado com a nova versão do consenso
-    const lastBlock = this.miner.heights[0]?.[0];
-    this.miner.currentBlock = this.miner.initBlockTemplate(lastBlock?.block);
+    const latestBlock = this.miner.getLatestBlock();
+    this.miner.currentBlock = this.miner.initBlockTemplate(latestBlock);
   }
 
   connectToPeers() {
