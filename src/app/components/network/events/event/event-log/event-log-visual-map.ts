@@ -187,6 +187,6 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     icon: 'pi pi-percentage',
     label: 'Halving',
     template:
-      'Recompensa reduzida pela metade: {{oldSubsidy}} -> {{newSubsidy}} BTC',
+      'Halving: Recompensa reduzida pela metade: {{oldSubsidy}} -> {{newSubsidy}} BTC',
   },
 };
