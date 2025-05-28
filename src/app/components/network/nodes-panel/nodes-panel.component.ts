@@ -50,4 +50,14 @@ export class NodesPanelComponent {
   showLogs() {}
 
   closeLogs() {}
+
+  getStatusColor(node: Node): string {
+    if (node.peers.length === 0) {
+      return 'red';
+    }
+    if (node.isSyncing) {
+      return 'blue';
+    }
+    return 'green';
+  }
 }
