@@ -37,8 +37,7 @@ export class NodesPanelComponent {
   }
 
   addNode() {
-    const node = this.network.addNode(false);
-    this.network.initializeNode(node);
+    this.network.addNode(false);
   }
 
   removeNode(index: number) {
