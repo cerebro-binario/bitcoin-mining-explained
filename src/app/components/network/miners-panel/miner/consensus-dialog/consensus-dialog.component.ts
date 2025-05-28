@@ -227,6 +227,16 @@ export class ConsensusDialogComponent implements OnInit, OnDestroy {
     this.onParametersChange();
   }
 
+  onHalvingIntervalChange(value: number) {
+    if (!isNaN(value) && value > 0) {
+      this.forkWarnings['halvingInterval'] =
+        value !== this.copy.halvingInterval ? 'hard' : 'none';
+      this.updateConsolidatedFork();
+    }
+
+    this.onParametersChange();
+  }
+
   confirmEdit() {
     // Se for edição de época futura, apenas atualiza os parâmetros dessa época
     if (this.isEditingFutureEpoch) {

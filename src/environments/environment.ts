@@ -5,5 +5,6 @@ export const environment = {
     targetBlockTime: 10, // 10 segundos por bloco
     maxTransactionsPerBlock: 0, // sem limite
     maxBlockSize: 1, // 1MB
+    halvingInterval: 210000, // padrão Bitcoin
   },
 };
