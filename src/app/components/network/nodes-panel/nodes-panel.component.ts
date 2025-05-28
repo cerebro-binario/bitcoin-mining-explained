@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Node } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { EventsComponent } from '../events/events.component';
 
@@ -12,10 +14,11 @@ import { EventsComponent } from '../events/events.component';
   styleUrls: ['./nodes-panel.component.scss'],
 })
 export class NodesPanelComponent {
-  constructor(public network: BitcoinNetworkService) {}
-
-  get nodes() {
-    return this.network.nodes.filter((n) => !n.isMiner);
+  nodes: Node[] = [];
+  constructor(public network: BitcoinNetworkService) {
+    this.network.nodes$.pipe(takeUntilDestroyed()).subscribe((nodes) => {
+      this.nodes = nodes.filter((n) => !n.isMiner);
+    });
   }
 
   getPeerStatusText(peer: any): string {
