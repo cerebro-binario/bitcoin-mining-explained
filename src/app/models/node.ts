@@ -1363,6 +1363,12 @@ export class Node {
       });
     }
 
+    // Adiciona evento no height correspondente à mudança de consenso
+    const heightIndex = this.getHeightIndex(newConsensus.startHeight);
+    if (heightIndex >= 0 && this.heights[heightIndex]) {
+      this.heights[heightIndex].events.push(event);
+    }
+
     this.removeIncompatibleBlocksOnConsensusChange(newConsensus, event);
     EventManager.complete(event);
   }
