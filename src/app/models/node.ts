@@ -438,6 +438,11 @@ export class Node {
         block.children.sort(this.sortBlocks.bind(this));
       });
     });
+
+    // Passo 4: Atualizar eventos dos heights para refletir apenas os dos blocos ativos
+    for (let i = 0; i < this.heights.length; i++) {
+      this.updateHeightEvents(i);
+    }
   }
 
   // Método centralizado para calcular o índice na estrutura heights (ordem inversa)
@@ -1511,5 +1516,36 @@ export class Node {
         (e) => e.height !== height
       );
     }
+  }
+
+  /**
+   * Atualiza os eventos do height para refletir apenas os eventos especiais do bloco principal,
+   * preservando eventos que foram adicionados diretamente ao nível da altura.
+   */
+  private updateHeightEvents(heightIndex: number) {
+    const height = this.heights[heightIndex];
+    if (!height) return;
+
+    const specialTypes = ['difficulty-adjustment', 'halving'];
+    // Pega o primeiro bloco (main chain) na altura
+    const mainBlock = height.blocks[0];
+    if (!mainBlock || !mainBlock.isActive) {
+      // Mantém apenas eventos não especiais
+      height.events = height.events.filter(
+        (e) => !specialTypes.includes(e.type)
+      );
+      return;
+    }
+
+    // Filtra eventos não especiais já presentes na altura
+    const nonSpecialEvents = height.events.filter(
+      (e) => !specialTypes.includes(e.type)
+    );
+    // Coleta eventos especiais do bloco principal
+    const specialEvents = (mainBlock.events || []).filter((e) =>
+      specialTypes.includes(e.type)
+    );
+    // Atualiza os eventos da altura: mantém os não especiais e adiciona os especiais do bloco
+    height.events = [...nonSpecialEvents, ...specialEvents];
   }
 }
