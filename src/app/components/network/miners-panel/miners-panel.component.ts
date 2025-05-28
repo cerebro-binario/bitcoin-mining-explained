@@ -53,6 +53,7 @@ export class MinersPanelComponent implements OnDestroy {
   private readonly RECONNECT_PEERS_INTERVAL = 6000; // ms
 
   miners$!: Observable<Node[]>;
+  miners: Node[] = [];
   minersStats: MinersStats = {
     toCollapse: 0,
     toExpand: 0,
@@ -80,6 +81,7 @@ export class MinersPanelComponent implements OnDestroy {
     this.miners$ = this.network.nodes$.pipe(
       map((nodes) => nodes.filter((n) => n.isMiner)),
       tap((miners) => {
+        this.miners = miners;
         this.updateStats(miners);
       })
     );
@@ -145,29 +147,11 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   onMiningChanged(miner: Node) {
-    if (miner.isMining) {
-      this.minersStats.nMining++;
-      this.minersStats.nCanStart--;
-      this.minersStats.nCanPause++;
-    } else {
-      this.minersStats.nMining--;
-      this.minersStats.nCanStart++;
-      this.minersStats.nCanPause--;
-    }
-
-    this.statsChange.emit(this.minersStats);
+    this.updateStats(this.miners);
   }
 
   onMinerCollapsedChange(miner: Node) {
-    if (miner.isCollapsed) {
-      this.minersStats.toCollapse--;
-      this.minersStats.toExpand++;
-    } else {
-      this.minersStats.toExpand--;
-      this.minersStats.toCollapse++;
-    }
-    this.minersStats.allCollapsed = this.minersStats.toCollapse === 0;
-    this.statsChange.emit(this.minersStats);
+    this.updateStats(this.miners);
   }
 
   onMinerMaximizedChange(miner: Node) {
@@ -192,21 +176,7 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   onHashRateChange(hashRate: number | null) {
-    // 1. Se todos os miners tiverem o mesmo hash rate, esse será o default
-    // 2. Caso contrário, usará o padrão DEFAULT_HASH_RATE
-    let newDefault: number | null = this.DEFAULT_HASH_RATE;
-    let newTotal = 0;
-    if (this.minerComponents && this.minerComponents.length > 0) {
-      const rates = this.minerComponents.map((m) => {
-        newTotal += m.miner.currentHashRate;
-        return m.miner.hashRate;
-      });
-      const allEqual = rates.every((r) => r === rates[0]);
-      newDefault = allEqual ? rates[0] : this.DEFAULT_HASH_RATE;
-    }
-    this.minersStats.defaultHashRate = newDefault;
-    this.minersStats.totalHashRate = newTotal;
-    this.statsChange.emit(this.minersStats);
+    this.updateStats(this.miners);
   }
 
   onBackdropClick(event: MouseEvent, miner: Node) {
