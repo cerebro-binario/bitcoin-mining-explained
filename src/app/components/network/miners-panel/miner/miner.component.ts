@@ -16,6 +16,7 @@ import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventsComponent } from '../../events/events.component';
+import { MiniBlockchainComponent } from '../../mini-blockchain/mini-blockchain.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
@@ -36,6 +37,7 @@ interface HashRateOption {
     ConsensusDialogComponent,
     ConfirmDialogModule,
     PeersDialogComponent,
+    MiniBlockchainComponent,
   ],
   templateUrl: './miner.component.html',
   styleUrls: ['./miner.component.scss'],

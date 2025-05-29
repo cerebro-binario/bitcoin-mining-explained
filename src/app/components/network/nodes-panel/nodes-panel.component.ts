@@ -6,6 +6,7 @@ import { Node } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { EventsComponent } from '../events/events.component';
 import { ConsensusDialogComponent } from '../miners-panel/miner/consensus-dialog/consensus-dialog.component';
+import { MiniBlockchainComponent } from '../mini-blockchain/mini-blockchain.component';
 
 @Component({
   selector: 'app-nodes-panel',
@@ -15,6 +16,7 @@ import { ConsensusDialogComponent } from '../miners-panel/miner/consensus-dialog
     FormsModule,
     EventsComponent,
     ConsensusDialogComponent,
+    MiniBlockchainComponent,
   ],
   templateUrl: './nodes-panel.component.html',
   styleUrls: ['./nodes-panel.component.scss'],

@@ -150,46 +150,7 @@
         }}</span>
       </div>
       <!-- Mini-blockchain no corpo do card, antes dos eventos -->
-      <div
-        class="flex items-center gap-1 my-2 opacity-80 justify-center w-full"
-      >
-        <ng-container *ngFor="let block of node.lastMainBlocks; let i = index">
-          <div class="relative flex flex-col items-center justify-center">
-            <div
-              class="flex flex-col items-center justify-center w-7 h-7 rounded-md border-2 text-[0.75rem] cursor-pointer transition duration-200 ease-in-out"
-              [ngClass]="{
-                'bg-blue-700 border-blue-400 text-white':
-                  i === node.lastMainBlocks.length - 1,
-                'bg-zinc-700 border-zinc-500 text-zinc-200':
-                  i !== node.lastMainBlocks.length - 1
-              }"
-              [title]="
-                'Bloco #' +
-                block.height +
-                '\nHash: ' +
-                block.hash +
-                '\nMiner: ' +
-                (block.minerId ?? '-') +
-                '\nTxs: ' +
-                block.transactions.length
-              "
-            >
-              <span>{{ block.height }}</span>
-              <span
-                class="text-[0.65em] -mt-0.5"
-                [ngClass]="{
-                  'text-green-400 font-bold': block.minerId === node.id,
-                  'text-zinc-300': block.minerId !== node.id
-                }"
-                >M{{ block.minerId ?? "-" }}</span
-              >
-            </div>
-          </div>
-          <span *ngIf="i < node.lastMainBlocks.length - 1" class="text-zinc-500"
-            >→</span
-          >
-        </ng-container>
-      </div>
+      <app-mini-blockchain [node]="node" class="my-2"></app-mini-blockchain>
       <!-- Seção de peers durante primeira sincronização -->
       <div *ngIf="node.isSyncing" class="w-full mt-4">
         <div class="text-xs text-zinc-400 mb-2">Peers:</div>
