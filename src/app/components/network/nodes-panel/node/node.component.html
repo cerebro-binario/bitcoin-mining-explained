@@ -1,11 +1,18 @@
 <div
   class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center"
   [ngClass]="{
-    'z-30 fixed inset-0 max-w-3xl max-h-[95vh] w-full h-full m-auto':
+    'z-50 fixed inset-0 w-full h-full max-w-[90vw] max-h-[90vh] m-auto overflow-y-auto pt-0':
       isMaximized
   }"
 >
-  <div class="flex items-center gap-2 mb-2 w-full">
+  <div
+    class="flex items-center gap-2 mb-2 w-full"
+    [ngClass]="
+      isMaximized
+        ? 'sticky top-0 z-20 bg-zinc-800 border-b border-zinc-700 py-6'
+        : ''
+    "
+  >
     <div class="flex items-center gap-2 flex-1 min-w-0">
       <span class="text-lg font-bold text-blue-400 truncate"
         >Nó #{{ node.id }}</span
@@ -152,18 +159,7 @@
       </button>
     </div>
   </div>
-  <div class="flex flex-col items-center">
-    <span class="text-xs text-zinc-400">Status:</span>
-    <span
-      class="px-2 py-1 rounded text-xs"
-      [ngClass]="{
-        'bg-blue-900 text-blue-400 animate-pulse': node.isSyncing,
-        'bg-zinc-900 text-zinc-400': !node.isSyncing
-      }"
-    >
-      {{ node.isSyncing ? "Sincronizando..." : "Sincronizado" }}
-    </span>
-  </div>
+
   <div class="flex flex-col items-center">
     <span class="text-xs text-zinc-400">Blocos:</span>
     <span class="font-mono text-base text-green-400">{{
@@ -175,6 +171,54 @@
     [node]="node"
     (show)="(null)"
     (close)="(null)"
-    class="max-h-80 overflow-y-auto w-full"
+    class="h-80 w-full"
   ></app-events>
+
+  <!-- Blockchain Local -->
+  <div class="mt-6 w-full" *ngIf="isMaximized">
+    <div
+      class="flex items-center justify-between mb-4 cursor-pointer hover:bg-zinc-700/50 p-2 rounded transition-colors"
+      (click)="toggleBlockchainVisibility()"
+    >
+      <div class="flex items-center gap-2">
+        <h3 class="text-lg font-semibold text-blue-400">Blockchain Local</h3>
+        <span class="text-xs text-zinc-400">
+          {{ node.heights.length > 0 ? node.heights.length - 1 : 0 }} blocos
+          <span *ngIf="node.getLatestBlock()"
+            >(Último: #{{ node.getLatestBlock()?.height }})</span
+          >
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-400">{{
+          isBlockchainVisible ? "Recolher" : "Expandir"
+        }}</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-zinc-400 transition-transform"
+          [ngClass]="{ 'rotate-180': isBlockchainVisible }"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+    </div>
+    <div
+      class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
+      [ngStyle]="{
+        'max-height': !isBlockchainVisible ? '0px' : null,
+        opacity: isBlockchainVisible ? '1' : '0',
+        overflow: isBlockchainVisible ? 'visible' : 'hidden',
+      }"
+    >
+      <app-blockchain [node]="node"></app-blockchain>
+    </div>
+  </div>
 </div>

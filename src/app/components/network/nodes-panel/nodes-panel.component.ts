@@ -85,9 +85,11 @@ export class NodesPanelComponent {
   onNodeMaximizedChange(node: Node) {
     if (this.maximizedNode && this.maximizedNode.id === node.id) {
       this.maximizedNode = null;
+      node.isMaximized = false;
       this.renderer.removeClass(this.document.body, 'overflow-hidden');
     } else {
       this.maximizedNode = node;
+      node.isMaximized = true;
       this.renderer.addClass(this.document.body, 'overflow-hidden');
     }
   }
