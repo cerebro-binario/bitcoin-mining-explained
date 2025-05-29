@@ -48,7 +48,7 @@
                 : 'Procurar conexões na rede'
             "
             [ngClass]="{
-              'animate-pulse-ring': miner.isSearchingPeers,
+              'animate-spin': miner.isSearchingPeers,
               'bg-blue-700/30': miner.isSearchingPeers,
               'hover:bg-blue-700/30': !miner.isSearchingPeers
             }"
@@ -58,7 +58,7 @@
               xmlns="http://www.w3.org/2000/svg"
               class="w-4 h-4 text-blue-400 transition-transform"
               [ngClass]="{
-                'animate-spin-slow': miner.isSearchingPeers
+                'animate-spin': miner.isSearchingPeers
               }"
               fill="none"
               viewBox="0 0 24 24"
