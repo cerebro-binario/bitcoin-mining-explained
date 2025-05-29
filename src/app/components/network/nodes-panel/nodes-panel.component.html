@@ -11,7 +11,7 @@
   <div *ngIf="nodes.length === 0" class="text-zinc-400 italic mb-4">
     Nenhum nó adicionado ainda.
   </div>
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div
       *ngFor="let node of nodes; let i = index"
       class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center"
@@ -141,6 +141,7 @@
         [node]="node"
         (show)="showLogs()"
         (close)="closeLogs()"
+        class="max-h-80 overflow-y-auto w-full"
       ></app-events>
     </div>
   </div>
