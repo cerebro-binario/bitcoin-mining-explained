@@ -33,7 +33,9 @@ import { EventLogMessagePipe } from '../events/event/event-log/event-log-message
   ],
 })
 export class BlockchainComponent {
-  @Input() miner!: Node;
+  @Input() set node(value: Node) {
+    this.miner = value;
+  }
   slideXValue = 'translateX(0)';
 
   // Propriedades para o cálculo de gaps
@@ -49,6 +51,8 @@ export class BlockchainComponent {
       percentage: 0,
     },
   };
+
+  miner!: Node;
 
   // Método chamado após a view ser inicializada
   ngAfterViewInit() {

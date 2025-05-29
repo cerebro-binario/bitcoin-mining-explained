@@ -1,0 +1,224 @@
+<div
+  class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center"
+  [ngClass]="{
+    'z-50 fixed inset-0 w-full h-full max-w-[90vw] max-h-[90vh] m-auto overflow-y-auto pt-0':
+      isMaximized
+  }"
+>
+  <div
+    class="flex items-center gap-2 mb-2 w-full"
+    [ngClass]="
+      isMaximized
+        ? 'sticky top-0 z-20 bg-zinc-800 border-b border-zinc-700 py-6'
+        : ''
+    "
+  >
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <span class="text-lg font-bold text-blue-400 truncate"
+        >Nó #{{ node.id }}</span
+      >
+      <span class="text-xs text-zinc-400 ml-2" title="Versão do Consenso">
+        v{{ node.consensus.version }}
+      </span>
+      <span class="flex items-center gap-2 ml-2">
+        <span
+          class="inline-block w-3 h-3 rounded-full border border-zinc-700"
+          [ngClass]="{
+            'bg-green-500': getStatusColor(node) === 'green',
+            'bg-blue-500': getStatusColor(node) === 'blue',
+            'bg-red-500': getStatusColor(node) === 'red'
+          }"
+          [title]="
+            getStatusColor(node) === 'red'
+              ? 'Desconectado da rede'
+              : getStatusColor(node) === 'blue'
+              ? 'Sincronizando com peers'
+              : 'Conectado'
+          "
+        ></span>
+        <span class="text-xs text-zinc-400">{{ node.peers.length }} peers</span>
+        <button
+          class="ml-1 p-1 rounded-full transition align-middle relative overflow-hidden"
+          (click)="searchPeers.emit(node); $event.stopPropagation()"
+          [disabled]="node.isSearchingPeers"
+          [title]="
+            node.isSearchingPeers
+              ? 'Procurando conexões...'
+              : 'Procurar conexões na rede'
+          "
+          [ngClass]="{
+            'animate-spin': node.isSearchingPeers,
+            'bg-blue-700/30': node.isSearchingPeers,
+            'hover:bg-blue-700/30': !node.isSearchingPeers
+          }"
+          style="vertical-align: middle"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4 text-blue-400 transition-transform"
+            [ngClass]="{
+              'animate-spin-slow': node.isSearchingPeers
+            }"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M2 12a10 10 0 0 1 20 0" />
+            <path d="M12 2v2m0 16v2m10-10h-2M4 12H2" />
+          </svg>
+          <span
+            *ngIf="node.isSearchingPeers"
+            class="absolute inset-0 rounded-full border-2 border-blue-400 opacity-40 animate-pulse"
+          ></span>
+        </button>
+      </span>
+    </div>
+    <div class="flex items-center gap-1 ml-auto">
+      <button
+        class="p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
+        (click)="editConsensus.emit(node)"
+        title="Parâmetros de Consenso"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      </button>
+      <button
+        class="p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
+        (click)="toggleMaximized()"
+        title="{{ isMaximized ? 'Minimizar' : 'Maximizar' }} nó"
+      >
+        <svg
+          *ngIf="!isMaximized"
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2"
+          />
+        </svg>
+        <svg
+          *ngIf="isMaximized"
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20 12H4"
+          />
+        </svg>
+      </button>
+      <button
+        class="p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition"
+        (click)="remove.emit(node)"
+        title="Remover nó"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex flex-col items-center">
+    <span class="text-xs text-zinc-400">Blocos:</span>
+    <span class="font-mono text-base text-green-400">{{
+      node.heights.length > 0 ? node.heights.length - 1 : 0
+    }}</span>
+  </div>
+  <app-mini-blockchain [node]="node" class="my-2"></app-mini-blockchain>
+  <app-events
+    [node]="node"
+    (show)="(null)"
+    (close)="(null)"
+    class="h-80 w-full"
+  ></app-events>
+
+  <!-- Blockchain Local -->
+  <div class="mt-6 w-full" *ngIf="isMaximized">
+    <div
+      class="flex items-center justify-between mb-4 cursor-pointer hover:bg-zinc-700/50 p-2 rounded transition-colors"
+      (click)="toggleBlockchainVisibility()"
+    >
+      <div class="flex items-center gap-2">
+        <h3 class="text-lg font-semibold text-blue-400">Blockchain Local</h3>
+        <span class="text-xs text-zinc-400">
+          {{ node.heights.length > 0 ? node.heights.length - 1 : 0 }} blocos
+          <span *ngIf="node.getLatestBlock()"
+            >(Último: #{{ node.getLatestBlock()?.height }})</span
+          >
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-400">{{
+          isBlockchainVisible ? "Recolher" : "Expandir"
+        }}</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-zinc-400 transition-transform"
+          [ngClass]="{ 'rotate-180': isBlockchainVisible }"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+    </div>
+    <div
+      class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
+      [ngStyle]="{
+        'max-height': !isBlockchainVisible ? '0px' : null,
+        opacity: isBlockchainVisible ? '1' : '0',
+        overflow: isBlockchainVisible ? 'visible' : 'hidden',
+      }"
+    >
+      <app-blockchain [node]="node"></app-blockchain>
+    </div>
+  </div>
+</div>

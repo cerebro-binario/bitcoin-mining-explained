@@ -20,15 +20,15 @@
     (mouseleave)="onControlPanelMouseLeave()"
   >
     <div
-      class="flex gap-4 w-full max-w-5xl mx-auto items-center justify-center pointer-events-auto"
+      class="flex gap-4 w-full max-w-5xl mx-auto items-center justify-center"
     >
       <div
-        class="text-sm text-zinc-400 bg-zinc-800 px-3 py-1 rounded shadow-2xl border border-zinc-700"
+        class="text-sm text-zinc-400 bg-zinc-800 px-3 py-1 rounded shadow-2xl border border-zinc-700 pointer-events-auto"
       >
         Minerando: {{ stats.nMining }}/{{ stats.nTotal }}
       </div>
       <div
-        class="text-sm text-zinc-400 bg-zinc-800 px-3 py-1 rounded shadow-2xl border border-zinc-700"
+        class="text-sm text-zinc-400 bg-zinc-800 px-3 py-1 rounded shadow-2xl border border-zinc-700 pointer-events-auto"
       >
         Hash Rate: {{ stats.totalHashRate | number }} H/s
       </div>

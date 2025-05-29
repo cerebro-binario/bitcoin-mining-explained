@@ -1,3 +1,8 @@
+<div
+  *ngIf="maximizedNode"
+  class="fixed inset-0 bg-black/80 z-50 cursor-pointer !m-0 backdrop-blur"
+  (click)="onNodeMaximizedChange(maximizedNode)"
+></div>
 <div class="mb-12">
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-2xl font-semibold">Nós da Rede</h2>
@@ -11,81 +16,22 @@
   <div *ngIf="nodes.length === 0" class="text-zinc-400 italic mb-4">
     Nenhum nó adicionado ainda.
   </div>
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-    <div
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <app-node
       *ngFor="let node of nodes; let i = index"
-      class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center"
-    >
-      <div class="flex items-center gap-2 mb-2">
-        <span class="text-lg font-bold text-blue-400">Nó #{{ node.id }}</span>
-        <button
-          class="ml-auto p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-700 transition"
-          (click)="removeNode(i)"
-          title="Remover nó"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-        </button>
-      </div>
-      <div class="flex flex-col items-center">
-        <span class="text-xs text-zinc-400">Status:</span>
-        <span
-          class="px-2 py-1 rounded text-xs"
-          [ngClass]="{
-            'bg-blue-900 text-blue-400 animate-pulse': node.isSyncing,
-            'bg-zinc-900 text-zinc-400': !node.isSyncing
-          }"
-        >
-          {{ node.isSyncing ? "Sincronizando..." : "Sincronizado" }}
-        </span>
-      </div>
-      <div class="flex flex-col items-center">
-        <span class="text-xs text-zinc-400">Blocos:</span>
-        <span class="font-mono text-base text-green-400">{{
-          node.heights.length || 0
-        }}</span>
-      </div>
-
-      <!-- Seção de peers durante primeira sincronização -->
-      <div *ngIf="node.isSyncing" class="w-full mt-4">
-        <div class="text-xs text-zinc-400 mb-2">Peers:</div>
-        <div class="space-y-2">
-          <div
-            *ngFor="let peer of node.syncPeers"
-            class="flex items-center justify-between text-xs"
-          >
-            <span class="text-zinc-300">Nó #{{ peer.nodeId }}</span>
-            <span
-              [ngClass]="{
-                'text-yellow-400': peer.status === 'validating',
-                'text-green-400': peer.status === 'valid',
-                'text-red-400': peer.status === 'invalid',
-                'text-zinc-400': peer.status === 'pending'
-              }"
-            >
-              {{ getPeerStatusText(peer) }}
-            </span>
-          </div>
-        </div>
-      </div>
-      <!-- Log de eventos de propagação/validação de blocos -->
-      <app-events
-        [node]="node"
-        (show)="showLogs()"
-        (close)="closeLogs()"
-      ></app-events>
-    </div>
+      [node]="node"
+      [isMaximized]="maximizedNode?.id === node.id"
+      (remove)="removeNode($event)"
+      (editConsensus)="editConsensusParams($event)"
+      (searchPeers)="searchPeers($event)"
+      (maximizedChange)="onNodeMaximizedChange($event)"
+      class="w-full"
+    ></app-node>
   </div>
+  <app-consensus-dialog
+    *ngIf="showConsensusDialog && consensusNode"
+    [miner]="consensusNode"
+    (close)="closeConsensusDialog()"
+    (versionChange)="closeConsensusDialog()"
+  ></app-consensus-dialog>
 </div>
