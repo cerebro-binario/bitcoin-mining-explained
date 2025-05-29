@@ -1,5 +1,9 @@
 <div
   class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center"
+  [ngClass]="{
+    'z-30 fixed inset-0 max-w-3xl max-h-[95vh] w-full h-full m-auto':
+      isMaximized
+  }"
 >
   <div class="flex items-center gap-2 mb-2 w-full">
     <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -87,6 +91,42 @@
             stroke-linejoin="round"
             stroke-width="2"
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      </button>
+      <button
+        class="p-1 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition"
+        (click)="toggleMaximized()"
+        title="{{ isMaximized ? 'Minimizar' : 'Maximizar' }} nó"
+      >
+        <svg
+          *ngIf="!isMaximized"
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2"
+          />
+        </svg>
+        <svg
+          *ngIf="isMaximized"
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20 12H4"
           />
         </svg>
       </button>

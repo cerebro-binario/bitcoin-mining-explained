@@ -13,9 +13,11 @@ import { MiniBlockchainComponent } from '../../mini-blockchain/mini-blockchain.c
 })
 export class NodeComponent {
   @Input() node!: Node;
+  @Input() isMaximized = false;
   @Output() remove = new EventEmitter<Node>();
   @Output() editConsensus = new EventEmitter<Node>();
   @Output() searchPeers = new EventEmitter<Node>();
+  @Output() maximizedChange = new EventEmitter<Node>();
 
   getStatusColor(node: Node): string {
     if (node.peers.length === 0) {
@@ -25,5 +27,9 @@ export class NodeComponent {
       return 'blue';
     }
     return 'green';
+  }
+
+  toggleMaximized() {
+    this.maximizedChange.emit(this.node);
   }
 }

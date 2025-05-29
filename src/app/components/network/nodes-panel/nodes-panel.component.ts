@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, Inject, Renderer2 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Node } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { ConsensusDialogComponent } from '../miners-panel/miner/consensus-dialog/consensus-dialog.component';
 import { NodeComponent } from './node/node.component';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-nodes-panel',
@@ -18,8 +19,13 @@ export class NodesPanelComponent {
   nodes: Node[] = [];
   showConsensusDialog = false;
   consensusNode: Node | null = null;
+  maximizedNode: Node | null = null;
 
-  constructor(public network: BitcoinNetworkService) {
+  constructor(
+    public network: BitcoinNetworkService,
+    private renderer: Renderer2,
+    @Inject(DOCUMENT) private document: Document
+  ) {
     this.network.nodes$.pipe(takeUntilDestroyed()).subscribe((nodes) => {
       this.nodes = nodes.filter((n) => !n.isMiner);
     });
@@ -74,5 +80,15 @@ export class NodesPanelComponent {
   closeConsensusDialog() {
     this.showConsensusDialog = false;
     this.consensusNode = null;
+  }
+
+  onNodeMaximizedChange(node: Node) {
+    if (this.maximizedNode && this.maximizedNode.id === node.id) {
+      this.maximizedNode = null;
+      this.renderer.removeClass(this.document.body, 'overflow-hidden');
+    } else {
+      this.maximizedNode = node;
+      this.renderer.addClass(this.document.body, 'overflow-hidden');
+    }
   }
 }
