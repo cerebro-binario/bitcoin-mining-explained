@@ -4,20 +4,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Node } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
-import { EventsComponent } from '../events/events.component';
 import { ConsensusDialogComponent } from '../miners-panel/miner/consensus-dialog/consensus-dialog.component';
-import { MiniBlockchainComponent } from '../mini-blockchain/mini-blockchain.component';
+import { NodeComponent } from './node/node.component';
 
 @Component({
   selector: 'app-nodes-panel',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    EventsComponent,
-    ConsensusDialogComponent,
-    MiniBlockchainComponent,
-  ],
+  imports: [CommonModule, FormsModule, ConsensusDialogComponent, NodeComponent],
   templateUrl: './nodes-panel.component.html',
   styleUrls: ['./nodes-panel.component.scss'],
 })
@@ -51,11 +44,8 @@ export class NodesPanelComponent {
     this.network.addNode(false);
   }
 
-  removeNode(index: number) {
-    const node = this.nodes[index];
-    if (node) {
-      this.network.removeNode(node.id!);
-    }
+  removeNode(node: Node) {
+    this.network.removeNode(node.id!);
   }
 
   showLogs() {}
