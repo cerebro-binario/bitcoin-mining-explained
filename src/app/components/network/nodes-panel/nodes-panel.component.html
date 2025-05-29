@@ -146,7 +146,7 @@
       <div class="flex flex-col items-center">
         <span class="text-xs text-zinc-400">Blocos:</span>
         <span class="font-mono text-base text-green-400">{{
-          node.heights.length || 0
+          node.heights.length > 0 ? node.heights.length - 1 : 0
         }}</span>
       </div>
       <!-- Mini-blockchain no corpo do card, antes dos eventos -->
