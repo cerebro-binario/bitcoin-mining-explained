@@ -10,6 +10,7 @@
       transition: 'height 0.6s ease-in-out',
       overflowY: 'hidden',
     }"
+    (scrolledIndexChange)="onScrollIndexChange($event)"
   >
     <div
       #blockchainContainer
@@ -23,7 +24,9 @@
       }"
     >
       <!-- Bloco atual -->
-      <ng-container *cdkVirtualFor="let height of node.heights">
+      <ng-container
+        *cdkVirtualFor="let height of node.heights; trackBy: trackByHeight"
+      >
         @let hIndex = node.getHeightIndex(height.n);
         @if(height.blocks[0].block.height === -1) { @let nChains =
         height.blocks[0].children.length;

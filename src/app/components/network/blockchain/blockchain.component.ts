@@ -3,6 +3,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { BlockNode } from '../../../models/block.model';
+import { Height } from '../../../models/height.model';
 import { Node } from '../../../models/node';
 import { EventLogMessagePipe } from '../events/event/event-log/event-log-message.pipe';
 import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
@@ -76,12 +77,7 @@ export class BlockchainComponent {
     const container = document.querySelector(
       `#blockchain-container-${this.node.id}`
     ) as HTMLElement;
-    if (!container) return;
-
-    requestAnimationFrame(() => {
-      this.blockchainContainerHeight =
-        container.getBoundingClientRect().height + this.getScrollbarSize();
-    });
+    this.calculateVirtualScrollHeight(container);
 
     if (this.hasCalculatedGaps) return;
 
@@ -123,6 +119,15 @@ export class BlockchainComponent {
     this.nToleratedItems = Math.ceil(containerWidth / this.itemSize) * 2;
 
     this.hasCalculatedGaps = true;
+  }
+
+  calculateVirtualScrollHeight(container: HTMLElement) {
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+      this.blockchainContainerHeight =
+        container.getBoundingClientRect().height + this.getScrollbarSize();
+    });
   }
 
   // Método para obter a cor de fundo do bloco
@@ -184,9 +189,9 @@ export class BlockchainComponent {
 
   // Retorna a cor da conexão
   getConnectionStrokeColor(node: BlockNode, isResolved: boolean): string {
-    if (isResolved) return '#4b5563'; // cinza neutro para main chain
-    if (!node.isActive) return '#6b7280'; // cinza mais claro para dead forks
-    return '#4b5563'; // cinza neutro para conexões em andamento
+    if (isResolved) return '#6b7280'; // cinza mais claro para main chain
+    if (!node.isActive) return '#4b5563'; // cinza neutro para dead forks
+    return '#6b7280'; // cinza mais claro para conexões em andamento
   }
 
   // Calcula o valor dinâmico para o topo da conexão
@@ -231,5 +236,16 @@ export class BlockchainComponent {
     const scrollbarHeight = scrollDiv.offsetHeight - scrollDiv.clientHeight;
     document.body.removeChild(scrollDiv);
     return scrollbarHeight;
+  }
+
+  onScrollIndexChange(event: any) {
+    const container = document.querySelector(
+      `#blockchain-container-${this.node.id}`
+    ) as HTMLElement;
+    this.calculateVirtualScrollHeight(container);
+  }
+
+  trackByHeight(index: number, height: Height): number {
+    return height.n;
   }
 }
