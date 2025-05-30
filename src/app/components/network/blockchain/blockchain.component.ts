@@ -1,17 +1,24 @@
 import { animate, style, transition, trigger } from '@angular/animations';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { BlockNode } from '../../../models/block.model';
+import { Height } from '../../../models/height.model';
 import { Node } from '../../../models/node';
-import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
 import { EventLogMessagePipe } from '../events/event/event-log/event-log-message.pipe';
+import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
 
 @Component({
   selector: 'app-blockchain',
   templateUrl: './blockchain.component.html',
   styleUrls: ['./blockchain.component.scss'],
   standalone: true,
-  imports: [CommonModule, EventLogVisualPipe, EventLogMessagePipe],
+  imports: [
+    CommonModule,
+    EventLogVisualPipe,
+    EventLogMessagePipe,
+    ScrollingModule,
+  ],
   animations: [
     trigger('blockAnimation', [
       transition(':enter', [
@@ -33,13 +40,13 @@ import { EventLogMessagePipe } from '../events/event/event-log/event-log-message
   ],
 })
 export class BlockchainComponent {
-  @Input() set node(value: Node) {
-    this.miner = value;
-  }
   slideXValue = 'translateX(0)';
 
   // Propriedades para o cálculo de gaps
   hasCalculatedGaps = false;
+  blockchainContainerHeight = 0;
+  itemSize = 352;
+  nToleratedItems = 10;
   connectorViewbox = { w: 100, h: 100 };
   gap = {
     x: {
@@ -52,12 +59,12 @@ export class BlockchainComponent {
     },
   };
 
-  miner!: Node;
+  @Input() node!: Node;
 
   // Método chamado após a view ser inicializada
   ngAfterViewInit() {
     // Verifica se existe algum bloco minerado
-    const hasBlocks = this.miner.heights.length > 1;
+    const hasBlocks = this.node.heights.length > 1;
     if (hasBlocks) {
       requestAnimationFrame(() => {
         this.calculateGaps();
@@ -67,15 +74,14 @@ export class BlockchainComponent {
 
   // Método para calcular os gaps
   calculateGaps() {
+    const container = document.querySelector(
+      `#blockchain-container-${this.node.id}`
+    ) as HTMLElement;
+    this.calculateVirtualScrollHeight(container);
+
     if (this.hasCalculatedGaps) return;
 
-    const container = document.querySelector(
-      '#miners-panel-container'
-    ) as HTMLElement;
-    if (!container) return;
-
     const containerComputedStyle = window.getComputedStyle(container);
-
     this.gap.x.value =
       parseFloat(containerComputedStyle.getPropertyValue('gap')) || 0;
 
@@ -108,7 +114,20 @@ export class BlockchainComponent {
       this.slideXValue = `translateX(calc(-1 * (${this.connectorViewbox.w}px + ${this.gap.x.value}px)))`;
     });
 
+    const containerWidth = container.getBoundingClientRect().width;
+    this.itemSize = blockWidth + this.gap.x.value;
+    this.nToleratedItems = Math.ceil(containerWidth / this.itemSize) * 2;
+
     this.hasCalculatedGaps = true;
+  }
+
+  calculateVirtualScrollHeight(container: HTMLElement) {
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+      this.blockchainContainerHeight =
+        container.getBoundingClientRect().height + this.getScrollbarSize();
+    });
   }
 
   // Método para obter a cor de fundo do bloco
@@ -170,9 +189,9 @@ export class BlockchainComponent {
 
   // Retorna a cor da conexão
   getConnectionStrokeColor(node: BlockNode, isResolved: boolean): string {
-    if (isResolved) return '#4b5563'; // cinza neutro para main chain
-    if (!node.isActive) return '#6b7280'; // cinza mais claro para dead forks
-    return '#4b5563'; // cinza neutro para conexões em andamento
+    if (isResolved) return '#6b7280'; // cinza mais claro para main chain
+    if (!node.isActive) return '#4b5563'; // cinza neutro para dead forks
+    return '#6b7280'; // cinza mais claro para conexões em andamento
   }
 
   // Calcula o valor dinâmico para o topo da conexão
@@ -182,14 +201,14 @@ export class BlockchainComponent {
 
   // Verifica se a altura está resolvida (todos os blocos da altura estão na main chain)
   isHeightResolved(height: number): boolean {
-    const blocks = this.miner.heights[height]?.blocks;
+    const blocks = this.node.heights[height]?.blocks;
     const activeBlocks = blocks.filter((b) => b.isActive).length; // Conta apenas blocos ativos
     return activeBlocks === 1;
   }
 
   getOriginBlockTransform(childrenLength: number): string {
     const originBlock = document.querySelector(
-      `#originBlock-${this.miner.id}`
+      `#originBlock-${this.node.id}`
     ) as HTMLElement;
     const { width, height } = originBlock.getBoundingClientRect();
 
@@ -201,5 +220,32 @@ export class BlockchainComponent {
     );
 
     return 'translate(' + translateX + 'px, ' + translateY + 'px)';
+  }
+
+  getScrollbarSize(): number {
+    // Cria um elemento temporário
+    const scrollDiv = document.createElement('div');
+    scrollDiv.style.width = '100px';
+    scrollDiv.style.height = '100px';
+    scrollDiv.style.overflow = 'scroll';
+    scrollDiv.style.position = 'absolute';
+    scrollDiv.style.top = '-9999px';
+    document.body.appendChild(scrollDiv);
+
+    // Calcula a diferença entre offsetHeight e clientHeight
+    const scrollbarHeight = scrollDiv.offsetHeight - scrollDiv.clientHeight;
+    document.body.removeChild(scrollDiv);
+    return scrollbarHeight;
+  }
+
+  onScrollIndexChange(event: any) {
+    const container = document.querySelector(
+      `#blockchain-container-${this.node.id}`
+    ) as HTMLElement;
+    this.calculateVirtualScrollHeight(container);
+  }
+
+  trackByHeight(index: number, height: Height): number {
+    return height.n;
   }
 }
