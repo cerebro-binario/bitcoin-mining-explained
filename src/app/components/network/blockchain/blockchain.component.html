@@ -1,27 +1,40 @@
 <div class="relative">
-  <div class="overflow-x-auto pb-4">
+  <cdk-virtual-scroll-viewport
+    orientation="horizontal"
+    [itemSize]="itemSize"
+    [minBufferPx]="nToleratedItems * itemSize"
+    [maxBufferPx]="nToleratedItems * itemSize"
+    [style]="{
+      width: '100%',
+      height: blockchainContainerHeight + 'px',
+      transition: 'height 0.6s ease-in-out',
+      overflowY: 'hidden',
+    }"
+  >
     <div
-      id="miners-panel-container"
-      class="flex flex-row gap-16 items-stretch px-16"
+      #blockchainContainer
+      [id]="'blockchain-container-' + node.id"
+      class="flex flex-row items-stretch gap-16 px-16"
       [@slideRightAnimation]="{
-        value: miner.heights.length,
+        value: node.heights.length,
         params: {
           slideXValue
         }
       }"
     >
       <!-- Bloco atual -->
-      <ng-container *ngFor="let height of miner.heights; let hIndex = index">
+      <ng-container *cdkVirtualFor="let height of node.heights">
+        @let hIndex = node.getHeightIndex(height.n);
         @if(height.blocks[0].block.height === -1) { @let nChains =
         height.blocks[0].children.length;
-        <div class="relative flex flex-col" @blockAnimation>
+        <div class="relative w-72 block" @blockAnimation>
           <div
-            *ngIf="nChains > 1"
-            [id]="'originBlock-' + miner.id"
+            [id]="'originBlock-' + node.id"
             class="w-5 h-5 bg-zinc-500 rounded-full"
             [ngStyle]="{
-                  transform: getOriginBlockTransform(nChains),
-                }"
+                        transform: getOriginBlockTransform(nChains),
+                        opacity: nChains > 1 ? 1 : 0,
+                      }"
           ></div>
         </div>
         } @else {
@@ -31,8 +44,8 @@
             <div
               class="h-full absolute flex flex-col items-center select-none -translate-x-1/2"
               [ngStyle]="{
-                left: '-' + gap.x.value / 2 + 'px',
-              }"
+                      left: '-' + gap.x.value / 2 + 'px',
+                    }"
             >
               <div
                 class="absolute h-full border-l-2 border-zinc-700/50 border-dotted -z-50"
@@ -58,13 +71,13 @@
           >
             <div
               *ngFor="let blockNode of height.blocks"
-              class="relative block-element rounded-lg p-4 border w-72 shadow transition-transform cursor-pointer group flex flex-col"
+              class="relative block-element rounded-lg p-4 border w-72 shadow transition-transform cursor-pointer group flex flex-col overflow-visible"
               [ngClass]="[
                 getBlockBackgroundColor(blockNode),
                 getBlockBorderColor(blockNode)
               ]"
               @blockAnimation
-              (@blockAnimation.done)="calculateGaps()"
+              (@blockAnimation.start)="calculateGaps()"
             >
               <div class="flex items-center justify-between mb-1">
                 <div class="flex items-center gap-2">
@@ -141,7 +154,7 @@
                 class="absolute h-full w-full top-0 right-0 bottom-0 left-0 pointer-events-none overflow-visible z-0"
               >
                 <path
-                  [attr.d]="getCurvedPath(miner, blockNode, hIndex)"
+                  [attr.d]="getCurvedPath(node, blockNode, hIndex)"
                   [attr.stroke]="
                     getConnectionStrokeColor(
                       blockNode,
@@ -178,5 +191,5 @@
         }
       </ng-container>
     </div>
-  </div>
+  </cdk-virtual-scroll-viewport>
 </div>

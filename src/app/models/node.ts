@@ -169,11 +169,14 @@ export class Node {
 
     // Se a altura não existe, cria um novo array
     if (heightIndex < 0) {
-      this.heights.unshift({
-        n: block.height,
-        blocks: [blockNode],
-        events: [],
-      });
+      this.heights = [
+        {
+          n: block.height,
+          blocks: [blockNode],
+          events: [],
+        },
+        ...this.heights,
+      ];
       // Verifica eventos pendentes para esse height
       this.addPendingEventsToHeight(block.height);
     } else if (!this.heights[heightIndex]) {
