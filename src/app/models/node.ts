@@ -1587,22 +1587,21 @@ export class Node {
     // Pega o primeiro bloco (main chain) na altura
     const mainBlock = height.blocks[0];
     if (!mainBlock || !mainBlock.isActive) {
-      // Mantém apenas eventos não especiais
-      height.events = height.events.filter(
-        (e) => !specialTypes.includes(e.type)
-      );
       return;
     }
 
-    // Filtra eventos não especiais já presentes na altura
-    const nonSpecialEvents = height.events.filter(
-      (e) => !specialTypes.includes(e.type)
-    );
     // Coleta eventos especiais do bloco principal
     const specialEvents = (mainBlock.events || []).filter((e) =>
       specialTypes.includes(e.type)
     );
-    // Atualiza os eventos da altura: mantém os não especiais e adiciona os especiais do bloco
-    height.events = [...nonSpecialEvents, ...specialEvents];
+
+    if (specialEvents.length > 0) {
+      // Filtra eventos não especiais já presentes na altura
+      const nonSpecialEvents = height.events.filter(
+        (e) => !specialTypes.includes(e.type)
+      );
+      // Atualiza os eventos da altura: mantém os não especiais e adiciona os especiais do bloco
+      height.events = [...nonSpecialEvents, ...specialEvents];
+    }
   }
 }
