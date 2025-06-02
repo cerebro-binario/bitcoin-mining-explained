@@ -396,6 +396,18 @@
         }}</span>
       </div>
       <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-400">Saldo:</span>
+        <span class="font-mono text-xs text-blue-400">
+          {{ getBalance() | number : "1.8-8" }} BTC
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-400">UTXOs:</span>
+        <span class="font-mono text-xs text-blue-400">
+          {{ getUTXOs().length }} outputs não gastos
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
         <span class="text-xs text-zinc-400">Assinatura:</span>
         <span class="font-mono text-xs text-green-400">{{ miner.name }}</span>
       </div>
@@ -438,6 +450,16 @@
         (show)="showLogs()"
         (close)="closeLogs()"
       ></app-events>
+    </div>
+
+    <!-- UTXOs Section -->
+    <div class="mt-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-blue-400">UTXOs</h3>
+        <span class="text-xs text-zinc-400">
+          {{ getUTXOs().length }} outputs não gastos
+        </span>
+      </div>
     </div>
 
     <!-- Blockchain Local -->

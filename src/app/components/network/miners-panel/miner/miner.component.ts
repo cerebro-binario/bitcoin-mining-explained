@@ -276,4 +276,15 @@ export class MinerComponent {
     }
     return 'green';
   }
+
+  getBalance(): number {
+    if (!this.miner.miningAddress) return 0;
+    const balance = this.miner.getBalance(this.miner.miningAddress);
+    return balance / 100000000; // Convert satoshis to BTC
+  }
+
+  getUTXOs() {
+    if (!this.miner.miningAddress) return [];
+    return this.miner.getUTXOs(this.miner.miningAddress);
+  }
 }

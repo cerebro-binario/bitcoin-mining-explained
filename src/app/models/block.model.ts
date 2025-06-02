@@ -99,6 +99,8 @@ export interface TransactionInput {
   txid: string; // ID da transação que criou o UTXO
   vout: number; // Índice do output na transação anterior
   scriptSig: string; // Assinatura do input
+  scriptPubKey: string; // Endereço do dono do UTXO
+  value: number; // Valor do UTXO em satoshis
 }
 
 export interface TransactionOutput {
