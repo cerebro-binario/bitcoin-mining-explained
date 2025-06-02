@@ -277,14 +277,11 @@ export class MinerComponent {
     return 'green';
   }
 
-  getBalance(): number {
-    if (!this.miner.miningAddress) return 0;
-    const balance = this.miner.getBalance(this.miner.miningAddress);
-    return balance / 100000000; // Convert satoshis to BTC
+  get utxos() {
+    return this.miner.utxoSet[this.miner.miningAddress]?.utxos || [];
   }
 
-  getUTXOs() {
-    if (!this.miner.miningAddress) return [];
-    return this.miner.getUTXOs(this.miner.miningAddress);
+  get balance() {
+    return this.miner.utxoSet[this.miner.miningAddress]?.balance || 0;
   }
 }
