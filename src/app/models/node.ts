@@ -201,10 +201,11 @@ export class Node {
     const previousHash =
       lastBlock?.hash ||
       '0000000000000000000000000000000000000000000000000000000000000000';
+
     // Calcula o nBits correto para o novo bloco
-    const nBits = this.calculateExpectedNBits(
-      lastBlock ? lastBlock.height + 1 : 0
-    );
+    const { next } = this.getDifficulty(lastBlock);
+    const nBits = next?.nBits || lastBlock?.nBits || this.INITIAL_NBITS;
+
     const blockHeight = lastBlock ? lastBlock.height + 1 : 0;
     const subsidy = this.calculateBlockSubsidy(blockHeight);
 
@@ -239,7 +240,9 @@ export class Node {
     });
 
     return this.currentBlock;
-  } // Processa um tick de mineração
+  }
+
+  // Processa um tick de mineração
   processMiningTick(now: number, batchSize: number) {
     if (!this.isMining || !this.currentBlock) return;
 
@@ -319,86 +322,86 @@ export class Node {
     this.blockBroadcast$.next(block);
   }
 
-  // Calcula o valor esperado de nBits para um dado height, seguindo a política de ajuste de dificuldade
-  // Permite passar um resolvedor de blocos para seguir a cadeia do bloco recebido
-  private calculateExpectedNBits(
-    height: number,
-    blockResolver?: (hash: string) => Block | undefined,
-    tipBlock?: Block
-  ): number {
-    // Se for o bloco gênese, retorna o valor inicial
-    if (height === 0) {
-      return this.INITIAL_NBITS;
+  /**
+   * Calcula a dificuldade atual e a próxima para um bloco de referência.
+   * @param referenceBlock Bloco de referência para o cálculo
+   * @returns Objeto contendo a dificuldade atual e a próxima (se houver ajuste)
+   */
+  private getDifficulty(referenceBlock?: Block): {
+    current: { nBits: number };
+    next?: { nBits: number; adjustmentFactor: number };
+  } {
+    // Se não houver bloco de referência, assume que é o primeiro bloco
+    if (!referenceBlock) {
+      return {
+        current: {
+          nBits: this.INITIAL_NBITS,
+        },
+      };
     }
 
-    // Obtém os parâmetros de consenso para a altura específica
-    const epoch = this.consensus.getConsensusForHeight(height - 1);
-    const consensus = epoch.parameters;
-    const interval = consensus.difficultyAdjustmentInterval;
-    const targetBlockTime = consensus.targetBlockTime; // em segundos
-    const adjustedHeight = height - epoch.startHeight + 1;
+    const epoch = this.consensus.getConsensusForHeight(referenceBlock.height);
+    const interval = epoch.parameters.difficultyAdjustmentInterval;
+    const targetBlockTime = epoch.parameters.targetBlockTime;
+    const adjustedHeight = referenceBlock.height - epoch.startHeight + 1;
 
-    // Se não for um bloco de ajuste, mantém o nBits do bloco anterior
+    // Se não for um bloco de ajuste, retorna apenas a dificuldade atual
     if (adjustedHeight % interval !== 0) {
-      let lastBlock: Block | undefined;
-      if (blockResolver && tipBlock) {
-        lastBlock = blockResolver(tipBlock.previousHash);
-      } else {
-        const lastBlockNode = this.heights
-          .flatMap((h) => h.blocks)
-          .find((n) => n.block.height === height - 1 && n.isActive);
-        lastBlock = lastBlockNode?.block;
-      }
-      if (!lastBlock) {
-        return this.INITIAL_NBITS;
-      }
-      return lastBlock.nBits;
+      return {
+        current: {
+          nBits: referenceBlock.nBits,
+        },
+      };
     }
 
     // Encontra o bloco do último ajuste
     const prevAdjustmentHeight = adjustedHeight - interval;
-    let prevAdjustmentBlock: Block | undefined;
-    let lastBlock: Block | undefined;
-    if (blockResolver && tipBlock) {
-      prevAdjustmentBlock = this.getAncestorBlock(
-        tipBlock,
-        prevAdjustmentHeight,
-        blockResolver
-      );
-      lastBlock = blockResolver(tipBlock.previousHash);
-    } else {
-      const prevAdjustmentNode = this.heights
-        .flatMap((h) => h.blocks)
-        .find((n) => n.block.height === prevAdjustmentHeight && n.isActive);
-      prevAdjustmentBlock = prevAdjustmentNode?.block;
-      const lastBlockNode = this.heights
-        .flatMap((h) => h.blocks)
-        .find((n) => n.block.height === height - 1 && n.isActive);
-      lastBlock = lastBlockNode?.block;
-    }
-    if (!prevAdjustmentBlock || !lastBlock) {
-      return this.INITIAL_NBITS;
+    const prevIndex = this.getHeightIndex(prevAdjustmentHeight);
+    let prevAdjustmentBlock: Block | undefined = undefined;
+
+    if (prevIndex >= 0 && this.heights[prevIndex]) {
+      // Procura entre os blocos da altura o ancestral correto
+      for (const candidate of this.heights[prevIndex].blocks) {
+        let current: Block | undefined = referenceBlock;
+        while (current && current.height > prevAdjustmentHeight) {
+          current = this.findParentNode(current)?.block;
+        }
+        if (current && current.hash === candidate.block.hash) {
+          prevAdjustmentBlock = candidate.block;
+          break;
+        }
+      }
     }
 
-    const actualTime = lastBlock.timestamp - prevAdjustmentBlock.timestamp; // ms
-    const expectedTime = interval * targetBlockTime * 1000; // ms
+    if (!prevAdjustmentBlock) {
+      return {
+        current: {
+          nBits: referenceBlock.nBits,
+        },
+      };
+    }
 
-    // Converte o nBits anterior para target
-    const prevTarget = Number(prevAdjustmentBlock.target);
-
-    // Calcula o fator de ajuste baseado no tempo real x tempo alvo
+    const actualTime = referenceBlock.timestamp - prevAdjustmentBlock.timestamp;
+    const expectedTime = interval * targetBlockTime * 1000;
     let adjustmentFactor = actualTime / expectedTime;
 
-    // Limita o fator de ajuste para evitar mudanças bruscas (ex: 4x para cima/baixo)
+    // Limita o fator de ajuste para evitar mudanças bruscas
     adjustmentFactor = Math.max(0.25, Math.min(adjustmentFactor, 4));
 
-    // Aplica o fator de ajuste ao target
-    let newTarget = Math.round(prevTarget * adjustmentFactor);
-
-    // Converte o target de volta para nBits
+    // Calcula o novo target
+    const prevTarget = Number(prevAdjustmentBlock.target);
+    const newTarget = Math.round(prevTarget * adjustmentFactor);
     const newNBits = this.targetToNBits(newTarget);
 
-    return newNBits;
+    return {
+      current: {
+        nBits: referenceBlock.nBits,
+      },
+      next: {
+        nBits: newNBits,
+        adjustmentFactor,
+      },
+    };
   }
 
   // Converte um target para nBits
@@ -1162,18 +1165,11 @@ export class Node {
     }
 
     // 3. Validar ajuste de dificuldade (nBits)
-    // Para simular o Bitcoin real, use a cadeia do próprio bloco para calcular o nBits esperado
-    const blockResolver = (hash: string) => {
-      // Procura o bloco na estrutura local (pode ser melhorado para buscar em órfãos, se necessário)
-      return this.heights
-        .flatMap((h) => h.blocks)
-        .find((n) => n.block.hash === hash)?.block;
-    };
-    const expectedNBits = this.calculateExpectedNBits(
-      block.height,
-      blockResolver,
-      block
-    );
+
+    const {
+      current: { nBits: expectedNBits },
+    } = this.getDifficulty(block);
+
     if (block.nBits !== expectedNBits) {
       return 'invalid-bits';
     }
@@ -1492,46 +1488,21 @@ export class Node {
       return;
     }
 
-    const epoch = this.consensus.getConsensusForHeight(block.height - 1);
-    const interval = epoch.parameters.difficultyAdjustmentInterval;
-    const adjustedHeight = block.height - epoch.startHeight + 1;
-    if (adjustedHeight % interval === 0) {
-      const prevAdjustmentHeight = block.height - interval;
-      const prevIndex = this.getHeightIndex(prevAdjustmentHeight);
-      let prevAdjustmentBlock: Block | undefined = undefined;
-      if (prevIndex >= 0 && this.heights[prevIndex]) {
-        // Procura entre os blocos da altura o ancestral correto
-        for (const candidate of this.heights[prevIndex].blocks) {
-          let current: Block | undefined = block;
-          while (current && current.height > prevAdjustmentHeight) {
-            current = this.findParentNode(current)?.block;
-          }
-          if (current && current.hash === candidate.block.hash) {
-            prevAdjustmentBlock = candidate.block;
-            break;
-          }
-        }
-      }
-      if (prevAdjustmentBlock) {
-        const actualTime = block.timestamp - prevAdjustmentBlock.timestamp;
-        const expectedTime = interval * epoch.parameters.targetBlockTime * 1000;
-        const adjustmentFactor = actualTime / expectedTime;
-        const eventData = {
-          oldDifficulty: prevAdjustmentBlock.nBits || this.INITIAL_NBITS,
-          newDifficulty: block.nBits,
-          adjustmentFactor: Math.max(
-            0.25,
-            Math.min(adjustmentFactor, 4)
-          ).toFixed(2),
-          height: block.height,
-        };
-        const adjustEvent = event
-          ? EventManager.log(event, 'difficulty-adjustment', eventData)
-          : this.addEvent('difficulty-adjustment', eventData);
+    const difficulty = this.getDifficulty(block);
 
-        blockNode.events = blockNode.events || [];
-        blockNode.events.push(adjustEvent);
-      }
+    if (difficulty.next) {
+      const eventData = {
+        oldDifficulty: difficulty.current.nBits,
+        newDifficulty: difficulty.next.nBits,
+        adjustmentFactor: difficulty.next.adjustmentFactor.toFixed(2),
+        height: block.height,
+      };
+      const adjustEvent = event
+        ? EventManager.log(event, 'difficulty-adjustment', eventData)
+        : this.addEvent('difficulty-adjustment', eventData);
+
+      blockNode.events = blockNode.events || [];
+      blockNode.events.push(adjustEvent);
 
       // Organize height events
       this.heights[heightIndex].events = this.heights[
@@ -1616,22 +1587,21 @@ export class Node {
     // Pega o primeiro bloco (main chain) na altura
     const mainBlock = height.blocks[0];
     if (!mainBlock || !mainBlock.isActive) {
-      // Mantém apenas eventos não especiais
-      height.events = height.events.filter(
-        (e) => !specialTypes.includes(e.type)
-      );
       return;
     }
 
-    // Filtra eventos não especiais já presentes na altura
-    const nonSpecialEvents = height.events.filter(
-      (e) => !specialTypes.includes(e.type)
-    );
     // Coleta eventos especiais do bloco principal
     const specialEvents = (mainBlock.events || []).filter((e) =>
       specialTypes.includes(e.type)
     );
-    // Atualiza os eventos da altura: mantém os não especiais e adiciona os especiais do bloco
-    height.events = [...nonSpecialEvents, ...specialEvents];
+
+    if (specialEvents.length > 0) {
+      // Filtra eventos não especiais já presentes na altura
+      const nonSpecialEvents = height.events.filter(
+        (e) => !specialTypes.includes(e.type)
+      );
+      // Atualiza os eventos da altura: mantém os não especiais e adiciona os especiais do bloco
+      height.events = [...nonSpecialEvents, ...specialEvents];
+    }
   }
 }
