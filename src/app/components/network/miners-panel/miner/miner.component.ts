@@ -73,6 +73,7 @@ export class MinerComponent {
 
   showConsensusDialog = false;
   showPeersDialog = false;
+  showAddressesDialog = false;
 
   constructor(
     private addressService: AddressService,
@@ -283,5 +284,16 @@ export class MinerComponent {
 
   get balance() {
     return this.miner.utxoSet[this.miner.miningAddress]?.balance || 0;
+  }
+
+  getAllAddresses() {
+    // utxoSet é um objeto: { [address: string]: { balance, utxos } }
+    return Object.entries(this.miner.utxoSet)
+      .filter(([address, data]) => !!data)
+      .map(([address, data]) => ({
+        address,
+        balance: data!.balance,
+        utxos: data!.utxos,
+      }));
   }
 }
