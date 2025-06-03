@@ -22,6 +22,23 @@ export interface Neighbor {
   connectedAt: number;
 }
 
+export type Balances = {
+  [address: string]:
+    | {
+        balance: number;
+        utxos: {
+          output: {
+            value: number;
+            scriptPubKey: string;
+          };
+          blockHeight: number;
+          txId: string;
+          outputIndex: number;
+        }[];
+      }
+    | undefined;
+};
+
 export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
@@ -114,22 +131,7 @@ export class Node {
   private pendingConsensusEvents: { height: number; event: NodeEvent }[] = [];
 
   // Estrutura para rastrear UTXOs e saldos (Unspent Transaction Outputs)
-  utxoSet: {
-    [address: string]:
-      | {
-          balance: number;
-          utxos: {
-            output: {
-              value: number;
-              scriptPubKey: string;
-            };
-            blockHeight: number;
-            txId: string;
-            outputIndex: number;
-          }[];
-        }
-      | undefined;
-  } = {};
+  balances: Balances = {};
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -1662,7 +1664,7 @@ export class Node {
 
   // Método para validar e processar transações
   private validateAndProcessTransactions(block: Block): boolean {
-    const tempUtxoSet = { ...this.utxoSet };
+    const tempUtxoSet = { ...this.balances };
 
     for (const tx of block.transactions) {
       if (tx.inputs.length === 0) continue;
@@ -1728,7 +1730,7 @@ export class Node {
 
     // Se chegou aqui, todas as transações são válidas
     // Atualiza o UTXO set real
-    this.utxoSet = tempUtxoSet;
+    this.balances = tempUtxoSet;
     return true;
   }
 
@@ -1739,7 +1741,7 @@ export class Node {
 
     const subsidy = this.calculateBlockSubsidy(block.height);
     const address = coinbase.outputs[0].scriptPubKey;
-    const addressData = this.utxoSet[address] || { balance: 0, utxos: [] };
+    const addressData = this.balances[address] || { balance: 0, utxos: [] };
 
     addressData.utxos.push({
       output: coinbase.outputs[0],
@@ -1749,7 +1751,7 @@ export class Node {
     });
     addressData.balance += subsidy;
 
-    this.utxoSet[address] = addressData;
+    this.balances[address] = addressData;
   }
 
   // Método para atualizar o UTXO set durante um reorg
@@ -1773,25 +1775,25 @@ export class Node {
       // Remove os outputs da transação do UTXO set
       for (let j = 0; j < tx.outputs.length; j++) {
         const output = tx.outputs[j];
-        const addressData = this.utxoSet[output.scriptPubKey];
+        const addressData = this.balances[output.scriptPubKey];
         if (addressData) {
           const newUtxos = addressData.utxos.filter(
             (u) => !(u.txId === tx.id && u.outputIndex === j)
           );
           if (newUtxos.length > 0) {
-            this.utxoSet[output.scriptPubKey] = {
+            this.balances[output.scriptPubKey] = {
               balance: addressData.balance - output.value,
               utxos: newUtxos,
             };
           } else {
-            delete this.utxoSet[output.scriptPubKey];
+            delete this.balances[output.scriptPubKey];
           }
         }
       }
 
       // Restaura os inputs como UTXOs
       for (const input of tx.inputs) {
-        const addressData = this.utxoSet[input.scriptPubKey] || {
+        const addressData = this.balances[input.scriptPubKey] || {
           balance: 0,
           utxos: [],
         };
@@ -1805,7 +1807,7 @@ export class Node {
           outputIndex: input.vout,
         });
         addressData.balance += input.value;
-        this.utxoSet[input.scriptPubKey] = addressData;
+        this.balances[input.scriptPubKey] = addressData;
       }
     }
 
@@ -1813,18 +1815,18 @@ export class Node {
     const coinbase = block.transactions[0];
     if (coinbase) {
       const address = coinbase.outputs[0].scriptPubKey;
-      const addressData = this.utxoSet[address];
+      const addressData = this.balances[address];
       if (addressData) {
         const newUtxos = addressData.utxos.filter(
           (u) => !(u.txId === coinbase.id && u.outputIndex === 0)
         );
         if (newUtxos.length > 0) {
-          this.utxoSet[address] = {
+          this.balances[address] = {
             balance: addressData.balance - coinbase.outputs[0].value,
             utxos: newUtxos,
           };
         } else {
-          delete this.utxoSet[address];
+          delete this.balances[address];
         }
       }
     }
