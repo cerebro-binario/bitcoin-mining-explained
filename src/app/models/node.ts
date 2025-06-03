@@ -1751,7 +1751,6 @@ export class Node {
     };
 
     if (addressData.utxos.some((u) => u.txId === coinbase.id)) {
-      console.warn('Coinbase já processada', coinbase.id);
       return;
     }
 
@@ -1764,6 +1763,7 @@ export class Node {
     addressData.balance += subsidy;
 
     this.balances[address] = addressData;
+    this.balances = { ...this.balances };
   }
 
   // Método para atualizar o UTXO set durante um reorg
@@ -1811,6 +1811,7 @@ export class Node {
         const addressData = this.balances[input.scriptPubKey] || {
           balance: 0,
           utxos: [],
+          nodeName: `Minerador ${block.minerId}`,
         };
         addressData.utxos.push({
           output: {
@@ -1822,7 +1823,9 @@ export class Node {
           outputIndex: input.vout,
         });
         addressData.balance += input.value;
-        this.balances[input.scriptPubKey] = addressData;
+        const newBalances = { ...this.balances };
+        newBalances[input.scriptPubKey] = addressData;
+        this.balances = newBalances;
       }
     }
 
