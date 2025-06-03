@@ -20,6 +20,7 @@ import { MiniBlockchainComponent } from '../../mini-blockchain/mini-blockchain.c
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
+import { BalanceDialogComponent } from './balance-dialog/balance-dialog.component';
 
 interface HashRateOption {
   label: string;
@@ -38,6 +39,7 @@ interface HashRateOption {
     ConfirmDialogModule,
     PeersDialogComponent,
     MiniBlockchainComponent,
+    BalanceDialogComponent,
   ],
   templateUrl: './miner.component.html',
   styleUrls: ['./miner.component.scss'],
@@ -279,21 +281,10 @@ export class MinerComponent {
   }
 
   get utxos() {
-    return this.miner.utxoSet[this.miner.miningAddress]?.utxos || [];
+    return this.miner.balances[this.miner.miningAddress]?.utxos || [];
   }
 
   get balance() {
-    return this.miner.utxoSet[this.miner.miningAddress]?.balance || 0;
-  }
-
-  getAllAddresses() {
-    // utxoSet é um objeto: { [address: string]: { balance, utxos } }
-    return Object.entries(this.miner.utxoSet)
-      .filter(([address, data]) => !!data)
-      .map(([address, data]) => ({
-        address,
-        balance: data!.balance,
-        utxos: data!.utxos,
-      }));
+    return this.miner.balances[this.miner.miningAddress]?.balance || 0;
   }
 }

@@ -454,62 +454,8 @@
 ></app-peers-dialog>
 
 <!-- Dialog de endereços, saldos e UTXOs -->
-<ng-template [ngIf]="showAddressesDialog">
-  <div
-    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
-  >
-    <div class="bg-zinc-800 rounded-lg shadow-lg p-6 w-full max-w-2xl relative">
-      <button
-        class="absolute top-2 right-2 text-zinc-400 hover:text-red-400"
-        (click)="showAddressesDialog = false"
-        title="Fechar"
-      >
-        <svg
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-      <h2 class="text-lg font-bold text-blue-400 mb-4">
-        Endereços, Saldos e UTXOs
-      </h2>
-      <div class="overflow-x-auto max-h-[60vh]">
-        <table class="min-w-full text-xs">
-          <thead>
-            <tr class="text-zinc-400 border-b border-zinc-700">
-              <th class="text-left p-2">Endereço</th>
-              <th class="text-right p-2">Saldo (BTC)</th>
-              <th class="text-right p-2">Qtd UTXOs</th>
-              <th class="text-left p-2">UTXOs</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let entry of getAllAddresses()">
-              <td class="font-mono p-2">{{ entry.address }}</td>
-              <td class="text-right p-2">
-                {{ entry.balance / 100000000 | number : "1.8-8" }}
-              </td>
-              <td class="text-right p-2">{{ entry.utxos.length }}</td>
-              <td class="p-2">
-                <div *ngFor="let utxo of entry.utxos" class="mb-1">
-                  <span class="font-mono text-xs text-zinc-300">
-                    Tx: {{ utxo.txId }}, Out: {{ utxo.outputIndex }}, Valor:
-                    {{ utxo.output.value / 100000000 | number : "1.8-8" }} BTC
-                  </span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</ng-template>
+<app-balance-dialog
+  *ngIf="showAddressesDialog"
+  [node]="miner"
+  (close)="showAddressesDialog = false"
+></app-balance-dialog>
