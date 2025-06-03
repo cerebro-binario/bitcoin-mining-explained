@@ -34,7 +34,7 @@ export class BalanceDialogComponent {
   @Input() node!: Node;
   @Output() close = new EventEmitter<void>();
 
-  displayMode: 'all' | 'with-balance' = 'all';
+  displayMode: 'all' | 'with-balance' = 'with-balance';
   first = 0;
   rows = 10;
   totalRecords = 0;
