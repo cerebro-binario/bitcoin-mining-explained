@@ -94,19 +94,56 @@
             >
               {{ getPubKeyDisplay(entry.keys) }}
             </td>
-            <td class="font-mono p-4 text-white/90 align-middle">
-              <span class="text-white/40 text-xs">{{
-                entry.nodeName || "(Desconhecido)"
-              }}</span>
-              {{ entry.address }}
+            <td
+              class="font-mono p-4 align-middle"
+              style="max-width: 320px; word-break: break-all"
+            >
+              <div>
+                <span class="text-yellow-400 font-bold">Legacy:</span>
+                {{ entry.legacy.address }}
+              </div>
+              <div>
+                <span class="text-pink-400 font-bold">P2SH:</span>
+                {{ entry.p2sh.address }}
+              </div>
+              <div>
+                <span class="text-cyan-400 font-bold">Bech32:</span>
+                {{ entry.bech32.address }}
+              </div>
             </td>
-            <td class="text-right p-4 align-middle">
-              <span class="text-white font-mono">{{
-                entry.balance / 100000000 | number : "1.8-8"
-              }}</span>
+            <td class="text-right p-4 align-middle" style="min-width: 120px">
+              <div>
+                <span class="text-yellow-400 font-bold">{{
+                  entry.legacy.balance / 100000000 | number : "1.8-8"
+                }}</span>
+              </div>
+              <div>
+                <span class="text-pink-400 font-bold">{{
+                  entry.p2sh.balance / 100000000 | number : "1.8-8"
+                }}</span>
+              </div>
+              <div>
+                <span class="text-cyan-400 font-bold">{{
+                  entry.bech32.balance / 100000000 | number : "1.8-8"
+                }}</span>
+              </div>
             </td>
-            <td class="text-right p-4 align-middle text-white/80">
-              {{ entry.utxos.length }}
+            <td class="text-right p-4 align-middle" style="min-width: 80px">
+              <div>
+                <span class="text-yellow-400 font-bold">{{
+                  entry.legacy.utxos.length
+                }}</span>
+              </div>
+              <div>
+                <span class="text-pink-400 font-bold">{{
+                  entry.p2sh.utxos.length
+                }}</span>
+              </div>
+              <div>
+                <span class="text-cyan-400 font-bold">{{
+                  entry.bech32.utxos.length
+                }}</span>
+              </div>
             </td>
           </tr>
         </ng-template>

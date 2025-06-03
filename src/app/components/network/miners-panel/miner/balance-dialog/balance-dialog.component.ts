@@ -9,6 +9,13 @@ import { PaginatorModule } from 'primeng/paginator';
 import { Node, BitcoinAddress, Keys } from '../../../../../models/node';
 import { KeyService } from '../../../../../services/key.service';
 
+interface AddressRow {
+  keys: Keys;
+  legacy: { address: string; balance: number; utxos: any[] };
+  p2sh: { address: string; balance: number; utxos: any[] };
+  bech32: { address: string; balance: number; utxos: any[] };
+}
+
 @Component({
   selector: 'app-balance-dialog',
   templateUrl: './balance-dialog.component.html',
@@ -31,7 +38,7 @@ export class BalanceDialogComponent {
   first = 0;
   rows = 10;
   totalRecords = 0;
-  addresses: BitcoinAddress[] = [];
+  addresses: AddressRow[] = [];
 
   displayModeOptions = [
     { label: 'Mostrar todos', value: 'all' },
@@ -69,43 +76,56 @@ export class BalanceDialogComponent {
   }
 
   rowTrackBy(index: number, item: any): string {
-    return item.address;
+    return item.legacy.address;
   }
 
   loadAddresses() {
     if (this.displayMode === 'with-balance') {
-      // Apenas endereços com saldo (poucos, pode listar todos)
-      this.addresses = Object.entries(this.node.balances)
-        .map(([address, data]) => ({
-          address,
-          balance: data?.balance || 0,
-          nodeName: data?.nodeName,
-          utxos: data?.utxos || [],
-          keys: data?.keys || { priv: '', pub: '' },
-        }))
-        .filter((addr) => addr.balance > 0);
-      this.totalRecords = this.addresses.length;
+      // Listar todos os endereços com saldo (de todos os tipos)
+      // (Opcional: pode ser implementado depois)
+      this.addresses = [];
+      this.totalRecords = 0;
     } else {
-      // Gerar dinamicamente apenas os endereços da página atual
+      // Gerar dinamicamente apenas os keypairs da página atual
       const start = this.first;
       const end = this.first + this.rows;
       this.addresses = [];
       for (let i = start; i < end; i++) {
         const priv = KeyService.derivePrivateKey(i);
         const pub = KeyService.derivePublicKey(priv);
-        const address = KeyService.deriveBitcoinAddress(pub);
-        // Verifica se tem saldo registrado
-        const balanceData = this.node.balances[address];
+        const legacy = KeyService.deriveBitcoinAddress(pub);
+        const p2sh = KeyService.deriveP2SH_P2WPKH(pub);
+        const bech32 = KeyService.deriveBech32(pub);
+        // Buscar saldo/utxos de cada endereço
+        const legacyData = this.node.balances[legacy] || {
+          balance: 0,
+          utxos: [],
+        };
+        const p2shData = this.node.balances[p2sh] || { balance: 0, utxos: [] };
+        const bech32Data = this.node.balances[bech32] || {
+          balance: 0,
+          utxos: [],
+        };
         this.addresses.push({
-          address,
-          balance: balanceData?.balance || 0,
-          nodeName: balanceData?.nodeName,
-          utxos: balanceData?.utxos || [],
           keys: { priv, pub },
+          legacy: {
+            address: legacy,
+            balance: legacyData.balance || 0,
+            utxos: legacyData.utxos || [],
+          },
+          p2sh: {
+            address: p2sh,
+            balance: p2shData.balance || 0,
+            utxos: p2shData.utxos || [],
+          },
+          bech32: {
+            address: bech32,
+            balance: bech32Data.balance || 0,
+            utxos: bech32Data.utxos || [],
+          },
         });
       }
-      // O total de registros é "infinito" para fins práticos, mas vamos limitar para simulação
-      this.totalRecords = 1000000; // 1 milhão de páginas, por exemplo
+      this.totalRecords = 1000000;
     }
   }
 

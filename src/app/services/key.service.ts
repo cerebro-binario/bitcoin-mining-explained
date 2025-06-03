@@ -4,6 +4,7 @@ import * as secp256k1 from '@noble/secp256k1';
 import { sha256 } from '@noble/hashes/sha2';
 import { ripemd160 } from '@noble/hashes/legacy';
 import bs58 from 'bs58';
+import { bech32 } from 'bech32';
 
 @Injectable({
   providedIn: 'root',
@@ -122,5 +123,44 @@ export class KeyService {
     addressBytes.set(versioned, 0);
     addressBytes.set(checksum, versioned.length);
     return bs58.encode(addressBytes);
+  }
+
+  /**
+   * Deriva o endereço Bitcoin P2SH-P2WPKH (compatível, começa com 3) a partir da chave pública (hex)
+   */
+  static deriveP2SH_P2WPKH(pubHex: string): string {
+    // 1. PubKeyHash (hash160)
+    const pubBytes = KeyService.hexToBytes(pubHex);
+    const pubKeyHash = ripemd160(sha256(pubBytes));
+    // 2. ScriptSig: 0x00 0x14 <20 bytes pubKeyHash>
+    const redeemScript = new Uint8Array(2 + pubKeyHash.length);
+    redeemScript[0] = 0x00;
+    redeemScript[1] = 0x14;
+    redeemScript.set(pubKeyHash, 2);
+    // 3. Hash160 do redeemScript
+    const redeemScriptHash = ripemd160(sha256(redeemScript));
+    // 4. Prepend version byte 0x05 (P2SH)
+    const versioned = new Uint8Array(redeemScriptHash.length + 1);
+    versioned[0] = 0x05;
+    versioned.set(redeemScriptHash, 1);
+    // 5. Checksum
+    const checksum = sha256(sha256(versioned)).slice(0, 4);
+    const addressBytes = new Uint8Array(versioned.length + 4);
+    addressBytes.set(versioned, 0);
+    addressBytes.set(checksum, versioned.length);
+    return bs58.encode(addressBytes);
+  }
+
+  /**
+   * Deriva o endereço Bech32 (P2WPKH, nativo, começa com bc1) a partir da chave pública (hex)
+   */
+  static deriveBech32(pubHex: string): string {
+    const pubBytes = KeyService.hexToBytes(pubHex);
+    const pubKeyHash = ripemd160(sha256(pubBytes));
+    // witness version 0, program = pubKeyHash
+    const words = bech32.toWords(pubKeyHash);
+    // Prepend witness version 0
+    words.unshift(0x00);
+    return bech32.encode('bc', words);
   }
 }
