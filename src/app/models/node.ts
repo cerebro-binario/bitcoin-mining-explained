@@ -22,23 +22,30 @@ export interface Neighbor {
   connectedAt: number;
 }
 
-export type Balances = {
-  [address: string]:
-    | {
-        balance: number;
-        nodeName?: string;
-        utxos: {
-          output: {
-            value: number;
-            scriptPubKey: string;
-          };
-          blockHeight: number;
-          txId: string;
-          outputIndex: number;
-        }[];
-      }
-    | undefined;
+export type BitcoinAddress = {
+  address: string;
+  keys: Keys;
+  balance: number;
+  nodeName?: string;
+  utxos: {
+    output: {
+      value: number;
+      scriptPubKey: string;
+    };
+    blockHeight: number;
+    txId: string;
+    outputIndex: number;
+  }[];
 };
+
+export type Balances = {
+  [address: string]: BitcoinAddress | undefined;
+};
+
+export interface Keys {
+  priv: string;
+  pub: string;
+}
 
 export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
@@ -133,6 +140,13 @@ export class Node {
 
   // Estrutura para rastrear UTXOs e saldos (Unspent Transaction Outputs)
   balances: Balances = {};
+
+  seed: string = ''; // Seed phrase do miner
+  keys: Keys = {
+    // Par de chaves priv/pub
+    priv: '',
+    pub: '',
+  };
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -1694,8 +1708,10 @@ export class Node {
 
         if (newUtxos.length > 0) {
           tempUtxoSet[input.scriptPubKey] = {
+            address: input.scriptPubKey,
             balance: addressData.balance - utxo.output.value,
             utxos: newUtxos,
+            keys: addressData.keys,
           };
         } else {
           const newBalances = { ...this.balances };
@@ -1712,8 +1728,13 @@ export class Node {
 
         // Adiciona novo UTXO
         const addressData = tempUtxoSet[output.scriptPubKey] || {
+          address: output.scriptPubKey,
           balance: 0,
           utxos: [],
+          keys: {
+            priv: '',
+            pub: '',
+          },
         };
         addressData.utxos.push({
           output,
@@ -1745,9 +1766,14 @@ export class Node {
     const subsidy = this.calculateBlockSubsidy(block.height);
     const address = coinbase.outputs[0].scriptPubKey;
     const addressData = this.balances[address] || {
+      address,
       balance: 0,
       utxos: [],
       nodeName: `Minerador ${block.minerId}`,
+      keys: {
+        priv: '',
+        pub: '',
+      },
     };
 
     if (addressData.utxos.some((u) => u.txId === coinbase.id)) {
@@ -1795,9 +1821,11 @@ export class Node {
           const newBalances = { ...this.balances };
           if (newUtxos.length > 0) {
             newBalances[output.scriptPubKey] = {
+              address: output.scriptPubKey,
               balance: addressData.balance - output.value,
               utxos: newUtxos,
               nodeName: addressData.nodeName,
+              keys: addressData.keys,
             };
           } else {
             delete newBalances[output.scriptPubKey];
@@ -1809,9 +1837,14 @@ export class Node {
       // Restaura os inputs como UTXOs
       for (const input of tx.inputs) {
         const addressData = this.balances[input.scriptPubKey] || {
+          address: input.scriptPubKey,
           balance: 0,
           utxos: [],
           nodeName: `Minerador ${block.minerId}`,
+          keys: {
+            priv: '',
+            pub: '',
+          },
         };
         addressData.utxos.push({
           output: {
@@ -1841,9 +1874,11 @@ export class Node {
         const newBalances = { ...this.balances };
         if (newUtxos.length > 0) {
           newBalances[address] = {
+            address,
             balance: addressData.balance - coinbase.outputs[0].value,
             utxos: newUtxos,
             nodeName: addressData.nodeName,
+            keys: addressData.keys,
           };
         } else {
           delete newBalances[address];
