@@ -64,6 +64,10 @@ export class UserComponent {
 
   numAddresses = 10;
 
+  copiedSeed = false;
+
+  seedConfirmed = false;
+
   get wallet() {
     return this.user.wallet;
   }
@@ -96,6 +100,7 @@ export class UserComponent {
     this.user.wallet.step = 'show-seed';
     this.user.wallet.seed = generateMockSeed();
     this.user.wallet.seedPassphrase = '';
+    this.seedConfirmed = false;
   }
 
   importWallet() {
@@ -153,5 +158,14 @@ export class UserComponent {
 
   get walletExists() {
     return this.user.wallet?.step === 'created';
+  }
+
+  copySeedToClipboard() {
+    if (!this.seed.length) return;
+    const text = this.seed.join(' ');
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedSeed = true;
+      setTimeout(() => (this.copiedSeed = false), 2000);
+    });
   }
 }

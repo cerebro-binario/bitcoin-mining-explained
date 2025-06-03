@@ -89,9 +89,7 @@
             >Elas são a ÚNICA forma de recuperar sua wallet.</span
           >
         </div>
-      </div>
-      <div class="w-full flex flex-col items-center gap-4">
-        <div class="grid grid-cols-3 gap-3 w-full max-w-md">
+        <div class="grid grid-cols-3 gap-3 w-full max-w-md mt-2">
           <div
             *ngFor="let word of seed; let i = index"
             class="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 font-mono text-base flex items-center gap-2"
@@ -102,12 +100,72 @@
             <span>{{ word }}</span>
           </div>
         </div>
-        <button
-          (click)="continueAfterSeed()"
-          class="mt-6 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow"
-        >
-          Continuar
-        </button>
+        <div class="flex flex-col items-center w-full mt-4 gap-2">
+          <button
+            (click)="copySeedToClipboard()"
+            class="p-2 rounded bg-zinc-800 border border-zinc-700 text-blue-300 hover:bg-blue-900/40 transition flex items-center justify-center text-base mb-1 gap-2"
+            [title]="copiedSeed ? 'Copiado!' : 'Copiar seed'"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <rect
+                x="9"
+                y="9"
+                width="13"
+                height="13"
+                rx="2"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+              <rect
+                x="3"
+                y="3"
+                width="13"
+                height="13"
+                rx="2"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+            </svg>
+            <span class="text-sm">Copiar seed</span>
+          </button>
+          <span class="block text-xs mb-1" style="height: 1.2em">
+            <span
+              [ngClass]="
+                copiedSeed ? 'text-green-400 opacity-100' : 'opacity-0'
+              "
+              class="transition-opacity duration-200"
+              >Copiado!</span
+            >
+          </span>
+          <label
+            class="flex items-center gap-2 text-zinc-300 text-sm cursor-pointer select-none mt-2"
+          >
+            <input
+              type="checkbox"
+              [(ngModel)]="seedConfirmed"
+              name="seedConfirmed"
+              class="accent-blue-500 w-4 h-4"
+            />
+            Já copiei/anotei minha seed de recuperação em local seguro.
+          </label>
+          <button
+            (click)="continueAfterSeed()"
+            class="mt-2 px-6 py-2 rounded bg-blue-600 text-white font-semibold text-base transition-all duration-200 shadow"
+            [ngClass]="{
+              'hover:bg-blue-700': seedConfirmed,
+              'opacity-50 cursor-not-allowed': !seedConfirmed
+            }"
+            [disabled]="!seedConfirmed"
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   </div>
