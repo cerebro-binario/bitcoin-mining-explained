@@ -153,9 +153,15 @@
         class="flex flex-col items-center gap-2 animate-fade-in"
       >
         <span class="text-blue-300 font-bold text-base flex items-center gap-2">
-          <i class="pi pi-link text-lg"></i> Derivando endereço...
+          <i class="pi pi-link text-lg"></i> Derivando endereços...
         </span>
-        <span class="text-green-300 font-mono text-xs mt-2">{{ address }}</span>
+        <div class="flex flex-col gap-1 mt-2 w-full max-w-xs">
+          <span
+            *ngFor="let addr of addresses; let i = index"
+            class="text-green-300 font-mono text-xs bg-zinc-800 border border-zinc-700 rounded px-2 py-1"
+            >{{ addr }}</span
+          >
+        </div>
       </div>
       <div
         *ngIf="animationStep === 4"
@@ -164,9 +170,14 @@
         <span class="text-blue-300 font-bold text-base flex items-center gap-2">
           <i class="pi pi-search text-lg"></i> Consultando saldo...
         </span>
-        <span class="text-zinc-400 text-xs mt-2"
-          >Saldo: <span class="text-yellow-300">0 BTC</span></span
-        >
+        <div class="flex flex-col gap-1 mt-2 w-full max-w-xs">
+          <span
+            *ngFor="let addr of addresses; let i = index"
+            class="text-zinc-400 text-xs"
+          >
+            {{ addr }} <span class="text-yellow-300">0 BTC</span>
+          </span>
+        </div>
       </div>
       <div
         *ngIf="animationStep === 5"

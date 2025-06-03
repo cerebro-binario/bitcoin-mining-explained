@@ -166,16 +166,16 @@ export class SeedAddressVisualComponent {
   seedWords: string[] = [];
   privKey: string = '';
   pubKey: string = '';
-  address: string = '';
-  saldo: number = 0;
+  addresses: string[] = [];
+  saldos: number[] = [];
 
   startBruteForceManual() {
     this.animationStep = 1;
     this.seedWords = randomSeedWords();
     this.privKey = '';
     this.pubKey = '';
-    this.address = '';
-    this.saldo = 0;
+    this.addresses = [];
+    this.saldos = [];
   }
 
   nextStepManual() {
@@ -189,12 +189,15 @@ export class SeedAddressVisualComponent {
       this.pubKey = 'pub_' + Math.random().toString(36).slice(2, 10);
     }
     if (this.animationStep === 2) {
-      // Derivar endereço
-      this.address = 'bc1q' + Math.random().toString(36).slice(2, 12);
+      // Derivar vários endereços
+      this.addresses = [];
+      for (let i = 0; i < 5; i++) {
+        this.addresses.push('bc1q' + Math.random().toString(36).slice(2, 12));
+      }
     }
     if (this.animationStep === 3) {
-      // Consultar saldo
-      this.saldo = 0;
+      // Consultar saldo de todos os endereços
+      this.saldos = this.addresses.map(() => 0);
     }
     if (this.animationStep < 5) {
       this.animationStep++;
@@ -212,7 +215,7 @@ export class SeedAddressVisualComponent {
     this.seedWords = [];
     this.privKey = '';
     this.pubKey = '';
-    this.address = '';
-    this.saldo = 0;
+    this.addresses = [];
+    this.saldos = [];
   }
 }
