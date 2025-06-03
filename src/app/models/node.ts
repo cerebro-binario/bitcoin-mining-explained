@@ -26,6 +26,7 @@ export type Balances = {
   [address: string]:
     | {
         balance: number;
+        nodeName?: string;
         utxos: {
           output: {
             value: number;
@@ -42,7 +43,7 @@ export type Balances = {
 export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
-  private readonly MAX_PEERS: number = Math.floor(Math.random() * 2) + 2; // Random between 2 and 3
+  private readonly MAX_PEERS: number = Math.floor(Math.random() * 2) + 2; // Random entre 2 e 3
 
   peerSearchInterval: number = 60000; // 1 minute
   lastPeerSearch: number = 0;
@@ -1697,7 +1698,9 @@ export class Node {
             utxos: newUtxos,
           };
         } else {
-          delete tempUtxoSet[input.scriptPubKey];
+          const newBalances = { ...this.balances };
+          delete newBalances[input.scriptPubKey];
+          this.balances = newBalances;
         }
       }
 
@@ -1750,6 +1753,7 @@ export class Node {
       outputIndex: 0,
     });
     addressData.balance += subsidy;
+    addressData.nodeName = `Minerador ${block.minerId}`;
 
     this.balances[address] = addressData;
   }
@@ -1784,9 +1788,12 @@ export class Node {
             this.balances[output.scriptPubKey] = {
               balance: addressData.balance - output.value,
               utxos: newUtxos,
+              nodeName: addressData.nodeName,
             };
           } else {
-            delete this.balances[output.scriptPubKey];
+            const newBalances = { ...this.balances };
+            delete newBalances[output.scriptPubKey];
+            this.balances = newBalances;
           }
         }
       }
@@ -1824,9 +1831,12 @@ export class Node {
           this.balances[address] = {
             balance: addressData.balance - coinbase.outputs[0].value,
             utxos: newUtxos,
+            nodeName: addressData.nodeName,
           };
         } else {
-          delete this.balances[address];
+          const newBalances = { ...this.balances };
+          delete newBalances[address];
+          this.balances = newBalances;
         }
       }
     }

@@ -1,8 +1,8 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
 import { Node } from '../../../../../models/node';
 
 @Component({
@@ -22,16 +22,6 @@ export class BalanceDialogComponent {
   }
   ngOnDestroy() {
     this.document.body.classList.remove('overflow-hidden');
-  }
-
-  getAllAddresses() {
-    return Object.entries(this.node.balances)
-      .filter(([address, data]) => !!data)
-      .map(([address, data]) => ({
-        address,
-        balance: data!.balance,
-        utxos: data!.utxos,
-      }));
   }
 
   onClose() {

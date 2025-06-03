@@ -19,7 +19,6 @@
       <p-table
         [value]="node.balances | keyvalue"
         dataKey="key"
-        [responsiveLayout]="'scroll'"
         [tableStyle]="{ 'min-width': '600px' }"
         [style]="{ 'font-size': '0.95rem' }"
         [scrollable]="true"
@@ -63,6 +62,9 @@
               ></button>
             </td>
             <td class="font-mono p-4 text-white/90 align-middle">
+              <span class="text-white/40 text-xs">{{
+                entry.value.nodeName || "(Desconhecido)"
+              }}</span>
               {{ entry.key }}
             </td>
             <td class="text-right p-4 align-middle">
