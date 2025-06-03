@@ -22,10 +22,28 @@ export interface Neighbor {
   connectedAt: number;
 }
 
+export type Balances = {
+  [address: string]:
+    | {
+        balance: number;
+        nodeName?: string;
+        utxos: {
+          output: {
+            value: number;
+            scriptPubKey: string;
+          };
+          blockHeight: number;
+          txId: string;
+          outputIndex: number;
+        }[];
+      }
+    | undefined;
+};
+
 export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
   private readonly SUBSIDY = 50 * 100000000; // 50 BTC em satoshis
-  private readonly MAX_PEERS: number = Math.floor(Math.random() * 2) + 2; // Random between 2 and 3
+  private readonly MAX_PEERS: number = Math.floor(Math.random() * 2) + 2; // Random entre 2 e 3
 
   peerSearchInterval: number = 60000; // 1 minute
   lastPeerSearch: number = 0;
@@ -113,11 +131,20 @@ export class Node {
 
   private pendingConsensusEvents: { height: number; event: NodeEvent }[] = [];
 
+  // Estrutura para rastrear UTXOs e saldos (Unspent Transaction Outputs)
+  balances: Balances = {};
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }
 
   addBlock(block: Block): NodeEventLogReasons | undefined {
+    // Primeiro valida e processa as transações
+    if (!this.validateAndProcessTransactions(block)) {
+      return 'invalid-transaction';
+    }
+
+    // Continua com o processamento normal do bloco
     const blockNode = new BlockNode(block);
 
     if (!this.heights.length) {
@@ -193,6 +220,10 @@ export class Node {
     const finalHeightIndex = this.getHeightIndex(block.height);
     this.checkForksAndSortFrom(finalHeightIndex);
     this.updateMiniBlockchain();
+
+    // Processa a coinbase APÓS todas as validações
+    this.processCoinbase(block);
+
     return undefined;
   }
 
@@ -506,27 +537,54 @@ export class Node {
       changed = false;
       const height = this.heights[heightIndex];
 
+      // Primeiro, identifica quais blocos mudaram de estado
+      const stateChanges = new Map<Block, boolean>();
       height.blocks.forEach((block) => {
         const wasActive = block.isActive;
-        if (
+        const isActive = !(
           block.children.length === 0 ||
           block.children.every((c) => !c.isActive)
-        ) {
-          block.isActive = false;
-        } else {
-          block.isActive = true;
-        }
-        if (block.isActive !== wasActive) {
+        );
+
+        if (wasActive !== isActive) {
+          stateChanges.set(block.block, isActive);
+          block.isActive = isActive;
           changed = true;
         }
       });
 
-      // Reordena e atualiza eventos só se houve mudança
+      // Se houve mudanças, atualiza o UTXO set
       if (changed) {
+        // Reordena os blocos
         height.blocks = height.blocks.sort(this.sortBlocks.bind(this));
         height.blocks.forEach((block) => {
           block.parent?.children.sort(this.sortBlocks.bind(this));
         });
+
+        // Atualiza o UTXO set para cada bloco que mudou de estado
+        // Processa na ordem correta: primeiro reverte os blocos que se tornaram inativos
+        // (do mais recente para o mais antigo), depois aplica os que se tornaram ativos
+        // (do mais antigo para o mais recente)
+        const blocksToRevert = Array.from(stateChanges.entries())
+          .filter(([_, isActive]) => !isActive)
+          .map(([block]) => block)
+          .sort((a, b) => b.height - a.height);
+
+        const blocksToApply = Array.from(stateChanges.entries())
+          .filter(([_, isActive]) => isActive)
+          .map(([block]) => block)
+          .sort((a, b) => a.height - b.height);
+
+        // Reverte os blocos que se tornaram inativos
+        for (const block of blocksToRevert) {
+          this.updateUtxoSetForReorg(block, false);
+        }
+
+        // Aplica os blocos que se tornaram ativos
+        for (const block of blocksToApply) {
+          this.updateUtxoSetForReorg(block, true);
+        }
+
         this.updateHeightEvents(heightIndex);
       }
 
@@ -1602,6 +1660,196 @@ export class Node {
       );
       // Atualiza os eventos da altura: mantém os não especiais e adiciona os especiais do bloco
       height.events = [...nonSpecialEvents, ...specialEvents];
+    }
+  }
+
+  // Método para validar e processar transações
+  private validateAndProcessTransactions(block: Block): boolean {
+    const tempUtxoSet = { ...this.balances };
+
+    for (const tx of block.transactions) {
+      if (tx.inputs.length === 0) continue;
+
+      let inputSum = 0;
+      let outputSum = 0;
+      const affectedAddresses = new Set<string>();
+
+      for (const input of tx.inputs) {
+        const addressData = tempUtxoSet[input.scriptPubKey];
+        if (!addressData) return false;
+
+        const utxo = addressData.utxos.find(
+          (u) => u.txId === input.txid && u.outputIndex === input.vout
+        );
+
+        if (!utxo) return false;
+
+        inputSum += utxo.output.value;
+        affectedAddresses.add(input.scriptPubKey);
+
+        // Remove o UTXO gasto
+        const newUtxos = addressData.utxos.filter(
+          (u) => !(u.txId === input.txid && u.outputIndex === input.vout)
+        );
+
+        if (newUtxos.length > 0) {
+          tempUtxoSet[input.scriptPubKey] = {
+            balance: addressData.balance - utxo.output.value,
+            utxos: newUtxos,
+          };
+        } else {
+          const newBalances = { ...this.balances };
+          delete newBalances[input.scriptPubKey];
+          this.balances = newBalances;
+        }
+      }
+
+      // Processa outputs
+      for (let i = 0; i < tx.outputs.length; i++) {
+        const output = tx.outputs[i];
+        outputSum += output.value;
+        affectedAddresses.add(output.scriptPubKey);
+
+        // Adiciona novo UTXO
+        const addressData = tempUtxoSet[output.scriptPubKey] || {
+          balance: 0,
+          utxos: [],
+        };
+        addressData.utxos.push({
+          output,
+          blockHeight: block.height,
+          txId: tx.id,
+          outputIndex: i,
+        });
+        addressData.balance += output.value;
+        tempUtxoSet[output.scriptPubKey] = addressData;
+      }
+
+      // Valida que inputs >= outputs
+      if (inputSum < outputSum) {
+        return false;
+      }
+    }
+
+    // Se chegou aqui, todas as transações são válidas
+    // Atualiza o UTXO set real
+    this.balances = tempUtxoSet;
+    return true;
+  }
+
+  // Método para processar a coinbase
+  private processCoinbase(block: Block): void {
+    const coinbase = block.transactions[0];
+    if (!coinbase || coinbase.inputs.length > 0) return;
+
+    const subsidy = this.calculateBlockSubsidy(block.height);
+    const address = coinbase.outputs[0].scriptPubKey;
+    const addressData = this.balances[address] || {
+      balance: 0,
+      utxos: [],
+      nodeName: `Minerador ${block.minerId}`,
+    };
+
+    if (addressData.utxos.some((u) => u.txId === coinbase.id)) {
+      return;
+    }
+
+    addressData.utxos.push({
+      output: coinbase.outputs[0],
+      blockHeight: block.height,
+      txId: coinbase.id,
+      outputIndex: 0,
+    });
+    addressData.balance += subsidy;
+
+    this.balances[address] = addressData;
+    this.balances = { ...this.balances };
+  }
+
+  // Método para atualizar o UTXO set durante um reorg
+  private updateUtxoSetForReorg(block: Block, isBecomingActive: boolean) {
+    if (isBecomingActive) {
+      // Bloco está se tornando ativo - aplica suas transações
+      this.validateAndProcessTransactions(block);
+      this.processCoinbase(block);
+    } else {
+      // Bloco está se tornando inativo - reverte suas transações
+      this.revertBlockTransactions(block);
+    }
+  }
+
+  // Método para reverter as transações de um bloco
+  private revertBlockTransactions(block: Block): void {
+    // Reverte as transações normais (não coinbase) na ordem inversa
+    for (let i = block.transactions.length - 1; i > 0; i--) {
+      const tx = block.transactions[i];
+
+      // Remove os outputs da transação do UTXO set
+      for (let j = 0; j < tx.outputs.length; j++) {
+        const output = tx.outputs[j];
+        const addressData = this.balances[output.scriptPubKey];
+        if (addressData) {
+          const newUtxos = addressData.utxos.filter(
+            (u) => !(u.txId === tx.id && u.outputIndex === j)
+          );
+          const newBalances = { ...this.balances };
+          if (newUtxos.length > 0) {
+            newBalances[output.scriptPubKey] = {
+              balance: addressData.balance - output.value,
+              utxos: newUtxos,
+              nodeName: addressData.nodeName,
+            };
+          } else {
+            delete newBalances[output.scriptPubKey];
+          }
+          this.balances = newBalances;
+        }
+      }
+
+      // Restaura os inputs como UTXOs
+      for (const input of tx.inputs) {
+        const addressData = this.balances[input.scriptPubKey] || {
+          balance: 0,
+          utxos: [],
+          nodeName: `Minerador ${block.minerId}`,
+        };
+        addressData.utxos.push({
+          output: {
+            value: input.value,
+            scriptPubKey: input.scriptPubKey,
+          },
+          blockHeight: block.height,
+          txId: input.txid,
+          outputIndex: input.vout,
+        });
+        addressData.balance += input.value;
+        const newBalances = { ...this.balances };
+        newBalances[input.scriptPubKey] = addressData;
+        this.balances = newBalances;
+      }
+    }
+
+    // Reverte a coinbase
+    const coinbase = block.transactions[0];
+    if (coinbase) {
+      const address = coinbase.outputs[0].scriptPubKey;
+      const addressData = this.balances[address];
+      if (addressData) {
+        const newUtxos = addressData.utxos.filter(
+          (u) => !(u.txId === coinbase.id && u.outputIndex === 0)
+        );
+        const newBalances = { ...this.balances };
+        if (newUtxos.length > 0) {
+          newBalances[address] = {
+            balance: addressData.balance - coinbase.outputs[0].value,
+            utxos: newUtxos,
+            nodeName: addressData.nodeName,
+          };
+        } else {
+          delete newBalances[address];
+        }
+        this.balances = newBalances;
+      }
     }
   }
 }
