@@ -36,7 +36,11 @@
 
     <div class="overflow-x-auto">
       <p-table
-        [value]="addresses.slice(first, first + rows)"
+        [value]="
+          displayMode === 'with-balance'
+            ? addresses.slice(first, first + rows)
+            : addresses
+        "
         dataKey="address"
         [tableStyle]="{ 'min-width': '900px' }"
         [style]="{ 'font-size': '0.95rem' }"
