@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { User, UserWallet } from '../../../../models/user.model';
@@ -50,6 +50,10 @@ function generateMockSeed(numWords = 12): string[] {
 })
 export class UserComponent {
   @Input() user!: User;
+  @ViewChild('inputSeedPassphrase')
+  inputSeedPassphrase?: ElementRef<HTMLInputElement>;
+  @ViewChild('inputWalletPassphrase')
+  inputWalletPassphrase?: ElementRef<HTMLInputElement>;
 
   passphrase = '';
   passphraseConfirm = '';
@@ -105,6 +109,9 @@ export class UserComponent {
   continueAfterSeed() {
     if (!this.user.wallet) return;
     this.user.wallet.step = 'set-seed-passphrase';
+    setTimeout(() => {
+      this.inputSeedPassphrase?.nativeElement.focus();
+    }, 0);
   }
 
   setSeedPassphrase() {
@@ -114,6 +121,9 @@ export class UserComponent {
     this.user.wallet.step = 'set-passphrase';
     this.seedPassphrase = '';
     this.seedPassphraseError = '';
+    setTimeout(() => {
+      this.inputWalletPassphrase?.nativeElement.focus();
+    }, 0);
   }
 
   setPassphrase() {

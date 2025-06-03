@@ -194,6 +194,7 @@
           placeholder="Digite a senha"
           class="bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-zinc-100 font-mono text-base focus:outline-none focus:border-blue-500 transition"
           autocomplete="new-password"
+          #inputWalletPassphrase
         />
         <input
           type="password"
@@ -252,6 +253,7 @@
           placeholder="Digite a passphrase (opcional)"
           class="bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-zinc-100 font-mono text-base focus:outline-none focus:border-blue-500 transition"
           autocomplete="off"
+          #inputSeedPassphrase
         />
         <div
           *ngIf="seedPassphraseError"
