@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { UserComponent } from './user/user.component';
-import { User } from '../../../models/user.model';
+import { User, UserWallet } from '../../../models/user.model';
 
 @Component({
   selector: 'app-users-panel',
@@ -19,7 +19,8 @@ export class UsersPanelComponent {
   createUser() {
     const id = this.userCount;
     const name = `Usuário #${this.userCount++}`;
-    this.users.push({ id, name });
+    const wallet: UserWallet = { step: 'choose', seed: [] };
+    this.users.push({ id, name, wallet });
     this.selectedUser = this.users[this.users.length - 1];
   }
 

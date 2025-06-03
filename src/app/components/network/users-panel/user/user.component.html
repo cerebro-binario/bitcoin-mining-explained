@@ -1,16 +1,239 @@
-<div
-  class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center mb-6 w-full"
->
-  <div class="flex items-center gap-2 mb-2 w-full">
-    <span class="text-lg font-bold text-blue-400 truncate">{{
-      user.name
-    }}</span>
-    <div class="flex items-center gap-2 ml-auto">
-      <span class="text-xs text-zinc-400 ml-2 font-mono">#{{ user.id }}</span>
+<ng-container *ngIf="walletStep === 'choose' && !walletExists">
+  <div class="flex flex-col items-center justify-center min-h-[340px] w-full">
+    <div
+      class="bg-zinc-900/90 rounded-2xl shadow-xl p-10 max-w-xl w-full flex flex-col items-center gap-8 border border-zinc-800"
+    >
+      <div class="flex flex-col items-center gap-4">
+        <svg width="56" height="56" fill="none" viewBox="0 0 56 56">
+          <rect width="56" height="56" rx="16" fill="#222" />
+          <path d="M28 14l12 7v14l-12 7-12-7V21l12-7z" fill="#22d3ee" />
+        </svg>
+        <div class="text-xl font-semibold text-zinc-100 text-center">
+          Crie uma nova wallet ou importe uma existente usando sua seed de
+          recuperação.
+        </div>
+      </div>
+      <div class="flex flex-col md:flex-row gap-4 w-full">
+        <button
+          (click)="createWallet()"
+          class="flex-1 flex flex-col items-center justify-center gap-2 bg-zinc-800 hover:bg-blue-900/40 border border-zinc-700 rounded-lg px-6 py-5 transition shadow group"
+        >
+          <span class="bg-blue-700/20 rounded-full p-2 mb-1">
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#38bdf8"
+                stroke-width="2"
+              />
+              <path
+                d="M12 8v8M8 12h8"
+                stroke="#38bdf8"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </span>
+          <span class="text-base font-bold text-blue-300"
+            >Criar nova wallet</span
+          >
+          <span class="text-xs text-zinc-400"
+            >Gere uma carteira nova e segura</span
+          >
+        </button>
+        <button
+          (click)="importWallet()"
+          class="flex-1 flex flex-col items-center justify-center gap-2 bg-zinc-800 hover:bg-blue-900/40 border border-zinc-700 rounded-lg px-6 py-5 transition shadow group"
+        >
+          <span class="bg-blue-700/20 rounded-full p-2 mb-1">
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#38bdf8"
+                stroke-width="2"
+              />
+              <path
+                d="M16 12H8M12 8v8"
+                stroke="#38bdf8"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </span>
+          <span class="text-base font-bold text-blue-300">Importar wallet</span>
+          <span class="text-xs text-zinc-400"
+            >Recupere usando sua seed/backup</span
+          >
+        </button>
+      </div>
     </div>
   </div>
-  <div class="w-full">
-    <!-- Aqui virão endereços, saldo, transações, etc -->
-    <div class="text-zinc-400 italic">Recursos da wallet em breve…</div>
+</ng-container>
+
+<ng-container *ngIf="walletStep === 'show-seed'">
+  <div class="flex flex-col items-center justify-center min-h-[340px] w-full">
+    <div
+      class="bg-zinc-900/90 rounded-2xl shadow-xl p-10 max-w-xl w-full flex flex-col items-center gap-8 border border-zinc-800"
+    >
+      <div class="flex flex-col items-center gap-4">
+        <svg width="56" height="56" fill="none" viewBox="0 0 56 56">
+          <rect width="56" height="56" rx="16" fill="#222" />
+          <path d="M28 14l12 7v14l-12 7-12-7V21l12-7z" fill="#22d3ee" />
+        </svg>
+        <div class="text-xl font-semibold text-zinc-100 text-center">
+          Anote cuidadosamente suas 12 palavras de recuperação. <br />
+          <span class="text-zinc-400 text-base font-normal"
+            >Elas são a ÚNICA forma de recuperar sua wallet.</span
+          >
+        </div>
+      </div>
+      <div class="w-full flex flex-col items-center gap-4">
+        <div class="grid grid-cols-3 gap-3 w-full max-w-md">
+          <div
+            *ngFor="let word of seed; let i = index"
+            class="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-zinc-100 font-mono text-base flex items-center gap-2"
+          >
+            <span class="text-zinc-500 text-xs w-5 text-right"
+              >{{ i + 1 }}.</span
+            >
+            <span>{{ word }}</span>
+          </div>
+        </div>
+        <button
+          (click)="continueAfterSeed()"
+          class="mt-6 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow"
+        >
+          Continuar
+        </button>
+      </div>
+    </div>
   </div>
-</div>
+</ng-container>
+
+<ng-container *ngIf="walletExists && walletStep === 'created'">
+  <div
+    class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center mb-6 w-full"
+  >
+    <div class="flex items-center gap-2 mb-2 w-full">
+      <span class="text-lg font-bold text-blue-400 truncate">{{
+        user.name
+      }}</span>
+      <div class="flex items-center gap-2 ml-auto">
+        <span class="text-xs text-zinc-400 ml-2 font-mono">#{{ user.id }}</span>
+      </div>
+    </div>
+    <div class="w-full">
+      <!-- Aqui virão endereços, saldo, transações, etc -->
+      <div class="text-zinc-400 italic">Recursos da wallet em breve…</div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="walletStep === 'set-passphrase'">
+  <div class="flex flex-col items-center justify-center min-h-[340px] w-full">
+    <div
+      class="bg-zinc-900/90 rounded-2xl shadow-xl p-10 max-w-md w-full flex flex-col items-center gap-8 border border-zinc-800"
+    >
+      <div class="flex flex-col items-center gap-4 w-full">
+        <svg width="56" height="56" fill="none" viewBox="0 0 56 56">
+          <rect width="56" height="56" rx="16" fill="#222" />
+          <path d="M28 14l12 7v14l-12 7-12-7V21l12-7z" fill="#22d3ee" />
+        </svg>
+        <div class="text-xl font-semibold text-zinc-100 text-center">
+          Crie uma senha para proteger sua wallet
+        </div>
+        <div class="text-zinc-400 text-center text-base font-normal">
+          Sua senha será usada para acessar e assinar transações.<br />
+          <span class="text-yellow-400">Não esqueça sua senha!</span>
+        </div>
+      </div>
+      <form
+        class="flex flex-col gap-4 w-full max-w-xs"
+        (ngSubmit)="setPassphrase()"
+        autocomplete="off"
+      >
+        <input
+          type="password"
+          [(ngModel)]="passphrase"
+          name="passphrase"
+          placeholder="Digite a senha"
+          class="bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-zinc-100 font-mono text-base focus:outline-none focus:border-blue-500 transition"
+          autocomplete="new-password"
+        />
+        <input
+          type="password"
+          [(ngModel)]="passphraseConfirm"
+          name="passphraseConfirm"
+          placeholder="Confirme a senha"
+          class="bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-zinc-100 font-mono text-base focus:outline-none focus:border-blue-500 transition"
+          autocomplete="new-password"
+        />
+        <div *ngIf="passphraseError" class="text-red-400 text-sm text-center">
+          {{ passphraseError }}
+        </div>
+        <button
+          type="submit"
+          class="mt-2 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow w-full"
+        >
+          Salvar senha e criar wallet
+        </button>
+      </form>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="walletStep === 'set-seed-passphrase'">
+  <div class="flex flex-col items-center justify-center min-h-[340px] w-full">
+    <div
+      class="bg-zinc-900/90 rounded-2xl shadow-xl p-10 max-w-md w-full flex flex-col items-center gap-8 border border-zinc-800"
+    >
+      <div class="flex flex-col items-center gap-4 w-full">
+        <svg width="56" height="56" fill="none" viewBox="0 0 56 56">
+          <rect width="56" height="56" rx="16" fill="#222" />
+          <path d="M28 14l12 7v14l-12 7-12-7V21l12-7z" fill="#22d3ee" />
+        </svg>
+        <div class="text-xl font-semibold text-zinc-100 text-center">
+          (Opcional) Adicione uma passphrase à sua seed
+        </div>
+        <div class="text-zinc-400 text-center text-base font-normal">
+          Uma passphrase é como uma 13ª palavra secreta.<br />
+          Ela aumenta a segurança e permite múltiplas carteiras com a mesma
+          seed.<br />
+          <span class="text-yellow-400"
+            >Se você esquecer a passphrase, não poderá acessar essa
+            carteira!</span
+          >
+        </div>
+      </div>
+      <form
+        class="flex flex-col gap-4 w-full max-w-xs"
+        (ngSubmit)="setSeedPassphrase()"
+        autocomplete="off"
+      >
+        <input
+          type="text"
+          [(ngModel)]="seedPassphrase"
+          name="seedPassphrase"
+          placeholder="Digite a passphrase (opcional)"
+          class="bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-zinc-100 font-mono text-base focus:outline-none focus:border-blue-500 transition"
+          autocomplete="off"
+        />
+        <div
+          *ngIf="seedPassphraseError"
+          class="text-red-400 text-sm text-center"
+        >
+          {{ seedPassphraseError }}
+        </div>
+        <button
+          type="submit"
+          class="mt-2 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow w-full"
+        >
+          Continuar
+        </button>
+      </form>
+    </div>
+  </div>
+</ng-container>
