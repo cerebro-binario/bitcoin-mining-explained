@@ -68,6 +68,10 @@ export class UserComponent {
 
   seedConfirmed = false;
 
+  importSeed = '';
+  importSeedPassphrase = '';
+  importSeedError = '';
+
   get wallet() {
     return this.user.wallet;
   }
@@ -105,10 +109,28 @@ export class UserComponent {
 
   importWallet() {
     if (!this.user.wallet) return;
-    this.user.wallet.step = 'created';
-    this.user.wallet.seed = [];
-    this.user.wallet.seedPassphrase = '';
-    // Lógica de importação de wallet virá depois
+    this.user.wallet.step = 'import-seed';
+    this.importSeed = '';
+    this.importSeedPassphrase = '';
+    this.importSeedError = '';
+  }
+
+  confirmImportSeed() {
+    if (!this.user.wallet) return;
+    const words = this.importSeed.trim().split(/\s+/);
+    if (words.length !== 12) {
+      this.importSeedError = 'A seed deve conter exatamente 12 palavras.';
+      return;
+    }
+    this.user.wallet.seed = words;
+    this.user.wallet.seedPassphrase = this.importSeedPassphrase || '';
+    this.user.wallet.step = 'set-passphrase';
+    this.importSeedError = '';
+    this.importSeed = '';
+    this.importSeedPassphrase = '';
+    setTimeout(() => {
+      this.inputWalletPassphrase?.nativeElement.focus();
+    }, 0);
   }
 
   continueAfterSeed() {

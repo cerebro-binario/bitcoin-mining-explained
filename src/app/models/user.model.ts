@@ -2,6 +2,7 @@ export interface UserWallet {
   step:
     | 'choose'
     | 'show-seed'
+    | 'import-seed'
     | 'set-seed-passphrase'
     | 'set-passphrase'
     | 'created';

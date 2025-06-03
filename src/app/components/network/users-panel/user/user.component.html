@@ -329,3 +329,56 @@
     </div>
   </div>
 </ng-container>
+
+<ng-container *ngIf="walletStep === 'import-seed'">
+  <div class="flex flex-col items-center justify-center min-h-[340px] w-full">
+    <div
+      class="bg-zinc-900/90 rounded-2xl shadow-xl p-10 max-w-xl w-full flex flex-col items-center gap-8 border border-zinc-800"
+    >
+      <div class="flex flex-col items-center gap-4 w-full">
+        <svg width="56" height="56" fill="none" viewBox="0 0 56 56">
+          <rect width="56" height="56" rx="16" fill="#222" />
+          <path d="M28 14l12 7v14l-12 7-12-7V21l12-7z" fill="#22d3ee" />
+        </svg>
+        <div class="text-xl font-semibold text-zinc-100 text-center">
+          Importe sua wallet
+        </div>
+        <div class="text-zinc-400 text-center text-base font-normal">
+          Cole ou digite suas 12 palavras de recuperação.<br />
+          (Separe por espaço)
+        </div>
+      </div>
+      <form
+        class="flex flex-col gap-4 w-full max-w-md"
+        (ngSubmit)="confirmImportSeed()"
+        autocomplete="off"
+      >
+        <textarea
+          [(ngModel)]="importSeed"
+          name="importSeed"
+          rows="2"
+          placeholder="ex: word1 word2 ... word12"
+          class="bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-zinc-100 font-mono text-base focus:outline-none focus:border-blue-500 transition resize-none"
+          autocomplete="off"
+        ></textarea>
+        <input
+          type="text"
+          [(ngModel)]="importSeedPassphrase"
+          name="importSeedPassphrase"
+          placeholder="Passphrase (opcional)"
+          class="bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-zinc-100 font-mono text-base focus:outline-none focus:border-blue-500 transition"
+          autocomplete="off"
+        />
+        <div *ngIf="importSeedError" class="text-red-400 text-sm text-center">
+          {{ importSeedError }}
+        </div>
+        <button
+          type="submit"
+          class="mt-2 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow w-full"
+        >
+          Importar
+        </button>
+      </form>
+    </div>
+  </div>
+</ng-container>
