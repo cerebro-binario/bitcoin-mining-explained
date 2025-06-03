@@ -1744,7 +1744,16 @@ export class Node {
 
     const subsidy = this.calculateBlockSubsidy(block.height);
     const address = coinbase.outputs[0].scriptPubKey;
-    const addressData = this.balances[address] || { balance: 0, utxos: [] };
+    const addressData = this.balances[address] || {
+      balance: 0,
+      utxos: [],
+      nodeName: `Minerador ${block.minerId}`,
+    };
+
+    if (addressData.utxos.some((u) => u.txId === coinbase.id)) {
+      console.warn('Coinbase já processada', coinbase.id);
+      return;
+    }
 
     addressData.utxos.push({
       output: coinbase.outputs[0],
@@ -1753,7 +1762,6 @@ export class Node {
       outputIndex: 0,
     });
     addressData.balance += subsidy;
-    addressData.nodeName = `Minerador ${block.minerId}`;
 
     this.balances[address] = addressData;
   }
@@ -1784,17 +1792,17 @@ export class Node {
           const newUtxos = addressData.utxos.filter(
             (u) => !(u.txId === tx.id && u.outputIndex === j)
           );
+          const newBalances = { ...this.balances };
           if (newUtxos.length > 0) {
-            this.balances[output.scriptPubKey] = {
+            newBalances[output.scriptPubKey] = {
               balance: addressData.balance - output.value,
               utxos: newUtxos,
               nodeName: addressData.nodeName,
             };
           } else {
-            const newBalances = { ...this.balances };
             delete newBalances[output.scriptPubKey];
-            this.balances = newBalances;
           }
+          this.balances = newBalances;
         }
       }
 
@@ -1827,17 +1835,17 @@ export class Node {
         const newUtxos = addressData.utxos.filter(
           (u) => !(u.txId === coinbase.id && u.outputIndex === 0)
         );
+        const newBalances = { ...this.balances };
         if (newUtxos.length > 0) {
-          this.balances[address] = {
+          newBalances[address] = {
             balance: addressData.balance - coinbase.outputs[0].value,
             utxos: newUtxos,
             nodeName: addressData.nodeName,
           };
         } else {
-          const newBalances = { ...this.balances };
           delete newBalances[address];
-          this.balances = newBalances;
         }
+        this.balances = newBalances;
       }
     }
   }
