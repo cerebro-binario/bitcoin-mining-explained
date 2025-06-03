@@ -1,13 +1,15 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
 import { Node } from '../../../../../models/node';
 
 @Component({
   selector: 'app-balance-dialog',
   templateUrl: './balance-dialog.component.html',
   standalone: true,
-  imports: [CommonModule, DialogModule],
+  imports: [CommonModule, DialogModule, TableModule, ButtonModule],
 })
 export class BalanceDialogComponent {
   @Input() node!: Node;
@@ -40,5 +42,9 @@ export class BalanceDialogComponent {
     if (event.target === event.currentTarget) {
       this.onClose();
     }
+  }
+
+  rowTrackBy(index: number, item: any): string {
+    return item.key;
   }
 }

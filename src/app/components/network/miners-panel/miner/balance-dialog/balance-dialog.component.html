@@ -16,24 +16,59 @@
       Endereços, Saldos e UTXOs
     </h2>
     <div class="overflow-x-auto max-h-[60vh]">
-      <table class="min-w-full text-xs">
-        <thead class="sticky top-0 z-10 bg-zinc-800">
-          <tr class="text-zinc-400 border-b border-zinc-700">
+      <p-table
+        [value]="node.balances | keyvalue"
+        dataKey="key"
+        [responsiveLayout]="'scroll'"
+        [tableStyle]="{ 'min-width': '600px' }"
+        [style]="{ 'font-size': '0.85rem' }"
+        [rowHover]="true"
+        [scrollable]="true"
+        scrollHeight="60vh"
+        rowExpandMode="multiple"
+        [rowTrackBy]="rowTrackBy"
+      >
+        <ng-template pTemplate="header">
+          <tr
+            class="text-zinc-400 border-b border-zinc-700 sticky top-0 z-10 bg-zinc-800"
+          >
+            <th class="text-left p-2"></th>
             <th class="text-left p-2">Endereço</th>
             <th class="text-right p-2">Saldo (BTC)</th>
             <th class="text-right p-2">Qtd UTXOs</th>
-            <th class="text-left p-2">UTXOs</th>
           </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let entry of node.balances | keyvalue">
-            <ng-container *ngIf="entry.value && entry.value.utxos">
-              <td class="font-mono p-2">{{ entry.key }}</td>
-              <td class="text-right p-2">
-                {{ entry.value.balance / 100000000 | number : "1.8-8" }}
-              </td>
-              <td class="text-right p-2">{{ entry.value.utxos.length }}</td>
-              <td class="p-2">
+        </ng-template>
+        <ng-template pTemplate="body" let-entry let-expanded="expanded">
+          <tr>
+            <td class="p-2">
+              <button
+                pButton
+                type="button"
+                [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                (click)="$event.stopPropagation(); entry.expanded = !expanded"
+                pRowToggler
+                [pRowToggler]="entry"
+                class="p-button-text p-0"
+                style="height: 1.5rem; width: 1.5rem"
+                [disabled]="
+                  !entry.value ||
+                  !entry.value.utxos ||
+                  entry.value.utxos.length === 0
+                "
+                [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
+              ></button>
+            </td>
+            <td class="font-mono p-2">{{ entry.key }}</td>
+            <td class="text-right p-2">
+              {{ entry.value.balance / 100000000 | number : "1.8-8" }}
+            </td>
+            <td class="text-right p-2">{{ entry.value.utxos.length }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="rowexpansion" let-entry>
+          <tr>
+            <td colspan="4" class="bg-zinc-900 p-2">
+              <div *ngIf="entry.value.utxos && entry.value.utxos.length > 0">
                 <table
                   class="min-w-full text-xs border-separate border-spacing-y-1"
                 >
@@ -57,11 +92,17 @@
                     </tr>
                   </tbody>
                 </table>
-              </td>
-            </ng-container>
+              </div>
+              <div
+                *ngIf="!entry.value.utxos || entry.value.utxos.length === 0"
+                class="text-zinc-400 italic"
+              >
+                Nenhum UTXO disponível.
+              </div>
+            </td>
           </tr>
-        </tbody>
-      </table>
+        </ng-template>
+      </p-table>
     </div>
   </div>
 </div>
