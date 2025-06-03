@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { User, UserWallet } from '../../../../models/user.model';
+import * as CryptoJS from 'crypto-js';
 
 const MOCK_WORDLIST = [
   'apple',
@@ -59,6 +60,21 @@ export class UserComponent {
 
   get wallet() {
     return this.user.wallet;
+  }
+
+  // Deriva 10 endereços determinísticos a partir da seed+passphrase
+  get addresses(): string[] {
+    if (!this.user.wallet?.seed?.length) return [];
+    const seed = this.user.wallet.seed.join(' ');
+    const passphrase = this.user.wallet.seedPassphrase || '';
+    const addresses: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const input = `${seed}|${passphrase}|${i}`;
+      const hash = CryptoJS.SHA256(input).toString();
+      // Simula um endereço bech32 (bc1...)
+      addresses.push('bc1' + hash.slice(0, 38));
+    }
+    return addresses;
   }
 
   createWallet() {

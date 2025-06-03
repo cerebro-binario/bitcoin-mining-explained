@@ -125,9 +125,35 @@
         <span class="text-xs text-zinc-400 ml-2 font-mono">#{{ user.id }}</span>
       </div>
     </div>
-    <div class="w-full">
-      <!-- Aqui virão endereços, saldo, transações, etc -->
-      <div class="text-zinc-400 italic">Recursos da wallet em breve…</div>
+    <div class="w-full mt-4">
+      <h3 class="text-base font-semibold text-blue-300 mb-2">
+        Endereços da Wallet
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm rounded-lg overflow-hidden">
+          <thead>
+            <tr class="bg-zinc-900 text-zinc-300">
+              <th class="px-4 py-2 text-left">#</th>
+              <th class="px-4 py-2 text-left">Endereço</th>
+              <th class="px-4 py-2 text-right">Saldo (BTC)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let address of addresses; let i = index"
+              class="border-b border-zinc-700 last:border-0"
+            >
+              <td class="px-4 py-2 text-zinc-500 font-mono">{{ i + 1 }}</td>
+              <td class="px-4 py-2 font-mono text-green-300 break-all">
+                {{ address }}
+              </td>
+              <td class="px-4 py-2 text-right font-mono text-zinc-200">
+                0.00000000
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </ng-container>
