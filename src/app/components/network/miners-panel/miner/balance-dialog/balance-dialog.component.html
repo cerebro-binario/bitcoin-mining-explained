@@ -31,7 +31,7 @@
       <p-table
         [value]="addresses.slice(first, first + rows)"
         dataKey="address"
-        [tableStyle]="{ 'min-width': '600px' }"
+        [tableStyle]="{ 'min-width': '900px' }"
         [style]="{ 'font-size': '0.95rem' }"
         [scrollable]="true"
         rowExpandMode="multiple"
@@ -42,6 +42,8 @@
           <tr class="text-white font-bold text-base">
             <th class="text-left p-4"></th>
             <th class="text-left p-4">Endereço</th>
+            <th class="text-left p-4">Chave Privada</th>
+            <th class="text-left p-4">Chave Pública</th>
             <th class="text-right p-4">
               Saldo <span class="text-white/70">(BTC)</span>
             </th>
@@ -75,6 +77,18 @@
               }}</span>
               {{ entry.address }}
             </td>
+            <td
+              class="font-mono p-4 text-green-400 align-middle"
+              style="max-width: 220px; word-break: break-all"
+            >
+              {{ entry.keys.priv }}
+            </td>
+            <td
+              class="font-mono p-4 text-blue-400 align-middle"
+              style="max-width: 220px; word-break: break-all"
+            >
+              {{ entry.keys.pub }}
+            </td>
             <td class="text-right p-4 align-middle">
               <span class="text-white font-mono">{{
                 entry.balance / 100000000 | number : "1.8-8"
@@ -87,7 +101,7 @@
         </ng-template>
         <ng-template pTemplate="rowexpansion" let-entry>
           <tr>
-            <td colspan="4" class="py-8">
+            <td colspan="6" class="py-8">
               <h3 class="text-white/80 font-bold text-sm">UTXOs</h3>
               <p-table
                 [value]="entry.utxos"
