@@ -15,32 +15,36 @@
     <h2 class="text-lg font-bold text-blue-400 mb-4">
       Endereços, Saldos e UTXOs
     </h2>
-    <div class="overflow-x-auto max-h-[60vh]">
+    <div class="overflow-x-auto">
       <p-table
         [value]="node.balances | keyvalue"
         dataKey="key"
         [responsiveLayout]="'scroll'"
         [tableStyle]="{ 'min-width': '600px' }"
-        [style]="{ 'font-size': '0.85rem' }"
-        [rowHover]="true"
+        [style]="{ 'font-size': '0.95rem' }"
         [scrollable]="true"
-        scrollHeight="60vh"
         rowExpandMode="multiple"
         [rowTrackBy]="rowTrackBy"
+        class="rounded-lg shadow"
       >
         <ng-template pTemplate="header">
-          <tr
-            class="text-zinc-400 border-b border-zinc-700 sticky top-0 z-10 bg-zinc-800"
-          >
-            <th class="text-left p-2"></th>
-            <th class="text-left p-2">Endereço</th>
-            <th class="text-right p-2">Saldo (BTC)</th>
-            <th class="text-right p-2">Qtd UTXOs</th>
+          <tr class="text-white font-bold text-base">
+            <th class="text-left p-4"></th>
+            <th class="text-left p-4">Endereço</th>
+            <th class="text-right p-4">
+              Saldo <span class="text-white/70">(BTC)</span>
+            </th>
+            <th class="text-right p-4">Qtd UTXOs</th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-entry let-expanded="expanded">
+        <ng-template
+          pTemplate="body"
+          let-entry
+          let-expanded="expanded"
+          let-rowIndex="rowIndex"
+        >
           <tr>
-            <td class="p-2">
+            <td class="p-4 align-middle">
               <button
                 pButton
                 type="button"
@@ -48,8 +52,8 @@
                 (click)="$event.stopPropagation(); entry.expanded = !expanded"
                 pRowToggler
                 [pRowToggler]="entry"
-                class="p-button-text p-0"
-                style="height: 1.5rem; width: 1.5rem"
+                class="p-button-text p-0 text-white/70 hover:text-white focus:ring-0 focus:outline-none"
+                style="height: 1.7rem; width: 1.7rem"
                 [disabled]="
                   !entry.value ||
                   !entry.value.utxos ||
@@ -58,47 +62,68 @@
                 [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
               ></button>
             </td>
-            <td class="font-mono p-2">{{ entry.key }}</td>
-            <td class="text-right p-2">
-              {{ entry.value.balance / 100000000 | number : "1.8-8" }}
+            <td class="font-mono p-4 text-white/90 align-middle">
+              {{ entry.key }}
             </td>
-            <td class="text-right p-2">{{ entry.value.utxos.length }}</td>
+            <td class="text-right p-4 align-middle">
+              <span class="text-white font-mono">{{
+                entry.value.balance / 100000000 | number : "1.8-8"
+              }}</span>
+            </td>
+            <td class="text-right p-4 align-middle text-white/80">
+              {{ entry.value.utxos.length }}
+            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="rowexpansion" let-entry>
           <tr>
-            <td colspan="4" class="bg-zinc-900 p-2">
-              <div *ngIf="entry.value.utxos && entry.value.utxos.length > 0">
-                <table
-                  class="min-w-full text-xs border-separate border-spacing-y-1"
-                >
-                  <thead>
-                    <tr class="text-zinc-400">
-                      <th class="text-left">TxID</th>
-                      <th class="text-right">Out</th>
-                      <th class="text-right">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let utxo of entry.value.utxos">
-                      <td class="font-mono" [title]="utxo.txId">
-                        {{ utxo.txId | slice : 0 : 8 }}…
-                      </td>
-                      <td class="text-right">{{ utxo.outputIndex }}</td>
-                      <td class="text-right">
-                        {{ utxo.output.value / 100000000 | number : "1.8-8" }}
-                        BTC
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div
-                *ngIf="!entry.value.utxos || entry.value.utxos.length === 0"
-                class="text-zinc-400 italic"
+            <td colspan="4" class="py-8">
+              <h3 class="text-white/80 font-bold text-sm">UTXOs</h3>
+              <p-table
+                [value]="entry.value.utxos"
+                [tableStyle]="{ 'min-width': '100%' }"
+                [style]="{ 'font-size': '0.95rem' }"
               >
-                Nenhum UTXO disponível.
-              </div>
+                <ng-template pTemplate="header">
+                  <tr class="text-white/80 font-bold text-sm">
+                    <th class="text-left px-4 py-3">TxID</th>
+                    <th class="text-right px-4 py-3">Out</th>
+                    <th class="text-right px-4 py-3">Valor</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-utxo>
+                  <tr>
+                    <td
+                      class="font-mono text-xs text-white/80 px-4 py-3"
+                      [title]="utxo.txId"
+                      style="
+                        max-width: 120px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                      "
+                    >
+                      {{ utxo.txId | slice : 0 : 8 }}…
+                    </td>
+                    <td class="text-right text-white/60 px-4 py-3">
+                      {{ utxo.outputIndex }}
+                    </td>
+                    <td class="text-right px-4 py-3">
+                      <span class="text-white font-mono">{{
+                        utxo.output.value / 100000000 | number : "1.8-8"
+                      }}</span>
+                      <span class="text-white/40">BTC</span>
+                    </td>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                  <tr>
+                    <td colspan="3" class="text-white/60 italic py-3 px-4">
+                      Nenhum UTXO disponível.
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
             </td>
           </tr>
         </ng-template>
