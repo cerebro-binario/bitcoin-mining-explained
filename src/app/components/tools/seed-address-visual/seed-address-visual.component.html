@@ -79,4 +79,54 @@
       RIPEMD-160.)</span
     >
   </div>
+
+  <!-- Quadro explicativo do cálculo teórico -->
+  <div
+    class="bg-zinc-800 border border-zinc-700 rounded-lg p-5 mt-6 w-full max-w-2xl flex flex-col gap-3 text-left"
+  >
+    <h3 class="text-lg font-bold text-blue-300 mb-2">
+      Probabilidade e tempo para acertar uma seed/endereço
+    </h3>
+    <ul class="list-disc ml-6 text-sm text-zinc-200">
+      <li>
+        <b>Espaço de busca de uma seed de 12 palavras:</b>
+        <span class="text-green-400">2¹³² ≈ 5,44 × 10³⁹</span> combinações
+        possíveis.
+      </li>
+      <li>
+        <b>Espaço de endereços Bitcoin:</b>
+        <span class="text-green-400">2¹⁶⁰ ≈ 1,46 × 10⁴⁸</span> endereços
+        possíveis.
+      </li>
+      <li>
+        <b>Poder computacional global (otimista):</b>
+        <span class="text-yellow-300">10²¹ tentativas/segundo</span> (1
+        zetta-hash/s).
+      </li>
+      <li>
+        <b>Tempo para acertar uma seed específica:</b>
+        <span class="text-red-400">~172 bilhões de anos</span> (muito maior que
+        a idade do universo).
+      </li>
+      <li>
+        <b>Tempo para acertar qualquer seed com saldo (10 milhões de seeds):</b>
+        <span class="text-red-400">~8,6 milhões de anos</span>.
+      </li>
+      <li>
+        <b>Com passphrase de 12 caracteres:</b>
+        <span class="text-red-400">~2,77 × 10²⁵ anos</span>
+        (27.700.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000
+        anos).
+      </li>
+    </ul>
+    <div class="mt-2 text-zinc-300 text-sm">
+      <b>Conclusão:</b> Mesmo com todo o poder computacional do mundo, a força
+      bruta é <span class="text-green-400">impraticável</span>. A segurança da
+      seed phrase (e da passphrase) é garantida pelo tamanho gigantesco do
+      espaço de busca.<br />
+      <span class="text-zinc-400"
+        >(A segurança depende de manter sua seed e passphrase em segredo!)</span
+      >
+    </div>
+  </div>
 </div>
