@@ -8,6 +8,7 @@ export interface UserWallet {
   seed: string[];
   passphrase?: string; // senha de acesso ao app
   seedPassphrase?: string; // 13ª palavra opcional
+  numAddresses: number; // quantos endereços mostrar
 }
 
 export interface User {

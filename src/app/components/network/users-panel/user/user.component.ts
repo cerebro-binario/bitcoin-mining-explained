@@ -70,7 +70,8 @@ export class UserComponent {
     const seed = this.user.wallet.seed.join(' ');
     const passphrase = this.user.wallet.seedPassphrase || '';
     const addresses: string[] = [];
-    for (let i = 0; i < this.numAddresses; i++) {
+    const num = this.user.wallet.numAddresses || 10;
+    for (let i = 0; i < num; i++) {
       const input = `${seed}|${passphrase}|${i}`;
       const hash = CryptoJS.SHA256(input).toString();
       // Simula um endereço bech32 (bc1...)
@@ -80,7 +81,10 @@ export class UserComponent {
   }
 
   gerarMaisEnderecos() {
-    this.numAddresses += 10;
+    if (this.user.wallet) {
+      this.user.wallet.numAddresses =
+        (this.user.wallet.numAddresses || 10) + 10;
+    }
   }
 
   createWallet() {
