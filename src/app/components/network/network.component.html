@@ -1,8 +1,15 @@
 <div class="container mx-auto p-10 pb-20">
   <h1 class="text-3xl font-bold mb-8">Rede Bitcoin</h1>
 
-  <!-- VISUALIZAÇÃO DO GRAFO -->
-  <app-graph-plot></app-graph-plot>
+  <!-- VISUALIZAÇÃO DO GRAFO + WALLET -->
+  <div class="flex flex-col md:flex-row gap-8 mb-8">
+    <div class="flex-1 min-w-0">
+      <app-graph-plot></app-graph-plot>
+    </div>
+    <div class="w-full md:w-[400px] max-w-sm min-w-[280px]">
+      <app-wallet></app-wallet>
+    </div>
+  </div>
 
   <!-- SETOR 2: MINERADORES -->
   <app-miners-panel
