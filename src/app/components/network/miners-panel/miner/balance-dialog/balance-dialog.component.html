@@ -99,48 +99,48 @@
               style="max-width: 320px; word-break: break-all"
             >
               <div>
-                <span class="text-yellow-400 font-bold">Legacy:</span>
+                <span style="color: #b3b3b3; font-weight: 500">Legacy:</span>
                 {{ entry.legacy.address }}
               </div>
               <div>
-                <span class="text-pink-400 font-bold">P2SH:</span>
+                <span style="color: #8ca0b3; font-weight: 500">P2SH:</span>
                 {{ entry.p2sh.address }}
               </div>
               <div>
-                <span class="text-cyan-400 font-bold">Bech32:</span>
+                <span style="color: #b39ddb; font-weight: 500">Bech32:</span>
                 {{ entry.bech32.address }}
               </div>
             </td>
             <td class="text-right p-4 align-middle" style="min-width: 120px">
               <div>
-                <span class="text-yellow-400 font-bold">{{
+                <span style="color: #b3b3b3; font-weight: 500">{{
                   entry.legacy.balance / 100000000 | number : "1.8-8"
                 }}</span>
               </div>
               <div>
-                <span class="text-pink-400 font-bold">{{
+                <span style="color: #8ca0b3; font-weight: 500">{{
                   entry.p2sh.balance / 100000000 | number : "1.8-8"
                 }}</span>
               </div>
               <div>
-                <span class="text-cyan-400 font-bold">{{
+                <span style="color: #b39ddb; font-weight: 500">{{
                   entry.bech32.balance / 100000000 | number : "1.8-8"
                 }}</span>
               </div>
             </td>
             <td class="text-right p-4 align-middle" style="min-width: 80px">
               <div>
-                <span class="text-yellow-400 font-bold">{{
+                <span style="color: #b3b3b3; font-weight: 500">{{
                   entry.legacy.utxos.length
                 }}</span>
               </div>
               <div>
-                <span class="text-pink-400 font-bold">{{
+                <span style="color: #8ca0b3; font-weight: 500">{{
                   entry.p2sh.utxos.length
                 }}</span>
               </div>
               <div>
-                <span class="text-cyan-400 font-bold">{{
+                <span style="color: #b39ddb; font-weight: 500">{{
                   entry.bech32.utxos.length
                 }}</span>
               </div>
