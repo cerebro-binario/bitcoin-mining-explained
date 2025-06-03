@@ -16,14 +16,21 @@
       Endereços, Saldos e UTXOs
     </h2>
 
-    <div class="mb-4">
+    <div class="mb-4 flex flex-col md:flex-row gap-2 md:items-center">
       <p-selectButton
         [options]="displayModeOptions"
         [(ngModel)]="displayMode"
         (onChange)="onDisplayModeChange()"
         optionLabel="label"
         optionValue="value"
-        class="w-full"
+        class="w-full md:w-auto"
+      ></p-selectButton>
+      <p-selectButton
+        [options]="keyFormatOptions"
+        [(ngModel)]="keyFormat"
+        optionLabel="label"
+        optionValue="value"
+        class="w-full md:w-auto"
       ></p-selectButton>
     </div>
 
@@ -41,9 +48,9 @@
         <ng-template pTemplate="header">
           <tr class="text-white font-bold text-base">
             <th class="text-left p-4"></th>
-            <th class="text-left p-4">Endereço</th>
             <th class="text-left p-4">Chave Privada</th>
             <th class="text-left p-4">Chave Pública</th>
+            <th class="text-left p-4">Endereço</th>
             <th class="text-right p-4">
               Saldo <span class="text-white/70">(BTC)</span>
             </th>
@@ -71,23 +78,23 @@
                 [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
               ></button>
             </td>
-            <td class="font-mono p-4 text-white/90 align-middle">
-              <span class="text-white/40 text-xs">{{
-                entry.nodeName || "(Desconhecido)"
-              }}</span>
-              {{ entry.address }}
-            </td>
             <td
               class="font-mono p-4 text-green-400 align-middle"
               style="max-width: 220px; word-break: break-all"
             >
-              {{ entry.keys.priv }}
+              {{ getPrivKeyDisplay(entry.keys) }}
             </td>
             <td
               class="font-mono p-4 text-blue-400 align-middle"
               style="max-width: 220px; word-break: break-all"
             >
-              {{ entry.keys.pub }}
+              {{ getPubKeyDisplay(entry.keys) }}
+            </td>
+            <td class="font-mono p-4 text-white/90 align-middle">
+              <span class="text-white/40 text-xs">{{
+                entry.nodeName || "(Desconhecido)"
+              }}</span>
+              {{ entry.address }}
             </td>
             <td class="text-right p-4 align-middle">
               <span class="text-white font-mono">{{

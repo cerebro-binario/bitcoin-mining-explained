@@ -38,6 +38,12 @@ export class BalanceDialogComponent {
     { label: 'Apenas com saldo', value: 'with-balance' },
   ];
 
+  keyFormat: 'hex' | 'dec' = 'hex';
+  keyFormatOptions = [
+    { label: 'Hexadecimal', value: 'hex' },
+    { label: 'Decimal', value: 'dec' },
+  ];
+
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private keyService: KeyService
@@ -112,5 +118,31 @@ export class BalanceDialogComponent {
   onDisplayModeChange() {
     this.first = 0;
     this.loadAddresses();
+  }
+
+  getPrivKeyDisplay(keys: Keys): string {
+    if (this.keyFormat === 'hex') {
+      return '0x' + keys.priv;
+    } else {
+      // decimal
+      try {
+        return BigInt('0x' + keys.priv).toString(10);
+      } catch {
+        return '(inválido)';
+      }
+    }
+  }
+
+  getPubKeyDisplay(keys: Keys): string {
+    if (this.keyFormat === 'hex') {
+      return '0x' + keys.pub;
+    } else {
+      // decimal
+      try {
+        return BigInt('0x' + keys.pub).toString(10);
+      } catch {
+        return '(inválido)';
+      }
+    }
   }
 }
