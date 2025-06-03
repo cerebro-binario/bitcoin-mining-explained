@@ -58,23 +58,29 @@ export class UserComponent {
   seedPassphrase = '';
   seedPassphraseError = '';
 
+  numAddresses = 10;
+
   get wallet() {
     return this.user.wallet;
   }
 
-  // Deriva 10 endereços determinísticos a partir da seed+passphrase
+  // Deriva numAddresses endereços determinísticos a partir da seed+passphrase
   get addresses(): string[] {
     if (!this.user.wallet?.seed?.length) return [];
     const seed = this.user.wallet.seed.join(' ');
     const passphrase = this.user.wallet.seedPassphrase || '';
     const addresses: string[] = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < this.numAddresses; i++) {
       const input = `${seed}|${passphrase}|${i}`;
       const hash = CryptoJS.SHA256(input).toString();
       // Simula um endereço bech32 (bc1...)
       addresses.push('bc1' + hash.slice(0, 38));
     }
     return addresses;
+  }
+
+  gerarMaisEnderecos() {
+    this.numAddresses += 10;
   }
 
   createWallet() {
