@@ -85,10 +85,11 @@
     <div class="flex gap-2 mb-2">
       <button
         class="px-4 py-2 rounded bg-blue-700 hover:bg-blue-800 text-white font-semibold text-base transition shadow"
-        (click)="resetManual()"
-        [disabled]="animationStep === 0"
+        (click)="toggleAutoRun()"
+        [ngClass]="{ 'bg-yellow-600 hover:bg-yellow-700': isAutoRunning }"
       >
-        Nova simulação
+        <ng-container *ngIf="!isAutoRunning">Rodar simulação</ng-container>
+        <ng-container *ngIf="isAutoRunning">Pausar</ng-container>
       </button>
       <button
         class="px-4 py-2 rounded bg-zinc-700 hover:bg-zinc-800 text-white font-semibold text-base transition shadow"
@@ -111,7 +112,7 @@
         class="flex flex-col items-center gap-2 animate-fade-in"
       >
         <span class="text-blue-300 font-bold text-base flex items-center gap-2">
-          <i class="pi pi-random text-lg"></i> Clique em "Nova simulação" para
+          <i class="pi pi-random text-lg"></i> Clique em "Rodar simulação" para
           começar!
         </span>
       </div>
