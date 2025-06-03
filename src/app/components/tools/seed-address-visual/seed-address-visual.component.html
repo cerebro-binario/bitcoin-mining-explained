@@ -80,6 +80,106 @@
     >
   </div>
 
+  <!-- Passo a passo didático: força bruta -->
+  <div class="w-full max-w-2xl mx-auto flex flex-col items-center gap-2 mb-8">
+    <div class="flex gap-2 mb-2">
+      <button
+        class="px-4 py-2 rounded bg-blue-700 hover:bg-blue-800 text-white font-semibold text-base transition shadow"
+        (click)="resetManual()"
+        [disabled]="animationStep === 0"
+      >
+        Nova simulação
+      </button>
+      <button
+        class="px-4 py-2 rounded bg-zinc-700 hover:bg-zinc-800 text-white font-semibold text-base transition shadow"
+        (click)="prevStepManual()"
+        [disabled]="animationStep <= 1"
+      >
+        Anterior
+      </button>
+      <button
+        class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow"
+        (click)="nextStepManual()"
+        [disabled]="animationStep === 5"
+      >
+        Próximo
+      </button>
+    </div>
+    <div class="w-full flex flex-col items-center gap-2 min-h-[180px]">
+      <div
+        *ngIf="animationStep === 0"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-random text-lg"></i> Clique em "Nova simulação" para
+          começar!
+        </span>
+      </div>
+      <div
+        *ngIf="animationStep === 1"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-random text-lg"></i> Gerando seed aleatória...
+        </span>
+        <div class="flex flex-wrap gap-1 justify-center mt-2">
+          <span
+            *ngFor="let word of seedWords; let i = index"
+            class="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-zinc-100 font-mono text-xs"
+            >{{ word }}</span
+          >
+        </div>
+      </div>
+      <div
+        *ngIf="animationStep === 2"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-key text-lg"></i> Derivando chave privada/pública...
+        </span>
+        <div class="flex flex-col gap-1 mt-2">
+          <span class="text-zinc-400 text-xs"
+            >Chave privada:
+            <span class="text-green-400">{{ privKey }}</span></span
+          >
+          <span class="text-zinc-400 text-xs"
+            >Chave pública:
+            <span class="text-green-400">{{ pubKey }}</span></span
+          >
+        </div>
+      </div>
+      <div
+        *ngIf="animationStep === 3"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-link text-lg"></i> Derivando endereço...
+        </span>
+        <span class="text-green-300 font-mono text-xs mt-2">{{ address }}</span>
+      </div>
+      <div
+        *ngIf="animationStep === 4"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-search text-lg"></i> Consultando saldo...
+        </span>
+        <span class="text-zinc-400 text-xs mt-2"
+          >Saldo: <span class="text-yellow-300">0 BTC</span></span
+        >
+      </div>
+      <div
+        *ngIf="animationStep === 5"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-red-400 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-times-circle text-lg"></i> Nada encontrado!
+        </span>
+        <span class="text-zinc-400 text-xs">Repita bilhões de vezes...</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Quadro explicativo do cálculo teórico -->
   <div
     class="bg-zinc-800 border border-zinc-700 rounded-lg p-5 mt-6 w-full max-w-2xl flex flex-col gap-3 text-left"
