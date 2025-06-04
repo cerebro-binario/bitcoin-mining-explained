@@ -122,11 +122,20 @@ export class KeyService {
   }
 
   deriveKeysFromPrivateKey(privateKey: string): Keys {
-    // TODO: Implementar derivação real da chave pública a partir da privada
-    // Por enquanto, retornamos chave pública simulada
+    // Remove o prefixo '0x' se existir
+    const cleanPrivKey = privateKey.startsWith('0x')
+      ? privateKey.slice(2)
+      : privateKey;
+
+    // Converte a chave privada para bytes
+    const privBytes = KeyService.hexToBytes(cleanPrivKey);
+
+    // Deriva a chave pública usando secp256k1 (comprimida)
+    const pubBytes = secp256k1.getPublicKey(privBytes, true);
+
     return {
       priv: privateKey,
-      pub: '0x' + Math.random().toString(16).slice(2, 66),
+      pub: KeyService.bytesToHex(pubBytes),
     };
   }
 
