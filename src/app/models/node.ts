@@ -1,5 +1,5 @@
 import * as CryptoJS from 'crypto-js';
-import { pipe, Subject, Subscription, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
@@ -1729,11 +1729,14 @@ export class Node {
         outputSum += output.value;
 
         // Adiciona novo UTXO
+        const isMinerCoinbase = output.scriptPubKey === this.miningAddress;
         const addressData = tempUtxoSet[output.scriptPubKey] || {
           address: output.scriptPubKey,
           balance: 0,
           utxos: [],
-          keys: this.keys, // Usa as chaves do minerador
+          ...(isMinerCoinbase
+            ? { keys: this.keys }
+            : { keys: { pub: '', priv: '' } }),
         };
 
         addressData.utxos.push({
@@ -1770,12 +1773,15 @@ export class Node {
     const address = coinbase.outputs[0].scriptPubKey;
 
     // Cria ou atualiza o endereço do minerador
+    const isMinerCoinbase = address === this.miningAddress;
     const addressData = this.balances[address] || {
       address,
       balance: 0,
       utxos: [],
       nodeName: `Minerador ${block.minerId}`,
-      keys: this.keys, // Usa as chaves do minerador
+      ...(isMinerCoinbase
+        ? { keys: this.keys }
+        : { keys: { pub: '', priv: '' } }),
     };
 
     // Verifica se a coinbase já foi processada
@@ -1850,7 +1856,7 @@ export class Node {
           balance: 0,
           utxos: [],
           nodeName: `Minerador ${block.minerId}`,
-          keys: this.keys, // Usa as chaves do minerador
+          keys: { pub: '', priv: '' },
         };
 
         addressData.utxos.push({

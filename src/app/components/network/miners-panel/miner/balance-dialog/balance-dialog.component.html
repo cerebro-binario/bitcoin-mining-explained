@@ -15,6 +15,14 @@
     <h2 class="text-lg font-bold text-blue-400 mb-4 px-6">
       Endereços, Saldos e UTXOs
     </h2>
+    <div class="px-6 mb-2 text-sm text-blue-200/80">
+      <span class="font-semibold">Dica:</span> Veja abaixo a relação entre
+      chaves, endereços e saldos.
+      <span class="text-green-300"
+        >Apenas endereços pertencentes a esse nó exibem as chaves
+        correspondentes</span
+      >.
+    </div>
 
     <div class="mb-4 flex flex-col md:flex-row gap-2 md:items-center px-6">
       <p-selectButton
@@ -53,47 +61,71 @@
           <ng-template pTemplate="header">
             <tr class="text-white font-bold text-base">
               <th class="text-left p-4"></th>
-              <th class="text-left p-4">Chave Privada</th>
-              <th class="text-left p-4">Chave Pública</th>
-              <th class="text-left p-4">Endereço</th>
               <th
-                class="text-right p-4 cursor-pointer group"
-                (click)="onSort('saldo')"
-                title="Clique para ordenar"
+                class="text-left p-4"
+                title="A chave privada permite gastar os bitcoins deste endereço. Só você deve conhecê-la."
+              >
+                Chave Privada
+              </th>
+              <th
+                class="text-left p-4"
+                title="A chave pública é derivada da chave privada e usada para gerar o endereço."
+              >
+                Chave Pública
+              </th>
+              <th
+                class="text-left p-4"
+                title="O endereço é gerado a partir da chave pública. Pode ser compartilhado para receber bitcoins."
+              >
+                Endereço
+              </th>
+              <th
+                class="text-right p-4"
+                [ngClass]="
+                  displayMode === 'with-balance' ? 'cursor-pointer group' : ''
+                "
+                (click)="
+                  displayMode === 'with-balance' ? onSort('saldo') : null
+                "
+                [attr.title]="
+                  displayMode === 'with-balance' ? 'Clique para ordenar' : null
+                "
               >
                 Saldo <span class="text-white/70">(BTC)</span>
-                <span>
-                  <i
-                    class="pi"
-                    [ngClass]="
-                      sortField === 'saldo'
-                        ? sortOrder === 1
-                          ? 'pi-sort-amount-up-alt'
-                          : 'pi-sort-amount-down'
-                        : 'pi-sort-amount-up-alt'
+                <ng-container *ngIf="displayMode === 'with-balance'">
+                  <span>
+                    <i
+                      class="pi"
+                      [ngClass]="
+                        sortField === 'saldo'
+                          ? sortOrder === 1
+                            ? 'pi-sort-amount-up-alt'
+                            : 'pi-sort-amount-down'
+                          : 'pi-sort-amount-up-alt'
+                      "
+                      [style.opacity]="sortField === 'saldo' ? '1' : '0.4'"
+                      style="font-size: 0.9em; margin-left: 0.5em"
+                    ></i>
+                  </span>
+                  <button
+                    (click)="$event.stopPropagation(); clearSort()"
+                    class="ml-1 text-zinc-400 hover:text-red-400"
+                    title="Limpar ordenação"
+                    style="
+                      background: none;
+                      border: none;
+                      cursor: pointer;
+                      width: 1.5em;
+                      height: 1.5em;
+                      padding: 0;
                     "
-                    [style.opacity]="sortField === 'saldo' ? '1' : '0.4'"
-                    style="font-size: 0.9em; margin-left: 0.5em"
-                  ></i>
-                </span>
-                <button
-                  (click)="$event.stopPropagation(); clearSort()"
-                  class="ml-1 text-zinc-400 hover:text-red-400"
-                  title="Limpar ordenação"
-                  style="
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    width: 1.5em;
-                    height: 1.5em;
-                    padding: 0;
-                  "
-                  [style.visibility]="
-                    sortField === 'saldo' ? 'visible' : 'hidden'
-                  "
-                >
-                  <i class="pi pi-times"></i>
-                </button>
+                    [style.visibility]="
+                      sortField === 'saldo' ? 'visible' : 'hidden'
+                    "
+                  >
+                    <i class="pi pi-times"></i>
+                  </button>
+                </ng-container>
               </th>
               <th class="text-right p-4">Qtd UTXOs</th>
             </tr>
@@ -125,13 +157,31 @@
                 class="font-mono p-4 text-green-400 align-middle"
                 style="max-width: 220px; word-break: break-all"
               >
-                {{ getPrivKeyDisplay(entry.keys) }}
+                <ng-container
+                  *ngIf="entry.keys && entry.keys.priv; else unknownPriv"
+                >
+                  {{ getPrivKeyDisplay(entry.keys) }}
+                </ng-container>
+                <ng-template #unknownPriv>
+                  <span title="Chave privada não conhecida (endereço externo)">
+                    <i class="pi pi-lock text-zinc-500"></i>
+                  </span>
+                </ng-template>
               </td>
               <td
                 class="font-mono p-4 text-blue-400 align-middle"
                 style="max-width: 220px; word-break: break-all"
               >
-                {{ getPubKeyDisplay(entry.keys) }}
+                <ng-container
+                  *ngIf="entry.keys && entry.keys.pub; else unknownPub"
+                >
+                  {{ getPubKeyDisplay(entry.keys) }}
+                </ng-container>
+                <ng-template #unknownPub>
+                  <span title="Chave pública não conhecida (endereço externo)">
+                    <i class="pi pi-lock text-zinc-500"></i>
+                  </span>
+                </ng-template>
               </td>
               <td
                 class="font-mono p-4 align-middle"
