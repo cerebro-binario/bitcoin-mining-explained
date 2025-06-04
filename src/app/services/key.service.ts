@@ -2,27 +2,18 @@ import { Injectable } from '@angular/core';
 import { Keys } from '../models/node';
 import * as secp256k1 from '@noble/secp256k1';
 import { sha256 } from '@noble/hashes/sha2';
+import { hmac } from '@noble/hashes/hmac';
 import { ripemd160 } from '@noble/hashes/legacy';
 import bs58 from 'bs58';
 import { bech32 } from 'bech32';
+import wordlist from '../../assets/bip39-words.json';
 
 @Injectable({
   providedIn: 'root',
 })
 export class KeyService {
-  private readonly WORDLIST = [
-    'abandon',
-    'ability',
-    'able',
-    'about',
-    'above',
-    'absent',
-    'absorb',
-    'abstract',
-    'absurd',
-    'abuse',
-    // ... (lista completa de palavras BIP39)
-  ];
+  private readonly WORDLIST = wordlist.words;
+  private readonly BIP32_SEED = 'Bitcoin seed';
 
   constructor() {}
 
@@ -35,12 +26,24 @@ export class KeyService {
     return words.join(' ');
   }
 
+  /**
+   * Deriva um par de chaves determinístico a partir da seed usando BIP32
+   */
   deriveKeysFromSeed(seed: string): Keys {
-    // TODO: Implementar derivação real de chaves usando BIP32/BIP39
-    // Por enquanto, retornamos chaves simuladas
+    // 1. Gerar a master key usando HMAC-SHA512
+    const seedBytes = new TextEncoder().encode(seed);
+    const hmacResult = hmac(sha256, this.BIP32_SEED, seedBytes);
+
+    // 2. Dividir o resultado em chave privada (32 bytes) e chain code (32 bytes)
+    const privateKey = hmacResult.slice(0, 32);
+    const chainCode = hmacResult.slice(32);
+
+    // 3. Derivar a chave pública
+    const pub = KeyService.derivePublicKey(KeyService.bytesToHex(privateKey));
+
     return {
-      priv: '0x' + Math.random().toString(16).slice(2, 66),
-      pub: '0x' + Math.random().toString(16).slice(2, 66),
+      priv: KeyService.bytesToHex(privateKey),
+      pub: pub,
     };
   }
 
