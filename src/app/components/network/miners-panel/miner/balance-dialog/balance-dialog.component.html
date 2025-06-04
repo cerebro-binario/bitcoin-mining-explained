@@ -101,52 +101,101 @@
                 class="font-mono p-4 align-middle"
                 style="max-width: 320px; word-break: break-all"
               >
-                <div>
-                  <span style="color: #b3b3b3; font-weight: 500">Legacy:</span>
-                  {{ entry.legacy.address }}
-                </div>
-                <div>
-                  <span style="color: #8ca0b3; font-weight: 500">P2SH:</span>
-                  {{ entry.p2sh.address }}
-                </div>
-                <div>
-                  <span style="color: #b39ddb; font-weight: 500">Bech32:</span>
-                  {{ entry.bech32.address }}
-                </div>
+                <ng-container
+                  *ngIf="displayMode === 'with-balance'; else allAddresses"
+                >
+                  <span *ngIf="entry.legacy.address">{{
+                    entry.legacy.address
+                  }}</span>
+                  <span *ngIf="entry.p2sh.address">{{
+                    entry.p2sh.address
+                  }}</span>
+                  <span *ngIf="entry.bech32.address">{{
+                    entry.bech32.address
+                  }}</span>
+                </ng-container>
+                <ng-template #allAddresses>
+                  <div>
+                    <span style="color: #b3b3b3; font-weight: 500"
+                      >Legacy:</span
+                    >
+                    {{ entry.legacy.address }}
+                  </div>
+                  <div>
+                    <span style="color: #8ca0b3; font-weight: 500">P2SH:</span>
+                    {{ entry.p2sh.address }}
+                  </div>
+                  <div>
+                    <span style="color: #b39ddb; font-weight: 500"
+                      >Bech32:</span
+                    >
+                    {{ entry.bech32.address }}
+                  </div>
+                </ng-template>
               </td>
               <td class="text-right p-4 align-middle" style="min-width: 120px">
-                <div>
-                  <span style="color: #b3b3b3; font-weight: 500">{{
+                <ng-container
+                  *ngIf="displayMode === 'with-balance'; else allSaldos"
+                >
+                  <span *ngIf="entry.legacy.balance">{{
                     entry.legacy.balance / 100000000 | number : "1.8-8"
                   }}</span>
-                </div>
-                <div>
-                  <span style="color: #8ca0b3; font-weight: 500">{{
+                  <span *ngIf="entry.p2sh.balance">{{
                     entry.p2sh.balance / 100000000 | number : "1.8-8"
                   }}</span>
-                </div>
-                <div>
-                  <span style="color: #b39ddb; font-weight: 500">{{
+                  <span *ngIf="entry.bech32.balance">{{
                     entry.bech32.balance / 100000000 | number : "1.8-8"
                   }}</span>
-                </div>
+                </ng-container>
+                <ng-template #allSaldos>
+                  <div>
+                    <span style="color: #b3b3b3; font-weight: 500">{{
+                      entry.legacy.balance / 100000000 | number : "1.8-8"
+                    }}</span>
+                  </div>
+                  <div>
+                    <span style="color: #8ca0b3; font-weight: 500">{{
+                      entry.p2sh.balance / 100000000 | number : "1.8-8"
+                    }}</span>
+                  </div>
+                  <div>
+                    <span style="color: #b39ddb; font-weight: 500">{{
+                      entry.bech32.balance / 100000000 | number : "1.8-8"
+                    }}</span>
+                  </div>
+                </ng-template>
               </td>
               <td class="text-right p-4 align-middle" style="min-width: 80px">
-                <div>
-                  <span style="color: #b3b3b3; font-weight: 500">{{
+                <ng-container
+                  *ngIf="displayMode === 'with-balance'; else allUtxos"
+                >
+                  <span *ngIf="entry.legacy.utxos.length">{{
                     entry.legacy.utxos.length
                   }}</span>
-                </div>
-                <div>
-                  <span style="color: #8ca0b3; font-weight: 500">{{
+                  <span *ngIf="entry.p2sh.utxos.length">{{
                     entry.p2sh.utxos.length
                   }}</span>
-                </div>
-                <div>
-                  <span style="color: #b39ddb; font-weight: 500">{{
+                  <span *ngIf="entry.bech32.utxos.length">{{
                     entry.bech32.utxos.length
                   }}</span>
-                </div>
+                </ng-container>
+                <ng-template #allUtxos>
+                  <div>
+                    <span style="color: #b3b3b3; font-weight: 500">{{
+                      entry.legacy.utxos.length
+                    }}</span>
+                  </div>
+                  <div>
+                    <span style="color: #8ca0b3; font-weight: 500">{{
+                      entry.p2sh.utxos.length
+                    }}</span>
+                  </div>
+                  <div>
+                    <span style="color: #b39ddb; font-weight: 500">{{
+                      entry.bech32.utxos.length
+                    }}</span>
+                  </div>
+                </ng-template>
               </td>
             </tr>
           </ng-template>
