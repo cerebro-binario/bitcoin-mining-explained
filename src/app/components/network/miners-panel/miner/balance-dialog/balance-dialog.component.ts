@@ -68,7 +68,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   totalPages: bigint = 0n;
   jumpPageInput: string = '';
 
-  sortField: string | null = null;
+  sortField: 'saldo' | null = null;
   sortOrder: number = 0;
 
   constructor(
@@ -184,10 +184,11 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   }
 
   onSort(field: string) {
-    if (this.sortField === field) {
+    if (field !== 'saldo') return;
+    if (this.sortField === 'saldo') {
       this.sortOrder = this.sortOrder === 1 ? -1 : 1;
     } else {
-      this.sortField = field;
+      this.sortField = 'saldo';
       this.sortOrder = 1;
     }
     this.loadAddresses();
@@ -226,14 +227,6 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
           const saldoA = a.legacy.balance + a.p2sh.balance + a.bech32.balance;
           const saldoB = b.legacy.balance + b.p2sh.balance + b.bech32.balance;
           return this.sortOrder === 1 ? saldoA - saldoB : saldoB - saldoA;
-        });
-      } else if (this.sortField === 'priv') {
-        this.addresses.sort((a, b) => {
-          const privA = a.keys.priv;
-          const privB = b.keys.priv;
-          return this.sortOrder === 1
-            ? privA.localeCompare(privB)
-            : privB.localeCompare(privA);
         });
       }
       this.totalRecords = BigInt(this.addresses.length);
@@ -300,82 +293,6 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         this.totalPages =
           (this.totalRecords + BigInt(this.pageSize) - 1n) /
           BigInt(this.pageSize);
-      } else if (this.sortField === 'priv') {
-        // sort por chave priv
-        const pageSize = BigInt(this.pageSize);
-        const start = this.currentPage * pageSize + 1n;
-        const N = BigInt(
-          '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-        );
-        this.addresses = [];
-        for (let i = 0n; i < pageSize && start + i < N; i++) {
-          const idx = start + i;
-          const priv = idx.toString(16).padStart(64, '0');
-          const pub = KeyService.derivePublicKey(priv);
-          const legacy = KeyService.deriveBitcoinAddress(pub);
-          const p2sh = KeyService.deriveP2SH_P2WPKH(pub);
-          const bech32 = KeyService.deriveBech32(pub);
-          const legacyData = this.node.balances[legacy];
-          const p2shData = this.node.balances[p2sh];
-          const bech32Data = this.node.balances[bech32];
-          this.addresses.push({
-            keys: { priv, pub },
-            legacy: {
-              address: legacy,
-              balance: legacyData?.balance || 0,
-              utxos: legacyData?.utxos || [],
-            },
-            p2sh: {
-              address: p2sh,
-              balance: p2shData?.balance || 0,
-              utxos: p2shData?.utxos || [],
-            },
-            bech32: {
-              address: bech32,
-              balance: bech32Data?.balance || 0,
-              utxos: bech32Data?.utxos || [],
-            },
-          });
-        }
-        this.updateTotalPages();
-      } else {
-        // sort padrão (sem ordenação manual)
-        const pageSize = BigInt(this.pageSize);
-        const start = this.currentPage * pageSize + 1n;
-        const N = BigInt(
-          '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-        );
-        this.addresses = [];
-        for (let i = 0n; i < pageSize && start + i < N; i++) {
-          const idx = start + i;
-          const priv = idx.toString(16).padStart(64, '0');
-          const pub = KeyService.derivePublicKey(priv);
-          const legacy = KeyService.deriveBitcoinAddress(pub);
-          const p2sh = KeyService.deriveP2SH_P2WPKH(pub);
-          const bech32 = KeyService.deriveBech32(pub);
-          const legacyData = this.node.balances[legacy];
-          const p2shData = this.node.balances[p2sh];
-          const bech32Data = this.node.balances[bech32];
-          this.addresses.push({
-            keys: { priv, pub },
-            legacy: {
-              address: legacy,
-              balance: legacyData?.balance || 0,
-              utxos: legacyData?.utxos || [],
-            },
-            p2sh: {
-              address: p2sh,
-              balance: p2shData?.balance || 0,
-              utxos: p2shData?.utxos || [],
-            },
-            bech32: {
-              address: bech32,
-              balance: bech32Data?.balance || 0,
-              utxos: bech32Data?.utxos || [],
-            },
-          });
-        }
-        this.updateTotalPages();
       }
     }
   }

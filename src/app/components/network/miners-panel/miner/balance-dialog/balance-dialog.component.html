@@ -53,45 +53,7 @@
           <ng-template pTemplate="header">
             <tr class="text-white font-bold text-base">
               <th class="text-left p-4"></th>
-              <th
-                class="text-left p-4 cursor-pointer group"
-                (click)="onSort('priv')"
-                title="Clique para ordenar"
-              >
-                Chave Privada
-                <span>
-                  <i
-                    class="pi"
-                    [ngClass]="
-                      sortField === 'priv'
-                        ? sortOrder === 1
-                          ? 'pi-sort-amount-up-alt'
-                          : 'pi-sort-amount-down'
-                        : 'pi-sort-amount-up-alt'
-                    "
-                    [style.opacity]="sortField === 'priv' ? '1' : '0.4'"
-                    style="font-size: 0.9em; margin-left: 0.5em"
-                  ></i>
-                </span>
-                <button
-                  (click)="$event.stopPropagation(); clearSort()"
-                  class="ml-1 text-zinc-400 hover:text-red-400"
-                  title="Limpar ordenação"
-                  style="
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    width: 1.5em;
-                    height: 1.5em;
-                    padding: 0;
-                  "
-                  [style.visibility]="
-                    sortField === 'priv' ? 'visible' : 'hidden'
-                  "
-                >
-                  <i class="pi pi-times"></i>
-                </button>
-              </th>
+              <th class="text-left p-4">Chave Privada</th>
               <th class="text-left p-4">Chave Pública</th>
               <th class="text-left p-4">Endereço</th>
               <th
