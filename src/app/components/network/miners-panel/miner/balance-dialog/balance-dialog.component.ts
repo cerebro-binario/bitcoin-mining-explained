@@ -46,7 +46,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   displayMode: 'all' | 'with-balance' = 'with-balance';
   first = 0;
   rows = 10;
-  totalRecords = 0;
+  totalRecords: bigint = 0n;
   addresses: AddressRow[] = [];
 
   displayModeOptions = [
@@ -62,13 +62,37 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
 
   private balancesSub?: Subscription;
 
+  // Paginator customizado
+  pageSize = 10;
+  currentPage: bigint = 0n;
+  totalPages: bigint = 0n;
+  jumpPageInput: string = '';
+
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private keyService: KeyService
   ) {}
 
+  get currentPageDisplay(): number {
+    return Number(this.currentPage) + 1;
+  }
+  get totalPagesDisplay(): number {
+    return Number(this.totalPages);
+  }
+  get pagePercent(): number {
+    if (this.totalPages === 0n) return 0;
+    return ((Number(this.currentPage) + 1) / Number(this.totalPages)) * 100;
+  }
+  get prevDisabled(): boolean {
+    return this.currentPage === 0n;
+  }
+  get nextDisabled(): boolean {
+    return this.currentPage >= this.totalPages - 1n;
+  }
+
   ngOnInit() {
     this.document.body.classList.add('overflow-hidden');
+    this.updateTotalPages();
     this.loadAddresses();
     this.balancesSub = this.node.balances$.subscribe(() => {
       this.loadAddresses();
@@ -92,6 +116,68 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
 
   rowTrackBy(index: number, item: any): string {
     return item.legacy.address;
+  }
+
+  updateTotalPages() {
+    if (this.displayMode === 'all') {
+      // Valor máximo do grupo secp256k1
+      const N = BigInt(
+        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
+      );
+      this.totalRecords = N - 1n;
+      this.totalPages =
+        (this.totalRecords + BigInt(this.pageSize) - 1n) /
+        BigInt(this.pageSize);
+    } else {
+      this.totalRecords = BigInt(this.addresses.length);
+      this.totalPages =
+        (this.totalRecords + BigInt(this.pageSize) - 1n) /
+        BigInt(this.pageSize);
+    }
+  }
+
+  goToFirstPage() {
+    this.currentPage = 0n;
+    this.loadAddresses();
+  }
+  goToPreviousPage() {
+    if (this.currentPage > 0n) {
+      this.currentPage--;
+      this.loadAddresses();
+    }
+  }
+  goToNextPage() {
+    if (this.currentPage < this.totalPages - 1n) {
+      this.currentPage++;
+      this.loadAddresses();
+    }
+  }
+  goToLastPage() {
+    this.currentPage = this.totalPages - 1n;
+    this.loadAddresses();
+  }
+  goToRandomPage() {
+    const rand = BigInt(Math.floor(Math.random() * Number(this.totalPages)));
+    this.currentPage = rand;
+    this.loadAddresses();
+  }
+  jumpToPage() {
+    try {
+      let page = BigInt(this.jumpPageInput);
+      if (page < 1n) page = 1n;
+      if (page > this.totalPages) page = this.totalPages;
+      this.currentPage = page - 1n;
+      this.loadAddresses();
+    } catch {
+      // ignore invalid input
+    }
+  }
+  formatBigInt(n: bigint): string {
+    if (n < 1_000_000_000_000_000n) return n.toString();
+    // Notação científica para números grandes
+    const exp = n.toString().length - 1;
+    const mantissa = n.toString().slice(0, 4);
+    return `${mantissa[0]}.${mantissa.slice(1)} × 10^${exp}`;
   }
 
   loadAddresses() {
@@ -120,20 +206,20 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         };
         this.addresses.push(addressRow);
       }
-      this.totalRecords = this.addresses.length;
+      this.totalRecords = BigInt(this.addresses.length);
+      this.totalPages =
+        (this.totalRecords + BigInt(this.pageSize) - 1n) /
+        BigInt(this.pageSize);
     } else {
       // Modo 'all': gerar todas as possíveis chaves privadas secp256k1
-      const pageSize = this.rows;
-      const pageIndex = Math.floor(this.first / this.rows);
-      const start = pageIndex * pageSize + 1; // começa em 1
-      const end = start + pageSize;
-      // Valor máximo do grupo secp256k1
+      const pageSize = BigInt(this.pageSize);
+      const start = this.currentPage * pageSize + 1n; // começa em 1
       const N = BigInt(
         '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
       );
       this.addresses = [];
-      for (let i = 0; i < pageSize; i++) {
-        const idx = BigInt(start + i);
+      for (let i = 0n; i < pageSize; i++) {
+        const idx = start + i;
         if (idx >= N) break;
         const priv = idx.toString(16).padStart(64, '0');
         const pub = KeyService.derivePublicKey(priv);
@@ -163,7 +249,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
           },
         });
       }
-      this.totalRecords = Math.min(Number(N - 1n), Number.MAX_SAFE_INTEGER);
+      this.updateTotalPages();
     }
   }
 
