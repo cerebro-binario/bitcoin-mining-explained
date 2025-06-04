@@ -28,23 +28,97 @@ export class KeyService {
 
   /**
    * Deriva um par de chaves determinístico a partir da seed usando BIP32
+   * @param seed Seed para derivação
+   * @param count Quantidade de chaves a serem derivadas (opcional, padrão: 1)
+   * @param path Caminho de derivação (opcional, padrão: m/0'/0/0)
+   * @returns Array de pares de chaves
    */
-  deriveKeysFromSeed(seed: string): Keys {
+  deriveKeysFromSeed(
+    seed: string,
+    count: number = 1,
+    path: string = "m/0'/0/0"
+  ): Keys[] {
     // 1. Gerar a master key usando HMAC-SHA512
     const seedBytes = new TextEncoder().encode(seed);
     const hmacResult = hmac(sha256, this.BIP32_SEED, seedBytes);
 
     // 2. Dividir o resultado em chave privada (32 bytes) e chain code (32 bytes)
-    const privateKey = hmacResult.slice(0, 32);
+    const masterKey = hmacResult.slice(0, 32);
     const chainCode = hmacResult.slice(32);
 
-    // 3. Derivar a chave pública
-    const pub = KeyService.derivePublicKey(KeyService.bytesToHex(privateKey));
+    const keys: Keys[] = [];
 
-    return {
-      priv: KeyService.bytesToHex(privateKey),
-      pub: pub,
-    };
+    // 3. Derivar as chaves filhas
+    for (let i = 0; i < count; i++) {
+      // Para cada chave, incrementamos o último índice do path
+      const currentPath = path.replace(/\d+$/, i.toString());
+
+      // Derivar a chave filha usando o chain code e o índice
+      const childKey = this.deriveChildKey(masterKey, chainCode, i);
+
+      // Derivar a chave pública
+      const pub = KeyService.derivePublicKey(KeyService.bytesToHex(childKey));
+
+      keys.push({
+        priv: KeyService.bytesToHex(childKey),
+        pub: pub,
+        path: currentPath,
+      });
+    }
+
+    return keys;
+  }
+
+  /**
+   * Deriva uma chave filha usando o algoritmo BIP32
+   * @param parentKey Chave privada do pai
+   * @param chainCode Chain code do pai
+   * @param index Índice da chave filha
+   * @returns Chave privada da chave filha
+   */
+  private deriveChildKey(
+    parentKey: Uint8Array,
+    chainCode: Uint8Array,
+    index: number
+  ): Uint8Array {
+    // 1. Preparar os dados para HMAC
+    const data = new Uint8Array(37); // 1 byte para flag + 32 bytes para chave + 4 bytes para índice
+
+    // Se índice >= 2^31, usar chave pública
+    if (index >= 0x80000000) {
+      data[0] = 0x00;
+      const pubKey = secp256k1.getPublicKey(parentKey, true);
+      data.set(pubKey, 1);
+    } else {
+      data[0] = 0x00;
+      data.set(parentKey, 1);
+    }
+
+    // Adicionar o índice (4 bytes, big-endian)
+    data[33] = (index >> 24) & 0xff;
+    data[34] = (index >> 16) & 0xff;
+    data[35] = (index >> 8) & 0xff;
+    data[36] = index & 0xff;
+
+    // 2. Calcular HMAC-SHA512
+    const hmacResult = hmac(sha256, chainCode, data);
+
+    // 3. Dividir o resultado em chave privada e novo chain code
+    const childKey = hmacResult.slice(0, 32);
+    const newChainCode = hmacResult.slice(32);
+
+    // 4. Ajustar a chave privada para estar no intervalo válido da curva
+    const childKeyBigInt = BigInt('0x' + KeyService.bytesToHex(childKey));
+    const n = BigInt(
+      '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
+    ); // ordem da curva secp256k1
+
+    // Se a chave estiver fora do intervalo válido, ajustar
+    if (childKeyBigInt >= n) {
+      return this.deriveChildKey(parentKey, newChainCode, index + 1);
+    }
+
+    return childKey;
   }
 
   deriveKeysFromPrivateKey(privateKey: string): Keys {
