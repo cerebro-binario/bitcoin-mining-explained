@@ -4,19 +4,19 @@ import {
   EventEmitter,
   Inject,
   Input,
-  Output,
-  OnInit,
   OnDestroy,
+  OnInit,
+  Output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { TableModule } from 'primeng/table';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { PaginatorModule } from 'primeng/paginator';
-import { Node, BitcoinAddress, Keys } from '../../../../../models/node';
-import { KeyService } from '../../../../../services/key.service';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TableModule } from 'primeng/table';
 import { Subscription } from 'rxjs';
+import { Keys, Node } from '../../../../../models/node';
+import { KeyService } from '../../../../../services/key.service';
 
 interface AddressRow {
   keys: Keys;
@@ -122,46 +122,48 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
       }
       this.totalRecords = this.addresses.length;
     } else {
-      // Gerar dinamicamente apenas os keypairs da página atual
-      const start = this.first;
-      const end = this.first + this.rows;
+      // Modo 'all': gerar todas as possíveis chaves privadas secp256k1
+      const pageSize = this.rows;
+      const pageIndex = Math.floor(this.first / this.rows);
+      const start = pageIndex * pageSize + 1; // começa em 1
+      const end = start + pageSize;
+      // Valor máximo do grupo secp256k1
+      const N = BigInt(
+        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
+      );
       this.addresses = [];
-      for (let i = start; i < end; i++) {
-        const priv = KeyService.derivePrivateKey(i);
+      for (let i = 0; i < pageSize; i++) {
+        const idx = BigInt(start + i);
+        if (idx >= N) break;
+        const priv = idx.toString(16).padStart(64, '0');
         const pub = KeyService.derivePublicKey(priv);
         const legacy = KeyService.deriveBitcoinAddress(pub);
         const p2sh = KeyService.deriveP2SH_P2WPKH(pub);
         const bech32 = KeyService.deriveBech32(pub);
-        // Buscar saldo/utxos de cada endereço
-        const legacyData = this.node.balances[legacy] || {
-          balance: 0,
-          utxos: [],
-        };
-        const p2shData = this.node.balances[p2sh] || { balance: 0, utxos: [] };
-        const bech32Data = this.node.balances[bech32] || {
-          balance: 0,
-          utxos: [],
-        };
+        // Busca saldo/utxos se existirem
+        const legacyData = this.node.balances[legacy];
+        const p2shData = this.node.balances[p2sh];
+        const bech32Data = this.node.balances[bech32];
         this.addresses.push({
           keys: { priv, pub },
           legacy: {
             address: legacy,
-            balance: legacyData.balance || 0,
-            utxos: legacyData.utxos || [],
+            balance: legacyData?.balance || 0,
+            utxos: legacyData?.utxos || [],
           },
           p2sh: {
             address: p2sh,
-            balance: p2shData.balance || 0,
-            utxos: p2shData.utxos || [],
+            balance: p2shData?.balance || 0,
+            utxos: p2shData?.utxos || [],
           },
           bech32: {
             address: bech32,
-            balance: bech32Data.balance || 0,
-            utxos: bech32Data.utxos || [],
+            balance: bech32Data?.balance || 0,
+            utxos: bech32Data?.utxos || [],
           },
         });
       }
-      this.totalRecords = 1000000;
+      this.totalRecords = Math.min(Number(N - 1n), Number.MAX_SAFE_INTEGER);
     }
   }
 
