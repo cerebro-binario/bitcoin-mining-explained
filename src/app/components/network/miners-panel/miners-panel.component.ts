@@ -12,7 +12,6 @@ import {
 import { TooltipModule } from 'primeng/tooltip';
 import { map, Observable, tap } from 'rxjs';
 import { Node } from '../../../models/node';
-import { AddressService } from '../../../services/address.service';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { MinerComponent } from './miner/miner.component';
 
@@ -60,7 +59,6 @@ export class MinersPanelComponent implements OnDestroy {
 
   constructor(
     public network: BitcoinNetworkService,
-    private addressService: AddressService,
     private renderer: Renderer2,
     @Inject(DOCUMENT) private document: Document
   ) {
@@ -81,7 +79,6 @@ export class MinersPanelComponent implements OnDestroy {
     const allCollapsed = this.minersStats.allCollapsed;
     const miner = this.network.addNode(true, undefined, hashRate, allCollapsed);
     miner.name = `Minerador ${miner.id}`;
-    miner.miningAddress = this.addressService.generateRandomAddress();
   }
 
   startAllMiners() {

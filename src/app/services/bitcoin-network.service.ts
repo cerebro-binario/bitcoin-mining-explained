@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { MinersStats } from '../components/network/miners-panel/miners-panel.component';
 import { Node } from '../models/node';
+import { KeyService } from './key.service';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
@@ -39,7 +40,7 @@ export class BitcoinNetworkService {
     totalHashRate: 0,
   };
 
-  constructor() {
+  constructor(private keyService: KeyService) {
     this.startMiningLoop();
   }
 
@@ -73,6 +74,19 @@ export class BitcoinNetworkService {
       peers: [],
       isCollapsed,
     });
+
+    // Se for minerador, gera seed, keypair e endereços
+    if (isMiner) {
+      const seed = this.keyService.generateSeed();
+      const { priv, pub } = this.keyService.deriveKeysFromSeed(seed);
+      const legacy = KeyService.deriveBitcoinAddress(pub);
+      const p2sh = KeyService.deriveP2SH_P2WPKH(pub);
+      const bech32 = KeyService.deriveBech32(pub);
+      node.seed = seed;
+      node.keys = { priv, pub };
+      node.miningAddress = bech32; // Usar Bech32 como padrão
+    }
+
     this.nodes.push(node);
     this.nodesSubject.next(this.nodes);
     return node;
