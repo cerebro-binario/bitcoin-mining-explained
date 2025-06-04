@@ -58,20 +58,10 @@ export class Node {
   isSearchingPeers: boolean = false;
 
   isSyncing: boolean = false;
-  pendingBlocks: Block[] = [];
   isAddingBlock: boolean = false;
 
   // Log de eventos de propagação/validação de blocos
   events: NodeEvent[] = [];
-
-  // Rastreamento de peers durante o sync inicial
-  syncPeers: {
-    nodeId: number;
-    latency: number;
-    status: 'pending' | 'validating' | 'valid' | 'invalid';
-    blockchainLength?: number;
-    work?: number;
-  }[] = [];
 
   id: number = 0;
   peers: Neighbor[] = [];
