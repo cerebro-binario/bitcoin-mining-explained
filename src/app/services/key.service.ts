@@ -122,27 +122,40 @@ export class KeyService {
   }
 
   deriveKeysFromPrivateKey(privateKey: string): Keys {
-    // Remove o prefixo '0x' se existir
     const cleanPrivKey = privateKey.startsWith('0x')
       ? privateKey.slice(2)
       : privateKey;
-
-    // Converte a chave privada para bytes
-    const privBytes = KeyService.hexToBytes(cleanPrivKey);
-
-    // Deriva a chave pública usando secp256k1 (comprimida)
-    const pubBytes = secp256k1.getPublicKey(privBytes, true);
-
     return {
       priv: privateKey,
-      pub: KeyService.bytesToHex(pubBytes),
+      pub: KeyService.derivePublicKey(cleanPrivKey),
     };
   }
 
-  generateBitcoinAddress(publicKey: string): string {
-    // TODO: Implementar geração real de endereço Bitcoin
-    // Por enquanto, retornamos endereço simulado
-    return 'bc1q' + Math.random().toString(16).slice(2, 42);
+  /**
+   * Gera um endereço Bitcoin a partir da chave pública
+   * @param publicKey Chave pública em formato hex
+   * @param format Formato do endereço (p2pkh, p2sh-p2wpkh, p2wpkh)
+   * @returns Endereço Bitcoin no formato especificado
+   */
+  generateBitcoinAddress(
+    publicKey: string,
+    format: 'p2pkh' | 'p2sh-p2wpkh' | 'p2wpkh' = 'p2pkh'
+  ): string {
+    // Remove o prefixo '0x' se existir
+    const cleanPubKey = publicKey.startsWith('0x')
+      ? publicKey.slice(2)
+      : publicKey;
+
+    switch (format) {
+      case 'p2pkh':
+        return KeyService.deriveBitcoinAddress(cleanPubKey);
+      case 'p2sh-p2wpkh':
+        return KeyService.deriveP2SH_P2WPKH(cleanPubKey);
+      case 'p2wpkh':
+        return KeyService.deriveBech32(cleanPubKey);
+      default:
+        throw new Error('Formato de endereço inválido');
+    }
   }
 
   // Função para gerar chaves sequencialmente a partir de 0x0000...
