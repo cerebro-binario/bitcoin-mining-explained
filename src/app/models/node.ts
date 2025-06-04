@@ -1670,27 +1670,31 @@ export class Node {
 
   // Método para validar e processar transações
   private validateAndProcessTransactions(block: Block): boolean {
+    // Cria uma cópia do UTXO set atual para validação
     const tempUtxoSet = { ...this.balances };
 
-    for (const tx of block.transactions) {
-      if (tx.inputs.length === 0) continue;
-
+    // Processa cada transação (exceto coinbase)
+    for (let i = 1; i < block.transactions.length; i++) {
+      const tx = block.transactions[i];
       let inputSum = 0;
       let outputSum = 0;
-      const affectedAddresses = new Set<string>();
 
+      // Processa inputs
       for (const input of tx.inputs) {
         const addressData = tempUtxoSet[input.scriptPubKey];
-        if (!addressData) return false;
+        if (!addressData) {
+          return false; // UTXO não encontrado
+        }
 
         const utxo = addressData.utxos.find(
           (u) => u.txId === input.txid && u.outputIndex === input.vout
         );
 
-        if (!utxo) return false;
+        if (!utxo) {
+          return false; // UTXO não encontrado
+        }
 
         inputSum += utxo.output.value;
-        affectedAddresses.add(input.scriptPubKey);
 
         // Remove o UTXO gasto
         const newUtxos = addressData.utxos.filter(
@@ -1699,15 +1703,12 @@ export class Node {
 
         if (newUtxos.length > 0) {
           tempUtxoSet[input.scriptPubKey] = {
-            address: input.scriptPubKey,
+            ...addressData,
             balance: addressData.balance - utxo.output.value,
             utxos: newUtxos,
-            keys: addressData.keys,
           };
         } else {
-          const newBalances = { ...this.balances };
-          delete newBalances[input.scriptPubKey];
-          this.balances = newBalances;
+          delete tempUtxoSet[input.scriptPubKey];
         }
       }
 
@@ -1715,7 +1716,6 @@ export class Node {
       for (let i = 0; i < tx.outputs.length; i++) {
         const output = tx.outputs[i];
         outputSum += output.value;
-        affectedAddresses.add(output.scriptPubKey);
 
         // Adiciona novo UTXO
         const addressData = tempUtxoSet[output.scriptPubKey] || {
@@ -1727,14 +1727,18 @@ export class Node {
             pub: '',
           },
         };
+
         addressData.utxos.push({
           output,
           blockHeight: block.height,
           txId: tx.id,
           outputIndex: i,
         });
-        addressData.balance += output.value;
-        tempUtxoSet[output.scriptPubKey] = addressData;
+
+        tempUtxoSet[output.scriptPubKey] = {
+          ...addressData,
+          balance: addressData.balance + output.value,
+        };
       }
 
       // Valida que inputs >= outputs
@@ -1744,8 +1748,8 @@ export class Node {
     }
 
     // Se chegou aqui, todas as transações são válidas
-    // Atualiza o UTXO set real
-    this.balances = tempUtxoSet;
+    // Atualiza o UTXO set real forçando uma nova referência para reatividade
+    this.balances = { ...tempUtxoSet };
     return true;
   }
 
@@ -1756,6 +1760,8 @@ export class Node {
 
     const subsidy = this.calculateBlockSubsidy(block.height);
     const address = coinbase.outputs[0].scriptPubKey;
+
+    // Cria ou atualiza o endereço do minerador
     const addressData = this.balances[address] || {
       address,
       balance: 0,
@@ -1767,20 +1773,27 @@ export class Node {
       },
     };
 
+    // Verifica se a coinbase já foi processada
     if (addressData.utxos.some((u) => u.txId === coinbase.id)) {
       return;
     }
 
+    // Adiciona o UTXO da coinbase
     addressData.utxos.push({
       output: coinbase.outputs[0],
       blockHeight: block.height,
       txId: coinbase.id,
       outputIndex: 0,
     });
+
+    // Atualiza o saldo
     addressData.balance += subsidy;
 
-    this.balances[address] = addressData;
-    this.balances = { ...this.balances };
+    // Atualiza o mapa de saldos forçando uma nova referência para reatividade
+    this.balances = {
+      ...this.balances,
+      [address]: { ...addressData },
+    };
   }
 
   // Método para atualizar o UTXO set durante um reorg
@@ -1797,6 +1810,9 @@ export class Node {
 
   // Método para reverter as transações de um bloco
   private revertBlockTransactions(block: Block): void {
+    // Cria uma cópia do UTXO set atual para validação
+    const tempUtxoSet = { ...this.balances };
+
     // Reverte as transações normais (não coinbase) na ordem inversa
     for (let i = block.transactions.length - 1; i > 0; i--) {
       const tx = block.transactions[i];
@@ -1804,30 +1820,27 @@ export class Node {
       // Remove os outputs da transação do UTXO set
       for (let j = 0; j < tx.outputs.length; j++) {
         const output = tx.outputs[j];
-        const addressData = this.balances[output.scriptPubKey];
+        const addressData = tempUtxoSet[output.scriptPubKey];
         if (addressData) {
           const newUtxos = addressData.utxos.filter(
             (u) => !(u.txId === tx.id && u.outputIndex === j)
           );
-          const newBalances = { ...this.balances };
+
           if (newUtxos.length > 0) {
-            newBalances[output.scriptPubKey] = {
-              address: output.scriptPubKey,
+            tempUtxoSet[output.scriptPubKey] = {
+              ...addressData,
               balance: addressData.balance - output.value,
               utxos: newUtxos,
-              nodeName: addressData.nodeName,
-              keys: addressData.keys,
             };
           } else {
-            delete newBalances[output.scriptPubKey];
+            delete tempUtxoSet[output.scriptPubKey];
           }
-          this.balances = newBalances;
         }
       }
 
       // Restaura os inputs como UTXOs
       for (const input of tx.inputs) {
-        const addressData = this.balances[input.scriptPubKey] || {
+        const addressData = tempUtxoSet[input.scriptPubKey] || {
           address: input.scriptPubKey,
           balance: 0,
           utxos: [],
@@ -1837,6 +1850,7 @@ export class Node {
             pub: '',
           },
         };
+
         addressData.utxos.push({
           output: {
             value: input.value,
@@ -1846,10 +1860,11 @@ export class Node {
           txId: input.txid,
           outputIndex: input.vout,
         });
-        addressData.balance += input.value;
-        const newBalances = { ...this.balances };
-        newBalances[input.scriptPubKey] = addressData;
-        this.balances = newBalances;
+
+        tempUtxoSet[input.scriptPubKey] = {
+          ...addressData,
+          balance: addressData.balance + input.value,
+        };
       }
     }
 
@@ -1857,25 +1872,25 @@ export class Node {
     const coinbase = block.transactions[0];
     if (coinbase) {
       const address = coinbase.outputs[0].scriptPubKey;
-      const addressData = this.balances[address];
+      const addressData = tempUtxoSet[address];
       if (addressData) {
         const newUtxos = addressData.utxos.filter(
           (u) => !(u.txId === coinbase.id && u.outputIndex === 0)
         );
-        const newBalances = { ...this.balances };
+
         if (newUtxos.length > 0) {
-          newBalances[address] = {
-            address,
+          tempUtxoSet[address] = {
+            ...addressData,
             balance: addressData.balance - coinbase.outputs[0].value,
             utxos: newUtxos,
-            nodeName: addressData.nodeName,
-            keys: addressData.keys,
           };
         } else {
-          delete newBalances[address];
+          delete tempUtxoSet[address];
         }
-        this.balances = newBalances;
       }
     }
+
+    // Atualiza o UTXO set real forçando uma nova referência para reatividade
+    this.balances = { ...tempUtxoSet };
   }
 }
