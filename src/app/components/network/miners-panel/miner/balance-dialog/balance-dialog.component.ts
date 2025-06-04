@@ -1,5 +1,13 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Inject,
+  Input,
+  Output,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -8,6 +16,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { PaginatorModule } from 'primeng/paginator';
 import { Node, BitcoinAddress, Keys } from '../../../../../models/node';
 import { KeyService } from '../../../../../services/key.service';
+import { Subscription } from 'rxjs';
 
 interface AddressRow {
   keys: Keys;
@@ -30,7 +39,7 @@ interface AddressRow {
     PaginatorModule,
   ],
 })
-export class BalanceDialogComponent {
+export class BalanceDialogComponent implements OnInit, OnDestroy {
   @Input() node!: Node;
   @Output() close = new EventEmitter<void>();
 
@@ -51,6 +60,8 @@ export class BalanceDialogComponent {
     { label: 'Decimal', value: 'dec' },
   ];
 
+  private balancesSub?: Subscription;
+
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private keyService: KeyService
@@ -59,10 +70,14 @@ export class BalanceDialogComponent {
   ngOnInit() {
     this.document.body.classList.add('overflow-hidden');
     this.loadAddresses();
+    this.balancesSub = this.node.balances$.subscribe(() => {
+      this.loadAddresses();
+    });
   }
 
   ngOnDestroy() {
     this.document.body.classList.remove('overflow-hidden');
+    this.balancesSub?.unsubscribe();
   }
 
   onClose() {
@@ -81,10 +96,31 @@ export class BalanceDialogComponent {
 
   loadAddresses() {
     if (this.displayMode === 'with-balance') {
-      // Listar todos os endereços com saldo (de todos os tipos)
-      // (Opcional: pode ser implementado depois)
       this.addresses = [];
-      this.totalRecords = 0;
+      for (const [address, data] of Object.entries(this.node.balances)) {
+        if (!data || !data.balance || data.balance === 0) continue;
+        // Determina o tipo de endereço baseado no prefixo
+        let addressType: 'legacy' | 'p2sh' | 'bech32' = 'legacy';
+        if (address.startsWith('3')) {
+          addressType = 'p2sh';
+        } else if (address.startsWith('bc1')) {
+          addressType = 'bech32';
+        }
+        // Cria um AddressRow válido, preenchendo apenas o tipo correspondente
+        const addressRow: AddressRow = {
+          keys: data.keys || { priv: '', pub: '' },
+          legacy: { address: '', balance: 0, utxos: [] },
+          p2sh: { address: '', balance: 0, utxos: [] },
+          bech32: { address: '', balance: 0, utxos: [] },
+        };
+        addressRow[addressType] = {
+          address,
+          balance: data.balance,
+          utxos: data.utxos,
+        };
+        this.addresses.push(addressRow);
+      }
+      this.totalRecords = this.addresses.length;
     } else {
       // Gerar dinamicamente apenas os keypairs da página atual
       const start = this.first;

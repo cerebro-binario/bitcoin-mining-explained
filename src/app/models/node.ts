@@ -1,5 +1,5 @@
 import * as CryptoJS from 'crypto-js';
-import { pipe, Subject, Subscription } from 'rxjs';
+import { pipe, Subject, Subscription, BehaviorSubject } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
 import { Block, BlockNode, Transaction } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
@@ -130,7 +130,18 @@ export class Node {
   private pendingConsensusEvents: { height: number; event: NodeEvent }[] = [];
 
   // Estrutura para rastrear UTXOs e saldos (Unspent Transaction Outputs)
-  balances: Balances = {};
+  private _balances: Balances = {};
+  public balances$: BehaviorSubject<Balances> = new BehaviorSubject<Balances>(
+    this._balances
+  );
+
+  get balances(): Balances {
+    return this._balances;
+  }
+  set balances(val: Balances) {
+    this._balances = val;
+    this.balances$.next(val);
+  }
 
   seed: string = ''; // Seed phrase do miner
   keys: Keys = {
@@ -1722,10 +1733,7 @@ export class Node {
           address: output.scriptPubKey,
           balance: 0,
           utxos: [],
-          keys: {
-            priv: '',
-            pub: '',
-          },
+          keys: this.keys, // Usa as chaves do minerador
         };
 
         addressData.utxos.push({
@@ -1767,10 +1775,7 @@ export class Node {
       balance: 0,
       utxos: [],
       nodeName: `Minerador ${block.minerId}`,
-      keys: {
-        priv: '',
-        pub: '',
-      },
+      keys: this.keys, // Usa as chaves do minerador
     };
 
     // Verifica se a coinbase já foi processada
@@ -1845,10 +1850,7 @@ export class Node {
           balance: 0,
           utxos: [],
           nodeName: `Minerador ${block.minerId}`,
-          keys: {
-            priv: '',
-            pub: '',
-          },
+          keys: this.keys, // Usa as chaves do minerador
         };
 
         addressData.utxos.push({
