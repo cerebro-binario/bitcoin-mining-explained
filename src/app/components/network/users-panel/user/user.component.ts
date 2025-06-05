@@ -37,10 +37,6 @@ export class UserComponent {
   importSeedPassphrase = '';
   importSeedError = '';
 
-  showingMasterKeys = false;
-  masterPrivateKey = '';
-  masterPublicKey = '';
-
   constructor(public keyService: KeyService) {}
 
   get wallet() {
@@ -170,49 +166,5 @@ export class UserComponent {
       this.copiedSeed = true;
       setTimeout(() => (this.copiedSeed = false), 2000);
     });
-  }
-
-  showMasterKeys() {
-    if (!this.user.wallet?.seed?.length) return;
-
-    try {
-      const mnemonic = this.user.wallet.seed.join(' ');
-      const passphrase = this.user.wallet.seedPassphrase || '';
-
-      // Valida o mnemônico
-      if (!this.keyService.validateSeed(mnemonic)) {
-        throw new Error('Mnemônico inválido');
-      }
-
-      // Converte mnemônico para seed usando PBKDF2
-      const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
-      const seed = KeyService.bytesToHex(seedBytes);
-
-      // Deriva as chaves mestras usando BIP84
-      const root = HDKey.fromMasterSeed(seedBytes);
-
-      // Deriva até o nível da conta BIP84
-      const account = root.derive("m/84'/0'/0'");
-
-      // Obtém as chaves estendidas no formato BIP84
-      const xpriv = account.toJSON().xpriv;
-      const xpub = account.toJSON().xpub;
-
-      // Converte para o formato BIP84 (zprv/zpub)
-      this.masterPrivateKey = xpriv.replace('xprv', 'zprv');
-      this.masterPublicKey = xpub.replace('xpub', 'zpub');
-    } catch (error) {
-      console.error('Erro ao derivar master keys:', error);
-      this.masterPrivateKey = 'Erro ao derivar chaves';
-      this.masterPublicKey = 'Erro ao derivar chaves';
-    }
-
-    this.showingMasterKeys = true;
-  }
-
-  hideMasterKeys() {
-    this.showingMasterKeys = false;
-    this.masterPrivateKey = '';
-    this.masterPublicKey = '';
   }
 }
