@@ -47,20 +47,30 @@ export class UserComponent {
     return this.user.wallet;
   }
 
-  // Deriva numAddresses endereços determinísticos a partir da seed+passphrase
   get addresses(): string[] {
     if (!this.user.wallet?.seed?.length) return [];
-    const seed = this.user.wallet.seed.join(' ');
+
+    const mnemonic = this.user.wallet.seed.join(' ');
     const passphrase = this.user.wallet.seedPassphrase || '';
-    const addresses: string[] = [];
     const num = this.user.wallet.numAddresses || 10;
-    for (let i = 0; i < num; i++) {
-      const input = `${seed}|${passphrase}|${i}`;
-      const hash = CryptoJS.SHA256(input).toString();
-      // Simula um endereço bech32 (bc1...)
-      addresses.push('bc1' + hash.slice(0, 38));
+
+    // Valida o mnemônico
+    if (!this.keyService.validateSeed(mnemonic)) {
+      console.error('Mnemônico inválido:', mnemonic);
+      return [];
     }
-    return addresses;
+
+    // Converte mnemônico para seed usando PBKDF2
+    const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
+    const seed = KeyService.bytesToHex(seedBytes);
+
+    // Deriva as chaves usando BIP84 (native segwit)
+    const keys = this.keyService.deriveKeysFromSeed(seed, num, "m/84'/0'/0'");
+
+    // Gera os endereços bech32 (bc1...) para cada chave
+    return keys.map((key) =>
+      this.keyService.generateBitcoinAddress(key.pub, 'p2wpkh')
+    );
   }
 
   gerarMaisEnderecos() {
@@ -166,22 +176,31 @@ export class UserComponent {
     if (!this.user.wallet?.seed?.length) return;
 
     try {
-      // Converte a seed para mnemônico
       const mnemonic = this.user.wallet.seed.join(' ');
       const passphrase = this.user.wallet.seedPassphrase || '';
 
-      // Gera o seed binário a partir do mnemônico
-      const seed = mnemonicToSeedSync(mnemonic, passphrase);
+      // Valida o mnemônico
+      if (!this.keyService.validateSeed(mnemonic)) {
+        throw new Error('Mnemônico inválido');
+      }
 
-      // Deriva a master key usando BIP32
-      const root = HDKey.fromMasterSeed(seed);
+      // Converte mnemônico para seed usando PBKDF2
+      const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
+      const seed = KeyService.bytesToHex(seedBytes);
 
-      // Deriva a conta (m/84'/0'/0')
+      // Deriva as chaves mestras usando BIP84
+      const root = HDKey.fromMasterSeed(seedBytes);
+
+      // Deriva até o nível da conta BIP84
       const account = root.derive("m/84'/0'/0'");
 
-      // Obtém as chaves estendidas
-      this.masterPrivateKey = account.privateExtendedKey;
-      this.masterPublicKey = account.publicExtendedKey;
+      // Obtém as chaves estendidas no formato BIP84
+      const xpriv = account.toJSON().xpriv;
+      const xpub = account.toJSON().xpub;
+
+      // Converte para o formato BIP84 (zprv/zpub)
+      this.masterPrivateKey = xpriv.replace('xprv', 'zprv');
+      this.masterPublicKey = xpub.replace('xpub', 'zpub');
     } catch (error) {
       console.error('Erro ao derivar master keys:', error);
       this.masterPrivateKey = 'Erro ao derivar chaves';
@@ -193,7 +212,6 @@ export class UserComponent {
 
   hideMasterKeys() {
     this.showingMasterKeys = false;
-    // Limpa as chaves da memória
     this.masterPrivateKey = '';
     this.masterPublicKey = '';
   }

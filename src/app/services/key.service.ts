@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { hmac } from '@noble/hashes/hmac';
 import { ripemd160 } from '@noble/hashes/legacy';
 import { sha256 } from '@noble/hashes/sha2';
 import * as secp256k1 from '@noble/secp256k1';
+import { HDKey } from '@scure/bip32';
+import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
 import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
@@ -13,7 +14,6 @@ import { Keys } from '../models/node';
 })
 export class KeyService {
   private readonly WORDLIST = wordlist.words;
-  private readonly BIP32_SEED = 'Bitcoin seed';
 
   constructor() {}
 
@@ -110,121 +110,52 @@ export class KeyService {
   }
 
   validateSeed(seed: string): boolean {
-    const words = seed.split(' ');
-    if (words.length !== 12) return false;
-
-    // Converter palavras para índices
-    const indices = words.map((word) => this.WORDLIST.indexOf(word));
-    if (indices.some((idx) => idx === -1)) return false;
-
-    // Reconstruir a entropia e o checksum
-    const combined = new Uint8Array(17); // 16 bytes de entropia + 1 byte de checksum
-    for (let i = 0; i < 12; i++) {
-      this.writeBits(combined, i * 11, 11, indices[i]);
+    try {
+      return validateMnemonic(seed, this.WORDLIST);
+    } catch (error) {
+      console.error('Erro ao validar mnemônico:', error);
+      return false;
     }
-
-    // Verificar checksum
-    const entropy = combined.slice(0, 16);
-    const checksum = combined[16];
-    const hash = sha256(entropy);
-    const expectedChecksum = hash[0] >> 4;
-
-    return checksum === expectedChecksum;
   }
 
-  /**
-   * Deriva um par de chaves determinístico a partir da seed usando BIP32
-   * @param seed Seed para derivação
-   * @param count Quantidade de chaves a serem derivadas (opcional, padrão: 1)
-   * @param path Caminho de derivação (opcional, padrão: m/0'/0/0)
-   * @returns Array de pares de chaves
-   */
   deriveKeysFromSeed(
     seed: string,
     count: number = 1,
-    path: string = "m/0'/0/0"
+    path: string = "m/84'/0'/0'"
   ): Keys[] {
-    // 1. Gerar a master key usando HMAC-SHA512
-    const seedBytes = new TextEncoder().encode(seed);
-    const hmacResult = hmac(sha256, this.BIP32_SEED, seedBytes);
+    let seedBytes: Uint8Array;
 
-    // 2. Dividir o resultado em chave privada (32 bytes) e chain code (32 bytes)
-    const masterKey = hmacResult.slice(0, 32);
-    const chainCode = hmacResult.slice(32);
+    // Se o input for um mnemônico (contém espaços), converte para seed
+    if (seed.includes(' ')) {
+      seedBytes = mnemonicToSeedSync(seed);
+    } else {
+      // Se já for um seed em hex, converte para bytes
+      seedBytes = KeyService.hexToBytes(seed);
+    }
+
+    // 2. Create HD wallet from seed
+    const root = HDKey.fromMasterSeed(seedBytes);
 
     const keys: Keys[] = [];
 
-    // 3. Derivar as chaves filhas
+    // 3. Derive each child key with its full path
     for (let i = 0; i < count; i++) {
-      // Para cada chave, incrementamos o último índice do path
-      const currentPath = path.replace(/\d+$/, i.toString());
+      const fullPath = `m/84'/0'/0'/0/${i}`;
+      const child = root.derive(fullPath);
+      if (!child.publicKey) throw new Error('Failed to derive public key');
 
-      // Derivar a chave filha usando o chain code e o índice
-      const childKey = this.deriveChildKey(masterKey, chainCode, i);
-
-      // Derivar a chave pública
-      const pub = KeyService.derivePublicKey(KeyService.bytesToHex(childKey));
+      // Get extended keys in BIP32 format
+      const xpriv = child.toJSON().xpriv;
+      const xpub = child.toJSON().xpub;
 
       keys.push({
-        priv: KeyService.bytesToHex(childKey),
-        pub: pub,
-        path: currentPath,
+        priv: xpriv,
+        pub: xpub,
+        path: fullPath,
       });
     }
 
     return keys;
-  }
-
-  /**
-   * Deriva uma chave filha usando o algoritmo BIP32
-   * @param parentKey Chave privada do pai
-   * @param chainCode Chain code do pai
-   * @param index Índice da chave filha
-   * @returns Chave privada da chave filha
-   */
-  private deriveChildKey(
-    parentKey: Uint8Array,
-    chainCode: Uint8Array,
-    index: number
-  ): Uint8Array {
-    // 1. Preparar os dados para HMAC
-    const data = new Uint8Array(37); // 1 byte para flag + 32 bytes para chave + 4 bytes para índice
-
-    // Se índice >= 2^31, usar chave pública
-    if (index >= 0x80000000) {
-      data[0] = 0x00;
-      const pubKey = secp256k1.getPublicKey(parentKey, true);
-      data.set(pubKey, 1);
-    } else {
-      data[0] = 0x00;
-      data.set(parentKey, 1);
-    }
-
-    // Adicionar o índice (4 bytes, big-endian)
-    data[33] = (index >> 24) & 0xff;
-    data[34] = (index >> 16) & 0xff;
-    data[35] = (index >> 8) & 0xff;
-    data[36] = index & 0xff;
-
-    // 2. Calcular HMAC-SHA512
-    const hmacResult = hmac(sha256, chainCode, data);
-
-    // 3. Dividir o resultado em chave privada e novo chain code
-    const childKey = hmacResult.slice(0, 32);
-    const newChainCode = hmacResult.slice(32);
-
-    // 4. Ajustar a chave privada para estar no intervalo válido da curva
-    const childKeyBigInt = BigInt('0x' + KeyService.bytesToHex(childKey));
-    const n = BigInt(
-      '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-    ); // ordem da curva secp256k1
-
-    // Se a chave estiver fora do intervalo válido, ajustar
-    if (childKeyBigInt >= n) {
-      return this.deriveChildKey(parentKey, newChainCode, index + 1);
-    }
-
-    return childKey;
   }
 
   deriveKeysFromPrivateKey(privateKey: string): Keys {
@@ -247,10 +178,17 @@ export class KeyService {
     publicKey: string,
     format: 'p2pkh' | 'p2sh-p2wpkh' | 'p2wpkh' = 'p2pkh'
   ): string {
-    // Remove o prefixo '0x' se existir
-    const cleanPubKey = publicKey.startsWith('0x')
-      ? publicKey.slice(2)
-      : publicKey;
+    // Se for uma chave pública estendida (xpub), extrai a chave pública real
+    let cleanPubKey = publicKey;
+    if (publicKey.startsWith('xpub') || publicKey.startsWith('zpub')) {
+      const hdKey = HDKey.fromExtendedKey(publicKey);
+      if (!hdKey.publicKey)
+        throw new Error('Failed to get public key from extended key');
+      cleanPubKey = KeyService.bytesToHex(hdKey.publicKey);
+    } else {
+      // Remove o prefixo '0x' se existir
+      cleanPubKey = publicKey.startsWith('0x') ? publicKey.slice(2) : publicKey;
+    }
 
     switch (format) {
       case 'p2pkh':
