@@ -145,7 +145,7 @@
             let-expanded="expanded"
             let-rowIndex="rowIndex"
           >
-            <tr>
+            <tr [ngClass]="{ 'border-l-2 border-blue-400': entry.isMine }">
               <td class="p-4 align-middle">
                 <button
                   *ngIf="
@@ -163,6 +163,11 @@
                   style="height: 1.7rem; width: 1.7rem"
                   [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
                 ></button>
+                <i
+                  *ngIf="entry.isMine"
+                  class="pi pi-verified text-blue-400 text-xs ml-1"
+                  title="Este endereço pertence a este nó"
+                ></i>
               </td>
               <td
                 class="font-mono p-4 text-green-400 align-middle"
