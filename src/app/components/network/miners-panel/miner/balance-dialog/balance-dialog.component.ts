@@ -19,6 +19,7 @@ import { Keys, Node } from '../../../../../models/node';
 import { KeyService } from '../../../../../services/key.service';
 
 interface AddressRow {
+  id: string;
   keys: Keys;
   legacy: { address: string; balance: number; utxos: any[] };
   p2sh: { address: string; balance: number; utxos: any[] };
@@ -118,8 +119,8 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     }
   }
 
-  rowTrackBy(index: number, item: any): string {
-    return item.legacy.address;
+  rowTrackBy(index: number, item: AddressRow): string {
+    return item.id;
   }
 
   updateTotalPages() {
@@ -215,6 +216,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
           data.keys.priv === this.node.keys.priv
         );
         const addressRow: AddressRow = {
+          id: address,
           keys: data.keys || { priv: '', pub: '' },
           legacy: { address: '', balance: 0, utxos: [] },
           p2sh: { address: '', balance: 0, utxos: [] },
@@ -259,6 +261,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         const p2shData = this.node.balances[p2sh];
         const bech32Data = this.node.balances[bech32];
         this.addresses.push({
+          id: priv,
           keys: { priv, pub },
           legacy: {
             address: legacy,
