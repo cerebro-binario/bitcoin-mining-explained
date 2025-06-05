@@ -184,9 +184,19 @@
       </div>
     </div>
     <div class="w-full mt-4">
-      <h3 class="text-base font-semibold text-blue-300 mb-2">
-        Endereços da Wallet
-      </h3>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-base font-semibold text-blue-300">
+          Endereços da Wallet
+        </h3>
+        <button
+          (click)="showMasterKeys()"
+          class="text-xs text-zinc-400 hover:text-blue-400 transition-colors flex items-center gap-1"
+          title="Ver chaves mestras"
+        >
+          <i class="pi pi-key"></i>
+          <span>Master Keys</span>
+        </button>
+      </div>
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm rounded-lg overflow-hidden">
           <thead>
@@ -382,3 +392,51 @@
     </div>
   </div>
 </ng-container>
+
+<!-- Modal de Master Keys -->
+<div
+  *ngIf="showingMasterKeys"
+  class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+  (click)="hideMasterKeys()"
+>
+  <div
+    class="bg-zinc-800 rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4 border border-zinc-700"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-blue-300">Master Keys</h3>
+      <button
+        (click)="hideMasterKeys()"
+        class="text-zinc-400 hover:text-red-400 transition-colors"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm text-zinc-400 mb-1"
+          >Chave Privada Mestra</label
+        >
+        <div
+          class="bg-zinc-900 rounded p-3 font-mono text-sm text-green-300 break-all"
+        >
+          {{ masterPrivateKey }}
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm text-zinc-400 mb-1"
+          >Chave Pública Mestra</label
+        >
+        <div
+          class="bg-zinc-900 rounded p-3 font-mono text-sm text-blue-300 break-all"
+        >
+          {{ masterPublicKey }}
+        </div>
+      </div>
+      <div class="text-xs text-zinc-500 mt-4">
+        <i class="pi pi-info-circle mr-1"></i>
+        Estas são as chaves mestras derivadas da sua seed. Mantenha-as seguras!
+      </div>
+    </div>
+  </div>
+</div>

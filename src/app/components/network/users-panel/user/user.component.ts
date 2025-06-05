@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { User, UserWallet } from '../../../../models/user.model';
 import * as CryptoJS from 'crypto-js';
+import { mnemonicToSeedSync } from '@scure/bip39';
+import { HDKey } from '@scure/bip32';
 
 const MOCK_WORDLIST = [
   'apple',
@@ -71,6 +73,10 @@ export class UserComponent {
   importSeed = '';
   importSeedPassphrase = '';
   importSeedError = '';
+
+  showingMasterKeys = false;
+  masterPrivateKey = '';
+  masterPublicKey = '';
 
   get wallet() {
     return this.user.wallet;
@@ -189,5 +195,41 @@ export class UserComponent {
       this.copiedSeed = true;
       setTimeout(() => (this.copiedSeed = false), 2000);
     });
+  }
+
+  showMasterKeys() {
+    if (!this.user.wallet?.seed?.length) return;
+
+    try {
+      // Converte a seed para mnemônico
+      const mnemonic = this.user.wallet.seed.join(' ');
+      const passphrase = this.user.wallet.seedPassphrase || '';
+
+      // Gera o seed binário a partir do mnemônico
+      const seed = mnemonicToSeedSync(mnemonic, passphrase);
+
+      // Deriva a master key usando BIP32
+      const root = HDKey.fromMasterSeed(seed);
+
+      // Deriva a conta (m/84'/0'/0')
+      const account = root.derive("m/84'/0'/0'");
+
+      // Obtém as chaves estendidas
+      this.masterPrivateKey = account.privateExtendedKey;
+      this.masterPublicKey = account.publicExtendedKey;
+    } catch (error) {
+      console.error('Erro ao derivar master keys:', error);
+      this.masterPrivateKey = 'Erro ao derivar chaves';
+      this.masterPublicKey = 'Erro ao derivar chaves';
+    }
+
+    this.showingMasterKeys = true;
+  }
+
+  hideMasterKeys() {
+    this.showingMasterKeys = false;
+    // Limpa as chaves da memória
+    this.masterPrivateKey = '';
+    this.masterPublicKey = '';
   }
 }
