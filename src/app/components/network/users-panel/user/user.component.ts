@@ -1,48 +1,11 @@
-import { Component, Input, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { User, UserWallet } from '../../../../models/user.model';
-import * as CryptoJS from 'crypto-js';
-import { mnemonicToSeedSync } from '@scure/bip39';
 import { HDKey } from '@scure/bip32';
-
-const MOCK_WORDLIST = [
-  'apple',
-  'banana',
-  'cat',
-  'dog',
-  'elephant',
-  'fish',
-  'grape',
-  'hat',
-  'ice',
-  'jungle',
-  'kite',
-  'lemon',
-  'monkey',
-  'nose',
-  'orange',
-  'pear',
-  'queen',
-  'rose',
-  'sun',
-  'tree',
-  'umbrella',
-  'violet',
-  'wolf',
-  'xray',
-  'yarn',
-  'zebra',
-];
-
-function generateMockSeed(numWords = 12): string[] {
-  const words = [];
-  for (let i = 0; i < numWords; i++) {
-    const idx = Math.floor(Math.random() * MOCK_WORDLIST.length);
-    words.push(MOCK_WORDLIST[idx]);
-  }
-  return words;
-}
+import { mnemonicToSeedSync } from '@scure/bip39';
+import * as CryptoJS from 'crypto-js';
+import { User } from '../../../../models/user.model';
+import { KeyService } from '../../../../services/key.service';
 
 @Component({
   selector: 'app-user',
@@ -78,6 +41,8 @@ export class UserComponent {
   masterPrivateKey = '';
   masterPublicKey = '';
 
+  constructor(public keyService: KeyService) {}
+
   get wallet() {
     return this.user.wallet;
   }
@@ -108,7 +73,7 @@ export class UserComponent {
   createWallet() {
     if (!this.user.wallet) return;
     this.user.wallet.step = 'show-seed';
-    this.user.wallet.seed = generateMockSeed();
+    this.user.wallet.seed = this.keyService.generateSeed().split(' ');
     this.user.wallet.seedPassphrase = '';
     this.seedConfirmed = false;
   }
