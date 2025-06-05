@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Keys } from '../models/node';
-import * as secp256k1 from '@noble/secp256k1';
-import { sha256 } from '@noble/hashes/sha2';
 import { hmac } from '@noble/hashes/hmac';
 import { ripemd160 } from '@noble/hashes/legacy';
-import bs58 from 'bs58';
+import { sha256 } from '@noble/hashes/sha2';
+import * as secp256k1 from '@noble/secp256k1';
 import { bech32 } from 'bech32';
+import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
+import { Keys } from '../models/node';
 
 @Injectable({
   providedIn: 'root',
@@ -18,12 +18,118 @@ export class KeyService {
   constructor() {}
 
   generateSeed(): string {
-    const words = [];
+    return this.generateMnemonic();
+  }
+
+  private generateMnemonic(): string {
+    // 1. Generate 128 bits (16 bytes) of entropy
+    const entropy = this.generateEntropy(16);
+
+    // 2. Calculate SHA256 hash of entropy
+    const entropyBytes = new Uint8Array(
+      entropy.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+    );
+    const hash = sha256(entropyBytes);
+
+    // 3. Get first 4 bits of hash for checksum
+    const firstByte = hash[0];
+    const checksum = (firstByte >> 4) & 0x0f;
+
+    // 4. Convert entropy to binary string (128 bits)
+    const entropyBinary = this.hexToBinary(entropy);
+
+    // 5. Convert checksum to 4-bit binary string
+    const checksumBinary = checksum.toString(2).padStart(4, '0');
+
+    // 6. Combine entropy and checksum (132 bits total)
+    const combinedBinary = entropyBinary + checksumBinary;
+
+    // 7. Split into 11-bit chunks
+    const indices: number[] = [];
     for (let i = 0; i < 12; i++) {
-      const idx = Math.floor(Math.random() * this.WORDLIST.length);
-      words.push(this.WORDLIST[idx]);
+      const startBit = i * 11;
+      const endBit = startBit + 11;
+      const chunk = combinedBinary.substring(startBit, endBit);
+      const index = parseInt(chunk, 2);
+
+      // Validate index is within bounds (0-2047)
+      if (index >= 2048) {
+        console.error(`Invalid index ${index} at position ${i}`);
+        throw new Error(`Invalid index ${index} at position ${i}`);
+      }
+
+      indices.push(index);
     }
-    return words.join(' ');
+
+    // 8. Convert indices to words
+    const words = indices.map((index) => this.WORDLIST[index]);
+    const mnemonic = words.join(' ');
+    return mnemonic;
+  }
+
+  private writeBits(
+    data: Uint8Array,
+    startBit: number,
+    length: number,
+    value: number
+  ): void {
+    let remainingBits = length;
+    let currentBit = startBit;
+
+    while (remainingBits > 0) {
+      const currentByte = Math.floor(currentBit / 8);
+      const bitInByte = currentBit % 8;
+      const bitsToTake = Math.min(remainingBits, 8 - bitInByte);
+
+      const shift = 8 - bitInByte - bitsToTake;
+      const mask = (1 << bitsToTake) - 1;
+      const bits = (value >> (remainingBits - bitsToTake)) & mask;
+
+      data[currentByte] |= bits << shift;
+      remainingBits -= bitsToTake;
+      currentBit += bitsToTake;
+    }
+  }
+
+  private hexToBinary(hex: string): string {
+    return hex
+      .split('')
+      .map((char) => {
+        const binary = parseInt(char, 16).toString(2);
+        return binary.padStart(4, '0');
+      })
+      .join('');
+  }
+
+  private generateEntropy(bytes: number): string {
+    const entropy = new Uint8Array(bytes);
+    crypto.getRandomValues(entropy);
+    return Array.from(entropy)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  validateSeed(seed: string): boolean {
+    const words = seed.split(' ');
+    if (words.length !== 12) return false;
+
+    // Converter palavras para índices
+    const indices = words.map((word) => this.WORDLIST.indexOf(word));
+    if (indices.some((idx) => idx === -1)) return false;
+
+    // Reconstruir a entropia e o checksum
+    const combined = new Uint8Array(17); // 16 bytes de entropia + 1 byte de checksum
+    for (let i = 0; i < 12; i++) {
+      this.writeBits(combined, i * 11, 11, indices[i]);
+    }
+
+    // Verificar checksum
+    const entropy = combined.slice(0, 16);
+    const checksum = combined[16];
+    const hash = sha256(entropy);
+    const expectedChecksum = hash[0] >> 4;
+
+    return checksum === expectedChecksum;
   }
 
   /**
