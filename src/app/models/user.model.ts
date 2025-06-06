@@ -1,15 +1,29 @@
+export interface BitcoinAddress {
+  // Chaves
+  privateKey: string;
+  publicKey: string;
+
+  // Endereços em diferentes formatos
+  p2pkh: string; // Legacy (1...)
+  p2sh_p2wpkh: string; // SegWit Compatível (3...)
+  p2wpkh: string; // Native SegWit (bc1...)
+
+  // Caminho de derivação
+  path: string;
+}
+
 export interface UserWallet {
   step:
     | 'choose'
     | 'show-seed'
-    | 'import-seed'
+    | 'confirm-seed'
     | 'set-seed-passphrase'
     | 'set-passphrase'
     | 'created';
   seed: string[];
-  passphrase?: string; // senha de acesso ao app
-  seedPassphrase?: string; // 13ª palavra opcional
-  numAddresses: number; // quantos endereços mostrar
+  seedPassphrase: string;
+  passphrase: string;
+  addresses: BitcoinAddress[];
 }
 
 export interface User {

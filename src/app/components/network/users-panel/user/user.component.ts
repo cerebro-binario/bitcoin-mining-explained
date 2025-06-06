@@ -6,6 +6,7 @@ import { mnemonicToSeedSync } from '@scure/bip39';
 import * as CryptoJS from 'crypto-js';
 import { User } from '../../../../models/user.model';
 import { KeyService } from '../../../../services/key.service';
+import { Keys } from '../../../../models/node';
 
 @Component({
   selector: 'app-user',
@@ -37,6 +38,10 @@ export class UserComponent {
   importSeedPassphrase = '';
   importSeedError = '';
 
+  // Propriedades para gerenciar a exibição das chaves
+  showingKeys: boolean[] = [];
+  addressKeys: Keys[] = [];
+
   constructor(public keyService: KeyService) {}
 
   get wallet() {
@@ -44,35 +49,50 @@ export class UserComponent {
   }
 
   get addresses(): string[] {
-    if (!this.user.wallet?.seed?.length) return [];
-
-    const mnemonic = this.user.wallet.seed.join(' ');
-    const passphrase = this.user.wallet.seedPassphrase || '';
-    const num = this.user.wallet.numAddresses || 10;
-
-    // Valida o mnemônico
-    if (!this.keyService.validateSeed(mnemonic)) {
-      console.error('Mnemônico inválido:', mnemonic);
-      return [];
-    }
-
-    // Converte mnemônico para seed usando PBKDF2
-    const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
-    const seed = KeyService.bytesToHex(seedBytes);
-
-    // Deriva as chaves usando BIP84 (native segwit)
-    const keys = this.keyService.deriveKeysFromSeed(seed, num, "m/84'/0'/0'");
-
-    // Gera os endereços bech32 (bc1...) para cada chave
-    return keys.map((key) =>
-      this.keyService.generateBitcoinAddress(key.pub, 'p2wpkh')
-    );
+    if (!this.user.wallet?.addresses?.length) return [];
+    return this.user.wallet.addresses.map((addr) => addr.p2wpkh);
   }
 
   gerarMaisEnderecos() {
-    if (this.user.wallet) {
-      this.user.wallet.numAddresses =
-        (this.user.wallet.numAddresses || 10) + 10;
+    if (!this.user.wallet?.seed?.length) return;
+
+    const mnemonic = this.user.wallet.seed.join(' ');
+    const passphrase = this.user.wallet.seedPassphrase || '';
+    const currentCount = this.user.wallet.addresses?.length || 0;
+    const newCount = 10;
+
+    try {
+      // Converte mnemônico para seed usando PBKDF2
+      const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
+      const seed = KeyService.bytesToHex(seedBytes);
+
+      // Deriva as novas chaves usando BIP84
+      const keys = this.keyService.deriveKeysFromSeed(
+        seed,
+        newCount,
+        "m/84'/0'/0'"
+      );
+
+      // Gera os endereços para cada chave
+      const newAddresses = keys.map((key) => ({
+        privateKey: key.priv,
+        publicKey: key.pub,
+        path: key.path || '',
+        p2pkh: this.keyService.generateBitcoinAddress(key.pub, 'p2pkh'),
+        p2sh_p2wpkh: this.keyService.generateBitcoinAddress(
+          key.pub,
+          'p2sh-p2wpkh'
+        ),
+        p2wpkh: this.keyService.generateBitcoinAddress(key.pub, 'p2wpkh'),
+      }));
+
+      // Adiciona os novos endereços à lista
+      this.user.wallet.addresses = [
+        ...(this.user.wallet.addresses || []),
+        ...newAddresses,
+      ];
+    } catch (error) {
+      console.error('Erro ao gerar mais endereços:', error);
     }
   }
 
@@ -81,12 +101,13 @@ export class UserComponent {
     this.user.wallet.step = 'show-seed';
     this.user.wallet.seed = this.keyService.generateSeed().split(' ');
     this.user.wallet.seedPassphrase = '';
+    this.user.wallet.addresses = [];
     this.seedConfirmed = false;
   }
 
   importWallet() {
     if (!this.user.wallet) return;
-    this.user.wallet.step = 'import-seed';
+    this.user.wallet.step = 'show-seed';
     this.importSeed = '';
     this.importSeedPassphrase = '';
     this.importSeedError = '';
@@ -123,6 +144,35 @@ export class UserComponent {
     // Não é obrigatório, pode ser vazio
     this.user.wallet.seedPassphrase = this.seedPassphrase || '';
     this.user.wallet.step = 'set-passphrase';
+
+    // Gera o primeiro endereço
+    try {
+      const mnemonic = this.user.wallet.seed.join(' ');
+      const seedBytes = mnemonicToSeedSync(
+        mnemonic,
+        this.user.wallet.seedPassphrase
+      );
+      const seed = KeyService.bytesToHex(seedBytes);
+
+      // Deriva a primeira chave usando BIP84
+      const keys = this.keyService.deriveKeysFromSeed(seed, 1, "m/84'/0'/0'");
+
+      // Gera o endereço com todos os formatos
+      this.user.wallet.addresses = keys.map((key) => ({
+        privateKey: key.priv,
+        publicKey: key.pub,
+        path: key.path || '',
+        p2pkh: this.keyService.generateBitcoinAddress(key.pub, 'p2pkh'),
+        p2sh_p2wpkh: this.keyService.generateBitcoinAddress(
+          key.pub,
+          'p2sh-p2wpkh'
+        ),
+        p2wpkh: this.keyService.generateBitcoinAddress(key.pub, 'p2wpkh'),
+      }));
+    } catch (error) {
+      console.error('Erro ao gerar primeiro endereço:', error);
+    }
+
     this.seedPassphrase = '';
     this.seedPassphraseError = '';
     setTimeout(() => {
@@ -166,5 +216,20 @@ export class UserComponent {
       this.copiedSeed = true;
       setTimeout(() => (this.copiedSeed = false), 2000);
     });
+  }
+
+  // Métodos para gerenciar a exibição das chaves
+  toggleAddressKeys(index: number): void {
+    if (!this.user.wallet?.addresses?.[index]) return;
+    this.showingKeys[index] = !this.showingKeys[index];
+  }
+
+  hasVisibleKeys(): boolean {
+    return this.showingKeys && this.showingKeys.some((k) => k);
+  }
+
+  copyToClipboard(text: string | undefined): void {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
   }
 }

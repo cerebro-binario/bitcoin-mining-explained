@@ -19,7 +19,13 @@ export class UsersPanelComponent {
   createUser() {
     const id = this.userCount;
     const name = `Usuário #${this.userCount++}`;
-    const wallet: UserWallet = { step: 'choose', seed: [], numAddresses: 10 };
+    const wallet: UserWallet = {
+      step: 'choose',
+      seed: [],
+      seedPassphrase: '',
+      passphrase: '',
+      addresses: [],
+    };
     this.users.push({ id, name, wallet });
     this.selectedUser = this.users[this.users.length - 1];
   }
