@@ -14,6 +14,7 @@ import {
   getRandomBytes,
   hexToBytes,
   padBinary,
+  padHex,
 } from '../utils/tools';
 
 @Injectable({
@@ -170,7 +171,7 @@ export class KeyService {
   generateSequentialKeys(startIndex: number = 0, count: number = 10): Keys[] {
     const keys: Keys[] = [];
     for (let i = 0; i < count; i++) {
-      const privateKey = '0x' + (startIndex + i).toString(16).padStart(64, '0');
+      const privateKey = '0x' + padHex(startIndex + i, 64);
       const nodeKeys = this.deriveKeysFromPrivateKey(privateKey);
       keys.push(nodeKeys);
     }
@@ -183,7 +184,7 @@ export class KeyService {
    */
   static derivePrivateKey(index: number): string {
     const n = BigInt(index + 1); // nunca zero
-    const hex = n.toString(16).padStart(64, '0');
+    const hex = padHex(n, 64);
     return hex;
   }
 
