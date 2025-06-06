@@ -97,7 +97,7 @@ export class UserComponent {
           privateKey: legacyKeys[0].priv,
           publicKey: legacyKeys[0].pub,
           path: legacyKeys[0].path || `m/44'/0'/0'/0/${currentCount}`,
-          address: this.keyService.generateBitcoinAddress(
+          address: this.keyService.deriveBitcoinAddress(
             legacyKeys[0].pub,
             'bip44'
           ),
@@ -108,7 +108,7 @@ export class UserComponent {
           privateKey: segwitKeys[0].priv,
           publicKey: segwitKeys[0].pub,
           path: segwitKeys[0].path || `m/49'/0'/0'/0/${currentCount}`,
-          address: this.keyService.generateBitcoinAddress(
+          address: this.keyService.deriveBitcoinAddress(
             segwitKeys[0].pub,
             'bip49'
           ),
@@ -119,7 +119,7 @@ export class UserComponent {
           privateKey: nativeSegwitKeys[0].priv, // Usamos a chave do BIP84 como principal
           publicKey: nativeSegwitKeys[0].pub,
           path: nativeSegwitKeys[0].path || `m/84'/0'/0'/0/${currentCount}`, // Garante que path sempre existe
-          address: this.keyService.generateBitcoinAddress(
+          address: this.keyService.deriveBitcoinAddress(
             nativeSegwitKeys[0].pub,
             'bip84'
           ),
@@ -218,19 +218,19 @@ export class UserComponent {
           privateKey: key.priv,
           publicKey: key.pub,
           path: key.path || '',
-          address: this.keyService.generateBitcoinAddress(key.pub, 'bip44'),
+          address: this.keyService.deriveBitcoinAddress(key.pub, 'bip44'),
         })),
         bip49: bip49Keys.map((key) => ({
           privateKey: key.priv,
           publicKey: key.pub,
           path: key.path || '',
-          address: this.keyService.generateBitcoinAddress(key.pub, 'bip49'),
+          address: this.keyService.deriveBitcoinAddress(key.pub, 'bip49'),
         })),
         bip84: bip84Keys.map((key) => ({
           privateKey: key.priv,
           publicKey: key.pub,
           path: key.path || '',
-          address: this.keyService.generateBitcoinAddress(key.pub, 'bip84'),
+          address: this.keyService.deriveBitcoinAddress(key.pub, 'bip84'),
         })),
       };
     } catch (error) {

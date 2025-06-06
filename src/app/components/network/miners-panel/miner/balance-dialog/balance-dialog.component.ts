@@ -254,9 +254,9 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         const idx = start + i;
         const priv = idx.toString(16).padStart(64, '0');
         const pub = KeyService.derivePublicKey(priv);
-        const bip44 = this.keyService.generateBitcoinAddress(pub, 'bip44');
-        const bip49 = this.keyService.generateBitcoinAddress(pub, 'bip49');
-        const bip84 = this.keyService.generateBitcoinAddress(pub, 'bip84');
+        const bip44 = this.keyService.deriveBitcoinAddress(pub, 'bip44');
+        const bip49 = this.keyService.deriveBitcoinAddress(pub, 'bip49');
+        const bip84 = this.keyService.deriveBitcoinAddress(pub, 'bip84');
         const bip44Data = this.node.balances[bip44];
         const bip49Data = this.node.balances[bip49];
         const bip84Data = this.node.balances[bip84];

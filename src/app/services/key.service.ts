@@ -152,7 +152,7 @@ export class KeyService {
    * @param format Formato do endereço (bip44, bip49, bip84)
    * @returns Endereço Bitcoin no formato especificado
    */
-  generateBitcoinAddress(
+  deriveBitcoinAddress(
     publicKey: string,
     format: 'bip44' | 'bip49' | 'bip84' = 'bip84'
   ): string {

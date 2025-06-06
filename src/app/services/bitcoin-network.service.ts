@@ -79,9 +79,9 @@ export class BitcoinNetworkService {
     if (isMiner) {
       const seed = this.keyService.generateSeed();
       const { priv, pub } = this.keyService.deriveKeysFromSeed(seed)[0];
-      const bip44 = this.keyService.generateBitcoinAddress(pub, 'bip44');
-      const bip49 = this.keyService.generateBitcoinAddress(pub, 'bip49');
-      const bip84 = this.keyService.generateBitcoinAddress(pub, 'bip84');
+      const bip44 = this.keyService.deriveBitcoinAddress(pub, 'bip44');
+      const bip49 = this.keyService.deriveBitcoinAddress(pub, 'bip49');
+      const bip84 = this.keyService.deriveBitcoinAddress(pub, 'bip84');
       node.seed = seed;
       node.keys = { priv, pub };
       node.miningAddress = bip84;
