@@ -3,7 +3,7 @@ import * as CryptoJS from 'crypto-js';
 export function textToHex(text: string): string {
   return text
     .split('')
-    .map((char) => char.charCodeAt(0).toString(16).padStart(2, '0')) // Converte cada caractere para hexadecimal
+    .map((char) => padHex(char.charCodeAt(0))) // Converte cada caractere para hexadecimal
     .join(''); // Junta todos os valores hexadecimais em uma string
 }
 
@@ -21,7 +21,7 @@ export function hexToBinary(hex: string): string {
   // Converte cada caractere hexadecimal em seu valor binário correspondente
   return hex
     .split('') // Divide o hexadecimal em caracteres individuais
-    .map((char) => parseInt(char, 16).toString(2).padStart(4, '0')) // Converte cada caractere para binário (4 bits)
+    .map((char) => padBinary(parseInt(char, 16), 4)) // Converte cada caractere para binário (4 bits)
     .join(''); // Junta todos os valores binários em uma única string
 }
 
@@ -47,8 +47,18 @@ export function hexToBytes(hex: string): Uint8Array {
 
 export function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
+    .map((b) => padHex(b))
     .join('');
+}
+
+export function bytesToBinary(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => padBinary(b))
+    .join('');
+}
+
+export function padBinary(num: number | bigint, length: number = 8): string {
+  return num.toString(2).padStart(length, '0');
 }
 
 export function padHex(num: number | bigint, length: number = 2): string {
@@ -82,6 +92,12 @@ export function getRandomAmount(max = 10): number {
 
 export function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function getRandomBytes(length: number): Uint8Array {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return bytes;
 }
 
 export function getWeightedRandomInput(): number {

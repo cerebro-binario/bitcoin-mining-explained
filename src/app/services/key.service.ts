@@ -3,12 +3,18 @@ import { ripemd160 } from '@noble/hashes/legacy';
 import { sha256 } from '@noble/hashes/sha2';
 import * as secp256k1 from '@noble/secp256k1';
 import { HDKey } from '@scure/bip32';
-import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
+import { mnemonicToSeedSync } from '@scure/bip39';
 import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
 import { Keys } from '../models/node';
-import { bytesToHex, hexToBinary, hexToBytes } from '../utils/tools';
+import {
+  bytesToBinary,
+  bytesToHex,
+  getRandomBytes,
+  hexToBytes,
+  padBinary,
+} from '../utils/tools';
 
 @Injectable({
   providedIn: 'root',
@@ -20,23 +26,20 @@ export class KeyService {
 
   generateSeed(): string {
     // 1. Generate 128 bits (16 bytes) of entropy
-    const entropy = this.generateEntropy(16);
+    const entropy = getRandomBytes(16);
 
     // 2. Calculate SHA256 hash of entropy
-    const entropyBytes = new Uint8Array(
-      entropy.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
-    );
-    const hash = sha256(entropyBytes);
+    const hash = sha256(entropy);
 
     // 3. Get first 4 bits of hash for checksum
     const firstByte = hash[0];
     const checksum = (firstByte >> 4) & 0x0f;
 
     // 4. Convert entropy to binary string (128 bits)
-    const entropyBinary = hexToBinary(entropy);
+    const entropyBinary = bytesToBinary(entropy);
 
     // 5. Convert checksum to 4-bit binary string
-    const checksumBinary = checksum.toString(2).padStart(4, '0');
+    const checksumBinary = padBinary(checksum, 4);
 
     // 6. Combine entropy and checksum (132 bits total)
     const combinedBinary = entropyBinary + checksumBinary;
@@ -62,23 +65,6 @@ export class KeyService {
     const words = indices.map((index) => this.WORDLIST[index]);
     const mnemonic = words.join(' ');
     return mnemonic;
-  }
-
-  private generateEntropy(bytes: number): string {
-    const entropy = new Uint8Array(bytes);
-    crypto.getRandomValues(entropy);
-    return Array.from(entropy)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-  }
-
-  validateSeed(seed: string): boolean {
-    try {
-      return validateMnemonic(seed, this.WORDLIST);
-    } catch (error) {
-      console.error('Erro ao validar mnemônico:', error);
-      return false;
-    }
   }
 
   deriveKeysFromSeed(
