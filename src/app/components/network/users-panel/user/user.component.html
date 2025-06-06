@@ -184,10 +184,43 @@
       </div>
     </div>
     <div class="w-full mt-4">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-base font-semibold text-blue-300">
-          Endereços da Wallet
-        </h3>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-zinc-200">Endereços</h3>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="px-3 py-1 rounded text-sm transition"
+            [class.bg-green-600]="selectedAddressType === 'p2pkh'"
+            [class.text-white]="selectedAddressType === 'p2pkh'"
+            [class.bg-zinc-700]="selectedAddressType !== 'p2pkh'"
+            [class.text-zinc-300]="selectedAddressType !== 'p2pkh'"
+            (click)="changeAddressType('p2pkh')"
+          >
+            Legacy
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1 rounded text-sm transition"
+            [class.bg-blue-600]="selectedAddressType === 'p2sh_p2wpkh'"
+            [class.text-white]="selectedAddressType === 'p2sh_p2wpkh'"
+            [class.bg-zinc-700]="selectedAddressType !== 'p2sh_p2wpkh'"
+            [class.text-zinc-300]="selectedAddressType !== 'p2sh_p2wpkh'"
+            (click)="changeAddressType('p2sh_p2wpkh')"
+          >
+            SegWit
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1 rounded text-sm transition"
+            [class.bg-purple-600]="selectedAddressType === 'p2wpkh'"
+            [class.text-white]="selectedAddressType === 'p2wpkh'"
+            [class.bg-zinc-700]="selectedAddressType !== 'p2wpkh'"
+            [class.text-zinc-300]="selectedAddressType !== 'p2wpkh'"
+            (click)="changeAddressType('p2wpkh')"
+          >
+            Native SegWit
+          </button>
+        </div>
       </div>
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm rounded-lg overflow-hidden">
@@ -205,7 +238,12 @@
               class="border-b border-zinc-700 last:border-0"
             >
               <td class="px-4 py-2 text-zinc-500 font-mono">{{ i + 1 }}</td>
-              <td class="px-4 py-2 font-mono text-green-300 break-all">
+              <td
+                class="px-4 py-2 font-mono break-all"
+                [class.text-green-300]="selectedAddressType === 'p2pkh'"
+                [class.text-blue-300]="selectedAddressType === 'p2sh_p2wpkh'"
+                [class.text-purple-300]="selectedAddressType === 'p2wpkh'"
+              >
                 {{ address }}
               </td>
               <td class="px-4 py-2 text-right font-mono text-zinc-200">

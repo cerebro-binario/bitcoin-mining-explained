@@ -42,6 +42,9 @@ export class UserComponent {
   showingKeys: boolean[] = [];
   addressKeys: Keys[] = [];
 
+  // Tipo de endereço selecionado
+  selectedAddressType: 'p2pkh' | 'p2sh_p2wpkh' | 'p2wpkh' = 'p2wpkh';
+
   constructor(public keyService: KeyService) {}
 
   get wallet() {
@@ -50,7 +53,9 @@ export class UserComponent {
 
   get addresses(): string[] {
     if (!this.user.wallet?.addresses?.length) return [];
-    return this.user.wallet.addresses.map((addr) => addr.p2wpkh);
+    return this.user.wallet.addresses.map(
+      (addr) => addr[this.selectedAddressType]
+    );
   }
 
   gerarMaisEnderecos() {
@@ -231,5 +236,10 @@ export class UserComponent {
   copyToClipboard(text: string | undefined): void {
     if (!text) return;
     navigator.clipboard.writeText(text);
+  }
+
+  // Método para alterar o tipo de endereço
+  changeAddressType(type: 'p2pkh' | 'p2sh_p2wpkh' | 'p2wpkh'): void {
+    this.selectedAddressType = type;
   }
 }
