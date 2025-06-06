@@ -79,12 +79,12 @@ export class BitcoinNetworkService {
     if (isMiner) {
       const seed = this.keyService.generateSeed();
       const { priv, pub } = this.keyService.deriveKeysFromSeed(seed)[0];
-      const legacy = KeyService.deriveBitcoinAddress(pub);
-      const p2sh = KeyService.deriveP2SH_P2WPKH(pub);
-      const bech32 = KeyService.deriveBech32(pub);
+      const bip44 = this.keyService.generateBitcoinAddress(pub, 'bip44');
+      const bip49 = this.keyService.generateBitcoinAddress(pub, 'bip49');
+      const bip84 = this.keyService.generateBitcoinAddress(pub, 'bip84');
       node.seed = seed;
       node.keys = { priv, pub };
-      node.miningAddress = bech32; // Usar Bech32 como padrão
+      node.miningAddress = bip84;
     }
 
     this.nodes.push(node);

@@ -21,9 +21,9 @@ import { KeyService } from '../../../../../services/key.service';
 interface AddressRow {
   id: string;
   keys: Keys;
-  legacy: { address: string; balance: number; utxos: any[] };
-  p2sh: { address: string; balance: number; utxos: any[] };
-  bech32: { address: string; balance: number; utxos: any[] };
+  bip44: { address: string; balance: number; utxos: any[] };
+  bip49: { address: string; balance: number; utxos: any[] };
+  bip84: { address: string; balance: number; utxos: any[] };
   isMine?: boolean;
 }
 
@@ -207,9 +207,9 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
       this.addresses = [];
       for (const [address, data] of Object.entries(this.node.balances)) {
         if (!data || !data.balance || data.balance === 0) continue;
-        let addressType: 'legacy' | 'p2sh' | 'bech32' = 'legacy';
-        if (address.startsWith('3')) addressType = 'p2sh';
-        else if (address.startsWith('bc1')) addressType = 'bech32';
+        let addressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
+        if (address.startsWith('3')) addressType = 'bip49';
+        else if (address.startsWith('bc1')) addressType = 'bip84';
         const isMine = !!(
           data.keys &&
           data.keys.priv &&
@@ -218,9 +218,9 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         const addressRow: AddressRow = {
           id: address,
           keys: data.keys || { priv: '', pub: '' },
-          legacy: { address: '', balance: 0, utxos: [] },
-          p2sh: { address: '', balance: 0, utxos: [] },
-          bech32: { address: '', balance: 0, utxos: [] },
+          bip44: { address: '', balance: 0, utxos: [] },
+          bip49: { address: '', balance: 0, utxos: [] },
+          bip84: { address: '', balance: 0, utxos: [] },
           isMine,
         };
         addressRow[addressType] = {
@@ -233,8 +233,8 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
       // Ordenação para with-balance
       if (this.sortField === 'saldo') {
         this.addresses.sort((a, b) => {
-          const saldoA = a.legacy.balance + a.p2sh.balance + a.bech32.balance;
-          const saldoB = b.legacy.balance + b.p2sh.balance + b.bech32.balance;
+          const saldoA = a.bip44.balance + a.bip49.balance + a.bip84.balance;
+          const saldoB = b.bip44.balance + b.bip49.balance + b.bip84.balance;
           return this.sortOrder === 1 ? saldoA - saldoB : saldoB - saldoA;
         });
       }
@@ -254,29 +254,29 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         const idx = start + i;
         const priv = idx.toString(16).padStart(64, '0');
         const pub = KeyService.derivePublicKey(priv);
-        const legacy = KeyService.deriveBitcoinAddress(pub);
-        const p2sh = KeyService.deriveP2SH_P2WPKH(pub);
-        const bech32 = KeyService.deriveBech32(pub);
-        const legacyData = this.node.balances[legacy];
-        const p2shData = this.node.balances[p2sh];
-        const bech32Data = this.node.balances[bech32];
+        const bip44 = this.keyService.generateBitcoinAddress(pub, 'bip44');
+        const bip49 = this.keyService.generateBitcoinAddress(pub, 'bip49');
+        const bip84 = this.keyService.generateBitcoinAddress(pub, 'bip84');
+        const bip44Data = this.node.balances[bip44];
+        const bip49Data = this.node.balances[bip49];
+        const bip84Data = this.node.balances[bip84];
         this.addresses.push({
           id: priv,
           keys: { priv, pub },
-          legacy: {
-            address: legacy,
-            balance: legacyData?.balance || 0,
-            utxos: legacyData?.utxos || [],
+          bip44: {
+            address: bip44,
+            balance: bip44Data?.balance || 0,
+            utxos: bip44Data?.utxos || [],
           },
-          p2sh: {
-            address: p2sh,
-            balance: p2shData?.balance || 0,
-            utxos: p2shData?.utxos || [],
+          bip49: {
+            address: bip49,
+            balance: bip49Data?.balance || 0,
+            utxos: bip49Data?.utxos || [],
           },
-          bech32: {
-            address: bech32,
-            balance: bech32Data?.balance || 0,
-            utxos: bech32Data?.utxos || [],
+          bip84: {
+            address: bip84,
+            balance: bip84Data?.balance || 0,
+            utxos: bip84Data?.utxos || [],
           },
           isMine: priv === this.node.keys.priv,
         });

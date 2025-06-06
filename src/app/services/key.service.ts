@@ -170,11 +170,11 @@ export class KeyService {
 
     switch (format) {
       case 'bip44':
-        return KeyService.deriveBitcoinAddress(cleanPubKey);
+        return KeyService.deriveBip44Address(cleanPubKey);
       case 'bip49':
-        return KeyService.deriveP2SH_P2WPKH(cleanPubKey);
+        return KeyService.deriveBip49Address(cleanPubKey);
       case 'bip84':
-        return KeyService.deriveBech32(cleanPubKey);
+        return KeyService.deriveBip84Address(cleanPubKey);
       default:
         throw new Error('Formato de endereço inválido');
     }
@@ -213,7 +213,7 @@ export class KeyService {
   /**
    * Deriva o endereço Bitcoin P2PKH (mainnet) a partir da chave pública (hex)
    */
-  static deriveBitcoinAddress(pubHex: string): string {
+  private static deriveBip44Address(pubHex: string): string {
     const pubBytes = hexToBytes(pubHex);
     const sha = sha256(pubBytes);
     const ripe = ripemd160(sha);
@@ -230,7 +230,7 @@ export class KeyService {
   /**
    * Deriva o endereço Bitcoin P2SH-P2WPKH (compatível, começa com 3) a partir da chave pública (hex)
    */
-  static deriveP2SH_P2WPKH(pubHex: string): string {
+  private static deriveBip49Address(pubHex: string): string {
     // 1. PubKeyHash (hash160)
     const pubBytes = hexToBytes(pubHex);
     const pubKeyHash = ripemd160(sha256(pubBytes));
@@ -256,7 +256,7 @@ export class KeyService {
   /**
    * Deriva o endereço Bech32 (P2WPKH, nativo, começa com bc1) a partir da chave pública (hex)
    */
-  static deriveBech32(pubHex: string): string {
+  private static deriveBip84Address(pubHex: string): string {
     const pubBytes = hexToBytes(pubHex);
     const pubKeyHash = ripemd160(sha256(pubBytes));
     // witness version 0, program = pubKeyHash
