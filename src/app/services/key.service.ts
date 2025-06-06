@@ -121,7 +121,7 @@ export class KeyService {
   deriveKeysFromSeed(
     seed: string,
     count: number = 1,
-    path: string = "m/84'/0'/0'",
+    bipType: 'bip44' | 'bip49' | 'bip84' = 'bip84',
     startIndex: number = 0
   ): Keys[] {
     let seedBytes: Uint8Array;
@@ -139,9 +139,23 @@ export class KeyService {
 
     const keys: Keys[] = [];
 
-    // 3. Derive each child key with its full path
+    // 3. Derive each child key with its full path based on BIP type
     for (let i = 0; i < count; i++) {
-      const fullPath = `m/84'/0'/0'/0/${startIndex + i}`;
+      let fullPath: string;
+      switch (bipType) {
+        case 'bip44':
+          fullPath = `m/44'/0'/0'/0/${startIndex + i}`; // Legacy (P2PKH)
+          break;
+        case 'bip49':
+          fullPath = `m/49'/0'/0'/0/${startIndex + i}`; // SegWit Compatible (P2SH-P2WPKH)
+          break;
+        case 'bip84':
+          fullPath = `m/84'/0'/0'/0/${startIndex + i}`; // Native SegWit (P2WPKH)
+          break;
+        default:
+          throw new Error('Invalid BIP type');
+      }
+
       const child = root.derive(fullPath);
       if (!child.publicKey) throw new Error('Failed to derive public key');
 
@@ -172,12 +186,12 @@ export class KeyService {
   /**
    * Gera um endereço Bitcoin a partir da chave pública
    * @param publicKey Chave pública em formato hex
-   * @param format Formato do endereço (p2pkh, p2sh-p2wpkh, p2wpkh)
+   * @param format Formato do endereço (bip44, bip49, bip84)
    * @returns Endereço Bitcoin no formato especificado
    */
   generateBitcoinAddress(
     publicKey: string,
-    format: 'p2pkh' | 'p2sh-p2wpkh' | 'p2wpkh' = 'p2pkh'
+    format: 'bip44' | 'bip49' | 'bip84' = 'bip84'
   ): string {
     // Se for uma chave pública estendida (xpub), extrai a chave pública real
     let cleanPubKey = publicKey;
@@ -192,11 +206,11 @@ export class KeyService {
     }
 
     switch (format) {
-      case 'p2pkh':
+      case 'bip44':
         return KeyService.deriveBitcoinAddress(cleanPubKey);
-      case 'p2sh-p2wpkh':
+      case 'bip49':
         return KeyService.deriveP2SH_P2WPKH(cleanPubKey);
-      case 'p2wpkh':
+      case 'bip84':
         return KeyService.deriveBech32(cleanPubKey);
       default:
         throw new Error('Formato de endereço inválido');

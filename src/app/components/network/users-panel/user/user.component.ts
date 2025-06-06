@@ -1,12 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HDKey } from '@scure/bip32';
 import { mnemonicToSeedSync } from '@scure/bip39';
-import * as CryptoJS from 'crypto-js';
+import { Keys } from '../../../../models/node';
 import { User } from '../../../../models/user.model';
 import { KeyService } from '../../../../services/key.service';
-import { Keys } from '../../../../models/node';
 
 @Component({
   selector: 'app-user',
@@ -43,7 +41,7 @@ export class UserComponent {
   addressKeys: Keys[] = [];
 
   // Tipo de endereço selecionado
-  selectedAddressType: 'p2pkh' | 'p2sh_p2wpkh' | 'p2wpkh' = 'p2wpkh';
+  selectedAddressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
 
   constructor(public keyService: KeyService) {}
 
@@ -52,9 +50,10 @@ export class UserComponent {
   }
 
   get addresses(): string[] {
-    if (!this.user.wallet?.addresses?.length) return [];
-    return this.user.wallet.addresses.map(
-      (addr) => addr[this.selectedAddressType]
+    return (
+      this.user.wallet?.addresses?.[this.selectedAddressType]?.map(
+        (addr) => addr.address
+      ) || []
     );
   }
 
@@ -63,39 +62,84 @@ export class UserComponent {
 
     const mnemonic = this.user.wallet.seed.join(' ');
     const passphrase = this.user.wallet.seedPassphrase || '';
-    const currentCount = this.user.wallet.addresses?.length || 0;
+    const currentCount =
+      this.user.wallet?.addresses?.[this.selectedAddressType]?.length || 0;
 
     try {
       // Converte mnemônico para seed usando PBKDF2
       const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
       const seed = KeyService.bytesToHex(seedBytes);
 
-      // Deriva a próxima chave usando BIP84, começando do índice atual
-      const keys = this.keyService.deriveKeysFromSeed(
+      // Deriva as chaves para cada tipo de endereço usando seus respectivos BIPs
+      const legacyKeys = this.keyService.deriveKeysFromSeed(
         seed,
         1,
-        "m/84'/0'/0'",
+        'bip44',
+        currentCount
+      );
+      const segwitKeys = this.keyService.deriveKeysFromSeed(
+        seed,
+        1,
+        'bip49',
+        currentCount
+      );
+      const nativeSegwitKeys = this.keyService.deriveKeysFromSeed(
+        seed,
+        1,
+        'bip84',
         currentCount
       );
 
-      // Gera o endereço com todos os formatos
-      const newAddresses = keys.map((key) => ({
-        privateKey: key.priv,
-        publicKey: key.pub,
-        path: key.path || '',
-        p2pkh: this.keyService.generateBitcoinAddress(key.pub, 'p2pkh'),
-        p2sh_p2wpkh: this.keyService.generateBitcoinAddress(
-          key.pub,
-          'p2sh-p2wpkh'
-        ),
-        p2wpkh: this.keyService.generateBitcoinAddress(key.pub, 'p2wpkh'),
-      }));
+      // Gera o endereço com todos os formatos usando as chaves corretas
+      const newBip44Addresses = [
+        {
+          privateKey: legacyKeys[0].priv,
+          publicKey: legacyKeys[0].pub,
+          path: legacyKeys[0].path || `m/44'/0'/0'/0/${currentCount}`,
+          address: this.keyService.generateBitcoinAddress(
+            legacyKeys[0].pub,
+            'bip44'
+          ),
+        },
+      ];
+      const newBip49Addresses = [
+        {
+          privateKey: segwitKeys[0].priv,
+          publicKey: segwitKeys[0].pub,
+          path: segwitKeys[0].path || `m/49'/0'/0'/0/${currentCount}`,
+          address: this.keyService.generateBitcoinAddress(
+            segwitKeys[0].pub,
+            'bip49'
+          ),
+        },
+      ];
+      const newBip84Addresses = [
+        {
+          privateKey: nativeSegwitKeys[0].priv, // Usamos a chave do BIP84 como principal
+          publicKey: nativeSegwitKeys[0].pub,
+          path: nativeSegwitKeys[0].path || `m/84'/0'/0'/0/${currentCount}`, // Garante que path sempre existe
+          address: this.keyService.generateBitcoinAddress(
+            nativeSegwitKeys[0].pub,
+            'bip84'
+          ),
+        },
+      ];
 
       // Adiciona o novo endereço à lista
-      this.user.wallet.addresses = [
-        ...(this.user.wallet.addresses || []),
-        ...newAddresses,
-      ];
+      this.user.wallet.addresses = {
+        bip44: [
+          ...(this.user.wallet.addresses.bip44 || []),
+          ...newBip44Addresses,
+        ],
+        bip49: [
+          ...(this.user.wallet.addresses.bip49 || []),
+          ...newBip49Addresses,
+        ],
+        bip84: [
+          ...(this.user.wallet.addresses.bip84 || []),
+          ...newBip84Addresses,
+        ],
+      };
     } catch (error) {
       console.error('Erro ao gerar novo endereço:', error);
     }
@@ -106,7 +150,11 @@ export class UserComponent {
     this.user.wallet.step = 'show-seed';
     this.user.wallet.seed = this.keyService.generateSeed().split(' ');
     this.user.wallet.seedPassphrase = '';
-    this.user.wallet.addresses = [];
+    this.user.wallet.addresses = {
+      bip44: [],
+      bip49: [],
+      bip84: [],
+    };
     this.seedConfirmed = false;
   }
 
@@ -159,21 +207,31 @@ export class UserComponent {
       );
       const seed = KeyService.bytesToHex(seedBytes);
 
-      // Deriva a primeira chave usando BIP84
-      const keys = this.keyService.deriveKeysFromSeed(seed, 1, "m/84'/0'/0'");
+      // Deriva a primeira chave usando BIP44, BIP49 e BIP84
+      const bip84Keys = this.keyService.deriveKeysFromSeed(seed, 1, 'bip84');
+      const bip44Keys = this.keyService.deriveKeysFromSeed(seed, 1, 'bip44');
+      const bip49Keys = this.keyService.deriveKeysFromSeed(seed, 1, 'bip49');
 
-      // Gera o endereço com todos os formatos
-      this.user.wallet.addresses = keys.map((key) => ({
-        privateKey: key.priv,
-        publicKey: key.pub,
-        path: key.path || '',
-        p2pkh: this.keyService.generateBitcoinAddress(key.pub, 'p2pkh'),
-        p2sh_p2wpkh: this.keyService.generateBitcoinAddress(
-          key.pub,
-          'p2sh-p2wpkh'
-        ),
-        p2wpkh: this.keyService.generateBitcoinAddress(key.pub, 'p2wpkh'),
-      }));
+      this.user.wallet.addresses = {
+        bip44: bip44Keys.map((key) => ({
+          privateKey: key.priv,
+          publicKey: key.pub,
+          path: key.path || '',
+          address: this.keyService.generateBitcoinAddress(key.pub, 'bip44'),
+        })),
+        bip49: bip49Keys.map((key) => ({
+          privateKey: key.priv,
+          publicKey: key.pub,
+          path: key.path || '',
+          address: this.keyService.generateBitcoinAddress(key.pub, 'bip49'),
+        })),
+        bip84: bip84Keys.map((key) => ({
+          privateKey: key.priv,
+          publicKey: key.pub,
+          path: key.path || '',
+          address: this.keyService.generateBitcoinAddress(key.pub, 'bip84'),
+        })),
+      };
     } catch (error) {
       console.error('Erro ao gerar primeiro endereço:', error);
     }
@@ -225,7 +283,11 @@ export class UserComponent {
 
   // Métodos para gerenciar a exibição das chaves
   toggleAddressKeys(index: number): void {
-    if (!this.user.wallet?.addresses?.[index]) return;
+    if (
+      !this.user.wallet?.addresses?.[this.selectedAddressType]?.[index] ||
+      !this.showingKeys[index]
+    )
+      return;
     this.showingKeys[index] = !this.showingKeys[index];
   }
 
@@ -239,7 +301,7 @@ export class UserComponent {
   }
 
   // Método para alterar o tipo de endereço
-  changeAddressType(type: 'p2pkh' | 'p2sh_p2wpkh' | 'p2wpkh'): void {
+  changeAddressType(type: 'bip44' | 'bip49' | 'bip84'): void {
     this.selectedAddressType = type;
   }
 }

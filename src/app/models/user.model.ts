@@ -4,9 +4,7 @@ export interface BitcoinAddress {
   publicKey: string;
 
   // Endereços em diferentes formatos
-  p2pkh: string; // Legacy (1...)
-  p2sh_p2wpkh: string; // SegWit Compatível (3...)
-  p2wpkh: string; // Native SegWit (bc1...)
+  address: string;
 
   // Caminho de derivação
   path: string;
@@ -23,7 +21,11 @@ export interface UserWallet {
   seed: string[];
   seedPassphrase: string;
   passphrase: string;
-  addresses: BitcoinAddress[];
+  addresses: {
+    bip44: BitcoinAddress[];
+    bip49: BitcoinAddress[];
+    bip84: BitcoinAddress[];
+  };
 }
 
 export interface User {

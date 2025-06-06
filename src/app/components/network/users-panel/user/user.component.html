@@ -190,33 +190,33 @@
           <button
             type="button"
             class="px-3 py-1 rounded text-sm transition"
-            [class.bg-green-600]="selectedAddressType === 'p2pkh'"
-            [class.text-white]="selectedAddressType === 'p2pkh'"
-            [class.bg-zinc-700]="selectedAddressType !== 'p2pkh'"
-            [class.text-zinc-300]="selectedAddressType !== 'p2pkh'"
-            (click)="changeAddressType('p2pkh')"
+            [class.bg-green-600]="selectedAddressType === 'bip44'"
+            [class.text-white]="selectedAddressType === 'bip44'"
+            [class.bg-zinc-700]="selectedAddressType !== 'bip44'"
+            [class.text-zinc-300]="selectedAddressType !== 'bip44'"
+            (click)="changeAddressType('bip44')"
           >
             Legacy
           </button>
           <button
             type="button"
             class="px-3 py-1 rounded text-sm transition"
-            [class.bg-blue-600]="selectedAddressType === 'p2sh_p2wpkh'"
-            [class.text-white]="selectedAddressType === 'p2sh_p2wpkh'"
-            [class.bg-zinc-700]="selectedAddressType !== 'p2sh_p2wpkh'"
-            [class.text-zinc-300]="selectedAddressType !== 'p2sh_p2wpkh'"
-            (click)="changeAddressType('p2sh_p2wpkh')"
+            [class.bg-blue-600]="selectedAddressType === 'bip49'"
+            [class.text-white]="selectedAddressType === 'bip49'"
+            [class.bg-zinc-700]="selectedAddressType !== 'bip49'"
+            [class.text-zinc-300]="selectedAddressType !== 'bip49'"
+            (click)="changeAddressType('bip49')"
           >
             SegWit
           </button>
           <button
             type="button"
             class="px-3 py-1 rounded text-sm transition"
-            [class.bg-purple-600]="selectedAddressType === 'p2wpkh'"
-            [class.text-white]="selectedAddressType === 'p2wpkh'"
-            [class.bg-zinc-700]="selectedAddressType !== 'p2wpkh'"
-            [class.text-zinc-300]="selectedAddressType !== 'p2wpkh'"
-            (click)="changeAddressType('p2wpkh')"
+            [class.bg-purple-600]="selectedAddressType === 'bip84'"
+            [class.text-white]="selectedAddressType === 'bip84'"
+            [class.bg-zinc-700]="selectedAddressType !== 'bip84'"
+            [class.text-zinc-300]="selectedAddressType !== 'bip84'"
+            (click)="changeAddressType('bip84')"
           >
             Native SegWit
           </button>
@@ -240,9 +240,9 @@
               <td class="px-4 py-2 text-zinc-500 font-mono">{{ i + 1 }}</td>
               <td
                 class="px-4 py-2 font-mono break-all"
-                [class.text-green-300]="selectedAddressType === 'p2pkh'"
-                [class.text-blue-300]="selectedAddressType === 'p2sh_p2wpkh'"
-                [class.text-purple-300]="selectedAddressType === 'p2wpkh'"
+                [class.text-green-300]="selectedAddressType === 'bip44'"
+                [class.text-blue-300]="selectedAddressType === 'bip49'"
+                [class.text-purple-300]="selectedAddressType === 'bip84'"
               >
                 {{ address }}
               </td>
@@ -292,10 +292,10 @@
                   <div
                     class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all"
                   >
-                    {{ user.wallet?.addresses?.[i]?.privateKey }}
+                    {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.privateKey }}
                   </div>
                   <button
-                    (click)="copyToClipboard(user.wallet?.addresses?.[i]?.privateKey)"
+                    (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.privateKey)"
                     class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                     title="Copiar chave privada"
                   >
@@ -312,10 +312,10 @@
                   <div
                     class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all"
                   >
-                    {{ user.wallet?.addresses?.[i]?.publicKey }}
+                    {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.publicKey }}
                   </div>
                   <button
-                    (click)="copyToClipboard(user.wallet?.addresses?.[i]?.publicKey)"
+                    (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.publicKey)"
                     class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                     title="Copiar chave pública"
                   >
@@ -333,10 +333,10 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all"
                     >
-                      {{ user.wallet?.addresses?.[i]?.p2pkh }}
+                      {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.address }}
                     </div>
                     <button
-                      (click)="copyToClipboard(user.wallet?.addresses?.[i]?.p2pkh)"
+                      (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.address)"
                       class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                       title="Copiar endereço Legacy"
                     >
@@ -347,10 +347,10 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all"
                     >
-                      {{ user.wallet?.addresses?.[i]?.p2sh_p2wpkh }}
+                      {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.address }}
                     </div>
                     <button
-                      (click)="copyToClipboard(user.wallet?.addresses?.[i]?.p2sh_p2wpkh)"
+                      (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.address)"
                       class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                       title="Copiar endereço SegWit Compatível"
                     >
@@ -361,10 +361,10 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-purple-300 break-all"
                     >
-                      {{ user.wallet?.addresses?.[i]?.p2wpkh }}
+                      {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.address }}
                     </div>
                     <button
-                      (click)="copyToClipboard(user.wallet?.addresses?.[i]?.p2wpkh)"
+                      (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.address)"
                       class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                       title="Copiar endereço Native SegWit"
                     >
