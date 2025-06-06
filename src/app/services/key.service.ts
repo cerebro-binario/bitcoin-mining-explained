@@ -8,6 +8,7 @@ import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
 import { Keys } from '../models/node';
+import { bytesToHex, hexToBinary, hexToBytes } from '../utils/tools';
 
 @Injectable({
   providedIn: 'root',
@@ -18,10 +19,6 @@ export class KeyService {
   constructor() {}
 
   generateSeed(): string {
-    return this.generateMnemonic();
-  }
-
-  private generateMnemonic(): string {
     // 1. Generate 128 bits (16 bytes) of entropy
     const entropy = this.generateEntropy(16);
 
@@ -36,7 +33,7 @@ export class KeyService {
     const checksum = (firstByte >> 4) & 0x0f;
 
     // 4. Convert entropy to binary string (128 bits)
-    const entropyBinary = this.hexToBinary(entropy);
+    const entropyBinary = hexToBinary(entropy);
 
     // 5. Convert checksum to 4-bit binary string
     const checksumBinary = checksum.toString(2).padStart(4, '0');
@@ -65,40 +62,6 @@ export class KeyService {
     const words = indices.map((index) => this.WORDLIST[index]);
     const mnemonic = words.join(' ');
     return mnemonic;
-  }
-
-  private writeBits(
-    data: Uint8Array,
-    startBit: number,
-    length: number,
-    value: number
-  ): void {
-    let remainingBits = length;
-    let currentBit = startBit;
-
-    while (remainingBits > 0) {
-      const currentByte = Math.floor(currentBit / 8);
-      const bitInByte = currentBit % 8;
-      const bitsToTake = Math.min(remainingBits, 8 - bitInByte);
-
-      const shift = 8 - bitInByte - bitsToTake;
-      const mask = (1 << bitsToTake) - 1;
-      const bits = (value >> (remainingBits - bitsToTake)) & mask;
-
-      data[currentByte] |= bits << shift;
-      remainingBits -= bitsToTake;
-      currentBit += bitsToTake;
-    }
-  }
-
-  private hexToBinary(hex: string): string {
-    return hex
-      .split('')
-      .map((char) => {
-        const binary = parseInt(char, 16).toString(2);
-        return binary.padStart(4, '0');
-      })
-      .join('');
   }
 
   private generateEntropy(bytes: number): string {
@@ -131,7 +94,7 @@ export class KeyService {
       seedBytes = mnemonicToSeedSync(seed);
     } else {
       // Se já for um seed em hex, converte para bytes
-      seedBytes = KeyService.hexToBytes(seed);
+      seedBytes = hexToBytes(seed);
     }
 
     // 2. Create HD wallet from seed
@@ -199,7 +162,7 @@ export class KeyService {
       const hdKey = HDKey.fromExtendedKey(publicKey);
       if (!hdKey.publicKey)
         throw new Error('Failed to get public key from extended key');
-      cleanPubKey = KeyService.bytesToHex(hdKey.publicKey);
+      cleanPubKey = bytesToHex(hdKey.publicKey);
     } else {
       // Remove o prefixo '0x' se existir
       cleanPubKey = publicKey.startsWith('0x') ? publicKey.slice(2) : publicKey;
@@ -228,25 +191,6 @@ export class KeyService {
     return keys;
   }
 
-  static padHex(num: number | bigint, length: number = 2): string {
-    return num.toString(16).padStart(length, '0');
-  }
-
-  static hexToBytes(hex: string): Uint8Array {
-    if (hex.length % 2 !== 0) throw new Error('Invalid hex string');
-    const arr = new Uint8Array(hex.length / 2);
-    for (let i = 0; i < hex.length; i += 2) {
-      arr[i / 2] = parseInt(hex.slice(i, i + 2), 16);
-    }
-    return arr;
-  }
-
-  static bytesToHex(bytes: Uint8Array): string {
-    return Array.from(bytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-  }
-
   /**
    * Gera uma chave privada válida (nunca zero, sempre 32 bytes)
    * @param index índice (começa do 0, mas nunca retorna zero)
@@ -261,16 +205,16 @@ export class KeyService {
    * Deriva a chave pública comprimida a partir da chave privada (hex)
    */
   static derivePublicKey(priv: string): string {
-    const privBytes = KeyService.hexToBytes(priv);
+    const privBytes = hexToBytes(priv);
     const pubBytes = secp256k1.getPublicKey(privBytes, true); // compressed
-    return KeyService.bytesToHex(pubBytes);
+    return bytesToHex(pubBytes);
   }
 
   /**
    * Deriva o endereço Bitcoin P2PKH (mainnet) a partir da chave pública (hex)
    */
   static deriveBitcoinAddress(pubHex: string): string {
-    const pubBytes = KeyService.hexToBytes(pubHex);
+    const pubBytes = hexToBytes(pubHex);
     const sha = sha256(pubBytes);
     const ripe = ripemd160(sha);
     const versioned = new Uint8Array(ripe.length + 1);
@@ -288,7 +232,7 @@ export class KeyService {
    */
   static deriveP2SH_P2WPKH(pubHex: string): string {
     // 1. PubKeyHash (hash160)
-    const pubBytes = KeyService.hexToBytes(pubHex);
+    const pubBytes = hexToBytes(pubHex);
     const pubKeyHash = ripemd160(sha256(pubBytes));
     // 2. ScriptSig: 0x00 0x14 <20 bytes pubKeyHash>
     const redeemScript = new Uint8Array(2 + pubKeyHash.length);
@@ -313,7 +257,7 @@ export class KeyService {
    * Deriva o endereço Bech32 (P2WPKH, nativo, começa com bc1) a partir da chave pública (hex)
    */
   static deriveBech32(pubHex: string): string {
-    const pubBytes = KeyService.hexToBytes(pubHex);
+    const pubBytes = hexToBytes(pubHex);
     const pubKeyHash = ripemd160(sha256(pubBytes));
     // witness version 0, program = pubKeyHash
     const words = bech32.toWords(pubKeyHash);

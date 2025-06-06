@@ -36,6 +36,25 @@ export function hexToDecimal(hex: string): string {
   return decimalValue.toString(); // Retorna o valor decimal como string
 }
 
+export function hexToBytes(hex: string): Uint8Array {
+  if (hex.length % 2 !== 0) throw new Error('Invalid hex string');
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    arr[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+  }
+  return arr;
+}
+
+export function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export function padHex(num: number | bigint, length: number = 2): string {
+  return num.toString(16).padStart(length, '0');
+}
+
 export function hashSHA256(data: string, enc: 'text' | 'hex' = 'text'): string {
   if (enc === 'text') {
     data = textToHex(data);

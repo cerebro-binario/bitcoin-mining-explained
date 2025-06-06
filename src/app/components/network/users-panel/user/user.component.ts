@@ -5,6 +5,7 @@ import { mnemonicToSeedSync } from '@scure/bip39';
 import { Keys } from '../../../../models/node';
 import { User } from '../../../../models/user.model';
 import { KeyService } from '../../../../services/key.service';
+import { bytesToHex } from '../../../../utils/tools';
 
 @Component({
   selector: 'app-user',
@@ -68,7 +69,7 @@ export class UserComponent {
     try {
       // Converte mnemônico para seed usando PBKDF2
       const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
-      const seed = KeyService.bytesToHex(seedBytes);
+      const seed = bytesToHex(seedBytes);
 
       // Deriva as chaves para cada tipo de endereço usando seus respectivos BIPs
       const legacyKeys = this.keyService.deriveKeysFromSeed(
@@ -205,7 +206,7 @@ export class UserComponent {
         mnemonic,
         this.user.wallet.seedPassphrase
       );
-      const seed = KeyService.bytesToHex(seedBytes);
+      const seed = bytesToHex(seedBytes);
 
       // Deriva a primeira chave usando BIP44, BIP49 e BIP84
       const bip84Keys = this.keyService.deriveKeysFromSeed(seed, 1, 'bip84');
