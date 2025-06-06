@@ -121,7 +121,8 @@ export class KeyService {
   deriveKeysFromSeed(
     seed: string,
     count: number = 1,
-    path: string = "m/84'/0'/0'"
+    path: string = "m/84'/0'/0'",
+    startIndex: number = 0
   ): Keys[] {
     let seedBytes: Uint8Array;
 
@@ -140,7 +141,7 @@ export class KeyService {
 
     // 3. Derive each child key with its full path
     for (let i = 0; i < count; i++) {
-      const fullPath = `m/84'/0'/0'/0/${i}`;
+      const fullPath = `m/84'/0'/0'/0/${startIndex + i}`;
       const child = root.derive(fullPath);
       if (!child.publicKey) throw new Error('Failed to derive public key');
 

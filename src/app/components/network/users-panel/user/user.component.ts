@@ -58,27 +58,27 @@ export class UserComponent {
     );
   }
 
-  gerarMaisEnderecos() {
+  deriveNextAddress() {
     if (!this.user.wallet?.seed?.length) return;
 
     const mnemonic = this.user.wallet.seed.join(' ');
     const passphrase = this.user.wallet.seedPassphrase || '';
     const currentCount = this.user.wallet.addresses?.length || 0;
-    const newCount = 10;
 
     try {
       // Converte mnemônico para seed usando PBKDF2
       const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
       const seed = KeyService.bytesToHex(seedBytes);
 
-      // Deriva as novas chaves usando BIP84
+      // Deriva a próxima chave usando BIP84, começando do índice atual
       const keys = this.keyService.deriveKeysFromSeed(
         seed,
-        newCount,
-        "m/84'/0'/0'"
+        1,
+        "m/84'/0'/0'",
+        currentCount
       );
 
-      // Gera os endereços para cada chave
+      // Gera o endereço com todos os formatos
       const newAddresses = keys.map((key) => ({
         privateKey: key.priv,
         publicKey: key.pub,
@@ -91,13 +91,13 @@ export class UserComponent {
         p2wpkh: this.keyService.generateBitcoinAddress(key.pub, 'p2wpkh'),
       }));
 
-      // Adiciona os novos endereços à lista
+      // Adiciona o novo endereço à lista
       this.user.wallet.addresses = [
         ...(this.user.wallet.addresses || []),
         ...newAddresses,
       ];
     } catch (error) {
-      console.error('Erro ao gerar mais endereços:', error);
+      console.error('Erro ao gerar novo endereço:', error);
     }
   }
 
