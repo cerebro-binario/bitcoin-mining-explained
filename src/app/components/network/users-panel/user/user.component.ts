@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { mnemonicToSeedSync } from '@scure/bip39';
 import { TableModule } from 'primeng/table';
 import { BitcoinAddress, User } from '../../../../models/user.model';
+import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { KeyService } from '../../../../services/key.service';
 import { bytesToHex } from '../../../../utils/tools';
 
@@ -43,7 +44,10 @@ export class UserComponent {
   // Tipo de endereço selecionado
   selectedAddressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
 
-  constructor(public keyService: KeyService) {}
+  constructor(
+    public keyService: KeyService,
+    private networkService: BitcoinNetworkService
+  ) {}
 
   deriveNextAddress() {
     if (!this.user.wallet?.seed?.length) return;
@@ -53,21 +57,19 @@ export class UserComponent {
     const currentCount = this.user.wallet?.addresses?.length || 0;
 
     try {
-      // Converte mnemônico para seed usando PBKDF2
       const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
       const seed = bytesToHex(seedBytes);
 
-      // Gera o endereço com todos os formatos usando as chaves corretas
       const newAddresses = this.keyService.deriveBitcoinAddresses(
         seed,
         1,
         currentCount
       );
-      // Adiciona o novo endereço à lista
       this.user.wallet.addresses = [
         ...this.user.wallet.addresses,
         ...newAddresses,
       ];
+      this.networkService.updateUser(this.user);
     } catch (error) {
       console.error('Erro ao gerar novo endereço:', error);
     }
@@ -80,6 +82,7 @@ export class UserComponent {
     this.user.wallet.seedPassphrase = '';
     this.user.wallet.addresses = [];
     this.seedConfirmed = false;
+    this.networkService.updateUser(this.user);
   }
 
   importWallet() {
@@ -118,11 +121,9 @@ export class UserComponent {
 
   setSeedPassphrase() {
     if (!this.user.wallet) return;
-    // Não é obrigatório, pode ser vazio
     this.user.wallet.seedPassphrase = this.seedPassphrase || '';
     this.user.wallet.step = 'set-passphrase';
 
-    // Gera o primeiro endereço
     try {
       const mnemonic = this.user.wallet.seed.join(' ');
       const seedBytes = mnemonicToSeedSync(
@@ -131,11 +132,11 @@ export class UserComponent {
       );
       const seed = bytesToHex(seedBytes);
 
-      // Deriva a primeira chave usando BIP44, BIP49 e BIP84
       this.user.wallet.addresses = this.keyService.deriveBitcoinAddresses(
         seed,
         1
       );
+      this.networkService.updateUser(this.user);
     } catch (error) {
       console.error('Erro ao gerar primeiro endereço:', error);
     }
@@ -162,6 +163,7 @@ export class UserComponent {
     this.passphrase = '';
     this.passphraseConfirm = '';
     this.passphraseError = '';
+    this.networkService.updateUser(this.user);
   }
 
   get walletStep() {

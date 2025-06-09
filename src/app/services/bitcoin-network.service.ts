@@ -2,16 +2,22 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { MinersStats } from '../components/network/miners-panel/miners-panel.component';
 import { Node } from '../models/node';
+import { User } from '../models/user.model';
 import { KeyService } from './key.service';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
   private readonly nodesSubject = new BehaviorSubject<Node[]>([]);
+  private readonly usersSubject = new BehaviorSubject<User[]>([]);
 
   nodes$ = this.nodesSubject.asObservable();
   nodes: Node[] = this.nodesSubject.getValue();
 
-  private nextId = 1;
+  users$ = this.usersSubject.asObservable();
+  users: User[] = this.usersSubject.getValue();
+
+  private nextNodeId = 1;
+  private nextUserId = 1;
 
   private miningTimeout: any;
 
@@ -67,7 +73,7 @@ export class BitcoinNetworkService {
     isCollapsed: boolean = false
   ): Node {
     const node = new Node({
-      id: this.nextId++,
+      id: this.nextNodeId++,
       isMiner,
       name,
       hashRate,
@@ -178,6 +184,30 @@ export class BitcoinNetworkService {
     this.frameTimes.push(frameTime);
     if (this.frameTimes.length > this.FRAME_TIME_HISTORY_SIZE) {
       this.frameTimes.shift();
+    }
+  }
+
+  // User management methods
+  addUser(name: string): User {
+    const user: User = {
+      id: this.nextUserId++,
+      name,
+    };
+    this.users.push(user);
+    this.usersSubject.next(this.users);
+    return user;
+  }
+
+  removeUser(userId: number) {
+    this.users = this.users.filter((u) => u.id !== userId);
+    this.usersSubject.next(this.users);
+  }
+
+  updateUser(user: User) {
+    const index = this.users.findIndex((u) => u.id === user.id);
+    if (index !== -1) {
+      this.users[index] = user;
+      this.usersSubject.next(this.users);
     }
   }
 }

@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { UserComponent } from './user/user.component';
 import { User, UserWallet } from '../../../models/user.model';
+import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 
 @Component({
   selector: 'app-users-panel',
@@ -11,14 +12,25 @@ import { User, UserWallet } from '../../../models/user.model';
   imports: [CommonModule, ButtonModule, FormsModule, UserComponent],
   templateUrl: './users-panel.component.html',
 })
-export class UsersPanelComponent {
+export class UsersPanelComponent implements OnInit {
   users: User[] = [];
   selectedUser: User | null = null;
   userCount = 1;
 
+  constructor(private networkService: BitcoinNetworkService) {}
+
+  ngOnInit() {
+    this.networkService.users$.subscribe((users) => {
+      this.users = users;
+      if (users.length > 0 && !this.selectedUser) {
+        this.selectedUser = users[0];
+      }
+    });
+  }
+
   createUser() {
-    const id = this.userCount;
     const name = `Usuário #${this.userCount++}`;
+    const user = this.networkService.addUser(name);
     const wallet: UserWallet = {
       step: 'choose',
       seed: [],
@@ -26,8 +38,9 @@ export class UsersPanelComponent {
       passphrase: '',
       addresses: [],
     };
-    this.users.push({ id, name, wallet });
-    this.selectedUser = this.users[this.users.length - 1];
+    user.wallet = wallet;
+    this.networkService.updateUser(user);
+    this.selectedUser = user;
   }
 
   selectUser(user: User) {
