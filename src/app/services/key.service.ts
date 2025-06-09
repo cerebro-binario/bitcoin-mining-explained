@@ -164,12 +164,43 @@ export class KeyService {
       if (!child.publicKey) throw new Error('Failed to derive public key');
 
       // Get extended keys in BIP32 format
-      const xpriv = child.toJSON().xpriv;
-      const xpub = child.toJSON().xpub;
+      const { xpriv, xpub } = child.toJSON();
+      const cleanKeys = HDKey.fromExtendedKey(xpriv);
+
+      // Para a chave privada WIF:
+      // 1. Extrai a chave privada do xpriv (últimos 32 bytes)
+      const privKey = cleanKeys.privateKey;
+      if (!privKey) throw new Error('Failed to get private key');
+
+      // 2. Prepara os bytes para WIF:
+      // - 0x80 (versão mainnet)
+      // - chave privada (32 bytes)
+      // - 0x01 (flag de compressão)
+      const wifBytes = new Uint8Array(34);
+      wifBytes[0] = 0x80; // versão mainnet
+      wifBytes.set(privKey, 1);
+      wifBytes[33] = 0x01; // flag de compressão
+
+      // 3. Calcula o checksum (primeiros 4 bytes do SHA256(SHA256(wifBytes)))
+      const hash = sha256(sha256(wifBytes));
+      const checksum = hash.slice(0, 4);
+
+      // 4. Concatena tudo
+      const finalBytes = new Uint8Array(38);
+      finalBytes.set(wifBytes, 0);
+      finalBytes.set(checksum, 34);
+
+      // 5. Codifica em Base58
+      const priv = bs58.encode(finalBytes);
+
+      // Para a chave pública, já está no formato correto (hex comprimido)
+      const pub = cleanKeys.publicKey ? bytesToHex(cleanKeys.publicKey) : '';
 
       keys.push({
-        priv: xpriv,
-        pub: xpub,
+        xpriv,
+        xpub,
+        priv,
+        pub,
         path: fullPath,
       });
     }

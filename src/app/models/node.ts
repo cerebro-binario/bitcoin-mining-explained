@@ -45,6 +45,8 @@ export type Balances = {
 export interface Keys {
   priv: string;
   pub: string;
+  xpriv?: string;
+  xpub?: string;
   path?: string; // Caminho de derivação BIP32 (opcional para compatibilidade)
 }
 
