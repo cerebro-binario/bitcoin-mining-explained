@@ -124,3 +124,7 @@ export function shortenValue(value: string, size: number = 6): string {
 
   return `${value.slice(0, size)}...${value.slice(-size)}`;
 }
+
+export function zip<T>(...arrays: T[][]): T[][] {
+  return arrays[0].map((_, i) => arrays.map((arr) => arr[i]));
+}

@@ -234,7 +234,7 @@
           </thead>
           <tbody>
             <tr
-              *ngFor="let address of addresses; let i = index"
+              *ngFor="let address of user.wallet?.addresses; let i = index"
               class="border-b border-zinc-700 last:border-0"
             >
               <td class="px-4 py-2 text-zinc-500 font-mono">{{ i + 1 }}</td>
@@ -244,7 +244,7 @@
                 [class.text-blue-300]="selectedAddressType === 'bip49'"
                 [class.text-purple-300]="selectedAddressType === 'bip84'"
               >
-                {{ address }}
+                {{ address[selectedAddressType].address }}
               </td>
               <td class="px-4 py-2 text-right font-mono text-zinc-200">
                 0.00000000
@@ -268,7 +268,7 @@
       </div>
 
       <!-- Painel de chaves -->
-      <div
+      <!-- <div
         *ngIf="hasVisibleKeys()"
         class="mt-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
       >
@@ -292,10 +292,12 @@
                   <div
                     class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all"
                   >
-                    {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.privateKey }}
+                    {{ address[selectedAddressType].keys.priv }}
                   </div>
                   <button
-                    (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.privateKey)"
+                    (click)="
+                      copyToClipboard(address[selectedAddressType].keys.priv)
+                    "
                     class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                     title="Copiar chave privada"
                   >
@@ -312,10 +314,12 @@
                   <div
                     class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all"
                   >
-                    {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.publicKey }}
+                    {{ address[selectedAddressType].keys.pub }}
                   </div>
                   <button
-                    (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.publicKey)"
+                    (click)="
+                      copyToClipboard(address[selectedAddressType].keys.pub)
+                    "
                     class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                     title="Copiar chave pública"
                   >
@@ -333,10 +337,12 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all"
                     >
-                      {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.address }}
+                      {{ address[selectedAddressType].address }}
                     </div>
                     <button
-                      (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.address)"
+                      (click)="
+                        copyToClipboard(address[selectedAddressType].address)
+                      "
                       class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                       title="Copiar endereço Legacy"
                     >
@@ -347,10 +353,12 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all"
                     >
-                      {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.address }}
+                      {{ address[selectedAddressType].address }}
                     </div>
                     <button
-                      (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.address)"
+                      (click)="
+                        copyToClipboard(address[selectedAddressType].address)
+                      "
                       class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                       title="Copiar endereço SegWit Compatível"
                     >
@@ -361,10 +369,12 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-purple-300 break-all"
                     >
-                      {{ user.wallet?.addresses?.[selectedAddressType]?.[i]?.address }}
+                      {{ address[selectedAddressType].address }}
                     </div>
                     <button
-                      (click)="copyToClipboard(user.wallet?.addresses?.[selectedAddressType]?.[i]?.address)"
+                      (click)="
+                        copyToClipboard(address[selectedAddressType].address)
+                      "
                       class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
                       title="Copiar endereço Native SegWit"
                     >
@@ -376,7 +386,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <button
         class="mt-4 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow"

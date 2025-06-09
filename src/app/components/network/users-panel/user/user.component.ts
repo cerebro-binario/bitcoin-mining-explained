@@ -2,8 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { mnemonicToSeedSync } from '@scure/bip39';
-import { Keys } from '../../../../models/node';
-import { User } from '../../../../models/user.model';
+import { BitcoinAddress, User } from '../../../../models/user.model';
 import { KeyService } from '../../../../services/key.service';
 import { bytesToHex } from '../../../../utils/tools';
 
@@ -39,7 +38,6 @@ export class UserComponent {
 
   // Propriedades para gerenciar a exibição das chaves
   showingKeys: boolean[] = [];
-  addressKeys: Keys[] = [];
 
   // Tipo de endereço selecionado
   selectedAddressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
@@ -50,97 +48,29 @@ export class UserComponent {
     return this.user.wallet;
   }
 
-  get addresses(): string[] {
-    return (
-      this.user.wallet?.addresses?.[this.selectedAddressType]?.map(
-        (addr) => addr.address
-      ) || []
-    );
-  }
-
   deriveNextAddress() {
     if (!this.user.wallet?.seed?.length) return;
 
     const mnemonic = this.user.wallet.seed.join(' ');
     const passphrase = this.user.wallet.seedPassphrase || '';
-    const currentCount =
-      this.user.wallet?.addresses?.[this.selectedAddressType]?.length || 0;
+    const currentCount = this.user.wallet?.addresses?.length || 0;
 
     try {
       // Converte mnemônico para seed usando PBKDF2
       const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
       const seed = bytesToHex(seedBytes);
 
-      // Deriva as chaves para cada tipo de endereço usando seus respectivos BIPs
-      const legacyKeys = this.keyService.deriveKeysFromSeed(
-        seed,
-        1,
-        'bip44',
-        currentCount
-      );
-      const segwitKeys = this.keyService.deriveKeysFromSeed(
-        seed,
-        1,
-        'bip49',
-        currentCount
-      );
-      const nativeSegwitKeys = this.keyService.deriveKeysFromSeed(
-        seed,
-        1,
-        'bip84',
-        currentCount
-      );
-
       // Gera o endereço com todos os formatos usando as chaves corretas
-      const newBip44Addresses = [
-        {
-          privateKey: legacyKeys[0].priv,
-          publicKey: legacyKeys[0].pub,
-          path: legacyKeys[0].path || `m/44'/0'/0'/0/${currentCount}`,
-          address: this.keyService.deriveBitcoinAddress(
-            legacyKeys[0].pub,
-            'bip44'
-          ),
-        },
-      ];
-      const newBip49Addresses = [
-        {
-          privateKey: segwitKeys[0].priv,
-          publicKey: segwitKeys[0].pub,
-          path: segwitKeys[0].path || `m/49'/0'/0'/0/${currentCount}`,
-          address: this.keyService.deriveBitcoinAddress(
-            segwitKeys[0].pub,
-            'bip49'
-          ),
-        },
-      ];
-      const newBip84Addresses = [
-        {
-          privateKey: nativeSegwitKeys[0].priv, // Usamos a chave do BIP84 como principal
-          publicKey: nativeSegwitKeys[0].pub,
-          path: nativeSegwitKeys[0].path || `m/84'/0'/0'/0/${currentCount}`, // Garante que path sempre existe
-          address: this.keyService.deriveBitcoinAddress(
-            nativeSegwitKeys[0].pub,
-            'bip84'
-          ),
-        },
-      ];
-
+      const newAddresses = this.keyService.deriveBitcoinAddresses(
+        seed,
+        1,
+        currentCount
+      );
       // Adiciona o novo endereço à lista
-      this.user.wallet.addresses = {
-        bip44: [
-          ...(this.user.wallet.addresses.bip44 || []),
-          ...newBip44Addresses,
-        ],
-        bip49: [
-          ...(this.user.wallet.addresses.bip49 || []),
-          ...newBip49Addresses,
-        ],
-        bip84: [
-          ...(this.user.wallet.addresses.bip84 || []),
-          ...newBip84Addresses,
-        ],
-      };
+      this.user.wallet.addresses = [
+        ...this.user.wallet.addresses,
+        ...newAddresses,
+      ];
     } catch (error) {
       console.error('Erro ao gerar novo endereço:', error);
     }
@@ -151,11 +81,7 @@ export class UserComponent {
     this.user.wallet.step = 'show-seed';
     this.user.wallet.seed = this.keyService.generateSeed().split(' ');
     this.user.wallet.seedPassphrase = '';
-    this.user.wallet.addresses = {
-      bip44: [],
-      bip49: [],
-      bip84: [],
-    };
+    this.user.wallet.addresses = [];
     this.seedConfirmed = false;
   }
 
@@ -209,30 +135,10 @@ export class UserComponent {
       const seed = bytesToHex(seedBytes);
 
       // Deriva a primeira chave usando BIP44, BIP49 e BIP84
-      const bip84Keys = this.keyService.deriveKeysFromSeed(seed, 1, 'bip84');
-      const bip44Keys = this.keyService.deriveKeysFromSeed(seed, 1, 'bip44');
-      const bip49Keys = this.keyService.deriveKeysFromSeed(seed, 1, 'bip49');
-
-      this.user.wallet.addresses = {
-        bip44: bip44Keys.map((key) => ({
-          privateKey: key.priv,
-          publicKey: key.pub,
-          path: key.path || '',
-          address: this.keyService.deriveBitcoinAddress(key.pub, 'bip44'),
-        })),
-        bip49: bip49Keys.map((key) => ({
-          privateKey: key.priv,
-          publicKey: key.pub,
-          path: key.path || '',
-          address: this.keyService.deriveBitcoinAddress(key.pub, 'bip49'),
-        })),
-        bip84: bip84Keys.map((key) => ({
-          privateKey: key.priv,
-          publicKey: key.pub,
-          path: key.path || '',
-          address: this.keyService.deriveBitcoinAddress(key.pub, 'bip84'),
-        })),
-      };
+      this.user.wallet.addresses = this.keyService.deriveBitcoinAddresses(
+        seed,
+        1
+      );
     } catch (error) {
       console.error('Erro ao gerar primeiro endereço:', error);
     }
@@ -284,11 +190,7 @@ export class UserComponent {
 
   // Métodos para gerenciar a exibição das chaves
   toggleAddressKeys(index: number): void {
-    if (
-      !this.user.wallet?.addresses?.[this.selectedAddressType]?.[index] ||
-      !this.showingKeys[index]
-    )
-      return;
+    if (!this.showingKeys[index]) return;
     this.showingKeys[index] = !this.showingKeys[index];
   }
 

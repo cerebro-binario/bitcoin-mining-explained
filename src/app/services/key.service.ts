@@ -8,6 +8,7 @@ import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
 import { Keys } from '../models/node';
+import { BipType, BitcoinAddress } from '../models/user.model';
 import {
   bytesToBinary,
   bytesToHex,
@@ -15,6 +16,7 @@ import {
   hexToBytes,
   padBinary,
   padHex,
+  zip,
 } from '../utils/tools';
 
 @Injectable({
@@ -68,10 +70,62 @@ export class KeyService {
     return mnemonic;
   }
 
-  deriveKeysFromSeed(
+  deriveBitcoinAddresses(
+    seed: string,
+    count: number = 10,
+    startIndex: number = 0
+  ): BitcoinAddress[] {
+    const bip44Keys = this.deriveKeysFromSeed(seed, count, 'bip44', startIndex);
+    const bip49Keys = this.deriveKeysFromSeed(seed, count, 'bip49', startIndex);
+    const bip84Keys = this.deriveKeysFromSeed(seed, count, 'bip84', startIndex);
+
+    const keys = zip(bip44Keys, bip49Keys, bip84Keys);
+
+    return keys.map(([bip44Keys, bip49Keys, bip84Keys]) => {
+      const bip44Address = this.deriveBitcoinAddress(bip44Keys.pub, 'bip44');
+      const bip49Address = this.deriveBitcoinAddress(bip49Keys.pub, 'bip49');
+      const bip84Address = this.deriveBitcoinAddress(bip84Keys.pub, 'bip84');
+
+      return {
+        bip44: {
+          keys: bip44Keys,
+          address: bip44Address,
+        },
+        bip49: {
+          keys: bip49Keys,
+          address: bip49Address,
+        },
+        bip84: {
+          keys: bip84Keys,
+          address: bip84Address,
+        },
+      };
+    });
+  }
+
+  deriveBitcoinAddressesFromSequentialPrivateKey(
+    count: number = 1,
+    startIndex: number = 0
+  ): BitcoinAddress[] {
+    const keys = this.generateSequentialKeys(startIndex, count);
+
+    return keys.map((key) => {
+      const bip44Address = this.deriveBitcoinAddress(key.pub, 'bip44');
+      const bip49Address = this.deriveBitcoinAddress(key.pub, 'bip49');
+      const bip84Address = this.deriveBitcoinAddress(key.pub, 'bip84');
+
+      return {
+        bip44: { keys: key, address: bip44Address },
+        bip49: { keys: key, address: bip49Address },
+        bip84: { keys: key, address: bip84Address },
+      };
+    });
+  }
+
+  private deriveKeysFromSeed(
     seed: string,
     count: number = 1,
-    bipType: 'bip44' | 'bip49' | 'bip84' = 'bip84',
+    bipType: BipType = 'bip84',
     startIndex: number = 0
   ): Keys[] {
     let seedBytes: Uint8Array;
@@ -123,7 +177,7 @@ export class KeyService {
     return keys;
   }
 
-  deriveKeysFromPrivateKey(privateKey: string): Keys {
+  private deriveKeysFromPrivateKey(privateKey: string): Keys {
     const cleanPrivKey = privateKey.startsWith('0x')
       ? privateKey.slice(2)
       : privateKey;
@@ -139,7 +193,7 @@ export class KeyService {
    * @param format Formato do endereço (bip44, bip49, bip84)
    * @returns Endereço Bitcoin no formato especificado
    */
-  deriveBitcoinAddress(
+  private deriveBitcoinAddress(
     publicKey: string,
     format: 'bip44' | 'bip49' | 'bip84' = 'bip84'
   ): string {
@@ -168,7 +222,10 @@ export class KeyService {
   }
 
   // Função para gerar chaves sequencialmente a partir de 0x0000...
-  generateSequentialKeys(startIndex: number = 0, count: number = 10): Keys[] {
+  private generateSequentialKeys(
+    startIndex: number = 0,
+    count: number = 10
+  ): Keys[] {
     const keys: Keys[] = [];
     for (let i = 0; i < count; i++) {
       const privateKey = '0x' + padHex(startIndex + i, 64);

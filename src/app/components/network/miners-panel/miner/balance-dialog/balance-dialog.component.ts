@@ -246,23 +246,23 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
       // Modo 'all'
       const pageSize = BigInt(this.pageSize);
       const start = this.currentPage * pageSize + 1n;
-      const N = BigInt(
-        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-      );
       this.addresses = [];
-      for (let i = 0n; i < pageSize && start + i < N; i++) {
-        const idx = start + i;
-        const priv = idx.toString(16).padStart(64, '0');
-        const pub = KeyService.derivePublicKey(priv);
-        const bip44 = this.keyService.deriveBitcoinAddress(pub, 'bip44');
-        const bip49 = this.keyService.deriveBitcoinAddress(pub, 'bip49');
-        const bip84 = this.keyService.deriveBitcoinAddress(pub, 'bip84');
+      const addresses =
+        this.keyService.deriveBitcoinAddressesFromSequentialPrivateKey(
+          Number(pageSize),
+          Number(start)
+        );
+      for (const address of addresses) {
+        const priv = address.bip44.keys.priv;
+        const bip44 = address.bip44.address;
+        const bip49 = address.bip49.address;
+        const bip84 = address.bip84.address;
         const bip44Data = this.node.balances[bip44];
         const bip49Data = this.node.balances[bip49];
         const bip84Data = this.node.balances[bip84];
         this.addresses.push({
           id: priv,
-          keys: { priv, pub },
+          keys: address.bip44.keys,
           bip44: {
             address: bip44,
             balance: bip44Data?.balance || 0,
@@ -278,9 +278,10 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
             balance: bip84Data?.balance || 0,
             utxos: bip84Data?.utxos || [],
           },
-          isMine: priv === this.node.keys.priv,
+          isMine: address.bip44.keys.priv === this.node.keys.priv,
         });
       }
+
       this.updateTotalPages();
     }
   }

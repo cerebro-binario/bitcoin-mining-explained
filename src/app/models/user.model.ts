@@ -1,14 +1,17 @@
-export interface BitcoinAddress {
-  // Chaves
-  privateKey: string;
-  publicKey: string;
+import { Keys } from './node';
 
-  // Endereços em diferentes formatos
+export interface BitcoinAddressData {
+  keys: Keys;
   address: string;
-
-  // Caminho de derivação
-  path: string;
 }
+
+export type BipType = 'bip44' | 'bip49' | 'bip84';
+
+export const BIP_TYPES: BipType[] = ['bip44', 'bip49', 'bip84'];
+
+export type BitcoinAddress = {
+  [key in BipType]: BitcoinAddressData;
+};
 
 export interface UserWallet {
   step:
@@ -21,11 +24,7 @@ export interface UserWallet {
   seed: string[];
   seedPassphrase: string;
   passphrase: string;
-  addresses: {
-    bip44: BitcoinAddress[];
-    bip49: BitcoinAddress[];
-    bip84: BitcoinAddress[];
-  };
+  addresses: BitcoinAddress[];
 }
 
 export interface User {

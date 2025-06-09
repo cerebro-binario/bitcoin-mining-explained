@@ -78,13 +78,10 @@ export class BitcoinNetworkService {
     // Se for minerador, gera seed, keypair e endereços
     if (isMiner) {
       const seed = this.keyService.generateSeed();
-      const { priv, pub } = this.keyService.deriveKeysFromSeed(seed)[0];
-      const bip44 = this.keyService.deriveBitcoinAddress(pub, 'bip44');
-      const bip49 = this.keyService.deriveBitcoinAddress(pub, 'bip49');
-      const bip84 = this.keyService.deriveBitcoinAddress(pub, 'bip84');
+      const addresses = this.keyService.deriveBitcoinAddresses(seed, 1, 0);
       node.seed = seed;
-      node.keys = { priv, pub };
-      node.miningAddress = bip84;
+      node.keys = addresses[0].bip84.keys;
+      node.miningAddress = addresses[0].bip84.address;
     }
 
     this.nodes.push(node);

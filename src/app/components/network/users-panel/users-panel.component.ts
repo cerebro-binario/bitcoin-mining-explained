@@ -24,11 +24,7 @@ export class UsersPanelComponent {
       seed: [],
       seedPassphrase: '',
       passphrase: '',
-      addresses: {
-        bip44: [],
-        bip49: [],
-        bip84: [],
-      },
+      addresses: [],
     };
     this.users.push({ id, name, wallet });
     this.selectedUser = this.users[this.users.length - 1];
