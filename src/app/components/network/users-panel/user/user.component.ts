@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { mnemonicToSeedSync } from '@scure/bip39';
+import { TableModule } from 'primeng/table';
 import { BitcoinAddress, User } from '../../../../models/user.model';
 import { KeyService } from '../../../../services/key.service';
 import { bytesToHex } from '../../../../utils/tools';
@@ -9,7 +10,7 @@ import { bytesToHex } from '../../../../utils/tools';
 @Component({
   selector: 'app-user',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './user.component.html',
 })
 export class UserComponent {
@@ -43,10 +44,6 @@ export class UserComponent {
   selectedAddressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
 
   constructor(public keyService: KeyService) {}
-
-  get wallet() {
-    return this.user.wallet;
-  }
 
   deriveNextAddress() {
     if (!this.user.wallet?.seed?.length) return;
@@ -206,5 +203,9 @@ export class UserComponent {
   // Método para alterar o tipo de endereço
   changeAddressType(type: 'bip44' | 'bip49' | 'bip84'): void {
     this.selectedAddressType = type;
+  }
+
+  rowTrackBy(index: number, item: BitcoinAddress): string {
+    return item.bip44.keys.priv;
   }
 }

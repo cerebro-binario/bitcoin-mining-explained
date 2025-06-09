@@ -223,21 +223,33 @@
         </div>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-sm rounded-lg overflow-hidden table-fixed">
-          <thead>
+        <p-table
+          class="w-full text-sm rounded-lg overflow-hidden table-fixed"
+          [value]="user.wallet?.addresses || []"
+          dataKey="bip44.keys.priv"
+          [style]="{ 'font-size': '0.95rem', width: '100%', height: '100%' }"
+          [scrollable]="true"
+          [scrollHeight]="'100%'"
+          rowExpandMode="multiple"
+          [rowTrackBy]="rowTrackBy"
+          class="rounded-lg flex-1 h-full w-full"
+        >
+          <ng-template #header>
             <tr class="bg-zinc-900 text-zinc-300">
               <th class="px-4 py-2 text-left w-[5%]">#</th>
               <th class="px-4 py-2 text-left w-[70%]">Endereço</th>
               <th class="px-4 py-2 text-right w-[15%]">Saldo (BTC)</th>
               <th class="px-4 py-2 text-center w-[10%]">Chaves</th>
             </tr>
-          </thead>
-          <tbody>
-            <tr
-              *ngFor="let address of user.wallet?.addresses; let i = index"
-              class="border-b border-zinc-700 last:border-0"
-            >
-              <td class="px-4 py-2 text-zinc-500 font-mono">{{ i + 1 }}</td>
+          </ng-template>
+          <ng-template
+            #body
+            let-address
+            let-index="rowIndex"
+            let-expanded="expanded"
+          >
+            <tr class="border-b border-zinc-700 last:border-0">
+              <td class="px-4 py-2 text-zinc-500 font-mono">{{ index + 1 }}</td>
               <td
                 class="px-4 py-2 font-mono break-all"
                 [class.text-green-300]="selectedAddressType === 'bip44'"
@@ -251,20 +263,93 @@
               </td>
               <td class="px-4 py-2 text-center">
                 <button
-                  (click)="toggleAddressKeys(i)"
                   class="text-zinc-400 hover:text-blue-400 transition-colors"
-                  [title]="showingKeys[i] ? 'Ocultar chaves' : 'Mostrar chaves'"
+                  [title]="expanded ? 'Ocultar chaves' : 'Mostrar chaves'"
+                  [attr.aria-label]="
+                    expanded ? 'Ocultar chaves' : 'Mostrar chaves'
+                  "
+                  [pRowToggler]="address"
                 >
                   <i
                     class="pi"
-                    [class.pi-eye]="!showingKeys[i]"
-                    [class.pi-eye-slash]="showingKeys[i]"
+                    [class.pi-eye]="!expanded"
+                    [class.pi-eye-slash]="expanded"
                   ></i>
                 </button>
               </td>
             </tr>
-          </tbody>
-        </table>
+          </ng-template>
+          <ng-template #expandedrow let-address let-index="rowIndex">
+            <tr>
+              <td colspan="4">
+                <div
+                  class="w-full mt-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
+                >
+                  <div class="space-y-4">
+                    <div class="transition-all duration-300">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-sm text-zinc-400"
+                          >Endereço #{{ index + 1 }}</span
+                        >
+                        <div class="flex-1 h-px bg-zinc-700"></div>
+                      </div>
+
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-xs text-zinc-500 mb-1"
+                            >Chave Privada</label
+                          >
+                          <div class="flex items-center gap-2">
+                            <div
+                              class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all"
+                            >
+                              {{ address[selectedAddressType].keys.priv }}
+                            </div>
+                            <button
+                              (click)="
+                                copyToClipboard(
+                                  address[selectedAddressType].keys.priv
+                                )
+                              "
+                              class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                              title="Copiar chave privada"
+                            >
+                              <i class="pi pi-copy"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label class="block text-xs text-zinc-500 mb-1"
+                            >Chave Pública</label
+                          >
+                          <div class="flex items-center gap-2">
+                            <div
+                              class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all"
+                            >
+                              {{ address[selectedAddressType].keys.pub }}
+                            </div>
+                            <button
+                              (click)="
+                                copyToClipboard(
+                                  address[selectedAddressType].keys.pub
+                                )
+                              "
+                              class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                              title="Copiar chave pública"
+                            >
+                              <i class="pi pi-copy"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
 
       <!-- Painel de chaves -->
