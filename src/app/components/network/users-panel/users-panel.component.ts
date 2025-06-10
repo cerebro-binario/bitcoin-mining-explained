@@ -3,7 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { UserComponent } from './user/user.component';
-import { User, UserWallet } from '../../../models/user.model';
+import { User } from '../../../models/user.model';
+import { Wallet } from '../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 
 @Component({
@@ -31,7 +32,7 @@ export class UsersPanelComponent implements OnInit {
   createUser() {
     const name = `Usuário #${this.userCount++}`;
     const user = this.networkService.addUser(name);
-    const wallet: UserWallet = {
+    const wallet: Wallet = {
       step: 'choose',
       seed: [],
       seedPassphrase: '',

@@ -51,35 +51,22 @@ export class UserComponent {
   ) {}
 
   deriveNextAddress() {
-    if (!this.user.wallet?.seed?.length) return;
+    if (!this.user.wallet) return;
 
-    const mnemonic = this.user.wallet.seed.join(' ');
-    const passphrase = this.user.wallet.seedPassphrase || '';
-    const currentCount = this.user.wallet?.addresses?.length || 0;
+    const newAddress = this.keyService.deriveNextBitcoinAddress(
+      this.user.wallet
+    );
 
-    try {
-      const seedBytes = mnemonicToSeedSync(mnemonic, passphrase);
-      const seed = bytesToHex(seedBytes);
-
-      const newAddresses = this.keyService.deriveBitcoinAddresses(
-        seed,
-        1,
-        currentCount
-      );
-      this.user.wallet.addresses = [
-        ...this.user.wallet.addresses,
-        ...newAddresses,
-      ];
+    if (newAddress) {
+      this.user.wallet.addresses = [...this.user.wallet.addresses, newAddress];
       this.networkService.updateUser(this.user);
-    } catch (error) {
-      console.error('Erro ao gerar novo endereço:', error);
     }
   }
 
   createWallet() {
     if (!this.user.wallet) return;
     this.user.wallet.step = 'show-seed';
-    this.user.wallet.seed = this.keyService.generateSeed().split(' ');
+    this.user.wallet.seed = this.keyService.generateSeed();
     this.user.wallet.seedPassphrase = '';
     this.user.wallet.addresses = [];
     this.seedConfirmed = false;

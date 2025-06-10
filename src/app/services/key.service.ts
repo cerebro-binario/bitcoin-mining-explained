@@ -7,7 +7,7 @@ import { mnemonicToSeedSync } from '@scure/bip39';
 import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
-import { BipType, BitcoinAddress, Keys } from '../models/wallet.model';
+import { BipType, BitcoinAddress, Keys, Wallet } from '../models/wallet.model';
 import {
   bytesToBinary,
   bytesToHex,
@@ -26,7 +26,7 @@ export class KeyService {
 
   constructor() {}
 
-  generateSeed(): string {
+  generateSeed(): string[] {
     // 1. Generate 128 bits (16 bytes) of entropy
     const entropy = getRandomBytes(16);
 
@@ -65,18 +65,32 @@ export class KeyService {
 
     // 8. Convert indices to words
     const words = indices.map((index) => this.WORDLIST[index]);
-    const mnemonic = words.join(' ');
-    return mnemonic;
+    return words;
   }
 
   deriveBitcoinAddresses(
-    seed: string,
+    mnemonic: string,
     count: number = 10,
     startIndex: number = 0
   ): BitcoinAddress[] {
-    const bip44Keys = this.deriveKeysFromSeed(seed, count, 'bip44', startIndex);
-    const bip49Keys = this.deriveKeysFromSeed(seed, count, 'bip49', startIndex);
-    const bip84Keys = this.deriveKeysFromSeed(seed, count, 'bip84', startIndex);
+    const bip44Keys = this.deriveKeysFromSeed(
+      mnemonic,
+      count,
+      'bip44',
+      startIndex
+    );
+    const bip49Keys = this.deriveKeysFromSeed(
+      mnemonic,
+      count,
+      'bip49',
+      startIndex
+    );
+    const bip84Keys = this.deriveKeysFromSeed(
+      mnemonic,
+      count,
+      'bip84',
+      startIndex
+    );
 
     const keys = zip(bip44Keys, bip49Keys, bip84Keys);
 
@@ -108,6 +122,20 @@ export class KeyService {
     });
   }
 
+  deriveNextBitcoinAddress(wallet: Wallet): BitcoinAddress | undefined {
+    if (!wallet.seed?.length) return;
+
+    const mnemonic = wallet.seed.join(' ');
+    const passphrase = wallet.seedPassphrase || '';
+    const currentCount = wallet?.addresses?.length || 0;
+
+    const seed = mnemonicToSeedSync(mnemonic, passphrase);
+    const seedHex = bytesToHex(seed);
+    const newAddresses = this.deriveBitcoinAddresses(seedHex, 1, currentCount);
+
+    return newAddresses[0];
+  }
+
   deriveBitcoinAddressesFromSequentialPrivateKey(
     count: number = 1,
     startIndex: number = 0
@@ -128,7 +156,7 @@ export class KeyService {
   }
 
   private deriveKeysFromSeed(
-    seed: string,
+    mnemonicOrSeedHex: string,
     count: number = 1,
     bipType: BipType = 'bip84',
     startIndex: number = 0
@@ -136,11 +164,11 @@ export class KeyService {
     let seedBytes: Uint8Array;
 
     // Se o input for um mnemônico (contém espaços), converte para seed
-    if (seed.includes(' ')) {
-      seedBytes = mnemonicToSeedSync(seed);
+    if (mnemonicOrSeedHex.includes(' ')) {
+      seedBytes = mnemonicToSeedSync(mnemonicOrSeedHex);
     } else {
       // Se já for um seed em hex, converte para bytes
-      seedBytes = hexToBytes(seed);
+      seedBytes = hexToBytes(mnemonicOrSeedHex);
     }
 
     // 2. Create HD wallet from seed

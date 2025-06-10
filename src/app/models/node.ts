@@ -15,7 +15,7 @@ import {
 
 import { areConsensusVersionsCompatible } from './consensus.model';
 import { Height } from './height.model';
-import { Keys } from './wallet.model';
+import { BitcoinAddressData, Wallet } from './wallet.model';
 
 export interface Neighbor {
   latency: number;
@@ -23,24 +23,8 @@ export interface Neighbor {
   connectedAt: number;
 }
 
-export type BitcoinAddress = {
-  address: string;
-  keys: Keys;
-  balance: number;
-  nodeName?: string;
-  utxos: {
-    output: {
-      value: number;
-      scriptPubKey: string;
-    };
-    blockHeight: number;
-    txId: string;
-    outputIndex: number;
-  }[];
-};
-
 export type Balances = {
-  [address: string]: BitcoinAddress | undefined;
+  [address: string]: BitcoinAddressData | undefined;
 };
 
 export class Node {
@@ -138,11 +122,12 @@ export class Node {
     this.balances$.next(val);
   }
 
-  seed: string = ''; // Seed phrase do miner
-  keys: Keys = {
-    // Par de chaves priv/pub
-    priv: '',
-    pub: '',
+  wallet: Wallet = {
+    step: 'choose',
+    seed: [],
+    seedPassphrase: '',
+    passphrase: '',
+    addresses: [],
   };
 
   constructor(init?: Partial<Node>) {
@@ -1730,7 +1715,7 @@ export class Node {
           balance: 0,
           utxos: [],
           ...(isMinerCoinbase
-            ? { keys: this.keys }
+            ? { keys: this.wallet.addresses[0].bip84.keys }
             : { keys: { pub: '', priv: '' } }),
         };
 
@@ -1775,7 +1760,7 @@ export class Node {
       utxos: [],
       nodeName: `Minerador ${block.minerId}`,
       ...(isMinerCoinbase
-        ? { keys: this.keys }
+        ? { keys: this.wallet.addresses[0].bip84.keys }
         : { keys: { pub: '', priv: '' } }),
     };
 
