@@ -37,7 +37,9 @@
           title="Este endereço pertence a este nó"
         ></i>
       </td>
-      <td class="px-4 py-2 text-zinc-500 font-mono">{{ index + 1 }}</td>
+      <td class="px-4 py-2 text-zinc-500 font-mono">
+        {{ first + index + 1 }}
+      </td>
       <td
         class="px-4 py-2 font-mono break-all"
         [class.text-green-300]="addressType === 'bip44'"

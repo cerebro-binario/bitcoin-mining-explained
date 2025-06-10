@@ -7,7 +7,13 @@ import { mnemonicToSeedSync } from '@scure/bip39';
 import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
-import { BipType, BitcoinAddress, Keys, Wallet } from '../models/wallet.model';
+import {
+  BipType,
+  BitcoinAddress,
+  Keys,
+  MAX_PRIVATE_KEY_VALUE,
+  Wallet,
+} from '../models/wallet.model';
 import {
   bytesToBinary,
   bytesToHex,
@@ -149,7 +155,7 @@ export class KeyService {
 
   deriveBitcoinAddressesFromSequentialPrivateKey(
     count: number = 1,
-    startIndex: number = 0
+    startIndex: bigint = 0n
   ): BitcoinAddress[] {
     const keys = this.generateSequentialKeys(startIndex, count);
 
@@ -293,12 +299,14 @@ export class KeyService {
 
   // Função para gerar chaves sequencialmente a partir de 0x0000...
   private generateSequentialKeys(
-    startIndex: number = 0,
+    startIndex: bigint = 0n,
     count: number = 10
   ): Keys[] {
     const keys: Keys[] = [];
     for (let i = 0; i < count; i++) {
-      const privateKey = padHex(startIndex + i, 64);
+      const index = startIndex + BigInt(i);
+      if (index > MAX_PRIVATE_KEY_VALUE) break;
+      const privateKey = padHex(index, 64);
       const nodeKeys = this.deriveKeysFromPrivateKey(privateKey);
       keys.push(nodeKeys);
     }

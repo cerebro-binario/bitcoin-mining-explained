@@ -1,3 +1,9 @@
+export const MAX_PRIVATE_KEY_VALUE = BigInt(
+  '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140'
+);
+
+export const TOTAL_PRIVATE_KEY_RECORDS = MAX_PRIVATE_KEY_VALUE - 1n;
+
 export interface Keys {
   priv: {
     hex: string;

@@ -16,8 +16,13 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { Subscription } from 'rxjs';
 import { Node } from '../../../../../models/node';
-import { BitcoinAddressData, Keys } from '../../../../../models/wallet.model';
+import {
+  BitcoinAddressData,
+  Keys,
+  TOTAL_PRIVATE_KEY_RECORDS,
+} from '../../../../../models/wallet.model';
 import { KeyService } from '../../../../../services/key.service';
+import { AddressListComponent } from '../../../wallet/address-list/address-list.component';
 
 interface AddressRow {
   id: string;
@@ -40,6 +45,7 @@ interface AddressRow {
     ButtonModule,
     SelectButtonModule,
     PaginatorModule,
+    AddressListComponent,
   ],
 })
 export class BalanceDialogComponent implements OnInit, OnDestroy {
@@ -47,9 +53,6 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
 
   displayMode: 'all' | 'with-balance' = 'with-balance';
-  first = 0;
-  rows = 10;
-  totalRecords: bigint = 0n;
   addresses: AddressRow[] = [];
 
   displayModeOptions = [
@@ -67,9 +70,11 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   private balancesSub?: Subscription;
 
   // Paginator customizado
-  pageSize = 10;
-  currentPage: bigint = 0n;
-  totalPages: bigint = 0n;
+  pagination = {
+    pageSize: 10,
+    currentPage: 0n,
+    totalPages: 0n,
+  };
   jumpPageInput: string = '';
 
   sortField: 'saldo' | null = null;
@@ -81,20 +86,24 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   ) {}
 
   get currentPageDisplay(): number {
-    return Number(this.currentPage) + 1;
+    return Number(this.pagination.currentPage) + 1;
   }
   get totalPagesDisplay(): number {
-    return Number(this.totalPages);
+    return Number(this.pagination.totalPages);
   }
   get pagePercent(): number {
-    if (this.totalPages === 0n) return 0;
-    return ((Number(this.currentPage) + 1) / Number(this.totalPages)) * 100;
+    if (this.pagination.totalPages === 0n) return 0;
+    return (
+      ((Number(this.pagination.currentPage) + 1) /
+        Number(this.pagination.totalPages)) *
+      100
+    );
   }
   get prevDisabled(): boolean {
-    return this.currentPage === 0n;
+    return this.pagination.currentPage === 0n;
   }
   get nextDisabled(): boolean {
-    return this.currentPage >= this.totalPages - 1n;
+    return this.pagination.currentPage >= this.pagination.totalPages - 1n;
   }
 
   ngOnInit() {
@@ -128,52 +137,51 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   updateTotalPages() {
     if (this.displayMode === 'all') {
       // Valor máximo do grupo secp256k1
-      const N = BigInt(
-        '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141'
-      );
-      this.totalRecords = N - 1n;
-      this.totalPages =
-        (this.totalRecords + BigInt(this.pageSize) - 1n) /
-        BigInt(this.pageSize);
+      const totalRecords = TOTAL_PRIVATE_KEY_RECORDS;
+      this.pagination.totalPages =
+        (totalRecords + BigInt(this.pagination.pageSize) - 1n) /
+        BigInt(this.pagination.pageSize);
     } else {
-      this.totalRecords = BigInt(this.addresses.length);
-      this.totalPages =
-        (this.totalRecords + BigInt(this.pageSize) - 1n) /
-        BigInt(this.pageSize);
+      const totalRecords = BigInt(this.addresses.length);
+      this.pagination.totalPages =
+        (totalRecords + BigInt(this.pagination.pageSize) - 1n) /
+        BigInt(this.pagination.pageSize);
     }
   }
 
   goToFirstPage() {
-    this.currentPage = 0n;
+    this.pagination.currentPage = 0n;
     this.loadAddresses();
   }
   goToPreviousPage() {
-    if (this.currentPage > 0n) {
-      this.currentPage--;
+    if (this.pagination.currentPage > 0n) {
+      this.pagination.currentPage--;
       this.loadAddresses();
     }
   }
   goToNextPage() {
-    if (this.currentPage < this.totalPages - 1n) {
-      this.currentPage++;
+    if (this.pagination.currentPage < this.pagination.totalPages - 1n) {
+      this.pagination.currentPage++;
       this.loadAddresses();
     }
   }
   goToLastPage() {
-    this.currentPage = this.totalPages - 1n;
+    this.pagination.currentPage = this.pagination.totalPages - 1n;
     this.loadAddresses();
   }
   goToRandomPage() {
-    const rand = BigInt(Math.floor(Math.random() * Number(this.totalPages)));
-    this.currentPage = rand;
+    const rand = BigInt(
+      Math.floor(Math.random() * Number(this.pagination.totalPages))
+    );
+    this.pagination.currentPage = rand;
     this.loadAddresses();
   }
   jumpToPage() {
     try {
       let page = BigInt(this.jumpPageInput);
       if (page < 1n) page = 1n;
-      if (page > this.totalPages) page = this.totalPages;
-      this.currentPage = page - 1n;
+      if (page > this.pagination.totalPages) page = this.pagination.totalPages;
+      this.pagination.currentPage = page - 1n;
       this.loadAddresses();
     } catch {
       // ignore invalid input
@@ -266,19 +274,19 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
           return this.sortOrder === 1 ? saldoA - saldoB : saldoB - saldoA;
         });
       }
-      this.totalRecords = BigInt(this.addresses.length);
-      this.totalPages =
-        (this.totalRecords + BigInt(this.pageSize) - 1n) /
-        BigInt(this.pageSize);
+      const totalRecords = BigInt(this.addresses.length);
+      this.pagination.totalPages =
+        (totalRecords + BigInt(this.pagination.pageSize) - 1n) /
+        BigInt(this.pagination.pageSize);
     } else {
       // Modo 'all'
-      const pageSize = BigInt(this.pageSize);
-      const start = this.currentPage * pageSize + 1n;
+      const pageSize = BigInt(this.pagination.pageSize);
+      const start = this.pagination.currentPage * pageSize + 1n;
       this.addresses = [];
       const addresses =
         this.keyService.deriveBitcoinAddressesFromSequentialPrivateKey(
           Number(pageSize),
-          Number(start)
+          start
         );
       for (const address of addresses) {
         const priv = address.bip44.keys.priv;
@@ -319,14 +327,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     }
   }
 
-  onPageChange(event: any) {
-    this.first = event.first;
-    this.rows = event.rows;
-    this.loadAddresses();
-  }
-
   onDisplayModeChange() {
-    this.first = 0;
     this.loadAddresses();
   }
 
