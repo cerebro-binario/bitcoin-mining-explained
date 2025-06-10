@@ -14,7 +14,6 @@ import { copyToClipboard } from '../../../../utils/tools';
 export class AddressListComponent {
   @Input() addresses!: BitcoinAddress[];
   @Input() addressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
-  @Input() keysFormat: 'wif' | 'hex' | 'decimal' = 'hex';
 
   rowTrackBy(index: number, item: BitcoinAddress): string {
     return item.bip84.keys.priv.hex;
