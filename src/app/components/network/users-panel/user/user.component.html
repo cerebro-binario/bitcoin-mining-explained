@@ -259,7 +259,7 @@
                 {{ address[selectedAddressType].address }}
               </td>
               <td class="px-4 py-2 text-right font-mono text-zinc-200">
-                0.00000000
+                {{ address[selectedAddressType].balance | number : "1.8-8" }}
               </td>
               <td class="px-4 py-2 text-center">
                 <button

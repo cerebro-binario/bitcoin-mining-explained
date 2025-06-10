@@ -1,8 +1,20 @@
 import { Keys } from './node';
 
+export interface BitcoinUTXO {
+  output: {
+    value: number;
+    scriptPubKey: string;
+  };
+  blockHeight: number;
+  txId: string;
+  outputIndex: number;
+}
+
 export interface BitcoinAddressData {
   keys: Keys;
   address: string;
+  balance: number;
+  utxos: BitcoinUTXO[];
 }
 
 export type BipType = 'bip44' | 'bip49' | 'bip84';
