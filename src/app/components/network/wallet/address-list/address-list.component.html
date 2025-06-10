@@ -83,32 +83,42 @@
                         >Hex:</label
                       >
                       <div
-                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all flex items-center justify-between"
+                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
                       >
                         <ng-container
                           *ngIf="address.keys.priv.hex; else lockedPrivHex"
                         >
-                          0x{{ address.keys.priv.hex }}
+                          <span class="text-green-300 text-sm"
+                            >0x{{ address.keys.priv.hex }}</span
+                          >
                         </ng-container>
                         <ng-template #lockedPrivHex>
                           <span
-                            class="flex items-center gap-1 text-zinc-500 italic"
+                            class="flex items-center gap-1"
                             title="Chave não disponível para este endereço"
                           >
-                            <i class="pi pi-lock"></i>
-                            <span class="hidden sm:inline"
+                            <i class="pi pi-lock text-[0.9em]"></i>
+                            <span class="italic tracking-wide"
                               >Chave não disponível</span
                             >
                           </span>
                         </ng-template>
                       </div>
+                      <button
+                        *ngIf="address.keys.priv.hex"
+                        (click)="copyToClipboard(address.keys.priv.hex)"
+                        class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                        title="Copiar chave privada"
+                      >
+                        <i class="pi pi-copy"></i>
+                      </button>
                     </div>
                     <div class="flex items-center gap-2">
                       <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
                         >Decimal:</label
                       >
                       <div
-                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all flex items-center justify-between"
+                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
                         [title]="
                           address.keys.priv.decimal
                             ? (address.keys.priv.decimal | number : '1.0-0')
@@ -121,44 +131,62 @@
                             else lockedPrivDecimal
                           "
                         >
-                          {{ address.keys.priv.decimal }}
+                          <span class="text-green-300 text-sm">{{
+                            address.keys.priv.decimal
+                          }}</span>
                         </ng-container>
                         <ng-template #lockedPrivDecimal>
-                          <span
-                            class="flex items-center gap-1 text-zinc-500 italic"
-                          >
-                            <i class="pi pi-lock"></i>
-                            <span class="hidden sm:inline"
+                          <span class="flex items-center gap-1">
+                            <i class="pi pi-lock text-[0.9em]"></i>
+                            <span class="italic tracking-wide"
                               >Chave não disponível</span
                             >
                           </span>
                         </ng-template>
                       </div>
+                      <button
+                        *ngIf="address.keys.priv.decimal"
+                        (click)="copyToClipboard(address.keys.priv.decimal)"
+                        class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                        title="Copiar chave privada"
+                      >
+                        <i class="pi pi-copy"></i>
+                      </button>
                     </div>
                     <div class="flex items-center gap-2">
                       <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
                         >WIF:</label
                       >
                       <div
-                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all flex items-center justify-between"
+                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
                       >
                         <ng-container
                           *ngIf="address.keys.priv.wif; else lockedPrivWif"
                         >
-                          {{ address.keys.priv.wif }}
+                          <span class="text-green-300 text-sm">{{
+                            address.keys.priv.wif
+                          }}</span>
                         </ng-container>
                         <ng-template #lockedPrivWif>
                           <span
-                            class="flex items-center gap-1 text-zinc-500 italic"
+                            class="flex items-center gap-1"
                             title="Chave não disponível para este endereço"
                           >
-                            <i class="pi pi-lock"></i>
-                            <span class="hidden sm:inline"
+                            <i class="pi pi-lock text-[0.9em]"></i>
+                            <span class="italic tracking-wide"
                               >Chave não disponível</span
                             >
                           </span>
                         </ng-template>
                       </div>
+                      <button
+                        *ngIf="address.keys.priv.wif"
+                        (click)="copyToClipboard(address.keys.priv.wif)"
+                        class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                        title="Copiar chave privada"
+                      >
+                        <i class="pi pi-copy"></i>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -173,32 +201,42 @@
                         >Hex:</label
                       >
                       <div
-                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all flex items-center justify-between"
+                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
                       >
                         <ng-container
                           *ngIf="address.keys.pub.hex; else lockedPubHex"
                         >
-                          0x{{ address.keys.pub.hex }}
+                          <span class="text-blue-300 text-sm"
+                            >0x{{ address.keys.pub.hex }}</span
+                          >
                         </ng-container>
                         <ng-template #lockedPubHex>
                           <span
-                            class="flex items-center gap-1 text-zinc-500 italic"
+                            class="flex items-center gap-1"
                             title="Chave não disponível para este endereço"
                           >
-                            <i class="pi pi-lock"></i>
-                            <span class="hidden sm:inline"
+                            <i class="pi pi-lock text-[0.9em]"></i>
+                            <span class="italic tracking-wide"
                               >Chave não disponível</span
                             >
                           </span>
                         </ng-template>
                       </div>
+                      <button
+                        *ngIf="address.keys.pub.hex"
+                        (click)="copyToClipboard(address.keys.pub.hex)"
+                        class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                        title="Copiar chave pública"
+                      >
+                        <i class="pi pi-copy"></i>
+                      </button>
                     </div>
                     <div class="flex items-center gap-2">
                       <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
                         >Decimal:</label
                       >
                       <div
-                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all flex items-center justify-between"
+                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
                         [title]="
                           address.keys.pub.decimal
                             ? (address.keys.pub.decimal | number : '1.0-0')
@@ -211,19 +249,27 @@
                             else lockedPubDecimal
                           "
                         >
-                          {{ address.keys.pub.decimal }}
+                          <span class="text-blue-300 text-sm">{{
+                            address.keys.pub.decimal
+                          }}</span>
                         </ng-container>
                         <ng-template #lockedPubDecimal>
-                          <span
-                            class="flex items-center gap-1 text-zinc-500 italic"
-                          >
-                            <i class="pi pi-lock"></i>
-                            <span class="hidden sm:inline"
+                          <span class="flex items-center gap-1">
+                            <i class="pi pi-lock text-[0.9em]"></i>
+                            <span class="italic tracking-wide"
                               >Chave não disponível</span
                             >
                           </span>
                         </ng-template>
                       </div>
+                      <button
+                        *ngIf="address.keys.pub.decimal"
+                        (click)="copyToClipboard(address.keys.pub.decimal)"
+                        class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                        title="Copiar chave pública"
+                      >
+                        <i class="pi pi-copy"></i>
+                      </button>
                     </div>
                   </div>
                 </div>
