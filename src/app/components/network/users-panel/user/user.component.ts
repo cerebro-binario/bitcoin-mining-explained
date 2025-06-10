@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { mnemonicToSeedSync } from '@scure/bip39';
+import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { User } from '../../../../models/user.model';
 import { BitcoinAddress } from '../../../../models/wallet.model';
@@ -12,7 +13,7 @@ import { bytesToHex } from '../../../../utils/tools';
 @Component({
   selector: 'app-user',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, ButtonModule],
   templateUrl: './user.component.html',
 })
 export class UserComponent {

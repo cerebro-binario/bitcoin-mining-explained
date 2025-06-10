@@ -236,10 +236,10 @@
         >
           <ng-template #header>
             <tr class="bg-zinc-900 text-zinc-300">
+              <th class="text-left p-4 w-[5%]"></th>
               <th class="px-4 py-2 text-left w-[5%]">#</th>
               <th class="px-4 py-2 text-left w-[70%]">Endereço</th>
-              <th class="px-4 py-2 text-right w-[15%]">Saldo (BTC)</th>
-              <th class="px-4 py-2 text-center w-[10%]">Chaves</th>
+              <th class="px-4 py-2 text-right w-[20%]">Saldo (BTC)</th>
             </tr>
           </ng-template>
           <ng-template
@@ -249,6 +249,24 @@
             let-expanded="expanded"
           >
             <tr class="border-b border-zinc-700 last:border-0">
+              <td class="p-4 align-middle">
+                <button
+                  pButton
+                  type="button"
+                  [icon]="
+                    expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'
+                  "
+                  [pRowToggler]="address"
+                  class="p-button-text p-0 text-white/70 hover:text-white focus:ring-0 focus:outline-none"
+                  style="height: 1.7rem; width: 1.7rem"
+                  [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
+                ></button>
+                <i
+                  *ngIf="address.isMine"
+                  class="pi pi-verified text-blue-400 text-xs ml-1"
+                  title="Este endereço pertence a este nó"
+                ></i>
+              </td>
               <td class="px-4 py-2 text-zinc-500 font-mono">{{ index + 1 }}</td>
               <td
                 class="px-4 py-2 font-mono break-all"
@@ -261,29 +279,13 @@
               <td class="px-4 py-2 text-right font-mono text-zinc-200">
                 {{ address[selectedAddressType].balance | number : "1.8-8" }}
               </td>
-              <td class="px-4 py-2 text-center">
-                <button
-                  class="text-zinc-400 hover:text-blue-400 transition-colors"
-                  [title]="expanded ? 'Ocultar chaves' : 'Mostrar chaves'"
-                  [attr.aria-label]="
-                    expanded ? 'Ocultar chaves' : 'Mostrar chaves'
-                  "
-                  [pRowToggler]="address"
-                >
-                  <i
-                    class="pi"
-                    [class.pi-eye]="!expanded"
-                    [class.pi-eye-slash]="expanded"
-                  ></i>
-                </button>
-              </td>
             </tr>
           </ng-template>
           <ng-template #expandedrow let-address let-index="rowIndex">
             <tr>
               <td colspan="4">
                 <div
-                  class="w-full mt-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
+                  class="w-full p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
                 >
                   <div class="space-y-4">
                     <div class="transition-all duration-300">
@@ -341,6 +343,61 @@
                               <i class="pi pi-copy"></i>
                             </button>
                           </div>
+                        </div>
+
+                        <div>
+                          <label class="block text-xs text-zinc-500 mb-1"
+                            >UTXOs</label
+                          >
+                          <p-table
+                            [value]="address[selectedAddressType].utxos || []"
+                            [tableStyle]="{ 'min-width': '100%' }"
+                            [style]="{ 'font-size': '0.95rem' }"
+                          >
+                            <ng-template pTemplate="header">
+                              <tr class="text-white/80 font-bold text-sm">
+                                <th class="text-left px-4 py-3">TxID</th>
+                                <th class="text-right px-4 py-3">Out</th>
+                                <th class="text-right px-4 py-3">Valor</th>
+                              </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-utxo>
+                              <tr>
+                                <td
+                                  class="font-mono text-xs text-white/80 px-4 py-3"
+                                  [title]="utxo.txId"
+                                  style="
+                                    max-width: 120px;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                    white-space: nowrap;
+                                  "
+                                >
+                                  {{ utxo.txId | slice : 0 : 8 }}…
+                                </td>
+                                <td class="text-right text-white/60 px-4 py-3">
+                                  {{ utxo.outputIndex }}
+                                </td>
+                                <td class="text-right px-4 py-3">
+                                  <span class="text-white font-mono">{{
+                                    utxo.output.value / 100000000
+                                      | number : "1.8-8"
+                                  }}</span>
+                                  <span class="text-white/40">BTC</span>
+                                </td>
+                              </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage">
+                              <tr>
+                                <td
+                                  colspan="3"
+                                  class="text-white/60 italic py-3 px-4"
+                                >
+                                  Nenhum UTXO disponível.
+                                </td>
+                              </tr>
+                            </ng-template>
+                          </p-table>
                         </div>
                       </div>
                     </div>
