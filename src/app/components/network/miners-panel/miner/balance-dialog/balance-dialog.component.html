@@ -245,6 +245,9 @@
                   <span *ngIf="entry.bip49.balance">{{
                     entry.bip49.balance / 100000000 | number : "1.8-8"
                   }}</span>
+                  <span *ngIf="entry.bip84.balance">{{
+                    entry.bip84.balance / 100000000 | number : "1.8-8"
+                  }}</span>
                   <span
                     style="
                       display: inline-block;

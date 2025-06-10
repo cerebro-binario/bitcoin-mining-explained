@@ -15,15 +15,16 @@ import { PaginatorModule } from 'primeng/paginator';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { Subscription } from 'rxjs';
-import { Keys, Node } from '../../../../../models/node';
+import { Node } from '../../../../../models/node';
+import { BitcoinAddressData, Keys } from '../../../../../models/wallet.model';
 import { KeyService } from '../../../../../services/key.service';
 
 interface AddressRow {
   id: string;
   keys: Keys;
-  bip44: { address: string; balance: number; utxos: any[] };
-  bip49: { address: string; balance: number; utxos: any[] };
-  bip84: { address: string; balance: number; utxos: any[] };
+  bip44: BitcoinAddressData;
+  bip49: BitcoinAddressData;
+  bip84: BitcoinAddressData;
   isMine?: boolean;
 }
 
@@ -207,26 +208,43 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
       this.addresses = [];
       for (const [address, data] of Object.entries(this.node.balances)) {
         if (!data || !data.balance || data.balance === 0) continue;
-        let addressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
+        let addressType: 'bip44' | 'bip49' | 'bip84' = 'bip44';
         if (address.startsWith('3')) addressType = 'bip49';
         else if (address.startsWith('bc1')) addressType = 'bip84';
         const isMine = !!(
           data.keys &&
           data.keys.priv &&
-          data.keys.priv === this.node.keys.priv
+          data.keys.priv ===
+            this.node.wallet.addresses[0][addressType].keys.priv
         );
         const addressRow: AddressRow = {
           id: address,
-          keys: data.keys || { priv: '', pub: '' },
-          bip44: { address: '', balance: 0, utxos: [] },
-          bip49: { address: '', balance: 0, utxos: [] },
-          bip84: { address: '', balance: 0, utxos: [] },
+          keys: data.keys,
+          bip44: {
+            address: '',
+            balance: 0,
+            utxos: [],
+            keys: { priv: '', pub: '' },
+          },
+          bip49: {
+            address: '',
+            balance: 0,
+            utxos: [],
+            keys: { priv: '', pub: '' },
+          },
+          bip84: {
+            address: '',
+            balance: 0,
+            utxos: [],
+            keys: { priv: '', pub: '' },
+          },
           isMine,
         };
         addressRow[addressType] = {
           address,
           balance: data.balance,
           utxos: data.utxos,
+          keys: data.keys,
         };
         this.addresses.push(addressRow);
       }
@@ -267,18 +285,23 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
             address: bip44,
             balance: bip44Data?.balance || 0,
             utxos: bip44Data?.utxos || [],
+            keys: address.bip44.keys,
           },
           bip49: {
             address: bip49,
             balance: bip49Data?.balance || 0,
             utxos: bip49Data?.utxos || [],
+            keys: address.bip49.keys,
           },
           bip84: {
             address: bip84,
             balance: bip84Data?.balance || 0,
             utxos: bip84Data?.utxos || [],
+            keys: address.bip84.keys,
           },
-          isMine: address.bip44.keys.priv === this.node.keys.priv,
+          isMine:
+            address.bip84.keys.priv ===
+            this.node.wallet.addresses[0].bip84.keys.priv,
         });
       }
 
