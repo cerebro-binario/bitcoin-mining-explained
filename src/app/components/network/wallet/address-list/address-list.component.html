@@ -47,7 +47,7 @@
         {{ address.address }}
       </td>
       <td class="px-4 py-2 text-right font-mono text-zinc-200">
-        {{ address.balance | number : "1.8-8" }}
+        {{ address.balance / 100000000 | number : "1.8-8" }}
       </td>
       <td class="px-4 py-2 text-right font-mono text-zinc-200">
         {{ address.utxos.length }}
