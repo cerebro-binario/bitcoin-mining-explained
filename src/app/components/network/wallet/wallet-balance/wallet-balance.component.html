@@ -1,0 +1,166 @@
+<p-table
+  class="w-full text-sm rounded-lg overflow-hidden table-fixed"
+  [value]="wallet.addresses || []"
+  dataKey="bip44.keys.priv"
+  [style]="{ 'font-size': '0.95rem', width: '100%', height: '100%' }"
+  [scrollable]="true"
+  [scrollHeight]="'100%'"
+  rowExpandMode="multiple"
+  [rowTrackBy]="rowTrackBy"
+  class="rounded-lg flex-1 h-full w-full"
+>
+  <ng-template #header>
+    <tr class="bg-zinc-900 text-zinc-300">
+      <th class="text-left p-4 w-[5%]"></th>
+      <th class="px-4 py-2 text-left w-[5%]">#</th>
+      <th class="px-4 py-2 text-left w-[70%]">Endereço</th>
+      <th class="px-4 py-2 text-right w-[20%]">Saldo (BTC)</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-entry let-index="rowIndex" let-expanded="expanded">
+    @let address = entry[addressType];
+    <tr class="border-b border-zinc-700 last:border-0">
+      <td class="p-4 align-middle">
+        <button
+          pButton
+          type="button"
+          [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+          [pRowToggler]="entry"
+          class="p-button-text p-0 text-white/70 hover:text-white focus:ring-0 focus:outline-none"
+          style="height: 1.7rem; width: 1.7rem"
+          [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
+        ></button>
+        <i
+          *ngIf="entry.isMine"
+          class="pi pi-verified text-blue-400 text-xs ml-1"
+          title="Este endereço pertence a este nó"
+        ></i>
+      </td>
+      <td class="px-4 py-2 text-zinc-500 font-mono">{{ index + 1 }}</td>
+      <td
+        class="px-4 py-2 font-mono break-all"
+        [class.text-green-300]="addressType === 'bip44'"
+        [class.text-blue-300]="addressType === 'bip49'"
+        [class.text-purple-300]="addressType === 'bip84'"
+      >
+        {{ address.address }}
+      </td>
+      <td class="px-4 py-2 text-right font-mono text-zinc-200">
+        {{ address.balance | number : "1.8-8" }}
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template #expandedrow let-entry let-index="rowIndex">
+    @let address = entry[addressType];
+    <tr>
+      <td colspan="4">
+        <div
+          class="w-full p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
+        >
+          <div class="space-y-4">
+            <div class="transition-all duration-300">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-sm text-zinc-400"
+                  >Endereço #{{ index + 1 }}</span
+                >
+                <div class="flex-1 h-px bg-zinc-700"></div>
+              </div>
+
+              <div class="space-y-2">
+                <div>
+                  <label class="block text-xs text-zinc-500 mb-1"
+                    >Chave Privada</label
+                  >
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all"
+                    >
+                      {{ getPrivKeyDisplay(address.keys) }}
+                    </div>
+                    <button
+                      (click)="copyToClipboard(address.keys.priv)"
+                      class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                      title="Copiar chave privada"
+                    >
+                      <i class="pi pi-copy"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs text-zinc-500 mb-1"
+                    >Chave Pública</label
+                  >
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all"
+                    >
+                      {{ getPubKeyDisplay(address.keys) }}
+                    </div>
+                    <button
+                      (click)="copyToClipboard(address.keys.pub)"
+                      class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                      title="Copiar chave pública"
+                    >
+                      <i class="pi pi-copy"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs text-zinc-500 mb-1">UTXOs</label>
+                  <p-table
+                    *ngIf="address.utxos.length > 0; else noUtxos"
+                    [value]="address.utxos || []"
+                    [tableStyle]="{ 'min-width': '100%' }"
+                    [style]="{ 'font-size': '0.95rem' }"
+                  >
+                    <ng-template pTemplate="header">
+                      <tr class="text-white/80 font-bold text-sm">
+                        <th class="text-left px-4 py-3">TxID</th>
+                        <th class="text-right px-4 py-3">Out</th>
+                        <th class="text-right px-4 py-3">Valor</th>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-utxo>
+                      <tr>
+                        <td
+                          class="font-mono text-xs text-white/80 px-4 py-3"
+                          [title]="utxo.txId"
+                          style="
+                            max-width: 120px;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                          "
+                        >
+                          {{ utxo.txId | slice : 0 : 8 }}…
+                        </td>
+                        <td class="text-right text-white/60 px-4 py-3">
+                          {{ utxo.outputIndex }}
+                        </td>
+                        <td class="text-right px-4 py-3">
+                          <span class="text-white font-mono">{{
+                            utxo.output.value / 100000000 | number : "1.8-8"
+                          }}</span>
+                          <span class="text-white/40">BTC</span>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                  <ng-template #noUtxos>
+                    <div
+                      class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-white/60 italic break-all"
+                    >
+                      Nenhum UTXO disponível.
+                    </div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

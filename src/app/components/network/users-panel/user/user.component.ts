@@ -9,11 +9,18 @@ import { BitcoinAddress } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { KeyService } from '../../../../services/key.service';
 import { bytesToHex } from '../../../../utils/tools';
+import { WalletBalanceComponent } from '../../wallet/wallet-balance/wallet-balance.component';
 
 @Component({
   selector: 'app-user',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule, ButtonModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TableModule,
+    ButtonModule,
+    WalletBalanceComponent,
+  ],
   templateUrl: './user.component.html',
 })
 export class UserComponent {
@@ -194,9 +201,5 @@ export class UserComponent {
   // Método para alterar o tipo de endereço
   changeAddressType(type: 'bip44' | 'bip49' | 'bip84'): void {
     this.selectedAddressType = type;
-  }
-
-  rowTrackBy(index: number, item: BitcoinAddress): string {
-    return item.bip44.keys.priv;
   }
 }

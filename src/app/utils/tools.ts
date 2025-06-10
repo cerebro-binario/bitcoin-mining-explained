@@ -157,3 +157,8 @@ export function hexToWif(hex: string): string {
   const wif = bs58.encode(finalBytes);
   return wif;
 }
+
+export function copyToClipboard(text: string | undefined): void {
+  if (!text) return;
+  navigator.clipboard.writeText(text);
+}
