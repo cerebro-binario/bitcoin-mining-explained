@@ -7,8 +7,7 @@ import { mnemonicToSeedSync } from '@scure/bip39';
 import { bech32 } from 'bech32';
 import bs58 from 'bs58';
 import wordlist from '../../assets/bip39-words.json';
-import { Keys } from '../models/node';
-import { BipType, BitcoinAddress } from '../models/user.model';
+import { BipType, BitcoinAddress, Keys } from '../models/wallet.model';
 import {
   bytesToBinary,
   bytesToHex,

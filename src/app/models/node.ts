@@ -15,6 +15,7 @@ import {
 
 import { areConsensusVersionsCompatible } from './consensus.model';
 import { Height } from './height.model';
+import { Keys } from './wallet.model';
 
 export interface Neighbor {
   latency: number;
@@ -41,14 +42,6 @@ export type BitcoinAddress = {
 export type Balances = {
   [address: string]: BitcoinAddress | undefined;
 };
-
-export interface Keys {
-  priv: string;
-  pub: string;
-  xpriv?: string;
-  xpub?: string;
-  path?: string; // Caminho de derivação BIP32 (opcional para compatibilidade)
-}
 
 export class Node {
   private readonly INITIAL_NBITS = 0x1e9fffff;
