@@ -57,10 +57,11 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     { label: 'Apenas com saldo', value: 'with-balance' },
   ];
 
-  keyFormat: 'hex' | 'dec' = 'hex';
+  keyFormat: 'hex' | 'decimal' | 'wif' = 'hex';
   keyFormatOptions = [
     { label: 'Hexadecimal', value: 'hex' },
-    { label: 'Decimal', value: 'dec' },
+    { label: 'Decimal', value: 'decimal' },
+    { label: 'WIF', value: 'wif' },
   ];
 
   private balancesSub?: Subscription;
@@ -224,19 +225,28 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
             address: '',
             balance: 0,
             utxos: [],
-            keys: { priv: '', pub: '' },
+            keys: {
+              priv: { hex: '', decimal: '', wif: '' },
+              pub: { hex: '', decimal: '' },
+            },
           },
           bip49: {
             address: '',
             balance: 0,
             utxos: [],
-            keys: { priv: '', pub: '' },
+            keys: {
+              priv: { hex: '', decimal: '', wif: '' },
+              pub: { hex: '', decimal: '' },
+            },
           },
           bip84: {
             address: '',
             balance: 0,
             utxos: [],
-            keys: { priv: '', pub: '' },
+            keys: {
+              priv: { hex: '', decimal: '', wif: '' },
+              pub: { hex: '', decimal: '' },
+            },
           },
           isMine,
         };
@@ -279,7 +289,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         const bip49Data = this.node.balances[bip49];
         const bip84Data = this.node.balances[bip84];
         this.addresses.push({
-          id: priv,
+          id: priv.hex,
           keys: address.bip44.keys,
           bip44: {
             address: bip44,

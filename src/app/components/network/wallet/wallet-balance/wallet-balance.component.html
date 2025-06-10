@@ -75,7 +75,7 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-green-300 break-all"
                     >
-                      {{ getPrivKeyDisplay(address.keys) }}
+                      {{ address.keys.priv[keysFormat] }}
                     </div>
                     <button
                       (click)="copyToClipboard(address.keys.priv)"
@@ -95,7 +95,7 @@
                     <div
                       class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-blue-300 break-all"
                     >
-                      {{ getPubKeyDisplay(address.keys) }}
+                      {{ address.keys.pub[keysFormat] }}
                     </div>
                     <button
                       (click)="copyToClipboard(address.keys.pub)"

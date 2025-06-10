@@ -174,9 +174,12 @@
                 style="max-width: 220px; word-break: break-all"
               >
                 <ng-container
-                  *ngIf="entry.keys && entry.keys.priv; else unknownPriv"
+                  *ngIf="
+                    entry.keys && entry.keys.priv[keyFormat];
+                    else unknownPriv
+                  "
                 >
-                  {{ getPrivKeyDisplay(entry.keys) }}
+                  {{ entry.keys.priv[keyFormat] }}
                 </ng-container>
                 <ng-template #unknownPriv>
                   <span title="Chave privada não conhecida (endereço externo)">
@@ -189,9 +192,12 @@
                 style="max-width: 220px; word-break: break-all"
               >
                 <ng-container
-                  *ngIf="entry.keys && entry.keys.pub; else unknownPub"
+                  *ngIf="
+                    entry.keys && entry.keys.pub[keyFormat];
+                    else unknownPub
+                  "
                 >
-                  {{ getPubKeyDisplay(entry.keys) }}
+                  {{ entry.keys.pub[keyFormat] }}
                 </ng-container>
                 <ng-template #unknownPub>
                   <span title="Chave pública não conhecida (endereço externo)">

@@ -1,6 +1,13 @@
 export interface Keys {
-  priv: string;
-  pub: string;
+  priv: {
+    hex: string;
+    decimal: string;
+    wif: string;
+  };
+  pub: {
+    hex: string;
+    decimal: string;
+  };
   xpriv?: string;
   xpub?: string;
   path?: string; // Caminho de derivação BIP32 (opcional para compatibilidade)

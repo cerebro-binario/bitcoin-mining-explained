@@ -13,6 +13,8 @@ import {
   bytesToHex,
   getRandomBytes,
   hexToBytes,
+  hexToDecimal,
+  hexToWif,
   padBinary,
   padHex,
   zip,
@@ -95,9 +97,18 @@ export class KeyService {
     const keys = zip(bip44Keys, bip49Keys, bip84Keys);
 
     return keys.map(([bip44Keys, bip49Keys, bip84Keys]) => {
-      const bip44Address = this.deriveBitcoinAddress(bip44Keys.pub, 'bip44');
-      const bip49Address = this.deriveBitcoinAddress(bip49Keys.pub, 'bip49');
-      const bip84Address = this.deriveBitcoinAddress(bip84Keys.pub, 'bip84');
+      const bip44Address = this.deriveBitcoinAddress(
+        bip44Keys.pub.hex,
+        'bip44'
+      );
+      const bip49Address = this.deriveBitcoinAddress(
+        bip49Keys.pub.hex,
+        'bip49'
+      );
+      const bip84Address = this.deriveBitcoinAddress(
+        bip84Keys.pub.hex,
+        'bip84'
+      );
 
       return {
         bip44: {
@@ -143,9 +154,9 @@ export class KeyService {
     const keys = this.generateSequentialKeys(startIndex, count);
 
     return keys.map((key) => {
-      const bip44Address = this.deriveBitcoinAddress(key.pub, 'bip44');
-      const bip49Address = this.deriveBitcoinAddress(key.pub, 'bip49');
-      const bip84Address = this.deriveBitcoinAddress(key.pub, 'bip84');
+      const bip44Address = this.deriveBitcoinAddress(key.pub.hex, 'bip44');
+      const bip49Address = this.deriveBitcoinAddress(key.pub.hex, 'bip49');
+      const bip84Address = this.deriveBitcoinAddress(key.pub.hex, 'bip84');
 
       return {
         bip44: { keys: key, address: bip44Address, balance: 0, utxos: [] },
@@ -212,8 +223,15 @@ export class KeyService {
       keys.push({
         xpriv,
         xpub,
-        priv,
-        pub,
+        priv: {
+          hex: priv,
+          decimal: hexToDecimal(priv),
+          wif: hexToWif(priv),
+        },
+        pub: {
+          hex: pub,
+          decimal: hexToDecimal(pub),
+        },
         path: fullPath,
       });
     }
@@ -225,9 +243,17 @@ export class KeyService {
     const cleanPrivKey = privateKey.startsWith('0x')
       ? privateKey.slice(2)
       : privateKey;
+    const pubKey = KeyService.derivePublicKey(cleanPrivKey);
     return {
-      priv: cleanPrivKey,
-      pub: KeyService.derivePublicKey(cleanPrivKey),
+      priv: {
+        hex: cleanPrivKey,
+        decimal: hexToDecimal(cleanPrivKey),
+        wif: hexToWif(cleanPrivKey),
+      },
+      pub: {
+        hex: pubKey,
+        decimal: hexToDecimal(pubKey),
+      },
     };
   }
 

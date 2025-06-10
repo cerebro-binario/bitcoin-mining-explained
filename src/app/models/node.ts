@@ -1716,7 +1716,12 @@ export class Node {
           utxos: [],
           ...(isMinerCoinbase
             ? { keys: this.wallet.addresses[0].bip84.keys }
-            : { keys: { pub: '', priv: '' } }),
+            : {
+                keys: {
+                  pub: { hex: '', decimal: '' },
+                  priv: { hex: '', decimal: '', wif: '' },
+                },
+              }),
         };
 
         addressData.utxos.push({
@@ -1761,7 +1766,12 @@ export class Node {
       nodeName: `Minerador ${block.minerId}`,
       ...(isMinerCoinbase
         ? { keys: this.wallet.addresses[0].bip84.keys }
-        : { keys: { pub: '', priv: '' } }),
+        : {
+            keys: {
+              pub: { hex: '', decimal: '' },
+              priv: { hex: '', decimal: '', wif: '' },
+            },
+          }),
     };
 
     // Verifica se a coinbase já foi processada
@@ -1836,7 +1846,10 @@ export class Node {
           balance: 0,
           utxos: [],
           nodeName: `Minerador ${block.minerId}`,
-          keys: { pub: '', priv: '' },
+          keys: {
+            pub: { hex: '', decimal: '' },
+            priv: { hex: '', decimal: '', wif: '' },
+          },
         };
 
         addressData.utxos.push({
