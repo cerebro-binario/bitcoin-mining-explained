@@ -13,8 +13,9 @@
     <tr class="bg-zinc-900 text-zinc-300">
       <th class="text-left p-4 w-[5%]"></th>
       <th class="px-4 py-2 text-left w-[5%]">#</th>
-      <th class="px-4 py-2 text-left w-[70%]">Endereço</th>
-      <th class="px-4 py-2 text-right w-[20%]">Saldo (BTC)</th>
+      <th class="px-4 py-2 text-left w-[60%]">Endereço</th>
+      <th class="px-4 py-2 text-right w-[15%]">Saldo (BTC)</th>
+      <th class="px-4 py-2 text-right w-[15%]">UTXOs</th>
     </tr>
   </ng-template>
   <ng-template #body let-entry let-index="rowIndex" let-expanded="expanded">
@@ -47,6 +48,9 @@
       </td>
       <td class="px-4 py-2 text-right font-mono text-zinc-200">
         {{ address.balance | number : "1.8-8" }}
+      </td>
+      <td class="px-4 py-2 text-right font-mono text-zinc-200">
+        {{ address.utxos.length }}
       </td>
     </tr>
   </ng-template>
