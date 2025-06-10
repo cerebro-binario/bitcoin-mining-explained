@@ -5,11 +5,10 @@ import { mnemonicToSeedSync } from '@scure/bip39';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { User } from '../../../../models/user.model';
-import { BitcoinAddress } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { KeyService } from '../../../../services/key.service';
 import { bytesToHex } from '../../../../utils/tools';
-import { WalletBalanceComponent } from '../../wallet/wallet-balance/wallet-balance.component';
+import { AddressListComponent } from '../../wallet/address-list/address-list.component';
 
 @Component({
   selector: 'app-user',
@@ -19,7 +18,7 @@ import { WalletBalanceComponent } from '../../wallet/wallet-balance/wallet-balan
     FormsModule,
     TableModule,
     ButtonModule,
-    WalletBalanceComponent,
+    AddressListComponent,
   ],
   templateUrl: './user.component.html',
 })

@@ -223,10 +223,10 @@
         </div>
       </div>
       <div class="overflow-x-auto">
-        <app-wallet-balance
-          [wallet]="user.wallet!"
+        <app-address-list
+          [addresses]="user.wallet!.addresses"
           [addressType]="selectedAddressType"
-        ></app-wallet-balance>
+        ></app-address-list>
       </div>
 
       <button
