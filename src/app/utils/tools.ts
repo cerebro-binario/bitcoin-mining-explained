@@ -1,3 +1,5 @@
+import { sha256 } from '@noble/hashes/sha2';
+import bs58 from 'bs58';
 import * as CryptoJS from 'crypto-js';
 
 export function textToHex(text: string): string {
@@ -127,4 +129,31 @@ export function shortenValue(value: string, size: number = 6): string {
 
 export function zip<T>(...arrays: T[][]): T[][] {
   return arrays[0].map((_, i) => arrays.map((arr) => arr[i]));
+}
+
+export function hexToWif(hex: string): string {
+  // 1. Converte o hex para bytes
+  const privKey = hexToBytes(hex);
+
+  // 2. Prepara os bytes para WIF:
+  // - 0x80 (versão mainnet)
+  // - chave privada (32 bytes)
+  // - 0x01 (flag de compressão)
+  const wifBytes = new Uint8Array(34);
+  wifBytes[0] = 0x80; // versão mainnet
+  wifBytes.set(privKey, 1);
+  wifBytes[33] = 0x01; // flag de compressão
+
+  // 3. Calcula o checksum (primeiros 4 bytes do SHA256(SHA256(wifBytes)))
+  const hash = sha256(sha256(wifBytes));
+  const checksum = hash.slice(0, 4);
+
+  // 4. Concatena tudo
+  const finalBytes = new Uint8Array(38);
+  finalBytes.set(wifBytes, 0);
+  finalBytes.set(checksum, 34);
+
+  // 5. Codifica em Base58
+  const wif = bs58.encode(finalBytes);
+  return wif;
 }

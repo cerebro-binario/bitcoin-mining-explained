@@ -200,34 +200,14 @@ export class KeyService {
       const { xpriv, xpub } = child.toJSON();
       const cleanKeys = HDKey.fromExtendedKey(xpriv);
 
-      // Para a chave privada WIF:
-      // 1. Extrai a chave privada do xpriv (últimos 32 bytes)
       const privKey = cleanKeys.privateKey;
       if (!privKey) throw new Error('Failed to get private key');
 
-      // 2. Prepara os bytes para WIF:
-      // - 0x80 (versão mainnet)
-      // - chave privada (32 bytes)
-      // - 0x01 (flag de compressão)
-      const wifBytes = new Uint8Array(34);
-      wifBytes[0] = 0x80; // versão mainnet
-      wifBytes.set(privKey, 1);
-      wifBytes[33] = 0x01; // flag de compressão
+      const pubKey = cleanKeys.publicKey;
+      if (!pubKey) throw new Error('Failed to get public key');
 
-      // 3. Calcula o checksum (primeiros 4 bytes do SHA256(SHA256(wifBytes)))
-      const hash = sha256(sha256(wifBytes));
-      const checksum = hash.slice(0, 4);
-
-      // 4. Concatena tudo
-      const finalBytes = new Uint8Array(38);
-      finalBytes.set(wifBytes, 0);
-      finalBytes.set(checksum, 34);
-
-      // 5. Codifica em Base58
-      const priv = bs58.encode(finalBytes);
-
-      // Para a chave pública, já está no formato correto (hex comprimido)
-      const pub = cleanKeys.publicKey ? bytesToHex(cleanKeys.publicKey) : '';
+      const priv = bytesToHex(privKey);
+      const pub = bytesToHex(pubKey);
 
       keys.push({
         xpriv,
@@ -246,7 +226,7 @@ export class KeyService {
       ? privateKey.slice(2)
       : privateKey;
     return {
-      priv: privateKey,
+      priv: cleanPrivKey,
       pub: KeyService.derivePublicKey(cleanPrivKey),
     };
   }
@@ -292,7 +272,7 @@ export class KeyService {
   ): Keys[] {
     const keys: Keys[] = [];
     for (let i = 0; i < count; i++) {
-      const privateKey = '0x' + padHex(startIndex + i, 64);
+      const privateKey = padHex(startIndex + i, 64);
       const nodeKeys = this.deriveKeysFromPrivateKey(privateKey);
       keys.push(nodeKeys);
     }
