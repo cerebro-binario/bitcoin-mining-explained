@@ -18,7 +18,6 @@ import { Subscription } from 'rxjs';
 import { Node } from '../../../../../models/node';
 import {
   BitcoinAddress,
-  Keys,
   TOTAL_PRIVATE_KEY_RECORDS,
 } from '../../../../../models/wallet.model';
 import { KeyService } from '../../../../../services/key.service';
@@ -49,13 +48,6 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
   displayModeOptions = [
     { label: 'Mostrar todos', value: 'all' },
     { label: 'Apenas com saldo', value: 'with-balance' },
-  ];
-
-  keyFormat: 'hex' | 'decimal' | 'wif' = 'hex';
-  keyFormatOptions = [
-    { label: 'Hexadecimal', value: 'hex' },
-    { label: 'Decimal', value: 'decimal' },
-    { label: 'WIF', value: 'wif' },
   ];
 
   private balancesSub?: Subscription;
@@ -302,31 +294,5 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
 
   onDisplayModeChange() {
     this.loadAddresses();
-  }
-
-  getPrivKeyDisplay(keys: Keys): string {
-    if (this.keyFormat === 'hex') {
-      return '0x' + keys.priv;
-    } else {
-      // decimal
-      try {
-        return BigInt('0x' + keys.priv).toString(10);
-      } catch {
-        return '(inválido)';
-      }
-    }
-  }
-
-  getPubKeyDisplay(keys: Keys): string {
-    if (this.keyFormat === 'hex') {
-      return '0x' + keys.pub;
-    } else {
-      // decimal
-      try {
-        return BigInt('0x' + keys.pub).toString(10);
-      } catch {
-        return '(inválido)';
-      }
-    }
   }
 }
