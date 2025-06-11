@@ -31,8 +31,7 @@ export class WalletComponent {
   @Input() set wallet(wallet: Wallet | null) {
     if (this._wallet === wallet) return;
     this._wallet = wallet;
-    this.updateTotalPages();
-    this.loadAddresses();
+    this.updateView();
     if (this.goToLastPageAfterWalletUpdate) {
       this.goToLastPage();
       this.goToLastPageAfterWalletUpdate = false;
@@ -40,8 +39,8 @@ export class WalletComponent {
   }
   @Output() deriveNextAddress = new EventEmitter<void>();
 
-  displayedAddresses: BitcoinAddressData[] = [];
-  flattenedAddresses: BitcoinAddressData[] = [];
+  addresses: BitcoinAddressData[] = [];
+  addressesDisplay: BitcoinAddressData[] = [];
   addressType: BipType | 'all-bip-types' = 'bip84';
   pagination = {
     pageSize: 10,
@@ -50,19 +49,33 @@ export class WalletComponent {
   };
   jumpPageInput: string = '';
 
-  loadAddresses() {
-    if (!this._wallet) return;
+  private updateView() {
+    this.updateAddresses();
+    this.updateTotalPages();
+    this.displayAddresses();
+  }
 
+  private updateAddresses() {
+    if (!this._wallet) return;
+    this.addresses = [];
+
+    if (this.addressType === 'all-bip-types') {
+      this.addresses = this._wallet.addresses.reduce((acc, address) => {
+        return [...acc, ...Object.values(address)];
+      }, [] as BitcoinAddressData[]);
+    } else {
+      this.addresses = this._wallet.addresses.map(
+        (address) => address[this.addressType as BipType]
+      );
+    }
+  }
+
+  private displayAddresses() {
     const start =
       Number(this.pagination.currentPage) * Number(this.pagination.pageSize);
     const end = start + Number(this.pagination.pageSize);
 
-    this.displayedAddresses =
-      this.addressType === 'all-bip-types'
-        ? this.flattenedAddresses.slice(start, end)
-        : this._wallet.addresses
-            .slice(start, end)
-            .map((address) => address[this.addressType as BipType]);
+    this.addressesDisplay = this.addresses.slice(start, end);
   }
 
   onDeriveNextAddress() {
@@ -72,26 +85,7 @@ export class WalletComponent {
 
   onChangeAddressType(type: BipType | 'all-bip-types') {
     this.addressType = type;
-    if (type === 'all-bip-types') {
-      this.pagination.totalPages *= 3n;
-      this.pagination.currentPage *= 3n;
-
-      this.flattenedAddresses = this._wallet!.addresses.reduce(
-        (acc, address) => {
-          return [...acc, ...Object.values(address)];
-        },
-        [] as BitcoinAddressData[]
-      );
-
-      this.loadAddresses();
-    } else {
-      this.pagination.totalPages /= 3n;
-      this.pagination.currentPage /= 3n;
-
-      this.flattenedAddresses = [];
-
-      this.loadAddresses();
-    }
+    this.updateView();
   }
 
   get currentPageDisplay(): number {
@@ -125,30 +119,30 @@ export class WalletComponent {
 
   goToFirstPage() {
     this.pagination.currentPage = 0n;
-    this.loadAddresses();
+    this.updateView();
   }
   goToPreviousPage() {
     if (this.pagination.currentPage > 0n) {
       this.pagination.currentPage--;
-      this.loadAddresses();
+      this.updateView();
     }
   }
   goToNextPage() {
     if (this.pagination.currentPage < this.pagination.totalPages - 1n) {
       this.pagination.currentPage++;
-      this.loadAddresses();
+      this.updateView();
     }
   }
   goToLastPage() {
     this.pagination.currentPage = this.pagination.totalPages - 1n;
-    this.loadAddresses();
+    this.updateView();
   }
   goToRandomPage() {
     const rand = BigInt(
       Math.floor(Math.random() * Number(this.pagination.totalPages))
     );
     this.pagination.currentPage = rand;
-    this.loadAddresses();
+    this.updateView();
   }
   jumpToPage() {
     try {
@@ -156,7 +150,7 @@ export class WalletComponent {
       if (page < 1n) page = 1n;
       if (page > this.pagination.totalPages) page = this.pagination.totalPages;
       this.pagination.currentPage = page - 1n;
-      this.loadAddresses();
+      this.updateView();
     } catch {
       // ignore invalid input
     }
