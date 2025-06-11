@@ -187,14 +187,9 @@
       <app-address-list
         [addresses]="user.wallet!.addresses"
         [addressType]="selectedAddressType"
+        [canDeriveNextAddress]="true"
+        (deriveNextAddress)="deriveNextAddress()"
       ></app-address-list>
-
-      <button
-        class="mt-4 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow"
-        (click)="deriveNextAddress()"
-      >
-        Gerar novo endereço
-      </button>
     </div>
   </div>
 </ng-container>
