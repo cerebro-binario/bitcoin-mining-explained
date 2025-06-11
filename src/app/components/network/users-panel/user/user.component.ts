@@ -5,7 +5,6 @@ import { mnemonicToSeedSync } from '@scure/bip39';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { User } from '../../../../models/user.model';
-import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { KeyService } from '../../../../services/key.service';
 import { bytesToHex } from '../../../../utils/tools';
 import { AddressListComponent } from '../../wallet/address-list/address-list.component';
@@ -52,10 +51,7 @@ export class UserComponent {
   // Tipo de endereço selecionado
   selectedAddressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
 
-  constructor(
-    public keyService: KeyService,
-    private networkService: BitcoinNetworkService
-  ) {}
+  constructor(public keyService: KeyService) {}
 
   deriveNextAddress() {
     if (!this.user.wallet) return;
@@ -66,7 +62,6 @@ export class UserComponent {
 
     if (newAddress) {
       this.user.wallet.addresses = [...this.user.wallet.addresses, newAddress];
-      this.networkService.updateUser(this.user);
     }
   }
 
@@ -77,7 +72,6 @@ export class UserComponent {
     this.user.wallet.seedPassphrase = '';
     this.user.wallet.addresses = [];
     this.seedConfirmed = false;
-    this.networkService.updateUser(this.user);
   }
 
   importWallet() {
@@ -131,7 +125,6 @@ export class UserComponent {
         seed,
         1
       );
-      this.networkService.updateUser(this.user);
     } catch (error) {
       console.error('Erro ao gerar primeiro endereço:', error);
     }
@@ -158,7 +151,6 @@ export class UserComponent {
     this.passphrase = '';
     this.passphraseConfirm = '';
     this.passphraseError = '';
-    this.networkService.updateUser(this.user);
   }
 
   get walletStep() {
