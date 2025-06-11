@@ -50,6 +50,50 @@ export class WalletComponent {
   };
   jumpPageInput: string = '';
 
+  loadAddresses() {
+    if (!this._wallet) return;
+
+    const start =
+      Number(this.pagination.currentPage) * Number(this.pagination.pageSize);
+    const end = start + Number(this.pagination.pageSize);
+
+    this.displayedAddresses =
+      this.addressType === 'all-bip-types'
+        ? this.flattenedAddresses.slice(start, end)
+        : this._wallet.addresses
+            .slice(start, end)
+            .map((address) => address[this.addressType as BipType]);
+  }
+
+  onDeriveNextAddress() {
+    this.deriveNextAddress.emit();
+    this.goToLastPageAfterWalletUpdate = true;
+  }
+
+  onChangeAddressType(type: BipType | 'all-bip-types') {
+    this.addressType = type;
+    if (type === 'all-bip-types') {
+      this.pagination.totalPages *= 3n;
+      this.pagination.currentPage *= 3n;
+
+      this.flattenedAddresses = this._wallet!.addresses.reduce(
+        (acc, address) => {
+          return [...acc, ...Object.values(address)];
+        },
+        [] as BitcoinAddressData[]
+      );
+
+      this.loadAddresses();
+    } else {
+      this.pagination.totalPages /= 3n;
+      this.pagination.currentPage /= 3n;
+
+      this.flattenedAddresses = [];
+
+      this.loadAddresses();
+    }
+  }
+
   get currentPageDisplay(): number {
     return Number(this.pagination.currentPage) + 1;
   }
@@ -115,50 +159,6 @@ export class WalletComponent {
       this.loadAddresses();
     } catch {
       // ignore invalid input
-    }
-  }
-
-  loadAddresses() {
-    if (!this._wallet) return;
-
-    const start =
-      Number(this.pagination.currentPage) * Number(this.pagination.pageSize);
-    const end = start + Number(this.pagination.pageSize);
-
-    this.displayedAddresses =
-      this.addressType === 'all-bip-types'
-        ? this.flattenedAddresses.slice(start, end)
-        : this._wallet.addresses
-            .slice(start, end)
-            .map((address) => address[this.addressType as BipType]);
-  }
-
-  onDeriveNextAddress() {
-    this.deriveNextAddress.emit();
-    this.goToLastPageAfterWalletUpdate = true;
-  }
-
-  onChangeAddressType(type: BipType | 'all-bip-types') {
-    this.addressType = type;
-    if (type === 'all-bip-types') {
-      this.pagination.totalPages *= 3n;
-      this.pagination.currentPage *= 3n;
-
-      this.flattenedAddresses = this._wallet!.addresses.reduce(
-        (acc, address) => {
-          return [...acc, ...Object.values(address)];
-        },
-        [] as BitcoinAddressData[]
-      );
-
-      this.loadAddresses();
-    } else {
-      this.pagination.totalPages /= 3n;
-      this.pagination.currentPage /= 3n;
-
-      this.flattenedAddresses = [];
-
-      this.loadAddresses();
     }
   }
 }
