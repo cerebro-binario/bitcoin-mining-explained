@@ -1,48 +1,97 @@
-<div class="p-4">
-  <h2 class="text-lg font-bold text-blue-400 mb-4">Wallet (Simulação)</h2>
-  <form class="flex flex-col gap-2 mb-4" #txForm="ngForm">
-    <input
-      type="text"
-      pInputText
-      placeholder="Endereço de destino"
-      [(ngModel)]="toAddress"
-      name="toAddress"
-      required
-    />
-    <input
-      type="number"
-      pInputText
-      placeholder="Valor (BTC)"
-      [(ngModel)]="amount"
-      name="amount"
-      required
-      min="0.00000001"
-      step="0.00000001"
-    />
-    <button
-      pButton
-      type="button"
-      label="Enviar"
-      (click)="sendTransaction()"
-      [disabled]="!toAddress || !amount"
-    ></button>
-  </form>
-  <p-table [value]="transactions" [tableStyle]="{ 'min-width': '100%' }">
-    <ng-template pTemplate="header">
-      <tr>
-        <th>TxID</th>
-        <th>Para</th>
-        <th>Valor (BTC)</th>
-        <th>Status</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-tx>
-      <tr>
-        <td class="font-mono text-xs">{{ tx.id | slice : 0 : 8 }}…</td>
-        <td class="font-mono text-xs">{{ tx.to }}</td>
-        <td>{{ tx.amount | number : "1.8-8" }}</td>
-        <td>{{ tx.status }}</td>
-      </tr>
-    </ng-template>
-  </p-table>
+<div class="w-full h-full mt-4 flex-1 flex flex-col min-h-0">
+  <div class="px-6 flex-1 min-h-0 flex flex-col">
+    <app-address-list
+      [addresses]="displayedAddresses"
+      [pagination]="pagination"
+      [canDeriveNextAddress]="true"
+      (deriveNextAddress)="onDeriveNextAddress()"
+      class="h-full"
+    ></app-address-list>
+  </div>
+  <div
+    *ngIf="totalPagesDisplay > 1"
+    class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-4 bg-zinc-900 rounded-b-lg border-t border-zinc-700 mt-2"
+  >
+    <!-- Indicador de página atual -->
+    <div
+      class="flex flex-1 items-center justify-start gap-2 text-white/80 text-sm font-mono"
+    >
+      <span class="text-zinc-400">Página</span>
+      <span class="font-bold text-blue-300">#{{ currentPageDisplay }}</span>
+      <span class="text-zinc-400">of</span>
+      <span class="font-bold text-blue-300">{{ totalPagesDisplay }}</span>
+      <span class="text-zinc-500">({{ pagePercent | number : "1.0-2" }}%)</span>
+    </div>
+
+    <!-- Botões de navegação -->
+    <div class="flex flex-1 items-center justify-center gap-1">
+      <button
+        pButton
+        icon="pi pi-angle-double-left"
+        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+        (click)="goToFirstPage()"
+        [disabled]="prevDisabled"
+        [ngClass]="{ 'opacity-50': prevDisabled }"
+        title="Primeira página"
+      ></button>
+      <button
+        pButton
+        icon="pi pi-angle-left"
+        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+        (click)="goToPreviousPage()"
+        [disabled]="prevDisabled"
+        [ngClass]="{ 'opacity-50': prevDisabled }"
+        title="Página anterior"
+      ></button>
+      <button
+        pButton
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+        (click)="goToRandomPage()"
+        title="Página aleatória"
+      ></button>
+      <button
+        pButton
+        icon="pi pi-angle-right"
+        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+        (click)="goToNextPage()"
+        [disabled]="nextDisabled"
+        [ngClass]="{ 'opacity-50': nextDisabled }"
+        title="Próxima página"
+      ></button>
+      <button
+        pButton
+        icon="pi pi-angle-double-right"
+        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+        (click)="goToLastPage()"
+        [disabled]="nextDisabled"
+        [ngClass]="{ 'opacity-50': nextDisabled }"
+        title="Última página"
+      ></button>
+    </div>
+
+    <!-- Input para pular para página -->
+    <form
+      class="flex flex-1 items-center justify-end gap-2"
+      (submit)="jumpToPage(); $event.preventDefault()"
+      autocomplete="off"
+    >
+      <input
+        type="text"
+        [(ngModel)]="jumpPageInput"
+        name="jumpPageInput"
+        placeholder="Página #"
+        class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white font-mono w-24 focus:outline-none focus:border-blue-400"
+        style="min-width: 120px"
+      />
+      <button
+        pButton
+        type="submit"
+        icon="pi pi-arrow-right"
+        class="p-button-sm p-button-rounded p-button-text text-blue-400"
+        label="Ir para"
+        style="min-width: 60px"
+      ></button>
+    </form>
+  </div>
 </div>

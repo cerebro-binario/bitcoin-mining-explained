@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { Node } from '../../../../../models/node';
 import { KeyService } from '../../../../../services/key.service';
-import { AddressListComponent } from '../../../wallet/address-list/address-list.component';
+import { WalletComponent } from '../../../wallet/wallet.component';
 
 @Component({
   selector: 'app-wallet-dialog',
   templateUrl: './wallet-dialog.component.html',
   standalone: true,
-  imports: [CommonModule, AddressListComponent, ButtonModule, FormsModule],
+  imports: [CommonModule, ButtonModule, FormsModule, WalletComponent],
 })
 export class WalletDialogComponent {
   @Input() node!: Node;
@@ -47,7 +47,9 @@ export class WalletDialogComponent {
     );
 
     if (newAddress) {
-      this.node.wallet.addresses = [...this.node.wallet.addresses, newAddress];
+      const newWallet = { ...this.node.wallet };
+      newWallet.addresses = [...newWallet.addresses, newAddress];
+      this.node.wallet = newWallet;
     }
   }
 }
