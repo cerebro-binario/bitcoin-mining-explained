@@ -25,11 +25,12 @@
       </span>
     </h2>
 
-    <div class="w-full mt-4 px-6">
+    <div class="w-full mt-4 px-6 flex-1 min-h-0 flex flex-col">
       <app-address-list
         [addresses]="node.wallet!.addresses"
         [canDeriveNextAddress]="true"
         (deriveNextAddress)="deriveNextAddress()"
+        class="h-full"
       ></app-address-list>
     </div>
   </div>
