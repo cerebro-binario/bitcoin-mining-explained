@@ -70,7 +70,7 @@
       </ng-template>
       <ng-template #body let-data let-index="rowIndex" let-expanded="expanded">
         <tr class="border-b border-zinc-700 last:border-0">
-          <td class="p-4 align-middle">
+          <td class="p-4 align-middle flex items-center">
             <button
               pButton
               type="button"
@@ -81,7 +81,7 @@
               [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
             ></button>
             <i
-              *ngIf="data.isMine"
+              *ngIf="data.nodeId === nodeId"
               class="pi pi-verified text-blue-400 text-xs ml-1"
               title="Este endereço pertence a este nó"
             ></i>

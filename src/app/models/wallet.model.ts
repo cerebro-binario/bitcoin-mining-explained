@@ -30,7 +30,7 @@ export interface BitcoinUTXO {
 }
 
 export interface BitcoinAddressData {
-  nodeName?: string;
+  nodeId?: number;
   keys: Keys;
   address: string;
   balance: number;

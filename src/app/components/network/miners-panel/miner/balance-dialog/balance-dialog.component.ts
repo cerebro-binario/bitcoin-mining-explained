@@ -209,6 +209,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
               pub: { hex: '', decimal: '' },
             },
             addressType: 'bip44',
+            nodeId: data.nodeId,
           },
           bip49: {
             address: '',
@@ -219,6 +220,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
               pub: { hex: '', decimal: '' },
             },
             addressType: 'bip49',
+            nodeId: data.nodeId,
           },
           bip84: {
             address: '',
@@ -229,6 +231,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
               pub: { hex: '', decimal: '' },
             },
             addressType: 'bip84',
+            nodeId: data.nodeId,
           },
         };
         addressRow[addressType] = {
@@ -237,6 +240,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
           utxos: data.utxos,
           keys: data.keys,
           addressType,
+          nodeId: data.nodeId,
         };
         this.addresses.push(addressRow);
       }
@@ -277,6 +281,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
             utxos: bip44Data?.utxos || [],
             keys: address.bip44.keys,
             addressType: 'bip44',
+            nodeId: bip44Data?.nodeId || 0,
           },
           bip49: {
             address: bip49,
@@ -284,6 +289,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
             utxos: bip49Data?.utxos || [],
             keys: address.bip49.keys,
             addressType: 'bip49',
+            nodeId: bip49Data?.nodeId || 0,
           },
           bip84: {
             address: bip84,
@@ -291,6 +297,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
             utxos: bip84Data?.utxos || [],
             keys: address.bip84.keys,
             addressType: 'bip84',
+            nodeId: bip84Data?.nodeId || 0,
           },
         });
       }

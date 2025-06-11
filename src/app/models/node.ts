@@ -1766,7 +1766,7 @@ export class Node {
       address,
       balance: 0,
       utxos: [],
-      nodeName: `Minerador ${block.minerId}`,
+      nodeId: block.minerId,
       ...(isMinerCoinbase
         ? { keys: this.wallet.addresses[0].bip84.keys }
         : {
@@ -1849,7 +1849,6 @@ export class Node {
           address: input.scriptPubKey,
           balance: 0,
           utxos: [],
-          nodeName: `Minerador ${block.minerId}`,
           keys: {
             pub: { hex: '', decimal: '' },
             priv: { hex: '', decimal: '', wif: '' },

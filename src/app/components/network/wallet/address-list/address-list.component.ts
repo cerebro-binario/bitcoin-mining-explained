@@ -27,12 +27,14 @@ export class AddressListComponent {
   displayedAddresses: BitcoinAddressData[] = [];
 
   @Input() set addresses(value: BitcoinAddress[]) {
+    if (value === this._addresses) return;
     this._addresses = value;
     this.displayedAddresses = [];
     this.updateDisplayedAddresses();
   }
 
   @Input() addressType: BipType | 'all' = 'bip84';
+  @Input() nodeId: number | null = null;
 
   @Input() set pagination(
     value: {
@@ -45,6 +47,7 @@ export class AddressListComponent {
   }
 
   @Input() set onlyWithBalance(value: boolean) {
+    if (value === this._onlyWithBalance) return;
     this._onlyWithBalance = value;
     this.updateDisplayedAddresses();
   }
