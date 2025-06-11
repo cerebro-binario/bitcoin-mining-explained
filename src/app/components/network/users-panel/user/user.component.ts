@@ -45,12 +45,6 @@ export class UserComponent {
   importSeedPassphrase = '';
   importSeedError = '';
 
-  // Propriedades para gerenciar a exibição das chaves
-  showingKeys: boolean[] = [];
-
-  // Tipo de endereço selecionado
-  selectedAddressType: 'bip44' | 'bip49' | 'bip84' = 'bip84';
-
   constructor(public keyService: KeyService) {}
 
   deriveNextAddress() {
@@ -174,20 +168,5 @@ export class UserComponent {
       this.copiedSeed = true;
       setTimeout(() => (this.copiedSeed = false), 2000);
     });
-  }
-
-  // Métodos para gerenciar a exibição das chaves
-  toggleAddressKeys(index: number): void {
-    if (!this.showingKeys[index]) return;
-    this.showingKeys[index] = !this.showingKeys[index];
-  }
-
-  hasVisibleKeys(): boolean {
-    return this.showingKeys && this.showingKeys.some((k) => k);
-  }
-
-  copyToClipboard(text: string | undefined): void {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
   }
 }
