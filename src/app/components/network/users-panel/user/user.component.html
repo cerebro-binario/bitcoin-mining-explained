@@ -173,9 +173,9 @@
 
 <ng-container *ngIf="walletExists && walletStep === 'created'">
   <div
-    class="bg-zinc-800 rounded-lg shadow p-6 flex flex-col gap-3 border border-zinc-700 items-center mb-6 w-full"
+    class="bg-zinc-800 rounded-lg shadow flex flex-col gap-3 border border-zinc-700 items-center mb-6 pt-6 w-full h-[90vh]"
   >
-    <div class="flex items-center gap-2 mb-2 w-full">
+    <div class="flex items-center gap-2 mb-2 w-full px-6">
       <span class="text-lg font-bold text-blue-400 truncate">{{
         user.name
       }}</span>
@@ -183,13 +183,12 @@
         <span class="text-xs text-zinc-400 ml-2 font-mono">#{{ user.id }}</span>
       </div>
     </div>
-    <div class="w-full mt-4">
-      <app-address-list
-        [addresses]="user.wallet!.addresses"
-        [addressType]="selectedAddressType"
-        [canDeriveNextAddress]="true"
+    <div class="w-full flex-1 min-h-0 flex flex-col">
+      <app-wallet
+        [wallet]="user.wallet!"
         (deriveNextAddress)="deriveNextAddress()"
-      ></app-address-list>
+        class="h-full flex flex-col flex-1 min-h-0"
+      ></app-wallet>
     </div>
   </div>
 </ng-container>

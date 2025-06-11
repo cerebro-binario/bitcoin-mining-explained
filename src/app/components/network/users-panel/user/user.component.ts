@@ -7,7 +7,7 @@ import { TableModule } from 'primeng/table';
 import { User } from '../../../../models/user.model';
 import { KeyService } from '../../../../services/key.service';
 import { bytesToHex } from '../../../../utils/tools';
-import { AddressListComponent } from '../../wallet/address-list/address-list.component';
+import { WalletComponent } from '../../wallet/wallet.component';
 
 @Component({
   selector: 'app-user',
@@ -17,7 +17,7 @@ import { AddressListComponent } from '../../wallet/address-list/address-list.com
     FormsModule,
     TableModule,
     ButtonModule,
-    AddressListComponent,
+    WalletComponent,
   ],
   templateUrl: './user.component.html',
 })
@@ -61,7 +61,9 @@ export class UserComponent {
     );
 
     if (newAddress) {
-      this.user.wallet.addresses = [...this.user.wallet.addresses, newAddress];
+      const newWallet = { ...this.user.wallet };
+      newWallet.addresses = [...newWallet.addresses, newAddress];
+      this.user.wallet = newWallet;
     }
   }
 

@@ -22,12 +22,17 @@ import { AddressListComponent } from './address-list/address-list.component';
 })
 export class WalletComponent {
   private _wallet: Wallet | null = null;
+  private goToLastPageAfterWalletUpdate = false;
 
   @Input() set wallet(wallet: Wallet | null) {
     if (this._wallet === wallet) return;
     this._wallet = wallet;
     this.updateTotalPages();
     this.loadAddresses();
+    if (this.goToLastPageAfterWalletUpdate) {
+      this.goToLastPage();
+      this.goToLastPageAfterWalletUpdate = false;
+    }
   }
   @Output() deriveNextAddress = new EventEmitter<void>();
 
@@ -119,5 +124,6 @@ export class WalletComponent {
 
   onDeriveNextAddress() {
     this.deriveNextAddress.emit();
+    this.goToLastPageAfterWalletUpdate = true;
   }
 }
