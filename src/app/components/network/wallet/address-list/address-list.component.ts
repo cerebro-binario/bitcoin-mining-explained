@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import {
@@ -51,6 +51,9 @@ export class AddressListComponent {
     this._onlyWithBalance = value;
     this.updateDisplayedAddresses();
   }
+
+  @Input() canDeriveNextAddress = false;
+  @Output() deriveNextAddress = new EventEmitter<void>();
 
   get first() {
     if (!this._pagination) return 0;

@@ -17,10 +17,11 @@ import { AddressService } from '../../../../services/address.service';
 import { BlockchainComponent } from '../../blockchain/blockchain.component';
 import { EventsComponent } from '../../events/events.component';
 import { MiniBlockchainComponent } from '../../mini-blockchain/mini-blockchain.component';
+import { BalanceDialogComponent } from './balance-dialog/balance-dialog.component';
 import { ConsensusDialogComponent } from './consensus-dialog/consensus-dialog.component';
 import { MiningBlockComponent } from './mining-block/mining-block.component';
 import { PeersDialogComponent } from './peers-dialog/peers-dialog.component';
-import { BalanceDialogComponent } from './balance-dialog/balance-dialog.component';
+import { WalletDialogComponent } from './wallet-dialog/wallet-dialog.component';
 
 interface HashRateOption {
   label: string;
@@ -40,6 +41,7 @@ interface HashRateOption {
     PeersDialogComponent,
     MiniBlockchainComponent,
     BalanceDialogComponent,
+    WalletDialogComponent,
   ],
   templateUrl: './miner.component.html',
   styleUrls: ['./miner.component.scss'],
@@ -76,6 +78,7 @@ export class MinerComponent {
   showConsensusDialog = false;
   showPeersDialog = false;
   showAddressesDialog = false;
+  showWalletDialog = false;
 
   constructor(
     private addressService: AddressService,

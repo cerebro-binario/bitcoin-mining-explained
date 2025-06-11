@@ -147,10 +147,17 @@
     <span class="ml-auto text-xs text-zinc-400">#{{ miner.id }}</span>
     <button
       class="ml-2 p-1.5 rounded text-zinc-400 hover:text-yellow-400 hover:bg-zinc-700 transition flex items-center justify-center"
+      (click)="showWalletDialog = true"
+      title="Ver carteira"
+    >
+      <i class="pi pi-wallet text-xs"></i>
+    </button>
+    <button
+      class="ml-2 p-1.5 rounded text-zinc-400 hover:text-yellow-400 hover:bg-zinc-700 transition flex items-center justify-center"
       (click)="showAddressesDialog = true"
       title="Ver todos os endereços e UTXOs"
     >
-      <i class="pi pi-wallet text-xs"></i>
+      <i class="pi pi-building-columns text-xs"></i>
     </button>
     <button
       class="ml-2 p-1.5 rounded text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition flex items-center justify-center"
@@ -459,3 +466,10 @@
   [node]="miner"
   (close)="showAddressesDialog = false"
 ></app-balance-dialog>
+
+<!-- Dialog de carteira -->
+<app-wallet-dialog
+  *ngIf="showWalletDialog"
+  [node]="miner"
+  (close)="showWalletDialog = false"
+></app-wallet-dialog>
