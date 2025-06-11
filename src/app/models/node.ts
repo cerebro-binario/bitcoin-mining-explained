@@ -15,7 +15,7 @@ import {
 
 import { areConsensusVersionsCompatible } from './consensus.model';
 import { Height } from './height.model';
-import { BitcoinAddressData, Wallet } from './wallet.model';
+import { BipType, BitcoinAddressData, Wallet } from './wallet.model';
 
 import { getAddressType } from '../utils/tools';
 
@@ -122,6 +122,7 @@ export class Node {
   set balances(val: Balances) {
     this._balances = val;
     this.balances$.next(val);
+    this.updateWalletFromBalances();
   }
 
   wallet: Wallet = {
@@ -1899,5 +1900,23 @@ export class Node {
 
     // Atualiza o UTXO set real forçando uma nova referência para reatividade
     this.balances = { ...tempUtxoSet };
+  }
+
+  updateWalletFromBalances() {
+    if (!this.wallet || !this.wallet.addresses) return;
+
+    for (const addressObj of this.wallet.addresses) {
+      for (const bipType of Object.keys(addressObj) as BipType[]) {
+        const addressData = addressObj[bipType];
+        const balanceData = this.balances[addressData.address];
+        if (balanceData) {
+          addressData.balance = balanceData.balance;
+          addressData.utxos = balanceData.utxos;
+        } else {
+          addressData.balance = 0;
+          addressData.utxos = [];
+        }
+      }
+    }
   }
 }
