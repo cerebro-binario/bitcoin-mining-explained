@@ -38,7 +38,7 @@
       <button
         type="button"
         class="px-3 py-1 rounded text-sm transition"
-        [class.bg-zinc-600]="addressType === 'all'"
+        [class.bg-yellow-600]="addressType === 'all'"
         [class.text-white]="addressType === 'all'"
         [class.bg-zinc-700]="addressType !== 'all'"
         [class.text-zinc-300]="addressType !== 'all'"
@@ -91,9 +91,9 @@
           </td>
           <td
             class="px-4 py-2 font-mono break-all"
-            [class.text-green-300]="addressType === 'bip44'"
-            [class.text-blue-300]="addressType === 'bip49'"
-            [class.text-purple-300]="addressType === 'bip84'"
+            [class.text-green-300]="data.addressType === 'bip44'"
+            [class.text-blue-300]="data.addressType === 'bip49'"
+            [class.text-purple-300]="data.addressType === 'bip84'"
           >
             {{ data.address }}
           </td>

@@ -1,6 +1,7 @@
 import { sha256 } from '@noble/hashes/sha2';
 import bs58 from 'bs58';
 import * as CryptoJS from 'crypto-js';
+import { BipType } from '../models/wallet.model';
 
 export function textToHex(text: string): string {
   return text
@@ -161,4 +162,10 @@ export function hexToWif(hex: string): string {
 export function copyToClipboard(text: string | undefined): void {
   if (!text) return;
   navigator.clipboard.writeText(text);
+}
+
+export function getAddressType(address: string): BipType {
+  if (address.startsWith('bc1')) return 'bip84';
+  if (address.startsWith('3')) return 'bip49';
+  return 'bip44';
 }

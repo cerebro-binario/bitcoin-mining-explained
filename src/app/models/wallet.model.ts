@@ -35,6 +35,7 @@ export interface BitcoinAddressData {
   address: string;
   balance: number;
   utxos: BitcoinUTXO[];
+  addressType: BipType;
 }
 
 export type BipType = 'bip44' | 'bip49' | 'bip84';

@@ -17,6 +17,8 @@ import { areConsensusVersionsCompatible } from './consensus.model';
 import { Height } from './height.model';
 import { BitcoinAddressData, Wallet } from './wallet.model';
 
+import { getAddressType } from '../utils/tools';
+
 export interface Neighbor {
   latency: number;
   node: Node;
@@ -1722,6 +1724,7 @@ export class Node {
                   priv: { hex: '', decimal: '', wif: '' },
                 },
               }),
+          addressType: getAddressType(output.scriptPubKey),
         };
 
         addressData.utxos.push({
@@ -1772,6 +1775,7 @@ export class Node {
               priv: { hex: '', decimal: '', wif: '' },
             },
           }),
+      addressType: getAddressType(address),
     };
 
     // Verifica se a coinbase já foi processada
@@ -1850,6 +1854,7 @@ export class Node {
             pub: { hex: '', decimal: '' },
             priv: { hex: '', decimal: '', wif: '' },
           },
+          addressType: getAddressType(input.scriptPubKey),
         };
 
         addressData.utxos.push({

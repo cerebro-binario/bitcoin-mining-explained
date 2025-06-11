@@ -122,18 +122,21 @@ export class KeyService {
           address: bip44Address,
           balance: 0,
           utxos: [],
+          addressType: 'bip44',
         },
         bip49: {
           keys: bip49Keys,
           address: bip49Address,
           balance: 0,
           utxos: [],
+          addressType: 'bip49',
         },
         bip84: {
           keys: bip84Keys,
           address: bip84Address,
           balance: 0,
           utxos: [],
+          addressType: 'bip84',
         },
       };
     });
@@ -165,9 +168,27 @@ export class KeyService {
       const bip84Address = this.deriveBitcoinAddress(key.pub.hex, 'bip84');
 
       return {
-        bip44: { keys: key, address: bip44Address, balance: 0, utxos: [] },
-        bip49: { keys: key, address: bip49Address, balance: 0, utxos: [] },
-        bip84: { keys: key, address: bip84Address, balance: 0, utxos: [] },
+        bip44: {
+          keys: key,
+          address: bip44Address,
+          balance: 0,
+          utxos: [],
+          addressType: 'bip44',
+        },
+        bip49: {
+          keys: key,
+          address: bip49Address,
+          balance: 0,
+          utxos: [],
+          addressType: 'bip49',
+        },
+        bip84: {
+          keys: key,
+          address: bip84Address,
+          balance: 0,
+          utxos: [],
+          addressType: 'bip84',
+        },
       };
     });
   }
