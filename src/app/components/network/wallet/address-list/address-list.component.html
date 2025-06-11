@@ -1,375 +1,385 @@
-<div class="flex items-center justify-between mb-4">
-  <h3 class="text-lg font-semibold text-zinc-200">Endereços</h3>
-  <div class="flex gap-2">
-    <button
-      type="button"
-      class="px-3 py-1 rounded text-sm transition"
-      [class.bg-green-600]="addressType === 'bip44'"
-      [class.text-white]="addressType === 'bip44'"
-      [class.bg-zinc-700]="addressType !== 'bip44'"
-      [class.text-zinc-300]="addressType !== 'bip44'"
-      (click)="changeAddressType('bip44')"
-    >
-      Legacy
-    </button>
-    <button
-      type="button"
-      class="px-3 py-1 rounded text-sm transition"
-      [class.bg-blue-600]="addressType === 'bip49'"
-      [class.text-white]="addressType === 'bip49'"
-      [class.bg-zinc-700]="addressType !== 'bip49'"
-      [class.text-zinc-300]="addressType !== 'bip49'"
-      (click)="changeAddressType('bip49')"
-    >
-      SegWit
-    </button>
-    <button
-      type="button"
-      class="px-3 py-1 rounded text-sm transition"
-      [class.bg-purple-600]="addressType === 'bip84'"
-      [class.text-white]="addressType === 'bip84'"
-      [class.bg-zinc-700]="addressType !== 'bip84'"
-      [class.text-zinc-300]="addressType !== 'bip84'"
-      (click)="changeAddressType('bip84')"
-    >
-      Native SegWit
-    </button>
+<div class="flex flex-col h-full">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-zinc-200">Endereços</h3>
+    <div class="flex gap-2">
+      <button
+        type="button"
+        class="px-3 py-1 rounded text-sm transition"
+        [class.bg-green-600]="addressType === 'bip44'"
+        [class.text-white]="addressType === 'bip44'"
+        [class.bg-zinc-700]="addressType !== 'bip44'"
+        [class.text-zinc-300]="addressType !== 'bip44'"
+        (click)="changeAddressType('bip44')"
+      >
+        Legacy
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1 rounded text-sm transition"
+        [class.bg-blue-600]="addressType === 'bip49'"
+        [class.text-white]="addressType === 'bip49'"
+        [class.bg-zinc-700]="addressType !== 'bip49'"
+        [class.text-zinc-300]="addressType !== 'bip49'"
+        (click)="changeAddressType('bip49')"
+      >
+        SegWit
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1 rounded text-sm transition"
+        [class.bg-purple-600]="addressType === 'bip84'"
+        [class.text-white]="addressType === 'bip84'"
+        [class.bg-zinc-700]="addressType !== 'bip84'"
+        [class.text-zinc-300]="addressType !== 'bip84'"
+        (click)="changeAddressType('bip84')"
+      >
+        Native SegWit
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1 rounded text-sm transition"
+        [class.bg-zinc-600]="addressType === 'all'"
+        [class.text-white]="addressType === 'all'"
+        [class.bg-zinc-700]="addressType !== 'all'"
+        [class.text-zinc-300]="addressType !== 'all'"
+        (click)="changeAddressType('all')"
+      >
+        Todos
+      </button>
+    </div>
   </div>
-</div>
-<div class="overflow-x-auto">
-  <p-table
-    class="w-full text-sm rounded-lg overflow-hidden table-fixed"
-    [value]="addresses || []"
-    [dataKey]="addressType + '.address'"
-    [style]="{ 'font-size': '0.95rem', width: '100%', height: '100%' }"
-    [scrollable]="true"
-    [scrollHeight]="'100%'"
-    rowExpandMode="multiple"
-    [rowTrackBy]="rowTrackBy"
-    class="rounded-lg flex-1 h-full w-full"
-  >
-    <ng-template #header>
-      <tr class="bg-zinc-900 text-zinc-300">
-        <th class="text-left p-4 w-[5%]"></th>
-        <th class="px-4 py-2 text-left w-[5%]">#</th>
-        <th class="px-4 py-2 text-left w-[60%]">Endereço</th>
-        <th class="px-4 py-2 text-right w-[15%]">Saldo (BTC)</th>
-        <th class="px-4 py-2 text-right w-[15%]">UTXOs</th>
-      </tr>
-    </ng-template>
-    <ng-template #body let-entry let-index="rowIndex" let-expanded="expanded">
-      @let address = entry[addressType];
-      <tr class="border-b border-zinc-700 last:border-0">
-        <td class="p-4 align-middle">
-          <button
-            pButton
-            type="button"
-            [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-            [pRowToggler]="entry"
-            class="p-button-text p-0 text-white/70 hover:text-white focus:ring-0 focus:outline-none"
-            style="height: 1.7rem; width: 1.7rem"
-            [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
-          ></button>
-          <i
-            *ngIf="entry.isMine"
-            class="pi pi-verified text-blue-400 text-xs ml-1"
-            title="Este endereço pertence a este nó"
-          ></i>
-        </td>
-        <td class="px-4 py-2 text-zinc-500 font-mono">
-          {{ first + index + 1 }}
-        </td>
-        <td
-          class="px-4 py-2 font-mono break-all"
-          [class.text-green-300]="addressType === 'bip44'"
-          [class.text-blue-300]="addressType === 'bip49'"
-          [class.text-purple-300]="addressType === 'bip84'"
-        >
-          {{ address.address }}
-        </td>
-        <td class="px-4 py-2 text-right font-mono text-zinc-200">
-          {{ address.balance / 100000000 | number : "1.8-8" }}
-        </td>
-        <td class="px-4 py-2 text-right font-mono text-zinc-200">
-          {{ address.utxos.length }}
-        </td>
-      </tr>
-    </ng-template>
-    <ng-template #expandedrow let-entry let-index="rowIndex">
-      @let address = entry[addressType];
-      <tr>
-        <td colspan="4">
-          <div
-            class="w-full p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
+  <div class="flex-1 min-h-0 flex flex-col">
+    <p-table
+      class="w-full h-full flex-1 text-sm rounded-lg overflow-hidden table-fixed"
+      [value]="displayedAddresses || []"
+      dataKey="address"
+      [style]="{ 'font-size': '0.95rem', width: '100%', height: '100%' }"
+      [scrollable]="true"
+      [scrollHeight]="'100%'"
+      rowExpandMode="multiple"
+      [rowTrackBy]="rowTrackBy"
+    >
+      <ng-template #header>
+        <tr class="bg-zinc-900 text-zinc-300">
+          <th class="text-left p-4 w-[5%]"></th>
+          <th class="px-4 py-2 text-left w-[5%]">#</th>
+          <th class="px-4 py-2 text-left w-[60%]">Endereço</th>
+          <th class="px-4 py-2 text-right w-[15%]">Saldo (BTC)</th>
+          <th class="px-4 py-2 text-right w-[15%]">UTXOs</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-data let-index="rowIndex" let-expanded="expanded">
+        <tr class="border-b border-zinc-700 last:border-0">
+          <td class="p-4 align-middle">
+            <button
+              pButton
+              type="button"
+              [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+              [pRowToggler]="data"
+              class="p-button-text p-0 text-white/70 hover:text-white focus:ring-0 focus:outline-none"
+              style="height: 1.7rem; width: 1.7rem"
+              [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
+            ></button>
+            <i
+              *ngIf="data.isMine"
+              class="pi pi-verified text-blue-400 text-xs ml-1"
+              title="Este endereço pertence a este nó"
+            ></i>
+          </td>
+          <td class="px-4 py-2 text-zinc-500 font-mono">
+            {{ first + index + 1 }}
+          </td>
+          <td
+            class="px-4 py-2 font-mono break-all"
+            [class.text-green-300]="addressType === 'bip44'"
+            [class.text-blue-300]="addressType === 'bip49'"
+            [class.text-purple-300]="addressType === 'bip84'"
           >
-            <div class="space-y-4">
-              <div class="transition-all duration-300">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="text-sm text-zinc-400"
-                    >Endereço #{{ index + 1 }}</span
-                  >
-                  <div class="flex-1 h-px bg-zinc-700"></div>
-                </div>
-
-                <div class="space-y-2">
-                  <div>
-                    <label class="block text-xs text-zinc-500 mb-1"
-                      >Chave Privada</label
+            {{ data.address }}
+          </td>
+          <td class="px-4 py-2 text-right font-mono text-zinc-200">
+            {{ data.balance / 100000000 | number : "1.8-8" }}
+          </td>
+          <td class="px-4 py-2 text-right font-mono text-zinc-200">
+            {{ data.utxos.length }}
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #expandedrow let-data let-index="rowIndex">
+        <tr>
+          <td colspan="4">
+            <div
+              class="w-full p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
+            >
+              <div class="space-y-4">
+                <div class="transition-all duration-300">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="text-sm text-zinc-400"
+                      >Endereço #{{ index + 1 }}</span
                     >
-                    <div class="flex flex-col gap-1">
-                      <div class="flex items-center gap-2">
-                        <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
-                          >Hex:</label
-                        >
-                        <div
-                          class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
-                        >
-                          <ng-container
-                            *ngIf="address.keys.priv.hex; else lockedPrivHex"
-                          >
-                            <span class="text-green-300 text-sm"
-                              >0x{{ address.keys.priv.hex }}</span
-                            >
-                          </ng-container>
-                          <ng-template #lockedPrivHex>
-                            <span
-                              class="flex items-center gap-1"
-                              title="Chave não disponível para este endereço"
-                            >
-                              <i class="pi pi-lock text-[0.9em]"></i>
-                              <span class="italic tracking-wide"
-                                >Chave não disponível</span
-                              >
-                            </span>
-                          </ng-template>
-                        </div>
-                        <button
-                          *ngIf="address.keys.priv.hex"
-                          (click)="copyToClipboard(address.keys.priv.hex)"
-                          class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                          title="Copiar chave privada"
-                        >
-                          <i class="pi pi-copy"></i>
-                        </button>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
-                          >Decimal:</label
-                        >
-                        <div
-                          class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
-                          [title]="
-                            address.keys.priv.decimal
-                              ? (address.keys.priv.decimal | number : '1.0-0')
-                              : 'Chave não disponível para este endereço'
-                          "
-                        >
-                          <ng-container
-                            *ngIf="
-                              address.keys.priv.decimal;
-                              else lockedPrivDecimal
-                            "
-                          >
-                            <span class="text-green-300 text-sm">{{
-                              address.keys.priv.decimal
-                            }}</span>
-                          </ng-container>
-                          <ng-template #lockedPrivDecimal>
-                            <span class="flex items-center gap-1">
-                              <i class="pi pi-lock text-[0.9em]"></i>
-                              <span class="italic tracking-wide"
-                                >Chave não disponível</span
-                              >
-                            </span>
-                          </ng-template>
-                        </div>
-                        <button
-                          *ngIf="address.keys.priv.decimal"
-                          (click)="copyToClipboard(address.keys.priv.decimal)"
-                          class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                          title="Copiar chave privada"
-                        >
-                          <i class="pi pi-copy"></i>
-                        </button>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
-                          >WIF:</label
-                        >
-                        <div
-                          class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
-                        >
-                          <ng-container
-                            *ngIf="address.keys.priv.wif; else lockedPrivWif"
-                          >
-                            <span class="text-green-300 text-sm">{{
-                              address.keys.priv.wif
-                            }}</span>
-                          </ng-container>
-                          <ng-template #lockedPrivWif>
-                            <span
-                              class="flex items-center gap-1"
-                              title="Chave não disponível para este endereço"
-                            >
-                              <i class="pi pi-lock text-[0.9em]"></i>
-                              <span class="italic tracking-wide"
-                                >Chave não disponível</span
-                              >
-                            </span>
-                          </ng-template>
-                        </div>
-                        <button
-                          *ngIf="address.keys.priv.wif"
-                          (click)="copyToClipboard(address.keys.priv.wif)"
-                          class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                          title="Copiar chave privada"
-                        >
-                          <i class="pi pi-copy"></i>
-                        </button>
-                      </div>
-                    </div>
+                    <div class="flex-1 h-px bg-zinc-700"></div>
                   </div>
 
-                  <div>
-                    <label class="block text-xs text-zinc-500 mb-1"
-                      >Chave Pública</label
-                    >
-                    <div class="flex flex-col gap-1">
-                      <div class="flex items-center gap-2">
-                        <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
-                          >Hex:</label
-                        >
-                        <div
-                          class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
-                        >
-                          <ng-container
-                            *ngIf="address.keys.pub.hex; else lockedPubHex"
-                          >
-                            <span class="text-blue-300 text-sm"
-                              >0x{{ address.keys.pub.hex }}</span
-                            >
-                          </ng-container>
-                          <ng-template #lockedPubHex>
-                            <span
-                              class="flex items-center gap-1"
-                              title="Chave não disponível para este endereço"
-                            >
-                              <i class="pi pi-lock text-[0.9em]"></i>
-                              <span class="italic tracking-wide"
-                                >Chave não disponível</span
-                              >
-                            </span>
-                          </ng-template>
-                        </div>
-                        <button
-                          *ngIf="address.keys.pub.hex"
-                          (click)="copyToClipboard(address.keys.pub.hex)"
-                          class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                          title="Copiar chave pública"
-                        >
-                          <i class="pi pi-copy"></i>
-                        </button>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
-                          >Decimal:</label
-                        >
-                        <div
-                          class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
-                          [title]="
-                            address.keys.pub.decimal
-                              ? (address.keys.pub.decimal | number : '1.0-0')
-                              : 'Chave não disponível para este endereço'
-                          "
-                        >
-                          <ng-container
-                            *ngIf="
-                              address.keys.pub.decimal;
-                              else lockedPubDecimal
-                            "
-                          >
-                            <span class="text-blue-300 text-sm">{{
-                              address.keys.pub.decimal
-                            }}</span>
-                          </ng-container>
-                          <ng-template #lockedPubDecimal>
-                            <span class="flex items-center gap-1">
-                              <i class="pi pi-lock text-[0.9em]"></i>
-                              <span class="italic tracking-wide"
-                                >Chave não disponível</span
-                              >
-                            </span>
-                          </ng-template>
-                        </div>
-                        <button
-                          *ngIf="address.keys.pub.decimal"
-                          (click)="copyToClipboard(address.keys.pub.decimal)"
-                          class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                          title="Copiar chave pública"
-                        >
-                          <i class="pi pi-copy"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label class="block text-xs text-zinc-500 mb-1"
-                      >UTXOs</label
-                    >
-                    <p-table
-                      *ngIf="address.utxos.length > 0; else noUtxos"
-                      [value]="address.utxos || []"
-                      [tableStyle]="{ 'min-width': '100%' }"
-                      [style]="{ 'font-size': '0.95rem' }"
-                    >
-                      <ng-template pTemplate="header">
-                        <tr class="text-white/80 font-bold text-sm">
-                          <th class="text-left px-4 py-3">TxID</th>
-                          <th class="text-right px-4 py-3">Out</th>
-                          <th class="text-right px-4 py-3">Valor</th>
-                        </tr>
-                      </ng-template>
-                      <ng-template pTemplate="body" let-utxo>
-                        <tr>
-                          <td
-                            class="font-mono text-xs text-white/80 px-4 py-3"
-                            [title]="utxo.txId"
-                            style="
-                              max-width: 120px;
-                              overflow: hidden;
-                              text-overflow: ellipsis;
-                              white-space: nowrap;
-                            "
-                          >
-                            {{ utxo.txId | slice : 0 : 8 }}…
-                          </td>
-                          <td class="text-right text-white/60 px-4 py-3">
-                            {{ utxo.outputIndex }}
-                          </td>
-                          <td class="text-right px-4 py-3">
-                            <span class="text-white font-mono">{{
-                              utxo.output.value / 100000000 | number : "1.8-8"
-                            }}</span>
-                            <span class="text-white/40">BTC</span>
-                          </td>
-                        </tr>
-                      </ng-template>
-                    </p-table>
-                    <ng-template #noUtxos>
-                      <div
-                        class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-white/60 italic break-all"
+                  <div class="space-y-2">
+                    <div>
+                      <label class="block text-xs text-zinc-500 mb-1"
+                        >Chave Privada</label
                       >
-                        Nenhum UTXO disponível.
+                      <div class="flex flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                          <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
+                            >Hex:</label
+                          >
+                          <div
+                            class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
+                          >
+                            <ng-container
+                              *ngIf="data.keys.priv.hex; else lockedPrivHex"
+                            >
+                              <span class="text-green-300 text-sm"
+                                >0x{{ data.keys.priv.hex }}</span
+                              >
+                            </ng-container>
+                            <ng-template #lockedPrivHex>
+                              <span
+                                class="flex items-center gap-1"
+                                title="Chave não disponível para este endereço"
+                              >
+                                <i class="pi pi-lock text-[0.9em]"></i>
+                                <span class="italic tracking-wide"
+                                  >Chave não disponível</span
+                                >
+                              </span>
+                            </ng-template>
+                          </div>
+                          <button
+                            *ngIf="data.keys.priv.hex"
+                            (click)="copyToClipboard(data.keys.priv.hex)"
+                            class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                            title="Copiar chave privada"
+                          >
+                            <i class="pi pi-copy"></i>
+                          </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
+                            >Decimal:</label
+                          >
+                          <div
+                            class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
+                            [title]="
+                              data.keys.priv.decimal
+                                ? (data.keys.priv.decimal | number : '1.0-0')
+                                : 'Chave não disponível para este endereço'
+                            "
+                          >
+                            <ng-container
+                              *ngIf="
+                                data.keys.priv.decimal;
+                                else lockedPrivDecimal
+                              "
+                            >
+                              <span class="text-green-300 text-sm">{{
+                                data.keys.priv.decimal
+                              }}</span>
+                            </ng-container>
+                            <ng-template #lockedPrivDecimal>
+                              <span class="flex items-center gap-1">
+                                <i class="pi pi-lock text-[0.9em]"></i>
+                                <span class="italic tracking-wide"
+                                  >Chave não disponível</span
+                                >
+                              </span>
+                            </ng-template>
+                          </div>
+                          <button
+                            *ngIf="data.keys.priv.decimal"
+                            (click)="copyToClipboard(data.keys.priv.decimal)"
+                            class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                            title="Copiar chave privada"
+                          >
+                            <i class="pi pi-copy"></i>
+                          </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
+                            >WIF:</label
+                          >
+                          <div
+                            class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
+                          >
+                            <ng-container
+                              *ngIf="data.keys.priv.wif; else lockedPrivWif"
+                            >
+                              <span class="text-green-300 text-sm">{{
+                                data.keys.priv.wif
+                              }}</span>
+                            </ng-container>
+                            <ng-template #lockedPrivWif>
+                              <span
+                                class="flex items-center gap-1"
+                                title="Chave não disponível para este endereço"
+                              >
+                                <i class="pi pi-lock text-[0.9em]"></i>
+                                <span class="italic tracking-wide"
+                                  >Chave não disponível</span
+                                >
+                              </span>
+                            </ng-template>
+                          </div>
+                          <button
+                            *ngIf="data.keys.priv.wif"
+                            (click)="copyToClipboard(data.keys.priv.wif)"
+                            class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                            title="Copiar chave privada"
+                          >
+                            <i class="pi pi-copy"></i>
+                          </button>
+                        </div>
                       </div>
-                    </ng-template>
+                    </div>
+
+                    <div>
+                      <label class="block text-xs text-zinc-500 mb-1"
+                        >Chave Pública</label
+                      >
+                      <div class="flex flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                          <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
+                            >Hex:</label
+                          >
+                          <div
+                            class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
+                          >
+                            <ng-container
+                              *ngIf="data.keys.pub.hex; else lockedPubHex"
+                            >
+                              <span class="text-blue-300 text-sm"
+                                >0x{{ data.keys.pub.hex }}</span
+                              >
+                            </ng-container>
+                            <ng-template #lockedPubHex>
+                              <span
+                                class="flex items-center gap-1"
+                                title="Chave não disponível para este endereço"
+                              >
+                                <i class="pi pi-lock text-[0.9em]"></i>
+                                <span class="italic tracking-wide"
+                                  >Chave não disponível</span
+                                >
+                              </span>
+                            </ng-template>
+                          </div>
+                          <button
+                            *ngIf="data.keys.pub.hex"
+                            (click)="copyToClipboard(data.keys.pub.hex)"
+                            class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                            title="Copiar chave pública"
+                          >
+                            <i class="pi pi-copy"></i>
+                          </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <label class="text-xs text-zinc-500 mb-1 min-w-[60px]"
+                            >Decimal:</label
+                          >
+                          <div
+                            class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-xs text-zinc-500 break-all flex items-center gap-2 min-h-[2.2rem]"
+                            [title]="
+                              data.keys.pub.decimal
+                                ? (data.keys.pub.decimal | number : '1.0-0')
+                                : 'Chave não disponível para este endereço'
+                            "
+                          >
+                            <ng-container
+                              *ngIf="
+                                data.keys.pub.decimal;
+                                else lockedPubDecimal
+                              "
+                            >
+                              <span class="text-blue-300 text-sm">{{
+                                data.keys.pub.decimal
+                              }}</span>
+                            </ng-container>
+                            <ng-template #lockedPubDecimal>
+                              <span class="flex items-center gap-1">
+                                <i class="pi pi-lock text-[0.9em]"></i>
+                                <span class="italic tracking-wide"
+                                  >Chave não disponível</span
+                                >
+                              </span>
+                            </ng-template>
+                          </div>
+                          <button
+                            *ngIf="data.keys.pub.decimal"
+                            (click)="copyToClipboard(data.keys.pub.decimal)"
+                            class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                            title="Copiar chave pública"
+                          >
+                            <i class="pi pi-copy"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-xs text-zinc-500 mb-1"
+                        >UTXOs</label
+                      >
+                      <p-table
+                        *ngIf="data.utxos.length > 0; else noUtxos"
+                        [value]="data.utxos || []"
+                        [tableStyle]="{ 'min-width': '100%' }"
+                        [style]="{ 'font-size': '0.95rem' }"
+                      >
+                        <ng-template pTemplate="header">
+                          <tr class="text-white/80 font-bold text-sm">
+                            <th class="text-left px-4 py-3">TxID</th>
+                            <th class="text-right px-4 py-3">Out</th>
+                            <th class="text-right px-4 py-3">Valor</th>
+                          </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-utxo>
+                          <tr>
+                            <td
+                              class="font-mono text-xs text-white/80 px-4 py-3"
+                              [title]="utxo.txId"
+                              style="
+                                max-width: 120px;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                white-space: nowrap;
+                              "
+                            >
+                              {{ utxo.txId | slice : 0 : 8 }}…
+                            </td>
+                            <td class="text-right text-white/60 px-4 py-3">
+                              {{ utxo.outputIndex }}
+                            </td>
+                            <td class="text-right px-4 py-3">
+                              <span class="text-white font-mono">{{
+                                utxo.output.value / 100000000 | number : "1.8-8"
+                              }}</span>
+                              <span class="text-white/40">BTC</span>
+                            </td>
+                          </tr>
+                        </ng-template>
+                      </p-table>
+                      <ng-template #noUtxos>
+                        <div
+                          class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-white/60 italic break-all"
+                        >
+                          Nenhum UTXO disponível.
+                        </div>
+                      </ng-template>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 </div>
