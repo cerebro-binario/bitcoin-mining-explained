@@ -93,7 +93,6 @@ export class BitcoinNetworkService {
     node.wallet.seed = seed;
     node.wallet.addresses = addresses;
     node.miningAddress = addresses[0].bip84.address;
-    console.log('wallet', node.wallet);
     this.nodes.push(node);
     this.nodesSubject.next(this.nodes);
     return node;

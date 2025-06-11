@@ -83,9 +83,11 @@ export class AddressListComponent {
         ];
       }, [] as BitcoinAddressData[]);
     } else {
-      this.displayedAddresses = this._addresses.map(
-        (address) => address[this.addressType as BipType]
-      );
+      this.displayedAddresses = this._addresses
+        .map((address) => address[this.addressType as BipType])
+        .filter((address) =>
+          this._onlyWithBalance ? address.balance > 0 : true
+        );
     }
   }
 }
