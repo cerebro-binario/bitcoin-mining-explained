@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
 import { Node } from '../../../../../models/node';
 import {
   BitcoinAddress,
+  BitcoinAddressData,
   TOTAL_PRIVATE_KEY_RECORDS,
 } from '../../../../../models/wallet.model';
 import { KeyService } from '../../../../../services/key.service';
@@ -252,10 +253,6 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
           return this.sortOrder === 1 ? saldoA - saldoB : saldoB - saldoA;
         });
       }
-      const totalRecords = BigInt(this.addresses.length);
-      this.pagination.totalPages =
-        (totalRecords + BigInt(this.pagination.pageSize) - 1n) /
-        BigInt(this.pagination.pageSize);
     } else {
       // Modo 'all'
       const pageSize = BigInt(this.pagination.pageSize);
@@ -271,9 +268,12 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         const bip44 = address.bip44.address;
         const bip49 = address.bip49.address;
         const bip84 = address.bip84.address;
-        const bip44Data = this.node.balances[bip44];
-        const bip49Data = this.node.balances[bip49];
-        const bip84Data = this.node.balances[bip84];
+        const bip44Data =
+          this.node.balances[bip44] || this.findAddressInWallet(bip44);
+        const bip49Data =
+          this.node.balances[bip49] || this.findAddressInWallet(bip49);
+        const bip84Data =
+          this.node.balances[bip84] || this.findAddressInWallet(bip84);
         this.addresses.push({
           bip44: {
             address: bip44,
@@ -301,12 +301,28 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
           },
         });
       }
-
-      this.updateTotalPages();
     }
+
+    this.updateTotalPages();
   }
 
   onDisplayModeChange() {
+    this.pagination.currentPage = 0n;
     this.loadAddresses();
+  }
+
+  findAddressInWallet(address: string): BitcoinAddressData | undefined {
+    for (const addressGroup of this.node.wallet.addresses) {
+      if (addressGroup.bip44.address === address) {
+        return addressGroup.bip44;
+      }
+      if (addressGroup.bip49.address === address) {
+        return addressGroup.bip49;
+      }
+      if (addressGroup.bip84.address === address) {
+        return addressGroup.bip84;
+      }
+    }
+    return undefined;
   }
 }

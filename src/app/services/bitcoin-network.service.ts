@@ -82,15 +82,18 @@ export class BitcoinNetworkService {
     });
 
     // Se for minerador, gera seed, keypair e endereços
-    if (isMiner) {
-      const seed = this.keyService.generateSeed();
-      const mnemonic = seed.join(' ');
-      const addresses = this.keyService.deriveBitcoinAddresses(mnemonic, 1, 0);
-      node.wallet.seed = seed;
-      node.wallet.addresses = addresses;
-      node.miningAddress = addresses[0].bip84.address;
-    }
-
+    const seed = this.keyService.generateSeed();
+    const mnemonic = seed.join(' ');
+    const addresses = this.keyService.deriveBitcoinAddresses(mnemonic, 1, 0);
+    addresses.forEach((address) => {
+      address.bip44.nodeId = node.id;
+      address.bip49.nodeId = node.id;
+      address.bip84.nodeId = node.id;
+    });
+    node.wallet.seed = seed;
+    node.wallet.addresses = addresses;
+    node.miningAddress = addresses[0].bip84.address;
+    console.log('wallet', node.wallet);
     this.nodes.push(node);
     this.nodesSubject.next(this.nodes);
     return node;
