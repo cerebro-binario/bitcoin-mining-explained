@@ -42,7 +42,7 @@ export class WalletComponent {
 
   displayedAddresses: BitcoinAddressData[] = [];
   flattenedAddresses: BitcoinAddressData[] = [];
-  addressType: BipType | 'all' = 'bip84';
+  addressType: BipType | 'all-bip-types' = 'bip84';
   pagination = {
     pageSize: 10,
     currentPage: 0n,
@@ -126,7 +126,7 @@ export class WalletComponent {
     const end = start + Number(this.pagination.pageSize);
 
     this.displayedAddresses =
-      this.addressType === 'all'
+      this.addressType === 'all-bip-types'
         ? this.flattenedAddresses.slice(start, end)
         : this._wallet.addresses
             .slice(start, end)
@@ -138,9 +138,9 @@ export class WalletComponent {
     this.goToLastPageAfterWalletUpdate = true;
   }
 
-  onChangeAddressType(type: BipType | 'all') {
+  onChangeAddressType(type: BipType | 'all-bip-types') {
     this.addressType = type;
-    if (type === 'all') {
+    if (type === 'all-bip-types') {
       this.pagination.totalPages *= 3n;
       this.pagination.currentPage *= 3n;
 
