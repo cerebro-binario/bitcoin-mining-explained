@@ -1716,6 +1716,8 @@ export class Node {
           address: output.scriptPubKey,
           balance: 0,
           utxos: [],
+          nodeId: undefined, // não há uma forma de saber o nodeId de um endereço apenas com o scriptPubKey
+          // TODO: verificar se há algum outro modo de saber o nodeId de um endereço
           ...(isMinerCoinbase
             ? { keys: this.wallet.addresses[0].bip84.keys }
             : {
