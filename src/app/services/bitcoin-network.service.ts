@@ -67,14 +67,14 @@ export class BitcoinNetworkService {
   }
 
   addNode(
-    isMiner: boolean,
+    nodeType: 'miner' | 'peer' | 'user',
     name?: string,
     hashRate: number | null = null,
     isCollapsed: boolean = false
   ): Node {
     const node = new Node({
       id: this.nextNodeId++,
-      isMiner,
+      nodeType,
       name,
       hashRate,
       peers: [],

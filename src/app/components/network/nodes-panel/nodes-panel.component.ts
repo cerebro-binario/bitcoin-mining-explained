@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { Component, Inject, Renderer2 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +6,6 @@ import { Node } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { ConsensusDialogComponent } from '../miners-panel/miner/consensus-dialog/consensus-dialog.component';
 import { NodeComponent } from './node/node.component';
-import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-nodes-panel',
@@ -27,7 +26,7 @@ export class NodesPanelComponent {
     @Inject(DOCUMENT) private document: Document
   ) {
     this.network.nodes$.pipe(takeUntilDestroyed()).subscribe((nodes) => {
-      this.nodes = nodes.filter((n) => !n.isMiner);
+      this.nodes = nodes.filter((n) => n.nodeType === 'peer');
     });
   }
 
@@ -47,7 +46,7 @@ export class NodesPanelComponent {
   }
 
   addNode() {
-    this.network.addNode(false);
+    this.network.addNode('peer');
   }
 
   removeNode(node: Node) {

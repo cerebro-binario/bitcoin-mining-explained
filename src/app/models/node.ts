@@ -48,7 +48,7 @@ export class Node {
   peers: Neighbor[] = [];
 
   // Campos para minerador
-  isMiner: boolean = false;
+  nodeType: 'miner' | 'peer' | 'user' = 'miner';
   name: string = '';
   hashRate: number | null = null;
   currentHashRate: number = 0; // Hash rate real sendo alcançado

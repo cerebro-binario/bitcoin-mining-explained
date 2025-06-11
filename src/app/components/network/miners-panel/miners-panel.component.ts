@@ -63,7 +63,7 @@ export class MinersPanelComponent implements OnDestroy {
     @Inject(DOCUMENT) private document: Document
   ) {
     this.miners$ = this.network.nodes$.pipe(
-      map((nodes) => nodes.filter((n) => n.isMiner)),
+      map((nodes) => nodes.filter((n) => n.nodeType === 'miner')),
       tap((miners) => {
         this.miners = miners;
         this.updateStats(miners);
@@ -77,7 +77,12 @@ export class MinersPanelComponent implements OnDestroy {
         ? this.DEFAULT_HASH_RATE
         : this.minersStats.defaultHashRate;
     const allCollapsed = this.minersStats.allCollapsed;
-    const miner = this.network.addNode(true, undefined, hashRate, allCollapsed);
+    const miner = this.network.addNode(
+      'miner',
+      undefined,
+      hashRate,
+      allCollapsed
+    );
     miner.name = `Minerador ${miner.id}`;
   }
 
