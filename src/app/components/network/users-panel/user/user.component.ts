@@ -196,9 +196,4 @@ export class UserComponent {
     if (!text) return;
     navigator.clipboard.writeText(text);
   }
-
-  // Método para alterar o tipo de endereço
-  changeAddressType(type: 'bip44' | 'bip49' | 'bip84'): void {
-    this.selectedAddressType = type;
-  }
 }

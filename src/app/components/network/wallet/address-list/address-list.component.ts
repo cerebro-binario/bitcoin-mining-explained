@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { BitcoinAddress } from '../../../../models/wallet.model';
@@ -43,5 +43,9 @@ export class AddressListComponent {
 
   copyToClipboard(text: string | undefined): void {
     copyToClipboard(text);
+  }
+
+  changeAddressType(type: 'bip44' | 'bip49' | 'bip84'): void {
+    this.addressType = type;
   }
 }

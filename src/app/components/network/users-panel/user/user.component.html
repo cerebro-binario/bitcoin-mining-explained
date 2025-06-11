@@ -184,50 +184,10 @@
       </div>
     </div>
     <div class="w-full mt-4">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-zinc-200">Endereços</h3>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="px-3 py-1 rounded text-sm transition"
-            [class.bg-green-600]="selectedAddressType === 'bip44'"
-            [class.text-white]="selectedAddressType === 'bip44'"
-            [class.bg-zinc-700]="selectedAddressType !== 'bip44'"
-            [class.text-zinc-300]="selectedAddressType !== 'bip44'"
-            (click)="changeAddressType('bip44')"
-          >
-            Legacy
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1 rounded text-sm transition"
-            [class.bg-blue-600]="selectedAddressType === 'bip49'"
-            [class.text-white]="selectedAddressType === 'bip49'"
-            [class.bg-zinc-700]="selectedAddressType !== 'bip49'"
-            [class.text-zinc-300]="selectedAddressType !== 'bip49'"
-            (click)="changeAddressType('bip49')"
-          >
-            SegWit
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1 rounded text-sm transition"
-            [class.bg-purple-600]="selectedAddressType === 'bip84'"
-            [class.text-white]="selectedAddressType === 'bip84'"
-            [class.bg-zinc-700]="selectedAddressType !== 'bip84'"
-            [class.text-zinc-300]="selectedAddressType !== 'bip84'"
-            (click)="changeAddressType('bip84')"
-          >
-            Native SegWit
-          </button>
-        </div>
-      </div>
-      <div class="overflow-x-auto">
-        <app-address-list
-          [addresses]="user.wallet!.addresses"
-          [addressType]="selectedAddressType"
-        ></app-address-list>
-      </div>
+      <app-address-list
+        [addresses]="user.wallet!.addresses"
+        [addressType]="selectedAddressType"
+      ></app-address-list>
 
       <button
         class="mt-4 px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow"
