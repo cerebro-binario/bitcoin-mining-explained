@@ -5,6 +5,7 @@
       [pagination]="pagination"
       [canDeriveNextAddress]="true"
       (deriveNextAddress)="onDeriveNextAddress()"
+      (changeAddressType)="onChangeAddressType($event)"
       class="h-full"
     ></app-address-list>
   </div>

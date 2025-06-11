@@ -169,3 +169,7 @@ export function getAddressType(address: string): BipType {
   if (address.startsWith('3')) return 'bip49';
   return 'bip44';
 }
+
+export function ceilBigInt(value: bigint, divisor: bigint): bigint {
+  return (value + divisor - 1n) / divisor;
+}

@@ -21,7 +21,7 @@
         [class.text-white]="addressType === 'bip44'"
         [class.bg-zinc-700]="addressType !== 'bip44'"
         [class.text-zinc-300]="addressType !== 'bip44'"
-        (click)="changeAddressType('bip44')"
+        (click)="onAddressTypeChange('bip44')"
       >
         Legacy
       </button>
@@ -32,7 +32,7 @@
         [class.text-white]="addressType === 'bip49'"
         [class.bg-zinc-700]="addressType !== 'bip49'"
         [class.text-zinc-300]="addressType !== 'bip49'"
-        (click)="changeAddressType('bip49')"
+        (click)="onAddressTypeChange('bip49')"
       >
         SegWit
       </button>
@@ -43,18 +43,18 @@
         [class.text-white]="addressType === 'bip84'"
         [class.bg-zinc-700]="addressType !== 'bip84'"
         [class.text-zinc-300]="addressType !== 'bip84'"
-        (click)="changeAddressType('bip84')"
+        (click)="onAddressTypeChange('bip84')"
       >
         Native SegWit
       </button>
       <button
         type="button"
         class="px-3 py-1 rounded text-sm transition"
-        [class.bg-yellow-600]="addressType === 'all'"
-        [class.text-white]="addressType === 'all'"
-        [class.bg-zinc-700]="addressType !== 'all'"
-        [class.text-zinc-300]="addressType !== 'all'"
-        (click)="changeAddressType('all')"
+        [class.bg-yellow-600]="addressType === 'all-bip-types'"
+        [class.text-white]="addressType === 'all-bip-types'"
+        [class.bg-zinc-700]="addressType !== 'all-bip-types'"
+        [class.text-zinc-300]="addressType !== 'all-bip-types'"
+        (click)="onAddressTypeChange('all-bip-types')"
       >
         Todos
       </button>
@@ -63,7 +63,7 @@
   <div class="flex-1 min-h-0 flex flex-col">
     <p-table
       class="w-full h-full flex-1 text-sm rounded-lg overflow-hidden table-fixed"
-      [value]="displayedAddresses || []"
+      [value]="addresses"
       dataKey="address"
       [style]="{ 'font-size': '0.95rem', width: '100%', height: '100%' }"
       [scrollable]="true"

@@ -4,7 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
-import { BitcoinAddress, Wallet } from '../../../models/wallet.model';
+import {
+  BipType,
+  BitcoinAddressData,
+  Wallet,
+} from '../../../models/wallet.model';
 import { AddressListComponent } from './address-list/address-list.component';
 
 @Component({
@@ -36,8 +40,9 @@ export class WalletComponent {
   }
   @Output() deriveNextAddress = new EventEmitter<void>();
 
-  displayedAddresses: BitcoinAddress[] = [];
-
+  displayedAddresses: BitcoinAddressData[] = [];
+  flattenedAddresses: BitcoinAddressData[] = [];
+  addressType: BipType | 'all' = 'bip84';
   pagination = {
     pageSize: 10,
     currentPage: 0n,
@@ -115,15 +120,45 @@ export class WalletComponent {
 
   loadAddresses() {
     if (!this._wallet) return;
-    this.displayedAddresses = this._wallet.addresses.slice(
-      Number(this.pagination.currentPage) * Number(this.pagination.pageSize),
-      (Number(this.pagination.currentPage) + 1) *
-        Number(this.pagination.pageSize)
-    );
+
+    const start =
+      Number(this.pagination.currentPage) * Number(this.pagination.pageSize);
+    const end = start + Number(this.pagination.pageSize);
+
+    this.displayedAddresses =
+      this.addressType === 'all'
+        ? this.flattenedAddresses.slice(start, end)
+        : this._wallet.addresses
+            .slice(start, end)
+            .map((address) => address[this.addressType as BipType]);
   }
 
   onDeriveNextAddress() {
     this.deriveNextAddress.emit();
     this.goToLastPageAfterWalletUpdate = true;
+  }
+
+  onChangeAddressType(type: BipType | 'all') {
+    this.addressType = type;
+    if (type === 'all') {
+      this.pagination.totalPages *= 3n;
+      this.pagination.currentPage *= 3n;
+
+      this.flattenedAddresses = this._wallet!.addresses.reduce(
+        (acc, address) => {
+          return [...acc, ...Object.values(address)];
+        },
+        [] as BitcoinAddressData[]
+      );
+
+      this.loadAddresses();
+    } else {
+      this.pagination.totalPages /= 3n;
+      this.pagination.currentPage /= 3n;
+
+      this.flattenedAddresses = [];
+
+      this.loadAddresses();
+    }
   }
 }
