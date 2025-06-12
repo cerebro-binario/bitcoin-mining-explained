@@ -200,7 +200,10 @@
                 <span
                   class="font-mono text-blue-400 text-xs"
                   title="Saldo total disponível para envio"
-                  >{{ availableBalance | number : "1.8-8" }} BTC</span
+                  >{{
+                    availableBalance / 100000000 | number : "1.8-8"
+                  }}
+                  BTC</span
                 >
                 <i class="pi pi-wallet text-blue-400"></i>
               </div>

@@ -203,6 +203,10 @@ export class WalletComponent {
     this.availableBalance = this._wallet.addresses
       .flatMap((addrObj) => Object.values(addrObj))
       .reduce((sum, addr) => sum + (addr.balance || 0), 0);
+    // Revalida o valor se o campo já foi tocado
+    if (this.sendAmountTouched) {
+      this.onSendAmountBlur();
+    }
   }
 
   onSendAddressBlur() {
