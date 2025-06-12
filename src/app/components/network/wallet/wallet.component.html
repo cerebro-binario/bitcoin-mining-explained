@@ -21,6 +21,16 @@
     >
       Transações
     </button>
+    <button
+      class="px-4 py-2 font-semibold focus:outline-none transition border-b-2"
+      [class.text-white]="activeTab === 'enviar'"
+      [class.text-zinc-400]="activeTab !== 'enviar'"
+      [class.border-blue-500]="activeTab === 'enviar'"
+      [class.border-transparent]="activeTab !== 'enviar'"
+      (click)="activeTab = 'enviar'"
+    >
+      Enviar
+    </button>
   </div>
 
   <!-- Tabs content -->
@@ -132,6 +142,64 @@
           [transactions]="transactions"
           class="flex-1"
         ></app-transaction-list>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="activeTab === 'enviar'">
+      <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
+        <form class="flex flex-col gap-6 w-full max-w-2xl">
+          <h2 class="text-lg font-semibold text-white mb-2">
+            Enviar transação
+          </h2>
+          <div class="flex flex-col gap-1">
+            <label for="destino" class="text-zinc-400 text-sm"
+              >Endereço de destino</label
+            >
+            <input
+              id="destino"
+              name="destino"
+              type="text"
+              class="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+              placeholder="Endereço Bitcoin"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="valor" class="text-zinc-400 text-sm">Valor (BTC)</label>
+            <input
+              id="valor"
+              name="valor"
+              type="number"
+              step="any"
+              min="0"
+              class="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+              placeholder="0.00000000"
+            />
+            <!-- Saldo disponível -->
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-zinc-400 text-sm">Saldo disponível:</span>
+              <span
+                class="font-mono text-blue-400 text-base"
+                title="Saldo total disponível para envio"
+                >{{ availableBalance | number : "1.8-8" }} BTC</span
+              >
+              <i class="pi pi-wallet text-blue-400"></i>
+            </div>
+          </div>
+          <div class="flex gap-2 justify-end mt-4">
+            <button
+              type="button"
+              class="p-2 px-4 rounded bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
+              (click)="activeTab = 'transacoes'"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="p-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-500"
+            >
+              Enviar
+            </button>
+          </div>
+        </form>
       </div>
     </ng-container>
   </div>

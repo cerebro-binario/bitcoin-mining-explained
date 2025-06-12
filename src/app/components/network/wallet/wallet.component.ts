@@ -33,7 +33,7 @@ export class WalletComponent {
   private _wallet: Wallet | null = null;
   private goToLastPageAfterWalletUpdate = false;
 
-  activeTab: 'enderecos' | 'transacoes' = 'enderecos';
+  activeTab: 'enderecos' | 'transacoes' | 'enviar' = 'enderecos';
 
   @Input() set wallet(wallet: Wallet | null) {
     if (this._wallet === wallet) return;
@@ -56,11 +56,13 @@ export class WalletComponent {
   };
   jumpPageInput: string = '';
   transactions: Transaction[] = [];
+  availableBalance = 0;
 
   private updateView() {
     this.updateAddresses();
     this.updateTotalPages();
     this.displayAddresses();
+    this.updateAvailableBalance();
   }
 
   private updateAddresses() {
@@ -162,5 +164,16 @@ export class WalletComponent {
     } catch {
       // ignore invalid input
     }
+  }
+
+  private updateAvailableBalance() {
+    if (!this._wallet) {
+      this.availableBalance = 0;
+      return;
+    }
+    // Soma o saldo de todos os endereços (todas as BIP types)
+    this.availableBalance = this._wallet.addresses
+      .flatMap((addrObj) => Object.values(addrObj))
+      .reduce((sum, addr) => sum + (addr.balance || 0), 0);
   }
 }
