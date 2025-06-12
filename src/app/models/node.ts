@@ -457,19 +457,6 @@ export class Node {
     return Math.floor(this.SUBSIDY / Math.pow(2, halvings));
   }
 
-  // Função utilitária para buscar um ancestral seguindo previousHash a partir de um bloco base
-  private getAncestorBlock(
-    block: Block,
-    ancestorHeight: number,
-    blockResolver: (hash: string) => Block | undefined
-  ): Block | undefined {
-    let current: Block | undefined = block;
-    while (current && current.height > ancestorHeight) {
-      current = blockResolver(current.previousHash);
-    }
-    return current && current.height === ancestorHeight ? current : undefined;
-  }
-
   // Método para ordenar os blocos, movendo forks mortos para o final
   private sortBlocks(a: BlockNode, b: BlockNode): number {
     // 1. Prioriza forks ativos
@@ -696,19 +683,6 @@ export class Node {
       }
     }
     this.activeForkHeights = forkHeights;
-  }
-
-  // Update the difficulty adjustment interval based on block height
-  private getDifficultyAdjustmentInterval(height: number): number {
-    const epoch = this.consensus.getConsensusForHeight(height);
-    if (!epoch) {
-      throw new Error(`No consensus parameters found for height ${height}`);
-    }
-    return epoch.parameters.difficultyAdjustmentInterval;
-  }
-
-  private getCurrentConsensusParameters(): ConsensusVersion {
-    return this.consensus.getConsensusForHeight(this.currentBlock?.height || 0);
   }
 
   // Método para validar um bloco individual
@@ -1167,17 +1141,6 @@ export class Node {
         return;
       }
     }
-  }
-
-  private downloadGenesisFromPeer(peer: Node) {
-    const heightIndex = peer.getHeightIndex(0);
-    return peer.heights[heightIndex]?.blocks.map((h) => h.block) || [];
-  }
-
-  private downloadBlockFromPeer(height: number, hash: string, peer: Node) {
-    const heightIndex = peer.getHeightIndex(height);
-    return peer.heights[heightIndex]?.blocks.find((h) => h.block.hash === hash)
-      ?.block;
   }
 
   private downloadParentBlockFromPeer(block: Block, peer: Node) {
