@@ -11,6 +11,8 @@ import {
   Wallet,
 } from '../../../models/wallet.model';
 import { AddressListComponent } from './address-list/address-list.component';
+import { TransactionListComponent } from './transaction-list/transaction-list.component';
+import { Transaction } from '../../../models/block.model';
 
 @Component({
   selector: 'app-wallet',
@@ -23,6 +25,7 @@ import { AddressListComponent } from './address-list/address-list.component';
     FormsModule,
     AddressListComponent,
     TabsModule,
+    TransactionListComponent,
   ],
   templateUrl: './wallet.component.html',
 })
@@ -52,6 +55,7 @@ export class WalletComponent {
     totalPages: 0n,
   };
   jumpPageInput: string = '';
+  transactions: Transaction[] = [];
 
   private updateView() {
     this.updateAddresses();

@@ -127,8 +127,11 @@
       </div>
     </ng-container>
     <ng-container *ngIf="activeTab === 'transacoes'">
-      <div class="px-6 flex-1 min-h-0 flex flex-col h-full">
-        <p class="text-zinc-400 italic">Em breve: histórico de transações...</p>
+      <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
+        <app-transaction-list
+          [transactions]="transactions"
+          class="flex-1"
+        ></app-transaction-list>
       </div>
     </ng-container>
   </div>
