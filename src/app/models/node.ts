@@ -1918,5 +1918,8 @@ export class Node {
         }
       }
     }
+
+    // Força mudança de referência para detecção pelo Angular
+    this.wallet = { ...this.wallet };
   }
 }
