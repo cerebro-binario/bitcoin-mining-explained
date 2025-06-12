@@ -408,4 +408,46 @@ export class KeyService {
     words.unshift(0x00);
     return bech32.encode('bc', words);
   }
+
+  // Validação de endereço Bitcoin
+  private validateBase58Address(address: string): boolean {
+    try {
+      const decoded = bs58.decode(address);
+      if (decoded.length < 4) return false;
+      const data = decoded.slice(0, -4);
+      const checksum = decoded.slice(-4);
+      // Hash duplo SHA-256
+      const hash1 = sha256(data);
+      const hash2 = sha256(hash1);
+      const calculatedChecksum = hash2.slice(0, 4);
+      // Comparar checksum
+      return checksum.every((b, i) => b === calculatedChecksum[i]);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  private validateBech32Address(address: string): boolean {
+    try {
+      const decoded = bech32.decode(address);
+      // Opcional: checar prefixo (hrp)
+      if (decoded.prefix !== 'bc') return false;
+      // Opcional: checar comprimento do dado
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  public validateBitcoinAddress(address: string): boolean {
+    if (!address) return false;
+    const addr = address.trim();
+    if (addr.startsWith('1') || addr.startsWith('3')) {
+      return this.validateBase58Address(addr);
+    }
+    if (addr.startsWith('bc1')) {
+      return this.validateBech32Address(addr);
+    }
+    return false;
+  }
 }

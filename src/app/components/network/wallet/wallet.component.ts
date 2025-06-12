@@ -5,14 +5,15 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
+import { Transaction } from '../../../models/block.model';
 import {
   BipType,
   BitcoinAddressData,
   Wallet,
 } from '../../../models/wallet.model';
+import { KeyService } from '../../../services/key.service';
 import { AddressListComponent } from './address-list/address-list.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
-import { Transaction } from '../../../models/block.model';
 
 @Component({
   selector: 'app-wallet',
@@ -67,20 +68,23 @@ export class WalletComponent {
   // Controle de erro e foco do campo de valor
   sendAmountTouched = false;
   sendAmountFocused = false;
-  get sendAmountInsuficiente(): boolean {
-    return (
-      typeof this.sendAmount === 'number' &&
-      this.sendAmount > this.availableBalance
-    );
-  }
+  sendAddressTouched = false;
+  sendAddressFocused = false;
+  sendToAddressValid: boolean | null = null;
+  sendToAddressErrorMsg: string = '';
+  sendAmountValid: boolean | null = null;
+  sendAmountErrorMsg: string = '';
+
   get sendButtonDisabled(): boolean {
     return (
-      !this.sendToAddress ||
+      !this.sendToAddressValid ||
+      !this.sendAmountValid ||
       !this.sendAmount ||
-      this.sendAmount <= 0 ||
-      this.sendAmountInsuficiente
+      this.sendAmount <= 0
     );
   }
+
+  constructor(private keyService: KeyService) {}
 
   private updateView() {
     this.updateAddresses();
@@ -201,21 +205,65 @@ export class WalletComponent {
       .reduce((sum, addr) => sum + (addr.balance || 0), 0);
   }
 
+  onSendAddressBlur() {
+    this.sendAddressFocused = false;
+    this.sendAddressTouched = true;
+    const addr = this.sendToAddress.trim();
+    if (
+      !(addr.startsWith('1') || addr.startsWith('3') || addr.startsWith('bc1'))
+    ) {
+      this.sendToAddressValid = false;
+      this.sendToAddressErrorMsg = 'O endereço deve começar com 1, 3 ou bc1.';
+      return;
+    }
+    if (!this.keyService.validateBitcoinAddress(addr)) {
+      this.sendToAddressValid = false;
+      this.sendToAddressErrorMsg =
+        'O endereço está incompleto, mal formatado ou com checksum inválido.';
+      return;
+    }
+    this.sendToAddressValid = true;
+    this.sendToAddressErrorMsg = '';
+  }
+
+  onSendAddressFocus() {
+    this.sendAddressFocused = true;
+    this.sendToAddressErrorMsg = '';
+  }
+
+  onSendAmountBlur() {
+    this.sendAmountFocused = false;
+    this.sendAmountTouched = true;
+    if (typeof this.sendAmount !== 'number' || this.sendAmount <= 0) {
+      this.sendAmountValid = false;
+      this.sendAmountErrorMsg = 'Informe um valor válido.';
+      return;
+    }
+    if (this.sendAmount > this.availableBalance) {
+      this.sendAmountValid = false;
+      this.sendAmountErrorMsg = 'Saldo insuficiente para esta transação.';
+      return;
+    }
+    this.sendAmountValid = true;
+    this.sendAmountErrorMsg = '';
+  }
+
+  onSendAmountFocus() {
+    this.sendAmountFocused = true;
+    this.sendAmountErrorMsg = '';
+  }
+
   onSendTransaction(event: Event) {
     event.preventDefault();
     this.sendError = '';
     this.sendSuccess = '';
     // Validação básica
-    if (!this.sendToAddress || this.sendToAddress.length < 10) {
+    if (!this.sendToAddressValid) {
       this.sendError = 'Endereço de destino inválido.';
       return;
     }
-    if (!this.sendAmount || this.sendAmount <= 0) {
+    if (!this.sendAmountValid) {
       this.sendError = 'Informe um valor válido.';
-      return;
-    }
-    if (this.sendAmountInsuficiente) {
-      // Não mostra erro geral, só impede envio
       return;
     }
     // Criar transação fake
@@ -226,13 +274,19 @@ export class WalletComponent {
       signature: 'simulated',
     };
     this.transactions = [tx, ...this.transactions];
-    this.availableBalance -= this.sendAmount;
+    this.availableBalance -= this.sendAmount ?? 0;
     this.sendSuccess = 'Transação enviada!';
     // Limpar campos (opcional)
     this.sendToAddress = '';
     this.sendAmount = null;
     this.sendAmountTouched = false;
     this.sendAmountFocused = false;
+    this.sendAddressTouched = false;
+    this.sendAddressFocused = false;
+    this.sendToAddressValid = null;
+    this.sendToAddressErrorMsg = '';
+    this.sendAmountValid = null;
+    this.sendAmountErrorMsg = '';
     // Atualizar view
     this.updateView();
   }

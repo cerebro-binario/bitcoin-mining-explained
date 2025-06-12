@@ -162,12 +162,35 @@
               name="destino"
               type="text"
               [(ngModel)]="sendToAddress"
-              class="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+              (focus)="onSendAddressFocus()"
+              (blur)="onSendAddressBlur()"
+              [ngClass]="{
+                'border-red-500':
+                  sendAddressTouched &&
+                  !sendAddressFocused &&
+                  sendToAddressValid === false,
+                'border-zinc-700': !(
+                  sendAddressTouched &&
+                  !sendAddressFocused &&
+                  sendToAddressValid === false
+                )
+              }"
+              class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
               placeholder="Endereço Bitcoin"
             />
+            <div
+              *ngIf="
+                sendAddressTouched &&
+                !sendAddressFocused &&
+                sendToAddressValid === false
+              "
+              class="text-xs text-red-400 mt-1"
+            >
+              {{ sendToAddressErrorMsg }}
+            </div>
           </div>
           <div class="flex flex-col gap-1">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center mt-4">
               <label for="valor" class="text-zinc-400 text-sm"
                 >Valor (BTC)</label
               >
@@ -189,31 +212,31 @@
               step="any"
               min="0"
               [(ngModel)]="sendAmount"
-              (focus)="sendAmountFocused = true"
-              (blur)="sendAmountFocused = false; sendAmountTouched = true"
+              (focus)="onSendAmountFocus()"
+              (blur)="onSendAmountBlur()"
               [ngClass]="{
-                'border-red-500 ':
+                'border-red-500':
                   sendAmountTouched &&
                   !sendAmountFocused &&
-                  sendAmountInsuficiente,
+                  sendAmountValid === false,
                 'border-zinc-700': !(
                   sendAmountTouched &&
                   !sendAmountFocused &&
-                  sendAmountInsuficiente
+                  sendAmountValid === false
                 )
               }"
-              class="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+              class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
               placeholder="0.00000000"
             />
             <div
               *ngIf="
                 sendAmountTouched &&
                 !sendAmountFocused &&
-                sendAmountInsuficiente
+                sendAmountValid === false
               "
-              class="text-xs text-red-400"
+              class="text-xs text-red-400 mt-1"
             >
-              Saldo insuficiente para esta transação.
+              {{ sendAmountErrorMsg }}
             </div>
           </div>
           <div
