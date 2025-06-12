@@ -58,6 +58,30 @@ export class WalletComponent {
   transactions: Transaction[] = [];
   availableBalance = 0;
 
+  // Campos do formulário de envio
+  sendToAddress: string = '';
+  sendAmount: number | null = null;
+  sendError: string = '';
+  sendSuccess: string = '';
+
+  // Controle de erro e foco do campo de valor
+  sendAmountTouched = false;
+  sendAmountFocused = false;
+  get sendAmountInsuficiente(): boolean {
+    return (
+      typeof this.sendAmount === 'number' &&
+      this.sendAmount > this.availableBalance
+    );
+  }
+  get sendButtonDisabled(): boolean {
+    return (
+      !this.sendToAddress ||
+      !this.sendAmount ||
+      this.sendAmount <= 0 ||
+      this.sendAmountInsuficiente
+    );
+  }
+
   private updateView() {
     this.updateAddresses();
     this.updateTotalPages();
@@ -175,5 +199,41 @@ export class WalletComponent {
     this.availableBalance = this._wallet.addresses
       .flatMap((addrObj) => Object.values(addrObj))
       .reduce((sum, addr) => sum + (addr.balance || 0), 0);
+  }
+
+  onSendTransaction(event: Event) {
+    event.preventDefault();
+    this.sendError = '';
+    this.sendSuccess = '';
+    // Validação básica
+    if (!this.sendToAddress || this.sendToAddress.length < 10) {
+      this.sendError = 'Endereço de destino inválido.';
+      return;
+    }
+    if (!this.sendAmount || this.sendAmount <= 0) {
+      this.sendError = 'Informe um valor válido.';
+      return;
+    }
+    if (this.sendAmountInsuficiente) {
+      // Não mostra erro geral, só impede envio
+      return;
+    }
+    // Criar transação fake
+    const tx: Transaction = {
+      id: 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+      inputs: [], // Para simulação, pode ser vazio
+      outputs: [],
+      signature: 'simulated',
+    };
+    this.transactions = [tx, ...this.transactions];
+    this.availableBalance -= this.sendAmount;
+    this.sendSuccess = 'Transação enviada!';
+    // Limpar campos (opcional)
+    this.sendToAddress = '';
+    this.sendAmount = null;
+    this.sendAmountTouched = false;
+    this.sendAmountFocused = false;
+    // Atualizar view
+    this.updateView();
   }
 }
