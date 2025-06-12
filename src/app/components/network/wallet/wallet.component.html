@@ -1,98 +1,135 @@
-<div class="w-full h-full mt-4 flex-1 flex flex-col min-h-0">
-  <div class="px-6 flex-1 min-h-0 flex flex-col">
-    <app-address-list
-      [addresses]="addressesDisplay"
-      [pagination]="pagination"
-      [canDeriveNextAddress]="true"
-      (deriveNextAddress)="onDeriveNextAddress()"
-      (changeAddressType)="onChangeAddressType($event)"
-      class="h-full"
-    ></app-address-list>
+<div class="w-full h-full flex-1 flex flex-col min-h-0">
+  <!-- Tabs header -->
+  <div class="flex border-b border-zinc-700 mb-2">
+    <button
+      class="px-4 py-2 font-semibold focus:outline-none transition border-b-2"
+      [class.text-white]="activeTab === 'enderecos'"
+      [class.text-zinc-400]="activeTab !== 'enderecos'"
+      [class.border-blue-500]="activeTab === 'enderecos'"
+      [class.border-transparent]="activeTab !== 'enderecos'"
+      (click)="activeTab = 'enderecos'"
+    >
+      Endereços
+    </button>
+    <button
+      class="px-4 py-2 font-semibold focus:outline-none transition border-b-2"
+      [class.text-white]="activeTab === 'transacoes'"
+      [class.text-zinc-400]="activeTab !== 'transacoes'"
+      [class.border-blue-500]="activeTab === 'transacoes'"
+      [class.border-transparent]="activeTab !== 'transacoes'"
+      (click)="activeTab = 'transacoes'"
+    >
+      Transações
+    </button>
   </div>
-  <div
-    *ngIf="totalPagesDisplay > 1"
-    class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-4 bg-zinc-900 rounded-b-lg border-t border-zinc-700 mt-2"
-  >
-    <!-- Indicador de página atual -->
-    <div
-      class="flex flex-1 items-center justify-start gap-2 text-white/80 text-sm font-mono"
-    >
-      <span class="text-zinc-400">Página</span>
-      <span class="font-bold text-blue-300">#{{ currentPageDisplay }}</span>
-      <span class="text-zinc-400">of</span>
-      <span class="font-bold text-blue-300">{{ totalPagesDisplay }}</span>
-      <span class="text-zinc-500">({{ pagePercent | number : "1.0-2" }}%)</span>
-    </div>
 
-    <!-- Botões de navegação -->
-    <div class="flex flex-1 items-center justify-center gap-1">
-      <button
-        pButton
-        icon="pi pi-angle-double-left"
-        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
-        (click)="goToFirstPage()"
-        [disabled]="prevDisabled"
-        [ngClass]="{ 'opacity-50': prevDisabled }"
-        title="Primeira página"
-      ></button>
-      <button
-        pButton
-        icon="pi pi-angle-left"
-        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
-        (click)="goToPreviousPage()"
-        [disabled]="prevDisabled"
-        [ngClass]="{ 'opacity-50': prevDisabled }"
-        title="Página anterior"
-      ></button>
-      <button
-        pButton
-        icon="pi pi-refresh"
-        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
-        (click)="goToRandomPage()"
-        title="Página aleatória"
-      ></button>
-      <button
-        pButton
-        icon="pi pi-angle-right"
-        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
-        (click)="goToNextPage()"
-        [disabled]="nextDisabled"
-        [ngClass]="{ 'opacity-50': nextDisabled }"
-        title="Próxima página"
-      ></button>
-      <button
-        pButton
-        icon="pi pi-angle-double-right"
-        class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
-        (click)="goToLastPage()"
-        [disabled]="nextDisabled"
-        [ngClass]="{ 'opacity-50': nextDisabled }"
-        title="Última página"
-      ></button>
-    </div>
+  <!-- Tabs content -->
+  <div class="flex-1 min-h-0 flex flex-col h-full">
+    <ng-container *ngIf="activeTab === 'enderecos'">
+      <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
+        <app-address-list
+          [hideTitle]="true"
+          [addresses]="addressesDisplay"
+          [pagination]="pagination"
+          [canDeriveNextAddress]="true"
+          (deriveNextAddress)="onDeriveNextAddress()"
+          (changeAddressType)="onChangeAddressType($event)"
+          class="h-full"
+        ></app-address-list>
+      </div>
+      <div
+        *ngIf="totalPagesDisplay > 1"
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-4 bg-zinc-900 rounded-b-lg border-t border-zinc-700 mt-2"
+      >
+        <!-- Indicador de página atual -->
+        <div
+          class="flex flex-1 items-center justify-start gap-2 text-white/80 text-sm font-mono"
+        >
+          <span class="text-zinc-400">Página</span>
+          <span class="font-bold text-blue-300">#{{ currentPageDisplay }}</span>
+          <span class="text-zinc-400">of</span>
+          <span class="font-bold text-blue-300">{{ totalPagesDisplay }}</span>
+          <span class="text-zinc-500"
+            >({{ pagePercent | number : "1.0-2" }}%)</span
+          >
+        </div>
 
-    <!-- Input para pular para página -->
-    <form
-      class="flex flex-1 items-center justify-end gap-2"
-      (submit)="jumpToPage(); $event.preventDefault()"
-      autocomplete="off"
-    >
-      <input
-        type="text"
-        [(ngModel)]="jumpPageInput"
-        name="jumpPageInput"
-        placeholder="Página #"
-        class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white font-mono w-24 focus:outline-none focus:border-blue-400"
-        style="min-width: 120px"
-      />
-      <button
-        pButton
-        type="submit"
-        icon="pi pi-arrow-right"
-        class="p-button-sm p-button-rounded p-button-text text-blue-400"
-        label="Ir para"
-        style="min-width: 60px"
-      ></button>
-    </form>
+        <!-- Botões de navegação -->
+        <div class="flex flex-1 items-center justify-center gap-1">
+          <button
+            pButton
+            icon="pi pi-angle-double-left"
+            class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+            (click)="goToFirstPage()"
+            [disabled]="prevDisabled"
+            [ngClass]="{ 'opacity-50': prevDisabled }"
+            title="Primeira página"
+          ></button>
+          <button
+            pButton
+            icon="pi pi-angle-left"
+            class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+            (click)="goToPreviousPage()"
+            [disabled]="prevDisabled"
+            [ngClass]="{ 'opacity-50': prevDisabled }"
+            title="Página anterior"
+          ></button>
+          <button
+            pButton
+            icon="pi pi-refresh"
+            class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+            (click)="goToRandomPage()"
+            title="Página aleatória"
+          ></button>
+          <button
+            pButton
+            icon="pi pi-angle-right"
+            class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+            (click)="goToNextPage()"
+            [disabled]="nextDisabled"
+            [ngClass]="{ 'opacity-50': nextDisabled }"
+            title="Próxima página"
+          ></button>
+          <button
+            pButton
+            icon="pi pi-angle-double-right"
+            class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+            (click)="goToLastPage()"
+            [disabled]="nextDisabled"
+            [ngClass]="{ 'opacity-50': nextDisabled }"
+            title="Última página"
+          ></button>
+        </div>
+
+        <!-- Input para pular para página -->
+        <form
+          class="flex flex-1 items-center justify-end gap-2"
+          (submit)="jumpToPage(); $event.preventDefault()"
+          autocomplete="off"
+        >
+          <input
+            type="text"
+            [(ngModel)]="jumpPageInput"
+            name="jumpPageInput"
+            placeholder="Página #"
+            class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white font-mono w-24 focus:outline-none focus:border-blue-400"
+            style="min-width: 120px"
+          />
+          <button
+            pButton
+            type="submit"
+            icon="pi pi-arrow-right"
+            class="p-button-sm p-button-rounded p-button-text text-blue-400"
+            label="Ir para"
+            style="min-width: 60px"
+          ></button>
+        </form>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="activeTab === 'transacoes'">
+      <div class="px-6 flex-1 min-h-0 flex flex-col h-full">
+        <p class="text-zinc-400 italic">Em breve: histórico de transações...</p>
+      </div>
+    </ng-container>
   </div>
 </div>

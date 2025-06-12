@@ -1,7 +1,9 @@
 <div class="flex flex-col h-full">
   <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2">
-      <h3 class="text-lg font-semibold text-zinc-200">Endereços</h3>
+      <h3 *ngIf="!hideTitle" class="text-lg font-semibold text-zinc-200">
+        Endereços
+      </h3>
       <button
         *ngIf="canDeriveNextAddress"
         type="button"

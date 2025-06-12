@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
+import { TabsModule } from 'primeng/tabs';
 import {
   BipType,
   BitcoinAddressData,
@@ -21,12 +22,15 @@ import { AddressListComponent } from './address-list/address-list.component';
     InputTextModule,
     FormsModule,
     AddressListComponent,
+    TabsModule,
   ],
   templateUrl: './wallet.component.html',
 })
 export class WalletComponent {
   private _wallet: Wallet | null = null;
   private goToLastPageAfterWalletUpdate = false;
+
+  activeTab: 'enderecos' | 'transacoes' = 'enderecos';
 
   @Input() set wallet(wallet: Wallet | null) {
     if (this._wallet === wallet) return;

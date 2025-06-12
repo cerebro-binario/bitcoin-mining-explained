@@ -21,6 +21,7 @@ export class AddressListComponent {
   @Input() addresses: BitcoinAddressData[] = [];
   @Input() addressType: BipType | 'all-bip-types' = 'bip84';
   @Input() nodeId: number | null = null;
+  @Input() hideTitle = false;
 
   @Input() set pagination(
     value: {
