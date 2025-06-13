@@ -161,3 +161,11 @@ export class BlockNode {
     return node;
   }
 }
+
+export function generateTransactionId(
+  inputs: TransactionInput[],
+  outputs: TransactionOutput[],
+  timestamp: number
+): string {
+  return sha256(JSON.stringify({ inputs, outputs, timestamp }));
+}

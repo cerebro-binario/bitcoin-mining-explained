@@ -1,7 +1,12 @@
 import * as CryptoJS from 'crypto-js';
 import { BehaviorSubject, pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
-import { Block, BlockNode, Transaction } from './block.model';
+import {
+  Block,
+  BlockNode,
+  Transaction,
+  generateTransactionId,
+} from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
   EVENT_LOG_REASONS,
@@ -233,30 +238,26 @@ export class Node {
     const previousHash =
       lastBlock?.hash ||
       '0000000000000000000000000000000000000000000000000000000000000000';
-
     // Calcula o nBits correto para o novo bloco
     const { next } = this.getDifficulty(lastBlock);
     const nBits = next?.nBits || lastBlock?.nBits || this.INITIAL_NBITS;
-
     const blockHeight = lastBlock ? lastBlock.height + 1 : 0;
     const subsidy = this.calculateBlockSubsidy(blockHeight);
-
     // Cria a transação coinbase
+    const coinbaseOutputs = [
+      {
+        value: subsidy,
+        scriptPubKey: this.miningAddress,
+      },
+    ];
     const coinbaseTx: Transaction = {
-      id: CryptoJS.SHA256(timestamp.toString()).toString(),
+      id: generateTransactionId([], coinbaseOutputs, timestamp),
       inputs: [], // Coinbase não tem inputs
-      outputs: [
-        {
-          value: subsidy,
-          scriptPubKey: this.miningAddress,
-        },
-      ],
+      outputs: coinbaseOutputs,
       signature: '', // Coinbase não precisa de assinatura
     };
-
     // Adiciona a coinbase como primeira transação
     const transactions = [coinbaseTx];
-
     this.currentBlock = new Block({
       id: blockHeight,
       height: blockHeight,
@@ -270,7 +271,6 @@ export class Node {
       consensusVersion:
         this.consensus.getConsensusForHeight(blockHeight).version,
     });
-
     return this.currentBlock;
   }
 

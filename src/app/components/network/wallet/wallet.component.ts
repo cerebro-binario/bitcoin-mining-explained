@@ -9,6 +9,7 @@ import {
   Transaction,
   TransactionInput,
   TransactionOutput,
+  generateTransactionId,
 } from '../../../models/block.model';
 import {
   BipType,
@@ -333,9 +334,10 @@ export class WalletComponent {
       value: o.value,
       scriptPubKey: o.address, // ou gere o script a partir do endereço
     }));
+    const timestamp = Date.now();
     // Cria a transação
     const tx: Transaction = {
-      id: 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+      id: generateTransactionId(inputs, outputs, timestamp),
       inputs,
       outputs,
       signature: 'simulated', // ou assine de verdade depois

@@ -10,7 +10,10 @@ import {
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
-import { Transaction } from '../../../../models/block.model';
+import {
+  Transaction,
+  generateTransactionId,
+} from '../../../../models/block.model';
 import { IConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
@@ -160,10 +163,19 @@ export class MinerComponent {
   createTransaction() {
     // Gera um endereço aleatório para o destinatário
     const recipientAddress = this.addressService.generateRandomAddress();
-
+    const timestamp = Date.now();
     // Cria uma nova transação
     const tx: Transaction = {
-      id: CryptoJS.SHA256(Date.now().toString()).toString(),
+      id: generateTransactionId(
+        [],
+        [
+          {
+            value: 1000000, // 0.01 BTC em satoshis
+            scriptPubKey: recipientAddress,
+          },
+        ],
+        timestamp
+      ),
       inputs: [],
       outputs: [
         {
@@ -173,9 +185,7 @@ export class MinerComponent {
       ],
       signature: this.miner.name, // Usando o nome do miner como assinatura temporária
     };
-
     // TODO: Adicionar a transação à mempool do miner
-
     // TODO: Iniciar a propagação da transação
     // this.propagateTransaction(tx, miner);
     this.transactionBroadcasted.emit({
