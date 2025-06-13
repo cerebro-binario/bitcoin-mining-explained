@@ -5,15 +5,21 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
-import { Transaction } from '../../../models/block.model';
+import {
+  Transaction,
+  TransactionInput,
+  TransactionOutput,
+} from '../../../models/block.model';
 import {
   BipType,
   BitcoinAddressData,
   Wallet,
+  BitcoinUTXO,
 } from '../../../models/wallet.model';
 import { KeyService } from '../../../services/key.service';
 import { AddressListComponent } from './address-list/address-list.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
+import { Node } from '../../../models/node';
 
 @Component({
   selector: 'app-wallet',
@@ -45,6 +51,7 @@ export class WalletComponent {
       this.goToLastPageAfterWalletUpdate = false;
     }
   }
+  @Input() node!: Node;
   @Output() deriveNextAddress = new EventEmitter<void>();
 
   addresses: BitcoinAddressData[] = [];
@@ -74,6 +81,12 @@ export class WalletComponent {
   sendToAddressErrorMsg: string = '';
   sendAmountValid: boolean | null = null;
   sendAmountErrorMsg: string = '';
+
+  selectedUtxos: BitcoinUTXO[] = [];
+  changeAddress: string = '';
+  changeAmount: number = 0;
+  showTxConfirmation = false;
+  txOutputs: { address: string; value: number }[] = [];
 
   get sendButtonDisabled(): boolean {
     return (
@@ -243,7 +256,7 @@ export class WalletComponent {
       this.sendAmountErrorMsg = 'Informe um valor válido.';
       return;
     }
-    if (this.sendAmount > this.availableBalance) {
+    if (this.sendAmount * 1e8 > this.availableBalance) {
       this.sendAmountValid = false;
       this.sendAmountErrorMsg = 'Saldo insuficiente para esta transação.';
       return;
@@ -261,37 +274,130 @@ export class WalletComponent {
     event.preventDefault();
     this.sendError = '';
     this.sendSuccess = '';
-    // Validação básica
-    if (!this.sendToAddressValid) {
-      this.sendError = 'Endereço de destino inválido.';
+
+    // Seleção automática de UTXOs (modo simples)
+    const amountSats = Math.round((this.sendAmount ?? 0) * 1e8);
+    const fee = 500; // taxa fixa para exemplo
+    const { utxos, total } = this.selectUtxosFIFO(amountSats + fee);
+    if (total < amountSats + fee) {
+      this.sendAmountValid = false;
+      this.sendAmountErrorMsg = 'Saldo insuficiente para cobrir valor + taxa.';
       return;
     }
-    if (!this.sendAmountValid) {
-      this.sendError = 'Informe um valor válido.';
-      return;
+    this.selectedUtxos = utxos;
+    this.changeAmount = total - amountSats - fee;
+    this.changeAddress = this.getNextChangeAddress();
+    this.txOutputs = [{ address: this.sendToAddress, value: amountSats }];
+    if (this.changeAmount > 0) {
+      this.txOutputs.push({
+        address: this.changeAddress,
+        value: this.changeAmount,
+      });
     }
-    // Criar transação fake
+
+    // Agora sim, cria a transação
+    const tx = this.createTransaction();
+    if (tx) {
+      this.node.addTransaction(tx);
+      this.sendSuccess = 'Transação enviada!';
+      // Limpar campos, etc...
+      this.sendToAddress = '';
+      this.sendAmount = null;
+      this.sendAmountTouched = false;
+      this.sendAmountFocused = false;
+      this.sendAddressTouched = false;
+      this.sendAddressFocused = false;
+      this.sendToAddressValid = null;
+      this.sendToAddressErrorMsg = '';
+      this.sendAmountValid = null;
+      this.sendAmountErrorMsg = '';
+      this.updateView();
+    }
+  }
+
+  // Cria uma transação realista, sem alterar saldos/utxos locais
+  createTransaction(): Transaction | null {
+    if (!this.sendAmountValid || !this.sendToAddressValid || !this.sendAmount)
+      return null;
+    if (!this.selectedUtxos.length) return null;
+    // Monta inputs a partir dos UTXOs selecionados
+    const inputs: TransactionInput[] = this.selectedUtxos.map((utxo) => ({
+      txid: utxo.txId,
+      vout: utxo.outputIndex,
+      scriptSig: '', // será preenchido na assinatura real
+      scriptPubKey: utxo.output?.scriptPubKey ?? '',
+      value: utxo.output?.value ?? 0,
+    }));
+    // Monta outputs (destino + change)
+    const outputs: TransactionOutput[] = this.txOutputs.map((o) => ({
+      value: o.value,
+      scriptPubKey: o.address, // ou gere o script a partir do endereço
+    }));
+    // Cria a transação
     const tx: Transaction = {
       id: 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-      inputs: [], // Para simulação, pode ser vazio
-      outputs: [],
-      signature: 'simulated',
+      inputs,
+      outputs,
+      signature: 'simulated', // ou assine de verdade depois
     };
-    this.transactions = [tx, ...this.transactions];
-    this.availableBalance -= this.sendAmount ?? 0;
-    this.sendSuccess = 'Transação enviada!';
-    // Limpar campos (opcional)
-    this.sendToAddress = '';
-    this.sendAmount = null;
-    this.sendAmountTouched = false;
-    this.sendAmountFocused = false;
-    this.sendAddressTouched = false;
-    this.sendAddressFocused = false;
-    this.sendToAddressValid = null;
-    this.sendToAddressErrorMsg = '';
-    this.sendAmountValid = null;
-    this.sendAmountErrorMsg = '';
-    // Atualizar view
-    this.updateView();
+    return tx;
+  }
+
+  // Seleção automática de UTXOs (FIFO), usando BitcoinUTXO
+  selectUtxosFIFO(amount: number): { utxos: BitcoinUTXO[]; total: number } {
+    const utxos: BitcoinUTXO[] = this.addresses.flatMap((addr) =>
+      (addr.utxos || []).map((utxo: BitcoinUTXO) => ({
+        ...utxo,
+        address: addr.address, // extra para UI
+        bipType: addr.addressType, // extra para UI
+      }))
+    );
+    utxos.sort(
+      (a, b) => a.txId.localeCompare(b.txId) || a.outputIndex - b.outputIndex
+    );
+    let total = 0;
+    const selected: BitcoinUTXO[] = [];
+    for (const utxo of utxos) {
+      selected.push(utxo);
+      total += utxo.output.value;
+      if (total >= amount) break;
+    }
+    return { utxos: selected, total };
+  }
+
+  // Gera endereço de change automaticamente (próximo endereço não usado)
+  getNextChangeAddress(): string {
+    // Procura o primeiro endereço da carteira com saldo zero e sem UTXOs
+    const unused = this.addresses.find(
+      (addr) =>
+        (addr.balance || 0) === 0 && (!addr.utxos || addr.utxos.length === 0)
+    );
+    return unused ? unused.address : this.addresses[0]?.address || '';
+  }
+
+  // Chamada ao enviar (modo simples): seleciona UTXOs, calcula troco, mostra confirmação
+  prepareTransaction() {
+    if (!this.sendAmountValid || !this.sendToAddressValid || !this.sendAmount)
+      return;
+    const amountSats = Math.round(this.sendAmount * 1e8);
+    // Taxa fixa para exemplo (ex: 500 satoshis)
+    const fee = 500;
+    const { utxos, total } = this.selectUtxosFIFO(amountSats + fee);
+    if (total < amountSats + fee) {
+      this.sendAmountValid = false;
+      this.sendAmountErrorMsg = 'Saldo insuficiente para cobrir valor + taxa.';
+      return;
+    }
+    this.selectedUtxos = utxos;
+    this.changeAmount = total - amountSats - fee;
+    this.changeAddress = this.getNextChangeAddress();
+    this.txOutputs = [{ address: this.sendToAddress, value: amountSats }];
+    if (this.changeAmount > 0) {
+      this.txOutputs.push({
+        address: this.changeAddress,
+        value: this.changeAmount,
+      });
+    }
+    this.showTxConfirmation = true;
   }
 }

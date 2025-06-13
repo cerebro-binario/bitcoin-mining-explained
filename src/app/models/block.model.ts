@@ -17,6 +17,8 @@ export class Block {
   // Cronômetro de mineração
   miningElapsed: number = 0;
 
+  merkleRoot: string = '';
+
   constructor(init?: Partial<Block>) {
     if (init) {
       // Handle target conversion if it exists in init
@@ -85,6 +87,25 @@ export class Block {
 
     // Block is valid if hash is below target
     return hashValue < this.target;
+  }
+
+  public calculateMerkleRoot(): string {
+    if (!this.transactions.length) return '';
+    let hashes = this.transactions.map((tx) => sha256(JSON.stringify(tx)));
+    while (hashes.length > 1) {
+      if (hashes.length % 2 !== 0) hashes.push(hashes[hashes.length - 1]);
+      const newHashes: string[] = [];
+      for (let i = 0; i < hashes.length; i += 2) {
+        newHashes.push(sha256(hashes[i] + hashes[i + 1]));
+      }
+      hashes = newHashes;
+    }
+    return hashes[0];
+  }
+
+  public addTransaction(tx: Transaction): void {
+    this.transactions.push(tx);
+    this.merkleRoot = this.calculateMerkleRoot();
   }
 }
 

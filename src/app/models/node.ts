@@ -133,6 +133,8 @@ export class Node {
     addresses: [],
   };
 
+  pendingTransactions: Transaction[] = [];
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }
@@ -1884,5 +1886,11 @@ export class Node {
 
     // Força mudança de referência para detecção pelo Angular
     this.wallet = { ...this.wallet };
+  }
+
+  public addTransaction(tx: Transaction) {
+    if (!this.currentBlock) return;
+    if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
+    this.currentBlock.addTransaction(tx);
   }
 }
