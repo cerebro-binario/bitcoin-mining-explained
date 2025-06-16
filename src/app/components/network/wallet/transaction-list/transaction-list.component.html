@@ -47,14 +47,14 @@
             *ngIf="walletAddresses.includes(tx.address); else externalAddr"
           >
             <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-900/40 text-blue-300 font-mono text-xs"
+              class="inline-flex items-center gap-1"
               title="Endereço da sua carteira"
             >
-              <i class="pi pi-verified"></i> {{ tx.address }}
+              <i class="pi pi-verified text-blue-400"></i> {{ tx.address }}
             </span>
           </ng-container>
           <ng-template #externalAddr>
-            <span class="font-mono">{{ tx.address }}</span>
+            {{ tx.address }}
           </ng-template>
         </td>
         <td class="px-3 py-2">{{ tx.status }}</td>
