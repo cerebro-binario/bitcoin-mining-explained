@@ -37,6 +37,15 @@
             'text-yellow-400': tx.type === 'Coinbase'
           }"
         >
+          <ng-container [ngSwitch]="tx.type">
+            <i
+              *ngSwitchCase="'Recebida'"
+              class="pi pi-arrow-down-left mr-1"
+            ></i>
+            <i *ngSwitchCase="'Enviada'" class="pi pi-arrow-up-right mr-1"></i>
+            <i *ngSwitchCase="'Coinbase'" class="pi pi-star-fill mr-1"></i>
+            <i *ngSwitchDefault class="pi pi-info-circle mr-1"></i>
+          </ng-container>
           {{ tx.type }}
         </td>
         <td class="px-3 py-2">{{ tx.value / 100000000 | number : "1.8-8" }}</td>
