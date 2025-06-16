@@ -10,4 +10,5 @@ import { TransactionView } from '../wallet.component';
 })
 export class TransactionListComponent {
   @Input() transactions: TransactionView[] = [];
+  @Input() walletAddresses: string[] = [];
 }

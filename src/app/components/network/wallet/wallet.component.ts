@@ -507,4 +507,8 @@ export class WalletComponent {
     this.transactions = transactions;
     this.transactionViews = transactionViews;
   }
+
+  get walletAddressesList(): string[] {
+    return this.addresses ? this.addresses.map((a) => a.address) : [];
+  }
 }
