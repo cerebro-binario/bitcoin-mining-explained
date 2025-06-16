@@ -162,6 +162,7 @@
               name="destino"
               type="text"
               [(ngModel)]="sendToAddress"
+              (input)="onSendAddressChange()"
               (focus)="onSendAddressFocus()"
               (blur)="onSendAddressBlur()"
               [ngClass]="{
@@ -215,6 +216,7 @@
               step="any"
               min="0"
               [(ngModel)]="sendAmount"
+              (input)="onSendAmountChange()"
               (focus)="onSendAmountFocus()"
               (blur)="onSendAmountBlur()"
               [ngClass]="{

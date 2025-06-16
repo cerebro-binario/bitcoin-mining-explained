@@ -226,6 +226,14 @@ export class WalletComponent {
   onSendAddressBlur() {
     this.sendAddressFocused = false;
     this.sendAddressTouched = true;
+    this.validateSendAddress();
+  }
+
+  onSendAddressChange() {
+    this.validateSendAddress();
+  }
+
+  private validateSendAddress() {
     const addr = this.sendToAddress.trim();
     if (
       !(addr.startsWith('1') || addr.startsWith('3') || addr.startsWith('bc1'))
@@ -252,6 +260,14 @@ export class WalletComponent {
   onSendAmountBlur() {
     this.sendAmountFocused = false;
     this.sendAmountTouched = true;
+    this.validateSendAmount();
+  }
+
+  onSendAmountChange() {
+    this.validateSendAmount();
+  }
+
+  private validateSendAmount() {
     if (typeof this.sendAmount !== 'number' || this.sendAmount <= 0) {
       this.sendAmountValid = false;
       this.sendAmountErrorMsg = 'Informe um valor válido.';
