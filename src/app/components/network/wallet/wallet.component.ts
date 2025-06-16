@@ -22,14 +22,23 @@ import { AddressListComponent } from './address-list/address-list.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
 import { Node } from '../../../models/node';
 
+export interface TransactionDetail {
+  type: 'input' | 'output' | 'change';
+  value: number;
+  address: string;
+  addressType?: BipType;
+  isWallet: boolean;
+}
+
 export interface TransactionView {
   id: string;
   type: 'Recebida' | 'Enviada' | 'Coinbase';
-  value: number; // em satoshis
-  address: string;
+  value: number; // valor principal consolidado
+  address: string; // endereço principal (destino ou recebido)
   addressType?: BipType;
   timestamp: number;
   status: string;
+  details: TransactionDetail[];
 }
 
 @Component({
@@ -462,16 +471,46 @@ export class WalletComponent {
           transactions.push(tx);
           const timestamp = block.timestamp;
           const status = 'Confirmada';
-          // 1. Linha "Enviada" se houver input da wallet
+          const details: TransactionDetail[] = [];
+          // Adiciona todos os inputs
+          tx.inputs.forEach((input) => {
+            details.push({
+              type: 'input',
+              value: input.value,
+              address: input.scriptPubKey,
+              addressType: detectBipType(input.scriptPubKey),
+              isWallet: walletAddresses.has(input.scriptPubKey),
+            });
+          });
+          // Adiciona todos os outputs
+          tx.outputs.forEach((output) => {
+            const isWallet = walletAddresses.has(output.scriptPubKey);
+            // Se for output para a wallet E a transação tem input da wallet, é troco
+            let detailType: TransactionDetail['type'] = 'output';
+            if (
+              isWallet &&
+              tx.inputs.some((i) => walletAddresses.has(i.scriptPubKey))
+            ) {
+              detailType = 'change';
+            }
+            details.push({
+              type: detailType,
+              value: output.value,
+              address: output.scriptPubKey,
+              addressType: detectBipType(output.scriptPubKey),
+              isWallet,
+            });
+          });
+
+          // 1. Linha "Enviada" consolidada
           const hasInputFromWallet = tx.inputs.some((i) =>
             walletAddresses.has(i.scriptPubKey)
           );
           if (hasInputFromWallet) {
-            // Valor gasto: soma dos inputs da wallet
-            const valueSent = tx.inputs
-              .filter((i) => walletAddresses.has(i.scriptPubKey))
-              .reduce((sum, i) => sum + i.value, 0);
-            // Endereços de destino externos (ou '—' se todos outputs são da wallet)
+            // Valor realmente enviado para fora (soma dos outputs externos)
+            const valueSent = tx.outputs
+              .filter((o) => !walletAddresses.has(o.scriptPubKey))
+              .reduce((sum, o) => sum + o.value, 0);
             const externalOutputs = tx.outputs.filter(
               (o) => !walletAddresses.has(o.scriptPubKey)
             );
@@ -487,11 +526,15 @@ export class WalletComponent {
               addressType: detectBipType(address),
               timestamp,
               status,
+              details,
             });
           }
-          // 2. Uma linha "Recebida" para cada output da wallet
-          tx.outputs.forEach((o) => {
-            if (walletAddresses.has(o.scriptPubKey)) {
+          // 2. Linha "Recebida" consolidada (apenas se não for change nem enviada)
+          if (!hasInputFromWallet) {
+            const outputsToWallet = tx.outputs.filter((o) =>
+              walletAddresses.has(o.scriptPubKey)
+            );
+            outputsToWallet.forEach((o) => {
               transactionViews.push({
                 id: tx.id,
                 type: tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
@@ -500,9 +543,10 @@ export class WalletComponent {
                 addressType: detectBipType(o.scriptPubKey),
                 timestamp,
                 status,
+                details,
               });
-            }
-          });
+            });
+          }
         }
       }
       blockNode = blockNode.children[0];
