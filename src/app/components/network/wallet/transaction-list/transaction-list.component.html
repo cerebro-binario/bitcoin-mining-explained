@@ -51,10 +51,13 @@
               'text-purple-300': tx.addressType === 'bip84'
             }"
           >
-            <i
-              *ngIf="walletAddresses.includes(tx.address)"
-              class="pi pi-verified text-blue-400"
-            ></i>
+            <span class="inline-block align-middle" style="width: 1.2em">
+              <i
+                *ngIf="!walletAddresses.includes(tx.address)"
+                class="pi pi-external-link text-yellow-400"
+                title="Endereço externo"
+              ></i>
+            </span>
             {{ tx.address }}
           </span>
         </td>
