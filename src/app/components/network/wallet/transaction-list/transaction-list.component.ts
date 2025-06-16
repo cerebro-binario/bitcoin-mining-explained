@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { Transaction } from '../../../../models/block.model';
+import { TransactionView } from '../wallet.component';
 
 @Component({
   selector: 'app-transaction-list',
@@ -9,5 +9,5 @@ import { Transaction } from '../../../../models/block.model';
   templateUrl: './transaction-list.component.html',
 })
 export class TransactionListComponent {
-  @Input() transactions: Transaction[] = [];
+  @Input() transactions: TransactionView[] = [];
 }

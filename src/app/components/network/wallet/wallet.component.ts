@@ -22,6 +22,15 @@ import { AddressListComponent } from './address-list/address-list.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
 import { Node } from '../../../models/node';
 
+export interface TransactionView {
+  id: string;
+  type: 'Recebida' | 'Enviada' | 'Coinbase';
+  value: number; // em satoshis
+  address: string;
+  timestamp: number;
+  status: string;
+}
+
 @Component({
   selector: 'app-wallet',
   standalone: true,
@@ -89,6 +98,8 @@ export class WalletComponent {
   showTxConfirmation = false;
   txOutputs: { address: string; value: number }[] = [];
 
+  transactionViews: TransactionView[] = [];
+
   get sendButtonDisabled(): boolean {
     return (
       !this.sendToAddressValid ||
@@ -105,6 +116,7 @@ export class WalletComponent {
     this.updateTotalPages();
     this.displayAddresses();
     this.updateAvailableBalance();
+    this.updateWalletTransactions();
   }
 
   private updateAddresses() {
@@ -417,5 +429,79 @@ export class WalletComponent {
       });
     }
     this.showTxConfirmation = true;
+  }
+
+  /**
+   * Atualiza a lista de transações da carteira, buscando na main chain do node
+   */
+  private updateWalletTransactions() {
+    if (!this._wallet || !this.node) {
+      this.transactions = [];
+      this.transactionViews = [];
+      return;
+    }
+    const walletAddresses = new Set(
+      this._wallet.addresses
+        .flatMap((addrObj) => Object.values(addrObj))
+        .map((addr) => addr.address)
+    );
+    const transactions: Transaction[] = [];
+    const transactionViews: TransactionView[] = [];
+    let blockNode = this.node.genesis;
+    while (blockNode) {
+      const block = blockNode.block;
+      for (const tx of block.transactions) {
+        const involved =
+          tx.inputs.some((input) => walletAddresses.has(input.scriptPubKey)) ||
+          tx.outputs.some((output) => walletAddresses.has(output.scriptPubKey));
+        if (involved) {
+          transactions.push(tx);
+          const timestamp = block.timestamp;
+          const status = 'Confirmada';
+          // 1. Linha "Enviada" se houver input da wallet
+          const hasInputFromWallet = tx.inputs.some((i) =>
+            walletAddresses.has(i.scriptPubKey)
+          );
+          if (hasInputFromWallet) {
+            // Valor gasto: soma dos inputs da wallet
+            const valueSent = tx.inputs
+              .filter((i) => walletAddresses.has(i.scriptPubKey))
+              .reduce((sum, i) => sum + i.value, 0);
+            // Endereços de destino externos (ou '—' se todos outputs são da wallet)
+            const externalOutputs = tx.outputs.filter(
+              (o) => !walletAddresses.has(o.scriptPubKey)
+            );
+            const address =
+              externalOutputs.length > 0
+                ? externalOutputs[0].scriptPubKey
+                : '—';
+            transactionViews.push({
+              id: tx.id,
+              type: 'Enviada',
+              value: valueSent,
+              address,
+              timestamp,
+              status,
+            });
+          }
+          // 2. Uma linha "Recebida" para cada output da wallet
+          tx.outputs.forEach((o) => {
+            if (walletAddresses.has(o.scriptPubKey)) {
+              transactionViews.push({
+                id: tx.id,
+                type: tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
+                value: o.value,
+                address: o.scriptPubKey,
+                timestamp,
+                status,
+              });
+            }
+          });
+        }
+      }
+      blockNode = blockNode.children[0];
+    }
+    this.transactions = transactions;
+    this.transactionViews = transactionViews;
   }
 }

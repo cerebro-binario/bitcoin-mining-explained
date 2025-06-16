@@ -17,11 +17,15 @@
         </td>
       </tr>
       <tr *ngFor="let tx of transactions">
-        <td class="px-3 py-2">—</td>
-        <td class="px-3 py-2">—</td>
-        <td class="px-3 py-2">—</td>
-        <td class="px-3 py-2">—</td>
-        <td class="px-3 py-2">—</td>
+        <td class="px-3 py-2">
+          {{
+            tx.timestamp ? (tx.timestamp | date : "dd/MM/yyyy HH:mm:ss") : "—"
+          }}
+        </td>
+        <td class="px-3 py-2">{{ tx.type }}</td>
+        <td class="px-3 py-2">{{ tx.value / 100000000 | number : "1.8-8" }}</td>
+        <td class="px-3 py-2">{{ tx.address }}</td>
+        <td class="px-3 py-2">{{ tx.status }}</td>
         <td
           class="px-3 py-2 font-mono text-xs text-blue-300 truncate max-w-[180px]"
           [title]="tx.id"
