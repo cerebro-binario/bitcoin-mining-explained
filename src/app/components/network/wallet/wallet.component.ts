@@ -383,7 +383,10 @@ export class WalletComponent {
       }))
     );
     utxos.sort(
-      (a, b) => a.txId.localeCompare(b.txId) || a.outputIndex - b.outputIndex
+      (a, b) =>
+        a.blockHeight - b.blockHeight ||
+        a.txId.localeCompare(b.txId) ||
+        a.outputIndex - b.outputIndex
     );
     let total = 0;
     const selected: BitcoinUTXO[] = [];
