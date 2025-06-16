@@ -294,7 +294,7 @@ export class WalletComponent {
 
     // Seleção automática de UTXOs (modo simples)
     const amountSats = Math.round((this.sendAmount ?? 0) * 1e8);
-    const fee = 500; // taxa fixa para exemplo
+    const fee = 0; // taxa fixa para exemplo
     const { utxos, total } = this.selectUtxosFIFO(amountSats + fee);
     if (total < amountSats + fee) {
       this.sendAmountValid = false;
@@ -399,7 +399,7 @@ export class WalletComponent {
       return;
     const amountSats = Math.round(this.sendAmount * 1e8);
     // Taxa fixa para exemplo (ex: 500 satoshis)
-    const fee = 500;
+    const fee = 0;
     const { utxos, total } = this.selectUtxosFIFO(amountSats + fee);
     if (total < amountSats + fee) {
       this.sendAmountValid = false;
