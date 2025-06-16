@@ -28,6 +28,8 @@ export interface TransactionDetail {
   address: string;
   addressType?: BipType;
   isWallet: boolean;
+  txId?: string;
+  vout?: number;
 }
 
 export interface TransactionView {
@@ -480,10 +482,12 @@ export class WalletComponent {
               address: input.scriptPubKey,
               addressType: detectBipType(input.scriptPubKey),
               isWallet: walletAddresses.has(input.scriptPubKey),
+              txId: input.txid,
+              vout: input.vout,
             });
           });
           // Adiciona todos os outputs
-          tx.outputs.forEach((output) => {
+          tx.outputs.forEach((output, idx) => {
             const isWallet = walletAddresses.has(output.scriptPubKey);
             // Se for output para a wallet E a transação tem input da wallet, é troco
             let detailType: TransactionDetail['type'] = 'output';
@@ -499,6 +503,8 @@ export class WalletComponent {
               address: output.scriptPubKey,
               addressType: detectBipType(output.scriptPubKey),
               isWallet,
+              txId: tx.id,
+              vout: idx,
             });
           });
 

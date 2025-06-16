@@ -98,6 +98,8 @@
               <th class="px-2 py-1">Endereço</th>
               <th class="px-2 py-1">BIP</th>
               <th class="px-2 py-1">Wallet?</th>
+              <th class="px-2 py-1">TxID</th>
+              <th class="px-2 py-1">vout</th>
             </tr>
           </thead>
           <tbody>
@@ -133,6 +135,15 @@
               <td class="px-2 py-1">
                 <span *ngIf="d.isWallet" class="text-blue-400">Sim</span>
                 <span *ngIf="!d.isWallet" class="text-zinc-500">Não</span>
+              </td>
+              <td
+                class="px-2 py-1 font-mono text-xs text-blue-300 truncate max-w-[120px]"
+                [title]="d.txId"
+              >
+                {{ d.txId || "—" }}
+              </td>
+              <td class="px-2 py-1 text-center">
+                {{ d.vout !== undefined ? d.vout : "—" }}
               </td>
             </tr>
           </tbody>
