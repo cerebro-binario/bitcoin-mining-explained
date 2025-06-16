@@ -43,19 +43,20 @@
         </td>
         <td class="px-3 py-2">{{ tx.value / 100000000 | number : "1.8-8" }}</td>
         <td class="px-3 py-2">
-          <ng-container
-            *ngIf="walletAddresses.includes(tx.address); else externalAddr"
+          <span
+            class="inline-flex items-center gap-1"
+            [ngClass]="{
+              'text-green-300': tx.addressType === 'bip44',
+              'text-blue-300': tx.addressType === 'bip49',
+              'text-purple-300': tx.addressType === 'bip84'
+            }"
           >
-            <span
-              class="inline-flex items-center gap-1"
-              title="Endereço da sua carteira"
-            >
-              <i class="pi pi-verified text-blue-400"></i> {{ tx.address }}
-            </span>
-          </ng-container>
-          <ng-template #externalAddr>
+            <i
+              *ngIf="walletAddresses.includes(tx.address)"
+              class="pi pi-verified text-blue-400"
+            ></i>
             {{ tx.address }}
-          </ng-template>
+          </span>
         </td>
         <td class="px-3 py-2">{{ tx.status }}</td>
         <td

@@ -27,6 +27,7 @@ export interface TransactionView {
   type: 'Recebida' | 'Enviada' | 'Coinbase';
   value: number; // em satoshis
   address: string;
+  addressType?: BipType;
   timestamp: number;
   status: string;
 }
@@ -483,6 +484,7 @@ export class WalletComponent {
               type: 'Enviada',
               value: valueSent,
               address,
+              addressType: detectBipType(address),
               timestamp,
               status,
             });
@@ -495,6 +497,7 @@ export class WalletComponent {
                 type: tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
                 value: o.value,
                 address: o.scriptPubKey,
+                addressType: detectBipType(o.scriptPubKey),
                 timestamp,
                 status,
               });
@@ -511,4 +514,11 @@ export class WalletComponent {
   get walletAddressesList(): string[] {
     return this.addresses ? this.addresses.map((a) => a.address) : [];
   }
+}
+
+function detectBipType(address: string): BipType | undefined {
+  if (address.startsWith('1')) return 'bip44';
+  if (address.startsWith('3')) return 'bip49';
+  if (address.startsWith('bc1')) return 'bip84';
+  return undefined;
 }
