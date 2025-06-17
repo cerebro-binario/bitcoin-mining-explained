@@ -3,12 +3,13 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
+import { WalletComponent } from '../../network/wallet/wallet.component';
 
 @Component({
   selector: 'app-miner-profile',
   templateUrl: './miner-profile.component.html',
   styleUrls: ['./miner-profile.component.scss'],
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, WalletComponent],
 })
 export class MinerProfileComponent {
   miner: BitcoinNode | undefined;
