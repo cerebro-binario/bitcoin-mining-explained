@@ -7,6 +7,7 @@ import { KeyService } from '../../../services/key.service';
 import { EventComponent } from '../../network/events/event/event.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
 import { BlockchainComponent } from '../../network/blockchain/blockchain.component';
+import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
 
 @Component({
   selector: 'app-miner-profile',
@@ -18,6 +19,7 @@ import { BlockchainComponent } from '../../network/blockchain/blockchain.compone
     WalletComponent,
     EventComponent,
     BlockchainComponent,
+    BlockchainBalanceComponent,
   ],
 })
 export class MinerProfileComponent {
