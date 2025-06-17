@@ -115,6 +115,14 @@ export class WalletComponent {
 
   transactionViews: TransactionView[] = [];
 
+  // Paginação de transações
+  transactionPagination = {
+    pageSize: 10,
+    currentPage: 0n,
+    totalPages: 0n,
+  };
+  pagedTransactionViews: TransactionView[] = [];
+
   get sendButtonDisabled(): boolean {
     return (
       !this.sendToAddressValid ||
@@ -563,10 +571,100 @@ export class WalletComponent {
     }
     this.transactions = transactions;
     this.transactionViews = transactionViews;
+    this.updateTransactionTotalPages();
+    this.updateTransactionViews();
   }
 
   get walletAddressesList(): string[] {
     return this.addresses ? this.addresses.map((a) => a.address) : [];
+  }
+
+  get transactionCurrentPageDisplay(): number {
+    return Number(this.transactionPagination.currentPage) + 1;
+  }
+  get transactionTotalPagesDisplay(): number {
+    return Number(this.transactionPagination.totalPages);
+  }
+  get transactionPagePercent(): number {
+    if (this.transactionPagination.totalPages === 0n) return 0;
+    return (
+      ((Number(this.transactionPagination.currentPage) + 1) /
+        Number(this.transactionPagination.totalPages)) *
+      100
+    );
+  }
+  get transactionPrevDisabled(): boolean {
+    return this.transactionPagination.currentPage === 0n;
+  }
+  get transactionNextDisabled(): boolean {
+    return (
+      this.transactionPagination.currentPage >=
+        this.transactionPagination.totalPages - 1n ||
+      this.transactionPagination.totalPages === 0n
+    );
+  }
+
+  transactionGoToFirstPage() {
+    this.transactionPagination.currentPage = 0n;
+    this.updateTransactionViews();
+  }
+  transactionGoToPreviousPage() {
+    if (this.transactionPagination.currentPage > 0n) {
+      this.transactionPagination.currentPage--;
+      this.updateTransactionViews();
+    }
+  }
+  transactionGoToNextPage() {
+    if (
+      this.transactionPagination.currentPage <
+      this.transactionPagination.totalPages - 1n
+    ) {
+      this.transactionPagination.currentPage++;
+      this.updateTransactionViews();
+    }
+  }
+  transactionGoToLastPage() {
+    this.transactionPagination.currentPage =
+      this.transactionPagination.totalPages - 1n;
+    this.updateTransactionViews();
+  }
+  transactionGoToRandomPage() {
+    const rand = BigInt(
+      Math.floor(Math.random() * Number(this.transactionPagination.totalPages))
+    );
+    this.transactionPagination.currentPage = rand;
+    this.updateTransactionViews();
+  }
+  transactionJumpToPage(pageInt: number) {
+    try {
+      let page = BigInt(pageInt);
+      if (page < 1n) page = 1n;
+      if (page > this.transactionPagination.totalPages)
+        page = this.transactionPagination.totalPages;
+      this.transactionPagination.currentPage = page - 1n;
+      this.updateTransactionViews();
+    } catch {
+      // ignore invalid input
+    }
+  }
+
+  private updateTransactionViews() {
+    const start =
+      Number(this.transactionPagination.currentPage) *
+      Number(this.transactionPagination.pageSize);
+    const end = start + Number(this.transactionPagination.pageSize);
+    this.pagedTransactionViews = this.transactionViews.slice(start, end);
+  }
+
+  private updateTransactionTotalPages() {
+    const totalRecords = BigInt(this.transactionViews.length);
+    this.transactionPagination = {
+      ...this.transactionPagination,
+      totalPages: ceilBigInt(
+        totalRecords,
+        BigInt(this.transactionPagination.pageSize)
+      ),
+    };
   }
 }
 
