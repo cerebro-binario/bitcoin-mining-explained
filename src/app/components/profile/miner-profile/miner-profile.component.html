@@ -252,10 +252,10 @@
           </ng-template>
         </div>
         <div
-          class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px] overflow-hidden"
+          class="bg-zinc-900 rounded-lg shadow pt-6 flex flex-col gap-4 h-[600px] overflow-hidden relative"
         >
-          <h2 class="text-xl font-bold text-blue-300 mb-2">Eventos</h2>
-          <div class="flex-1 min-h-0 overflow-y-auto pr-2">
+          <h2 class="text-xl font-bold text-blue-300 mb-2 px-6">Eventos</h2>
+          <div class="flex-1 min-h-0 overflow-y-auto relative px-6 pb-6">
             <ng-container *ngIf="miner.events.length > 0; else noEvents">
               <ng-container *ngFor="let event of miner.events | slice : 0 : 15">
                 <app-event [event]="event"></app-event>
@@ -265,6 +265,7 @@
               <div class="text-zinc-500 italic">Nenhum evento registrado.</div>
             </ng-template>
           </div>
+          <div class="fade-gradient"></div>
         </div>
       </div>
       <div

@@ -1,0 +1,14 @@
+.fade-gradient {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  background: linear-gradient(
+    to bottom,
+    rgba(24, 24, 27, 0) 0%,
+    rgb(24, 24, 27) 100%
+  );
+  z-index: 10;
+}
