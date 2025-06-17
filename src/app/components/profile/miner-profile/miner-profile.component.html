@@ -1,7 +1,137 @@
-<div class="w-full h-full flex flex-col items-center justify-center">
-  <h1 class="text-3xl font-bold text-blue-400 mb-6">Perfil do Minerador</h1>
-  <div class="w-full max-w-3xl bg-zinc-900 rounded-lg shadow p-8">
-    <!-- Informações detalhadas do minerador aqui -->
-    <p class="text-zinc-300">Informações do minerador aparecerão aqui.</p>
-  </div>
+<div
+  class="w-full h-full flex flex-col items-center justify-start p-8 bg-zinc-950 overflow-auto"
+>
+  <ng-container *ngIf="miner; else notFound">
+    <div class="w-full max-w-5xl flex flex-col gap-8">
+      <div class="flex items-center gap-6">
+        <h1 class="text-3xl font-bold text-blue-400">
+          Minerador #{{ miner.id }}
+        </h1>
+        <span class="text-lg text-zinc-300">{{
+          miner.name || "Sem nome"
+        }}</span>
+        <span
+          class="ml-4 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center min-w-[110px] transition-colors"
+          [ngClass]="
+            miner.isMining
+              ? 'bg-green-900 text-green-400'
+              : 'bg-zinc-900 text-zinc-400'
+          "
+        >
+          <ng-container *ngIf="miner?.isMining">Minerando</ng-container>
+          <ng-container *ngIf="!miner?.isMining">Parado</ng-container>
+        </span>
+        <button
+          *ngIf="!miner?.isMining"
+          class="ml-4 px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition"
+          (click)="miner.isMining = true"
+        >
+          Iniciar Mineração
+        </button>
+        <button
+          *ngIf="miner?.isMining"
+          class="ml-4 px-3 py-1 rounded bg-yellow-600 text-white text-sm font-semibold hover:bg-yellow-700 transition"
+          (click)="miner.isMining = false"
+        >
+          Pausar Mineração
+        </button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4">
+          <h2 class="text-xl font-bold text-blue-300 mb-2">Bloco Atual</h2>
+          <div *ngIf="miner?.currentBlock; else noBlock" class="text-zinc-200">
+            <div>
+              <span class="font-semibold">Height:</span>
+              {{ miner.currentBlock?.height }}
+            </div>
+            <div>
+              <span class="font-semibold">Nonce:</span>
+              {{ miner.currentBlock?.nonce }}
+            </div>
+            <div>
+              <span class="font-semibold">Txs:</span>
+              {{ miner.currentBlock?.transactions?.length }}
+            </div>
+            <div>
+              <span class="font-semibold">Hash:</span>
+              <span class="font-mono text-xs">{{
+                miner.currentBlock?.hash ?? "N/A"
+              }}</span>
+            </div>
+          </div>
+          <ng-template #noBlock>
+            <div class="text-zinc-500 italic">Nenhum bloco em mineração.</div>
+          </ng-template>
+        </div>
+        <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4">
+          <h2 class="text-xl font-bold text-blue-300 mb-2">Carteira</h2>
+          <div>
+            <span class="font-semibold">Endereço de Mineração:</span>
+            <span class="font-mono text-xs">{{ miner.miningAddress }}</span>
+          </div>
+          <div>
+            <span class="font-semibold">Saldo:</span>
+            <span class="font-mono"
+              >{{
+                (miner.balances[miner.miningAddress]?.balance ?? 0) / 100000000
+                  | number : "1.8-8"
+              }}
+              BTC</span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4">
+        <h2 class="text-xl font-bold text-blue-300 mb-2">Peers</h2>
+        <div *ngIf="miner.peers.length > 0; else noPeers">
+          <ul class="list-disc ml-6 text-zinc-200">
+            <li *ngFor="let peer of miner.peers">
+              Nó #{{ peer.node.id }} ({{ peer.node.nodeType }})
+            </li>
+          </ul>
+        </div>
+        <ng-template #noPeers>
+          <div class="text-zinc-500 italic">Nenhum peer conectado.</div>
+        </ng-template>
+      </div>
+      <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4">
+        <h2 class="text-xl font-bold text-blue-300 mb-2">Blockchain Local</h2>
+        <div *ngIf="miner.heights.length > 0; else noChain">
+          <div class="text-zinc-200">
+            Altura: {{ miner.heights.length - 1 }}
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs text-zinc-300 mt-2">
+              <thead>
+                <tr>
+                  <th class="px-2 py-1">#</th>
+                  <th class="px-2 py-1">Hash</th>
+                  <th class="px-2 py-1">Txs</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- <tr *ngFor="let h of miner?.heights?.slice(-10).reverse()">
+                  <td class="px-2 py-1">{{ h.n }}</td>
+                  <td class="px-2 py-1 font-mono truncate max-w-[200px]">
+                    {{ h.blocks[0]?.block.hash }}
+                  </td>
+                  <td class="px-2 py-1">
+                    {{ h.blocks[0]?.block.transactions?.length }}
+                  </td>
+                </tr> -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <ng-template #noChain>
+          <div class="text-zinc-500 italic">
+            Blockchain ainda não inicializada.
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </ng-container>
+  <ng-template #notFound>
+    <div class="text-red-400 text-xl font-bold">Minerador não encontrado.</div>
+  </ng-template>
 </div>
