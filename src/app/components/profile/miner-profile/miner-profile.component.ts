@@ -43,4 +43,9 @@ export class MinerProfileComponent {
     this.miner.isMining = false;
     this.miner.miningLastTickTime = null;
   }
+
+  getTarget(block: any): string {
+    if (!block?.target) return '0';
+    return '0x' + block.target.toString(16).padStart(64, '0');
+  }
 }
