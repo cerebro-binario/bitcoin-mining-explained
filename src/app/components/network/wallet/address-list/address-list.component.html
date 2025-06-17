@@ -1,5 +1,5 @@
 <div class="flex flex-col h-full">
-  <div class="flex items-center justify-between mb-4">
+  <div class="flex items-center justify-between pb-4 px-6">
     <div class="flex items-center gap-2">
       <h3 *ngIf="!hideTitle" class="text-lg font-semibold text-zinc-200">
         Endereços
@@ -121,17 +121,14 @@
       </ng-template>
       <ng-template #expandedrow let-data let-index="rowIndex">
         <tr>
-          <td colspan="4">
-            <div
-              class="w-full p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50 backdrop-blur-sm"
-            >
+          <td colspan="5" class="p-0">
+            <div class="w-full p-4">
               <div class="space-y-4">
                 <div class="transition-all duration-300">
                   <div class="flex items-center gap-2 mb-2">
-                    <span class="text-sm text-zinc-400"
-                      >Endereço #{{ index + 1 }}</span
+                    <span class="text-xs text-zinc-400 mb-2 font-semibold"
+                      >Detalhes do Endereço #{{ index + 1 }}</span
                     >
-                    <div class="flex-1 h-px bg-zinc-700"></div>
                   </div>
 
                   <div class="space-y-2">
@@ -365,7 +362,7 @@
                                 white-space: nowrap;
                               "
                             >
-                              {{ utxo.txId | slice : 0 : 8 }}…
+                              {{ utxo.txId }}
                             </td>
                             <td class="text-right text-white/60 px-4 py-3">
                               {{ utxo.outputIndex }}
