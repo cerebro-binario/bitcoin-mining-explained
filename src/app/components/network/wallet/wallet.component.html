@@ -35,7 +35,7 @@
 
   <!-- Tabs content -->
   <div class="flex-1 min-h-0 flex flex-col h-full">
-    <div [hidden]="activeTab !== 'enderecos'">
+    <div [hidden]="activeTab !== 'enderecos'" class="h-full">
       <div class="flex-1 min-h-0 flex flex-col h-full mt-4">
         <div class="px-6 flex-1 min-h-0 flex flex-col">
           <app-address-list
@@ -140,7 +140,7 @@
         </div>
       </div>
     </div>
-    <div [hidden]="activeTab !== 'transacoes'">
+    <div [hidden]="activeTab !== 'transacoes'" class="h-full">
       <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
         <app-transaction-list
           [transactions]="transactionViews"
@@ -149,7 +149,7 @@
         ></app-transaction-list>
       </div>
     </div>
-    <div [hidden]="activeTab !== 'enviar'">
+    <div [hidden]="activeTab !== 'enviar'" class="h-full">
       <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
         <form
           class="flex flex-col gap-6 w-full max-w-2xl"
