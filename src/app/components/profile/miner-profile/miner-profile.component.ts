@@ -1,16 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { KeyService } from '../../../services/key.service';
+import { EventComponent } from '../../network/events/event/event.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
 
 @Component({
   selector: 'app-miner-profile',
   templateUrl: './miner-profile.component.html',
   styleUrls: ['./miner-profile.component.scss'],
-  imports: [CommonModule, RouterModule, WalletComponent],
+  imports: [CommonModule, RouterModule, WalletComponent, EventComponent],
 })
 export class MinerProfileComponent {
   miner: BitcoinNode | undefined;

@@ -254,17 +254,17 @@
         <div
           class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px] overflow-hidden"
         >
-          <h2 class="text-xl font-bold text-blue-300 mb-2">Peers</h2>
-          <div *ngIf="miner.peers.length > 0; else noPeers">
-            <ul class="list-disc ml-6 text-zinc-200">
-              <li *ngFor="let peer of miner.peers">
-                Nó #{{ peer.node.id }} ({{ peer.node.nodeType }})
-              </li>
-            </ul>
+          <h2 class="text-xl font-bold text-blue-300 mb-2">Eventos</h2>
+          <div class="flex-1 min-h-0 overflow-y-auto pr-2">
+            <ng-container *ngIf="miner.events.length > 0; else noEvents">
+              <ng-container *ngFor="let event of miner.events | slice : 0 : 15">
+                <app-event [event]="event"></app-event>
+              </ng-container>
+            </ng-container>
+            <ng-template #noEvents>
+              <div class="text-zinc-500 italic">Nenhum evento registrado.</div>
+            </ng-template>
           </div>
-          <ng-template #noPeers>
-            <div class="text-zinc-500 italic">Nenhum peer conectado.</div>
-          </ng-template>
         </div>
       </div>
       <div
