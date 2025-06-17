@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
+import { KeyService } from '../../../services/key.service';
 import { WalletComponent } from '../../network/wallet/wallet.component';
 
 @Component({
@@ -17,7 +18,8 @@ export class MinerProfileComponent {
 
   constructor(
     private route: ActivatedRoute,
-    public bitcoinNetwork: BitcoinNetworkService
+    public bitcoinNetwork: BitcoinNetworkService,
+    private keyService: KeyService
   ) {
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
@@ -49,5 +51,19 @@ export class MinerProfileComponent {
   getTarget(block: any): string {
     if (!block?.target) return '0';
     return '0x' + block.target.toString(16).padStart(64, '0');
+  }
+
+  deriveNextAddress() {
+    if (!this.miner?.wallet) return;
+
+    const newAddress = this.keyService.deriveNextBitcoinAddress(
+      this.miner.wallet
+    );
+
+    if (newAddress) {
+      const newWallet = { ...this.miner.wallet };
+      newWallet.addresses = [...newWallet.addresses, newAddress];
+      this.miner.wallet = newWallet;
+    }
   }
 }

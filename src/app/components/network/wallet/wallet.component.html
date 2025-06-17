@@ -36,8 +36,8 @@
   <!-- Tabs content -->
   <div class="flex-1 min-h-0 flex flex-col h-full">
     <div [hidden]="activeTab !== 'enderecos'" class="h-full">
-      <div class="flex-1 min-h-0 flex flex-col h-full mt-4">
-        <div class="px-6 flex-1 min-h-0 flex flex-col">
+      <div class="flex-1 min-h-0 flex flex-col h-full pt-4">
+        <div class="flex-1 min-h-0 flex flex-col">
           <app-address-list
             [hideTitle]="true"
             [addresses]="addressesDisplay"
@@ -141,7 +141,7 @@
       </div>
     </div>
     <div [hidden]="activeTab !== 'transacoes'" class="h-full">
-      <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
+      <div class="flex-1 min-h-0 flex flex-col h-full pt-4">
         <app-transaction-list
           [transactions]="transactionViews"
           [walletAddresses]="walletAddressesList"
@@ -150,7 +150,7 @@
       </div>
     </div>
     <div [hidden]="activeTab !== 'enviar'" class="h-full">
-      <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
+      <div class="flex-1 min-h-0 flex flex-col h-full pt-4">
         <form
           class="flex flex-col gap-6 w-full max-w-2xl"
           (submit)="onSendTransaction($event)"
