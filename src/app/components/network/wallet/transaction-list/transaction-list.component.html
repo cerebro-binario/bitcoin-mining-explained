@@ -12,6 +12,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th style="width: 3rem"></th>
+          <th class="px-3 py-2 font-semibold">#</th>
           <th class="px-3 py-2 font-semibold">Data/Hora</th>
           <th class="px-3 py-2 font-semibold">Tipo</th>
           <th class="px-3 py-2 font-semibold">Valor (BTC)</th>
@@ -21,7 +22,12 @@
           <th class="px-3 py-2 font-semibold">TxID</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-tx let-expanded="expanded">
+      <ng-template
+        pTemplate="body"
+        let-tx
+        let-expanded="expanded"
+        let-rowIndex="rowIndex"
+      >
         <tr>
           <td class="px-3 py-2 align-middle">
             <button
@@ -38,6 +44,7 @@
               ></i>
             </button>
           </td>
+          <td class="px-3 py-2 text-zinc-500 font-mono">{{ rowIndex + 1 }}</td>
           <td class="px-3 py-2">
             {{
               tx.timestamp ? (tx.timestamp | date : "dd/MM/yyyy HH:mm:ss") : "—"
