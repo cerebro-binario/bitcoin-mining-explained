@@ -32,7 +32,12 @@ export const routes: Routes = [
       {
         path: 'network',
         component: NetworkLayout,
-        children: [{ path: '', component: NetworkComponent }],
+        children: [
+          { path: '', component: NetworkComponent },
+          { path: 'miners', component: MinersListV2Component },
+          // { path: 'nodes', component: NodesListV2Component },
+          // { path: 'users', component: UsersListV2Component },
+        ],
       },
       {
         path: 'mempool',

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MenubarModule } from 'primeng/menubar';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -19,38 +20,32 @@ import { ThemeService } from '../../services/theme.service';
   styleUrl: './home.layout.scss',
 })
 export class HomeLayout {
-  tabs = [
-    // { route: '/blockchain', icon: 'pi pi-home', label: 'Blockchain' },
+  tabs: MenuItem[] = [
     {
-      route: '/network',
-      icon: 'pi pi-home',
       label: 'Rede Bitcoin',
+      icon: 'pi pi-home',
+      items: [
+        {
+          label: 'Mineradores',
+          icon: 'pi pi-server',
+          routerLink: '/network/miners',
+        },
+        { label: 'Nós', icon: 'pi pi-sitemap', routerLink: '/network/nodes' },
+        {
+          label: 'Usuários',
+          icon: 'pi pi-users',
+          routerLink: '/network/users',
+        },
+      ],
     },
-    // {
-    //   route: '/mempool',
-    //   icon: 'pi pi-arrow-right-arrow-left',
-    //   label: 'Transações',
-    // },
     {
-      route: '/addresses',
-      icon: 'pi pi-wallet',
-      label: 'Endereços',
-    },
-    {
-      route: '/tools',
-      icon: 'pi pi-wrench',
       label: 'Ferramentas',
+      icon: 'pi pi-wrench',
+      routerLink: '/tools',
     },
   ];
 
-  selectedTab = '/blockchain';
-
-  constructor(private router: Router, private themeService: ThemeService) {
-    const url = this.router.url;
-
-    this.selectedTab =
-      this.tabs.find((t) => url.includes(t.route))?.route || '/blockchain';
-  }
+  constructor(private themeService: ThemeService) {}
 
   get darkModeIcon() {
     return (this.themeService.darkMode && 'pi pi-sun') || 'pi pi-moon';
