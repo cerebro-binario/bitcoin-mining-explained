@@ -38,7 +38,7 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div
-          class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px]"
+          class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px] overflow-hidden"
         >
           <h2
             class="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2"
@@ -252,7 +252,7 @@
           </ng-template>
         </div>
         <div
-          class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px]"
+          class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px] overflow-hidden"
         >
           <h2 class="text-xl font-bold text-blue-300 mb-2">Peers</h2>
           <div *ngIf="miner.peers.length > 0; else noPeers">
@@ -268,7 +268,7 @@
         </div>
       </div>
       <div
-        class="bg-zinc-900 rounded-lg shadow flex flex-col gap-4 h-[600px] w-full"
+        class="bg-zinc-900 rounded-lg shadow flex flex-col gap-4 h-[600px] w-full overflow-hidden"
       >
         <h2 class="text-xl font-bold text-blue-300 mb-2 p-6 pb-0">Carteira</h2>
         <div class="flex flex-col flex-1 min-h-0">
@@ -281,7 +281,9 @@
           ></app-wallet>
         </div>
       </div>
-      <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4">
+      <div
+        class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 overflow-hidden"
+      >
         <h2 class="text-xl font-bold text-blue-300 mb-2">Blockchain Local</h2>
         <div *ngIf="miner.heights.length > 0; else noChain">
           <div class="text-zinc-200">
