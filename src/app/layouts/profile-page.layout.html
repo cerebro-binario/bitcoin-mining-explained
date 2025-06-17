@@ -1,0 +1,35 @@
+<nav
+  class="w-full flex items-center justify-between px-8 py-4 bg-zinc-900 border-b border-zinc-800 shadow-sm sticky top-0 z-30"
+>
+  <button
+    class="flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold text-base transition"
+    (click)="back()"
+    title="Voltar"
+  >
+    <svg
+      class="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M15 19l-7-7 7-7"
+      />
+    </svg>
+    Voltar
+  </button>
+  <div class="flex-1 flex items-center justify-center">
+    <ng-content select="[profile-title]"></ng-content>
+  </div>
+  <div class="flex items-center gap-4 min-w-[48px] justify-end">
+    <!-- Espaço para ações futuras, ex: editar, menu, etc -->
+  </div>
+</nav>
+<div
+  class="profile-page-layout w-full h-full min-h-0 flex flex-col bg-zinc-950"
+>
+  <ng-content></ng-content>
+</div>

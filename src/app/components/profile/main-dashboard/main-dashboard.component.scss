@@ -1,0 +1,26 @@
+.main-dashboard {
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  background: #09090b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.main-dashboard h1 {
+  color: #60a5fa;
+}
+
+.main-dashboard .grid {
+  width: 100%;
+}
+
+.main-dashboard .bg-zinc-900 {
+  transition: box-shadow 0.2s;
+}
+
+.main-dashboard .bg-zinc-900:hover {
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+}

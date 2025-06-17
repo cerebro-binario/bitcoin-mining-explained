@@ -1,0 +1,43 @@
+<div
+  class="main-dashboard w-full h-full flex flex-col items-center justify-start p-8 bg-zinc-950"
+>
+  <h1 class="text-4xl font-bold text-blue-400 mb-8">Painel de Controle</h1>
+  <div class="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col items-center">
+      <h2 class="text-xl font-semibold text-blue-300 mb-2">Mineradores</h2>
+      <p class="text-zinc-400 mb-4 text-center">
+        Gerencie e visualize todos os mineradores da rede.
+      </p>
+      <a
+        routerLink="/dashboard/miners"
+        class="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+        >Ver Mineradores</a
+      >
+    </div>
+    <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col items-center">
+      <h2 class="text-xl font-semibold text-green-300 mb-2">Nós</h2>
+      <p class="text-zinc-400 mb-4 text-center">
+        Gerencie e visualize todos os nós da rede.
+      </p>
+      <a
+        routerLink="/network"
+        class="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+        >Ver Nós</a
+      >
+    </div>
+    <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col items-center">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-2">Usuários</h2>
+      <p class="text-zinc-400 mb-4 text-center">
+        Gerencie e visualize todos os usuários.
+      </p>
+      <a
+        routerLink="/network"
+        class="px-4 py-2 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition"
+        >Ver Usuários</a
+      >
+    </div>
+  </div>
+  <div class="w-full max-w-6xl mt-12 flex flex-col items-center">
+    <!-- Espaço para ações globais, gráficos, status, etc -->
+  </div>
+</div>
