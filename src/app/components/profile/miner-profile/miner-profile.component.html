@@ -266,6 +266,13 @@
             </ng-template>
           </div>
           <div class="fade-gradient"></div>
+          <button
+            *ngIf="miner.events.length > 0"
+            (click)="showNodeLogs()"
+            class="absolute right-6 bottom-6 z-10 px-2 py-1 text-xs rounded bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition pointer-events-auto backdrop-blur-sm"
+          >
+            Ver tudo
+          </button>
         </div>
       </div>
       <div
@@ -325,3 +332,33 @@
     <div class="text-red-400 text-xl font-bold">Minerador não encontrado.</div>
   </ng-template>
 </div>
+
+<!-- Dialog de todos os logs -->
+<ng-template [ngIf]="showAllLogs && miner">
+  <div
+    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 !m-0 backdrop-blur"
+    (click)="closeLogs()"
+  >
+    <div
+      class="bg-zinc-900 border border-zinc-800 rounded-lg pt-6 w-full max-w-4xl h-[80vh] flex flex-col shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between mb-4 px-6">
+        <span class="font-semibold text-blue-400"
+          >Eventos do Nó #{{ miner.id }}</span
+        >
+        <button
+          (click)="closeLogs()"
+          class="text-zinc-400 hover:text-red-400 text-xl"
+        >
+          &times;
+        </button>
+      </div>
+      <ul class="flex-1 overflow-y-auto space-y-1 text-xs px-6 pb-6">
+        <li *ngFor="let event of miner.events">
+          <app-event [event]="event"></app-event>
+        </li>
+      </ul>
+    </div>
+  </div>
+</ng-template>

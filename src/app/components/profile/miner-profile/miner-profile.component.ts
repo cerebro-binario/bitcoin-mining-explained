@@ -14,24 +14,35 @@ import { WalletComponent } from '../../network/wallet/wallet.component';
   imports: [CommonModule, RouterModule, WalletComponent, EventComponent],
 })
 export class MinerProfileComponent {
-  miner: BitcoinNode | undefined;
+  miner!: BitcoinNode;
   activeTab: 'metadata' | 'transactions' = 'metadata';
+  showAllLogs = false;
 
   constructor(
     private route: ActivatedRoute,
-    public bitcoinNetwork: BitcoinNetworkService,
-    private keyService: KeyService,
-    private router: Router
-  ) {
-    this.route.paramMap.subscribe((params) => {
-      const id = Number(params.get('id'));
-      this.miner = this.bitcoinNetwork.nodes.find(
-        (n) => n.id === id && n.nodeType === 'miner'
-      );
+    private router: Router,
+    private networkService: BitcoinNetworkService,
+    private keyService: KeyService
+  ) {}
+
+  ngOnInit() {
+    this.route.params.subscribe((params) => {
+      const minerId = parseInt(params['id']);
+      this.miner = this.networkService.nodes.find(
+        (n) => n.id === minerId && n.nodeType === 'miner'
+      )!;
       if (!this.miner) {
         this.router.navigate(['/network/overview']);
       }
     });
+  }
+
+  showNodeLogs() {
+    this.showAllLogs = true;
+  }
+
+  closeLogs() {
+    this.showAllLogs = false;
   }
 
   startMining() {
