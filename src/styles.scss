@@ -13,10 +13,10 @@
 
 :root {
   --p-datatable-border-color: #3f3f4690 !important;
-  --p-datatable-header-cell-background: #27272a !important;
-  --p-datatable-row-background: #27272a !important;
-  --p-datatable-footer-cell-background: #27272a !important;
-  --p-tabs-tablist-background: #27272a !important;
-  --p-tabs-tab-background: #27272a !important;
-  --p-tabs-tabpanel-background: #27272a !important;
+  --p-datatable-header-cell-background: transparent !important;
+  --p-datatable-row-background: transparent !important;
+  --p-datatable-footer-cell-background: transparent !important;
+  --p-tabs-tablist-background: transparent !important;
+  --p-tabs-tab-background: transparent !important;
+  --p-tabs-tabpanel-background: transparent !important;
 }
