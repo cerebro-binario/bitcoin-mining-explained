@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { GraphPlotComponent } from '../graph-plot/graph-plot.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-network-overview',
@@ -12,7 +13,10 @@ import { GraphPlotComponent } from '../graph-plot/graph-plot.component';
 export class NetworkOverviewComponent {
   selectedEntity: BitcoinNode | null = null;
 
-  constructor(public bitcoinNetwork: BitcoinNetworkService) {}
+  constructor(
+    public bitcoinNetwork: BitcoinNetworkService,
+    private router: Router
+  ) {}
 
   addMiner() {
     this.bitcoinNetwork.addNode('miner');
@@ -28,5 +32,12 @@ export class NetworkOverviewComponent {
 
   onEntitySelected(node: BitcoinNode) {
     this.selectedEntity = node;
+    if (node.nodeType === 'miner') {
+      this.router.navigate(['/miner', node.id]);
+    } else if (node.nodeType === 'peer') {
+      this.router.navigate(['/node', node.id]);
+    } else if (node.nodeType === 'user') {
+      this.router.navigate(['/user', node.id]);
+    }
   }
 }
