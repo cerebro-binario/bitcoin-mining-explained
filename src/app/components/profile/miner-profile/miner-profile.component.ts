@@ -94,4 +94,46 @@ export class MinerProfileComponent {
       this.miner.wallet = newWallet;
     }
   }
+
+  getTotalBalanceBTC(): string {
+    if (!this.miner?.wallet?.addresses) return '0';
+    const sum = this.miner.wallet.addresses.reduce((acc, address) => {
+      return (
+        acc +
+        Object.values(address).reduce(
+          (a, addrData) => a + (addrData.balance || 0),
+          0
+        )
+      );
+    }, 0);
+    return (sum / 1e8).toLocaleString('en-US', { minimumFractionDigits: 8 });
+  }
+
+  getTotalUtxos(): number {
+    if (!this.miner?.wallet?.addresses) return 0;
+    return this.miner.wallet.addresses.reduce((acc, address) => {
+      return (
+        acc +
+        Object.values(address).reduce(
+          (a, addrData) => a + (addrData.utxos?.length || 0),
+          0
+        )
+      );
+    }, 0);
+  }
+
+  getTotalBalanceUSD(): string | null {
+    const btc = parseFloat(this.getTotalBalanceBTC().replace(',', ''));
+    if (!btc) return null;
+    const usd = btc * 65000; // mock price
+    return usd.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 2,
+    });
+  }
+
+  copyToClipboard(value: string) {
+    navigator.clipboard.writeText(value);
+  }
 }
