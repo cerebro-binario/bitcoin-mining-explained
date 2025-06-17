@@ -181,7 +181,6 @@ export class GraphPlotComponent {
     return this.network.nodes.findIndex((n) => n.id === id);
   }
   onNodeClick(node: BitcoinNode) {
-    console.log('nodeSelected', node);
     this.nodeSelected.emit(node);
   }
 }
