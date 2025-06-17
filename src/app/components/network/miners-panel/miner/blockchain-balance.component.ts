@@ -12,6 +12,7 @@ import {
 import { KeyService } from '../../../../services/key.service';
 import { AddressListComponent } from '../../wallet/address-list/address-list.component';
 import { ceilBigInt } from '../../../../utils/tools';
+import { PaginationBarComponent } from '../../wallet/pagination-bar.component';
 
 @Component({
   selector: 'app-blockchain-balance',
@@ -22,6 +23,7 @@ import { ceilBigInt } from '../../../../utils/tools';
     ButtonModule,
     SelectButtonModule,
     AddressListComponent,
+    PaginationBarComponent,
   ],
   templateUrl: './blockchain-balance.component.html',
   styleUrls: ['./blockchain-balance.component.scss'],
@@ -213,8 +215,8 @@ export class BlockchainBalanceComponent implements OnInit {
     this.updateView();
   }
 
-  jumpToPage() {
-    const page = Number(this.jumpPageInput);
+  jumpToPage(pageInt: number) {
+    const page = Number(pageInt);
     if (
       !isNaN(page) &&
       page > 0 &&

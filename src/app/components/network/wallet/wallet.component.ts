@@ -22,6 +22,7 @@ import { KeyService } from '../../../services/key.service';
 import { ceilBigInt } from '../../../utils/tools';
 import { AddressListComponent } from './address-list/address-list.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
+import { PaginationBarComponent } from './pagination-bar.component';
 
 export interface TransactionDetail {
   type: 'input' | 'output' | 'change';
@@ -56,6 +57,7 @@ export interface TransactionView {
     AddressListComponent,
     TabsModule,
     TransactionListComponent,
+    PaginationBarComponent,
   ],
   templateUrl: './wallet.component.html',
 })
@@ -222,9 +224,9 @@ export class WalletComponent {
     this.pagination.currentPage = rand;
     this.updateView();
   }
-  jumpToPage() {
+  jumpToPage(pageInt: number) {
     try {
-      let page = BigInt(this.jumpPageInput);
+      let page = BigInt(pageInt);
       if (page < 1n) page = 1n;
       if (page > this.pagination.totalPages) page = this.pagination.totalPages;
       this.pagination.currentPage = page - 1n;
