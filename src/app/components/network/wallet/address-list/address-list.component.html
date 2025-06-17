@@ -344,50 +344,94 @@
                       <label class="block text-xs text-zinc-500 mb-1"
                         >UTXOs</label
                       >
-                      <p-table
+                      <table
                         *ngIf="data.utxos.length > 0; else noUtxos"
-                        [value]="data.utxos || []"
-                        [tableStyle]="{ 'min-width': '100%' }"
-                        [style]="{ 'font-size': '0.95rem' }"
+                        class="min-w-full text-xs text-left bg-zinc-900 rounded"
                       >
-                        <ng-template pTemplate="header">
-                          <tr class="text-white/80 font-bold text-sm">
-                            <th class="text-left px-4 py-3">TxID</th>
-                            <th class="text-right px-4 py-3">Out</th>
-                            <th class="text-right px-4 py-3">Valor</th>
-                          </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-utxo>
+                        <thead>
                           <tr>
+                            <th class="px-4 py-2">TxID</th>
+                            <th class="px-4 py-2">Out</th>
+                            <th class="px-4 py-2">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            *ngFor="
+                              let utxo of getUtxosPage(data.address, data.utxos)
+                            "
+                          >
                             <td
                               class="font-mono text-xs text-white/80 px-4 py-3"
-                              [title]="utxo.txId"
-                              style="
-                                max-width: 120px;
-                                overflow: hidden;
-                                text-overflow: ellipsis;
-                                white-space: nowrap;
-                              "
                             >
                               {{ utxo.txId }}
                             </td>
-                            <td class="text-right text-white/60 px-4 py-3">
-                              {{ utxo.outputIndex }}
-                            </td>
-                            <td class="text-right px-4 py-3">
-                              <span class="text-white font-mono">{{
+                            <td class="px-4 py-3">{{ utxo.outputIndex }}</td>
+                            <td
+                              class="px-4 py-3 text-right font-mono text-zinc-200"
+                            >
+                              {{
                                 utxo.output.value / 100000000 | number : "1.8-8"
-                              }}</span>
-                              <span class="text-white/40">BTC</span>
+                              }}
+                              BTC
                             </td>
                           </tr>
-                        </ng-template>
-                      </p-table>
+                        </tbody>
+                      </table>
+                      <app-pagination-bar
+                        *ngIf="
+                          data.utxos.length >
+                          (utxoPagination[data.address]?.pageSize || 10)
+                        "
+                        [currentPage]="
+                          utxoPagination[data.address]?.currentPage || 1
+                        "
+                        [totalPages]="
+                          getUtxoTotalPages(data.address, data.utxos)
+                        "
+                        [percent]="
+                          ((utxoPagination[data.address]?.currentPage || 1) /
+                            getUtxoTotalPages(data.address, data.utxos)) *
+                          100
+                        "
+                        [prevDisabled]="
+                          (utxoPagination[data.address]?.currentPage || 1) === 1
+                        "
+                        [nextDisabled]="
+                          (utxoPagination[data.address]?.currentPage || 1) ===
+                          getUtxoTotalPages(data.address, data.utxos)
+                        "
+                        (goToFirst)="goToUtxoPage(data.address, 1, data.utxos)"
+                        (goToPrevious)="
+                          goToUtxoPage(
+                            data.address,
+                            (utxoPagination[data.address]?.currentPage || 1) -
+                              1,
+                            data.utxos
+                          )
+                        "
+                        (goToNext)="
+                          goToUtxoPage(
+                            data.address,
+                            (utxoPagination[data.address]?.currentPage || 1) +
+                              1,
+                            data.utxos
+                          )
+                        "
+                        (goToLast)="
+                          goToUtxoPage(
+                            data.address,
+                            getUtxoTotalPages(data.address, data.utxos),
+                            data.utxos
+                          )
+                        "
+                        (jumpToPage)="
+                          goToUtxoPage(data.address, $event, data.utxos)
+                        "
+                      ></app-pagination-bar>
                       <ng-template #noUtxos>
-                        <div
-                          class="flex-1 bg-zinc-800/50 rounded p-2 font-mono text-sm text-white/60 italic break-all"
-                        >
-                          Nenhum UTXO disponível.
+                        <div class="text-zinc-500 italic py-4">
+                          Nenhum UTXO encontrado para este endereço.
                         </div>
                       </ng-template>
                     </div>

@@ -4,12 +4,13 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { copyToClipboard } from '../../../../utils/tools';
+import { PaginationBarComponent } from '../pagination-bar.component';
 
 @Component({
   selector: 'app-address-list',
   templateUrl: './address-list.component.html',
   standalone: true,
-  imports: [CommonModule, TableModule, ButtonModule],
+  imports: [CommonModule, TableModule, ButtonModule, PaginationBarComponent],
 })
 export class AddressListComponent {
   private _pagination: {
@@ -37,6 +38,16 @@ export class AddressListComponent {
   @Output() deriveNextAddress = new EventEmitter<void>();
   @Output() changeAddressType = new EventEmitter<BipType | 'all-bip-types'>();
 
+  utxoPagination: {
+    [address: string]:
+      | {
+          currentPage: number;
+          pageSize: number;
+          totalPages: number;
+        }
+      | undefined;
+  } = {};
+
   get first() {
     if (!this._pagination) return 0;
     return Number(
@@ -55,5 +66,27 @@ export class AddressListComponent {
   onAddressTypeChange(type: BipType | 'all-bip-types') {
     this.addressType = type;
     this.changeAddressType.emit(type);
+  }
+
+  getUtxosPage(address: string, utxos: any[]) {
+    const pageSize = this.utxoPagination[address]?.pageSize || 10;
+    const currentPage = this.utxoPagination[address]?.currentPage || 1;
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return utxos.slice(start, end);
+  }
+
+  getUtxoTotalPages(address: string, utxos: any[]) {
+    const pageSize = this.utxoPagination[address]?.pageSize || 10;
+    return Math.ceil(utxos.length / pageSize) || 1;
+  }
+
+  goToUtxoPage(address: string, page: number, utxos: any[]) {
+    const totalPages = this.getUtxoTotalPages(address, utxos);
+    this.utxoPagination[address] = {
+      currentPage: Math.max(1, Math.min(page, totalPages)),
+      pageSize: this.utxoPagination[address]?.pageSize || 10,
+      totalPages,
+    };
   }
 }
