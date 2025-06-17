@@ -25,6 +25,7 @@ export class MinerProfileComponent {
   activeTab: 'metadata' | 'transactions' = 'metadata';
   showAllLogs = false;
   isBlockchainVisible = true;
+  showWalletDetails = false;
 
   constructor(
     private route: ActivatedRoute,

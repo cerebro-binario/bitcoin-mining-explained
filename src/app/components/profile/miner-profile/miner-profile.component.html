@@ -39,52 +39,93 @@
         </div>
         <div class="w-full max-w-7xl">
           <div
-            class="bg-zinc-900 rounded-lg shadow flex flex-col md:flex-row items-center justify-between gap-6 p-6 mb-4"
+            class="bg-zinc-900 rounded-lg shadow flex flex-col gap-2 p-6 mb-4"
           >
-            <div class="flex items-center gap-4">
-              <div
-                class="bg-blue-900/60 rounded-full p-4 flex items-center justify-center"
-              >
-                <i class="pi pi-wallet text-3xl text-blue-400"></i>
-              </div>
-              <div>
-                <div class="text-xs text-zinc-400">Saldo total</div>
-                <div class="text-2xl font-bold text-blue-300">
-                  {{ getTotalBalanceBTC() }}
-                  <span class="text-base text-zinc-400">BTC</span>
+            <!-- Balanço geral -->
+            <div
+              class="flex flex-col md:flex-row items-center justify-between gap-6"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="bg-blue-900/60 rounded-full p-4 flex items-center justify-center"
+                >
+                  <i class="pi pi-wallet text-3xl text-blue-400"></i>
                 </div>
-                <div class="text-xs text-zinc-500" *ngIf="getTotalBalanceUSD()">
-                  ≈ {{ getTotalBalanceUSD() }} USD
+                <div>
+                  <div class="text-xs text-zinc-400">Saldo total</div>
+                  <div class="text-2xl font-bold text-blue-300">
+                    {{ getTotalBalanceBTC() }}
+                    <span class="text-base text-zinc-400">BTC</span>
+                  </div>
+                  <div
+                    class="text-xs text-zinc-500"
+                    *ngIf="getTotalBalanceUSD()"
+                  >
+                    ≈ {{ getTotalBalanceUSD() }} USD
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col md:flex-row gap-4">
+                <div>
+                  <div class="text-xs text-zinc-400">Endereços</div>
+                  <div class="text-lg font-mono text-zinc-200">
+                    {{ miner.wallet.addresses.length }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-zinc-400">UTXOs</div>
+                  <div class="text-lg font-mono text-zinc-200">
+                    {{ getTotalUtxos() }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-zinc-400">Endereço principal</div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-xs text-blue-400">{{
+                      miner.miningAddress
+                    }}</span>
+                    <button
+                      (click)="copyToClipboard(miner.miningAddress)"
+                      class="text-zinc-400 hover:text-blue-400"
+                      title="Copiar"
+                    >
+                      <i class="pi pi-copy"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="flex flex-col md:flex-row gap-4">
-              <div>
-                <div class="text-xs text-zinc-400">Endereços</div>
-                <div class="text-lg font-mono text-zinc-200">
-                  {{ miner.wallet.addresses.length }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-zinc-400">UTXOs</div>
-                <div class="text-lg font-mono text-zinc-200">
-                  {{ getTotalUtxos() }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-zinc-400">Endereço principal</div>
-                <div class="flex items-center gap-2">
-                  <span class="font-mono text-xs text-blue-400">{{
-                    miner.miningAddress
-                  }}</span>
-                  <button
-                    (click)="copyToClipboard(miner.miningAddress)"
-                    class="text-zinc-400 hover:text-blue-400"
-                    title="Copiar"
-                  >
-                    <i class="pi pi-copy"></i>
-                  </button>
-                </div>
+            <button
+              class="self-end mt-2 text-xs text-blue-400 hover:underline flex items-center gap-1"
+              (click)="showWalletDetails = !showWalletDetails"
+            >
+              <span>{{
+                showWalletDetails
+                  ? "Recolher detalhes"
+                  : "Expandir detalhes da carteira"
+              }}</span>
+              <i
+                class="pi"
+                [ngClass]="
+                  showWalletDetails ? 'pi-chevron-up' : 'pi-chevron-down'
+                "
+              ></i>
+            </button>
+            <div
+              class="transition-all duration-300"
+              [ngStyle]="{
+                height: showWalletDetails ? '80vh' : '0',
+                'max-height': showWalletDetails ? '80vh' : '0',
+                opacity: showWalletDetails ? '1' : '0'
+              }"
+            >
+              <div class="flex flex-col flex-1 min-h-0 pt-4 w-full h-full">
+                <app-wallet
+                  [node]="miner"
+                  [wallet]="miner.wallet"
+                  (deriveNextAddress)="deriveNextAddress()"
+                  class="h-full"
+                ></app-wallet>
               </div>
             </div>
           </div>
