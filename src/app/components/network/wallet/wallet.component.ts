@@ -11,16 +11,17 @@ import {
   TransactionOutput,
   generateTransactionId,
 } from '../../../models/block.model';
+import { Node } from '../../../models/node';
 import {
   BipType,
   BitcoinAddressData,
-  Wallet,
   BitcoinUTXO,
+  Wallet,
 } from '../../../models/wallet.model';
 import { KeyService } from '../../../services/key.service';
+import { ceilBigInt } from '../../../utils/tools';
 import { AddressListComponent } from './address-list/address-list.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
-import { Node } from '../../../models/node';
 
 export interface TransactionDetail {
   type: 'input' | 'output' | 'change';
@@ -187,10 +188,11 @@ export class WalletComponent {
 
   updateTotalPages() {
     if (!this._wallet) return;
-    this.pagination.totalPages = BigInt(
-      Math.ceil(this._wallet.addresses.length / this.pagination.pageSize)
-    );
-    this.pagination.currentPage = 0n;
+    const totalRecords = BigInt(this._wallet.addresses.length);
+    this.pagination = {
+      ...this.pagination,
+      totalPages: ceilBigInt(totalRecords, BigInt(this.pagination.pageSize)),
+    };
   }
 
   goToFirstPage() {
