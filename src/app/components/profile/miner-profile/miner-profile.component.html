@@ -103,31 +103,31 @@
                   </div>
                   <div>
                     <div class="text-xs text-zinc-400">Timestamp</div>
-                    <div class="font-mono text-sm">
+                    <div class="font-mono">
                       {{ miner.currentBlock.timestamp | date : "medium" }}
                     </div>
                   </div>
                   <div class="col-span-2">
                     <div class="text-xs text-zinc-400">Hash Anterior</div>
-                    <div class="font-mono text-xs break-all text-zinc-300">
-                      {{ miner.currentBlock.previousHash || "0".repeat(64) }}
+                    <div class="font-mono break-all text-zinc-300">
+                      0x{{ miner.currentBlock.previousHash || "0".repeat(64) }}
                     </div>
                   </div>
                   <div class="col-span-2">
                     <div class="text-xs text-zinc-400">Hash Atual</div>
-                    <div class="font-mono text-xs break-all text-green-400">
-                      {{ miner.currentBlock.hash || "0".repeat(64) }}
+                    <div class="font-mono break-all text-green-400">
+                      0x{{ miner.currentBlock.hash || "0".repeat(64) }}
                     </div>
                   </div>
                   <div class="col-span-2">
                     <div class="text-xs text-zinc-400">Merkle Root</div>
-                    <div class="font-mono text-xs break-all text-zinc-300">
-                      {{ miner.currentBlock.merkleRoot || "-" }}
+                    <div class="font-mono break-all text-zinc-300">
+                      0x{{ miner.currentBlock.merkleRoot || "0".repeat(64) }}
                     </div>
                   </div>
                   <div class="col-span-2">
                     <div class="text-xs text-zinc-400">Target</div>
-                    <div class="font-mono text-xs break-all text-zinc-300">
+                    <div class="font-mono break-all text-zinc-300">
                       {{ getTarget(miner.currentBlock) }}
                     </div>
                   </div>
@@ -139,7 +139,7 @@
                   </div>
                   <div>
                     <div class="text-xs text-zinc-400">Consenso</div>
-                    <div class="font-mono text-sm">
+                    <div class="font-mono text-lg">
                       v{{ miner.currentBlock.consensusVersion }}
                     </div>
                   </div>
