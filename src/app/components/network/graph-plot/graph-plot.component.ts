@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
+import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 
 @Component({
@@ -98,6 +99,8 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
             "
             stroke="#fff"
             stroke-width="2"
+            (click)="onNodeClick(node)"
+            class="cursor-pointer"
           />
           <text
             [attr.x]="getX(i)"
@@ -106,6 +109,7 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
             font-size="14"
             fill="#fff"
             font-weight="bold"
+            class="pointer-events-none"
           >
             {{
               node.nodeType === 'miner'
@@ -155,6 +159,7 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
 export class GraphPlotComponent {
   width = 700;
   height = 400;
+  @Output() nodeSelected = new EventEmitter<BitcoinNode>();
 
   constructor(public network: BitcoinNetworkService) {}
 
@@ -174,5 +179,9 @@ export class GraphPlotComponent {
   }
   getIndexById(id: number | undefined) {
     return this.network.nodes.findIndex((n) => n.id === id);
+  }
+  onNodeClick(node: BitcoinNode) {
+    console.log('nodeSelected', node);
+    this.nodeSelected.emit(node);
   }
 }

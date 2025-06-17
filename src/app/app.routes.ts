@@ -10,6 +10,7 @@ import { ToolsLayout } from './layouts/home/tools/tools.layout';
 import { ProfilePageLayout } from './layouts/profile-page.layout';
 import { MainDashboardComponent } from './components/profile/main-dashboard/main-dashboard.component';
 import { MinersListV2Component } from './components/profile/miners-list-v2/miners-list-v2.component';
+import { NetworkOverviewComponent } from './components/network/network-overview/network-overview.component';
 
 export const routes: Routes = [
   {
@@ -35,6 +36,7 @@ export const routes: Routes = [
         children: [
           { path: '', component: NetworkComponent },
           { path: 'miners', component: MinersListV2Component },
+          { path: 'overview', component: NetworkOverviewComponent },
           // { path: 'nodes', component: NodesListV2Component },
           // { path: 'users', component: UsersListV2Component },
         ],
