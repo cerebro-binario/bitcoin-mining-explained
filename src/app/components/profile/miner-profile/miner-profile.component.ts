@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { KeyService } from '../../../services/key.service';
@@ -19,13 +19,17 @@ export class MinerProfileComponent {
   constructor(
     private route: ActivatedRoute,
     public bitcoinNetwork: BitcoinNetworkService,
-    private keyService: KeyService
+    private keyService: KeyService,
+    private router: Router
   ) {
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
       this.miner = this.bitcoinNetwork.nodes.find(
         (n) => n.id === id && n.nodeType === 'miner'
       );
+      if (!this.miner) {
+        this.router.navigate(['/network/overview']);
+      }
     });
   }
 
