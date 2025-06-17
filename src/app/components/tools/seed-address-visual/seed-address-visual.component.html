@@ -1,0 +1,250 @@
+<div
+  class="bg-zinc-900 rounded-xl shadow-xl p-6 my-8 max-w-3xl mx-auto flex flex-col items-center gap-6 border border-zinc-800"
+>
+  <h2 class="text-xl font-bold text-blue-400 mb-2">
+    Como uma seed gera endereços únicos?
+  </h2>
+  <div
+    class="flex flex-col md:flex-row items-center gap-8 w-full justify-center"
+  >
+    <!-- Seed 1 -->
+    <div class="flex flex-col items-center gap-2">
+      <div
+        class="bg-blue-800/30 border border-blue-400 rounded-full px-4 py-2 text-blue-200 font-mono text-sm"
+      >
+        Seed A
+      </div>
+      <span class="text-zinc-400 text-xs">(12/24 palavras)</span>
+      <span class="text-2xl">↓</span>
+      <div
+        class="bg-blue-900/40 border border-blue-500 rounded px-4 py-2 text-blue-100 font-mono text-xs"
+      >
+        Master Key A
+      </div>
+      <span class="text-2xl">↓</span>
+      <div class="flex flex-col gap-1">
+        <div
+          *ngFor="let i of [1, 2, 3, 4, 5]"
+          class="bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-green-300 font-mono text-xs flex items-center gap-2"
+        >
+          <span class="text-zinc-500">Endereço A{{ i }}</span>
+        </div>
+        <span class="text-zinc-400 text-xs mt-1"
+          >(infinitos endereços únicos)</span
+        >
+      </div>
+    </div>
+    <!-- Separador visual -->
+    <div class="flex flex-col items-center gap-2">
+      <span class="text-2xl text-zinc-500">≠</span>
+      <span class="text-zinc-400 text-xs">Seeds diferentes</span>
+    </div>
+    <!-- Seed 2 -->
+    <div class="flex flex-col items-center gap-2">
+      <div
+        class="bg-pink-800/30 border border-pink-400 rounded-full px-4 py-2 text-pink-200 font-mono text-sm"
+      >
+        Seed B
+      </div>
+      <span class="text-zinc-400 text-xs">(12/24 palavras)</span>
+      <span class="text-2xl">↓</span>
+      <div
+        class="bg-pink-900/40 border border-pink-500 rounded px-4 py-2 text-pink-100 font-mono text-xs"
+      >
+        Master Key B
+      </div>
+      <span class="text-2xl">↓</span>
+      <div class="flex flex-col gap-1">
+        <div
+          *ngFor="let i of [1, 2, 3, 4, 5]"
+          class="bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-green-300 font-mono text-xs flex items-center gap-2"
+        >
+          <span class="text-zinc-500">Endereço B{{ i }}</span>
+        </div>
+        <span class="text-zinc-400 text-xs mt-1"
+          >(infinitos endereços únicos)</span
+        >
+      </div>
+    </div>
+  </div>
+  <div class="text-center text-zinc-300 text-sm mt-4 max-w-2xl">
+    <b
+      >Cada seed/master key gera um conjunto único de endereços, sem intersecção
+      com outras seeds.</b
+    ><br />
+    A chance de colisão é tão pequena que é considerada impossível na
+    prática.<br />
+    <span class="text-zinc-400"
+      >(O espaço de endereços é de 2¹⁶⁰ possíveis, graças ao uso do hash
+      RIPEMD-160.)</span
+    >
+  </div>
+
+  <!-- Passo a passo didático: força bruta -->
+  <div class="w-full max-w-2xl mx-auto flex flex-col items-center gap-2 mb-8">
+    <div class="flex gap-2 mb-2">
+      <button
+        class="px-4 py-2 rounded bg-blue-700 hover:bg-blue-800 text-white font-semibold text-base transition shadow"
+        (click)="toggleAutoRun()"
+        [ngClass]="{ 'bg-yellow-600 hover:bg-yellow-700': isAutoRunning }"
+      >
+        <ng-container *ngIf="!isAutoRunning">Rodar simulação</ng-container>
+        <ng-container *ngIf="isAutoRunning">Pausar</ng-container>
+      </button>
+      <button
+        class="px-4 py-2 rounded bg-zinc-700 hover:bg-zinc-800 text-white font-semibold text-base transition shadow"
+        (click)="prevStepManual()"
+        [disabled]="animationStep <= 1"
+      >
+        Anterior
+      </button>
+      <button
+        class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base transition shadow"
+        (click)="nextStepManual()"
+        [disabled]="animationStep === 5"
+      >
+        Próximo
+      </button>
+    </div>
+    <div class="w-full flex flex-col items-center gap-2 min-h-[180px]">
+      <div
+        *ngIf="animationStep === 0"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-random text-lg"></i> Clique em "Rodar simulação" para
+          começar!
+        </span>
+      </div>
+      <div
+        *ngIf="animationStep === 1"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-random text-lg"></i> Gerando seed aleatória...
+        </span>
+        <div class="flex flex-wrap gap-1 justify-center mt-2">
+          <span
+            *ngFor="let word of seedWords; let i = index"
+            class="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-zinc-100 font-mono text-xs"
+            >{{ word }}</span
+          >
+        </div>
+      </div>
+      <div
+        *ngIf="animationStep === 2"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-key text-lg"></i> Derivando chave privada/pública...
+        </span>
+        <div class="flex flex-col gap-1 mt-2">
+          <span class="text-zinc-400 text-xs"
+            >Chave privada:
+            <span class="text-green-400">{{ privKey }}</span></span
+          >
+          <span class="text-zinc-400 text-xs"
+            >Chave pública:
+            <span class="text-green-400">{{ pubKey }}</span></span
+          >
+        </div>
+      </div>
+      <div
+        *ngIf="animationStep === 3"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-link text-lg"></i> Derivando endereços...
+        </span>
+        <div class="flex flex-col gap-1 mt-2 w-full max-w-xs">
+          <span
+            *ngFor="let addr of addresses; let i = index"
+            class="text-green-300 font-mono text-xs bg-zinc-800 border border-zinc-700 rounded px-2 py-1"
+            >{{ addr }}</span
+          >
+        </div>
+      </div>
+      <div
+        *ngIf="animationStep === 4"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-blue-300 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-search text-lg"></i> Consultando saldo...
+        </span>
+        <div class="flex flex-col gap-1 mt-2 w-full max-w-xs">
+          <span
+            *ngFor="let addr of addresses; let i = index"
+            class="text-zinc-400 text-xs"
+          >
+            {{ addr }} <span class="text-yellow-300">0 BTC</span>
+          </span>
+        </div>
+      </div>
+      <div
+        *ngIf="animationStep === 5"
+        class="flex flex-col items-center gap-2 animate-fade-in"
+      >
+        <span class="text-red-400 font-bold text-base flex items-center gap-2">
+          <i class="pi pi-times-circle text-lg"></i> Nada encontrado!
+        </span>
+        <span class="text-zinc-400 text-xs">Repita bilhões de vezes...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quadro explicativo do cálculo teórico -->
+  <div
+    class="bg-zinc-800 border border-zinc-700 rounded-lg p-5 mt-6 w-full max-w-2xl flex flex-col gap-3 text-left"
+  >
+    <h3 class="text-lg font-bold text-blue-300 mb-2">
+      Probabilidade e tempo para acertar uma seed/endereço
+    </h3>
+    <ul class="list-disc ml-6 text-sm text-zinc-200">
+      <li>
+        <b>Espaço de busca de uma seed de 12 palavras:</b>
+        <span class="text-green-400">2¹³² ≈ 5,44 × 10³⁹</span> combinações
+        possíveis.
+      </li>
+      <li>
+        <b>Espaço de endereços Bitcoin:</b>
+        <span class="text-green-400">2¹⁶⁰ ≈ 1,46 × 10⁴⁸</span> endereços
+        possíveis.
+      </li>
+      <li>
+        <b>Poder computacional global (otimista):</b>
+        <span class="text-yellow-300">10²¹ tentativas/segundo</span> (1
+        zetta-hash/s).
+      </li>
+      <li>
+        <b>Tempo para acertar uma seed específica:</b>
+        <span class="text-red-400">~172 bilhões de anos</span> (muito maior que
+        a idade do universo).
+      </li>
+      <li>
+        <b>Tempo para acertar qualquer seed com saldo (10 milhões de seeds):</b>
+        <span class="text-red-400">~8,6 milhões de anos</span>.
+      </li>
+      <li>
+        <b>Com passphrase de 12 caracteres:</b>
+        <span class="text-red-400">~2,77 × 10²⁵ anos</span>
+        (27.700.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000
+        anos).
+      </li>
+    </ul>
+    <div class="mt-2 text-zinc-300 text-sm">
+      <b>Conclusão:</b> Mesmo com todo o poder computacional do mundo, a força
+      bruta é <span class="text-green-400">impraticável</span>. A segurança da
+      seed phrase (e da passphrase) é garantida pelo tamanho gigantesco do
+      espaço de busca.<br />
+      <span class="text-zinc-400"
+        >(A segurança depende de manter sua seed e passphrase em segredo!)</span
+      >
+      <div class="mt-2 text-yellow-300 text-xs">
+        <b>Observação:</b> Além de "chutar" a seed/passphrase, o atacante ainda
+        teria que derivar todos os endereços possíveis e consultar o saldo de
+        cada um, o que torna o ataque ainda mais lento e impraticável na
+        prática.
+      </div>
+    </div>
+  </div>
+</div>

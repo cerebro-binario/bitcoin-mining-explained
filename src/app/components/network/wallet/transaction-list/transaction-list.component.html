@@ -1,0 +1,154 @@
+<p-table
+  [value]="transactions"
+  dataKey="id"
+  [responsiveLayout]="'scroll'"
+  [scrollable]="true"
+  [style]="{ 'font-size': '0.95rem', width: '100%', height: '100%' }"
+  class="w-full h-full flex-1 text-sm rounded-lg overflow-hidden table-fixed"
+  rowExpandMode="multiple"
+>
+  <ng-template pTemplate="header">
+    <tr>
+      <th style="width: 3rem"></th>
+      <th class="px-3 py-2 font-semibold">Data/Hora</th>
+      <th class="px-3 py-2 font-semibold">Tipo</th>
+      <th class="px-3 py-2 font-semibold">Valor (BTC)</th>
+      <th class="font-semibold"></th>
+      <th class="px-3 py-2 font-semibold">Endereço</th>
+      <th class="px-3 py-2 font-semibold">Status</th>
+      <th class="px-3 py-2 font-semibold">TxID</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-tx let-expanded="expanded">
+    <tr>
+      <td class="px-3 py-2 align-middle">
+        <button
+          [pRowToggler]="tx"
+          type="button"
+          class="p-0 m-0 text-zinc-400 hover:text-blue-400 focus:outline-none"
+          [attr.aria-label]="
+            expanded ? 'Colapsar detalhes' : 'Expandir detalhes'
+          "
+        >
+          <i
+            class="pi"
+            [ngClass]="expanded ? 'pi-chevron-down' : 'pi-chevron-right'"
+          ></i>
+        </button>
+      </td>
+      <td class="px-3 py-2">
+        {{ tx.timestamp ? (tx.timestamp | date : "dd/MM/yyyy HH:mm:ss") : "—" }}
+      </td>
+      <td
+        class="px-3 py-2"
+        [ngClass]="{
+          'text-green-400': tx.type === 'Recebida',
+          'text-red-400': tx.type === 'Enviada',
+          'text-yellow-400': tx.type === 'Coinbase'
+        }"
+      >
+        <ng-container [ngSwitch]="tx.type">
+          <i *ngSwitchCase="'Recebida'" class="pi pi-arrow-down-left mr-1"></i>
+          <i *ngSwitchCase="'Enviada'" class="pi pi-arrow-up-right mr-1"></i>
+          <i *ngSwitchCase="'Coinbase'" class="pi pi-star-fill mr-1"></i>
+          <i *ngSwitchDefault class="pi pi-info-circle mr-1"></i>
+        </ng-container>
+        {{ tx.type }}
+      </td>
+      <td class="px-3 py-2">{{ tx.value / 100000000 | number : "1.8-8" }}</td>
+      <td>
+        <i
+          *ngIf="!walletAddresses.includes(tx.address)"
+          class="pi pi-globe text-yellow-400"
+          title="Endereço externo"
+        ></i>
+      </td>
+      <td class="px-3 py-2">
+        <span
+          class="flex items-center gap-2"
+          [ngClass]="{
+            'text-green-300': tx.addressType === 'bip44',
+            'text-blue-300': tx.addressType === 'bip49',
+            'text-purple-300': tx.addressType === 'bip84'
+          }"
+        >
+          {{ tx.address }}
+        </span>
+      </td>
+      <td class="px-3 py-2">{{ tx.status }}</td>
+      <td
+        class="px-3 py-2 font-mono text-xs text-blue-300 truncate max-w-[180px]"
+        [title]="tx.id"
+      >
+        {{ tx.id }}
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="rowexpansion" let-tx>
+    <tr>
+      <td colspan="8" class="bg-zinc-900/60 px-6 py-3">
+        <div class="text-xs text-zinc-400 mb-2 font-semibold">
+          Detalhes da transação
+        </div>
+        <table class="min-w-full text-xs text-left">
+          <thead>
+            <tr>
+              <th class="px-2 py-1">Tipo</th>
+              <th class="px-2 py-1">Valor (BTC)</th>
+              <th class="px-2 py-1">Endereço</th>
+              <th class="px-2 py-1">BIP</th>
+              <th class="px-2 py-1">Wallet?</th>
+              <th class="px-2 py-1">TxID</th>
+              <th class="px-2 py-1">vout</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of tx.details">
+              <td class="px-2 py-1">
+                <span *ngIf="d.type === 'input'">Input</span>
+                <span *ngIf="d.type === 'output'">Output</span>
+                <span
+                  *ngIf="d.type === 'change'"
+                  class="text-blue-400 font-bold"
+                  >Change</span
+                >
+              </td>
+              <td class="px-2 py-1">
+                {{ d.value / 100000000 | number : "1.8-8" }}
+              </td>
+              <td class="px-2 py-1 font-mono">
+                <span
+                  [ngClass]="{
+                    'text-green-300': d.addressType === 'bip44',
+                    'text-blue-300': d.addressType === 'bip49',
+                    'text-purple-300': d.addressType === 'bip84'
+                  }"
+                  >{{ d.address }}</span
+                >
+              </td>
+              <td class="px-2 py-1">
+                <span *ngIf="d.addressType === 'bip44'">Legacy</span>
+                <span *ngIf="d.addressType === 'bip49'">SegWit</span>
+                <span *ngIf="d.addressType === 'bip84'">Native</span>
+                <span *ngIf="!d.addressType">—</span>
+              </td>
+              <td class="px-2 py-1">
+                <span *ngIf="d.isWallet" class="text-blue-400">Sim</span>
+                <span *ngIf="!d.isWallet" class="text-zinc-500">Não</span>
+              </td>
+              <td
+                class="px-2 py-1 font-mono text-xs text-blue-300 truncate max-w-[120px]"
+                [title]="d.txId"
+              >
+                {{ d.txId || "—" }}
+              </td>
+              <td class="px-2 py-1 text-center">
+                {{ d.vout !== undefined ? d.vout : "—" }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

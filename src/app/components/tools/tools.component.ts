@@ -1,11 +1,13 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { TooltipModule } from 'primeng/tooltip';
+import { BitcoinEmissionChartComponent } from './bitcoin-emission-chart/bitcoin-emission-chart.component';
+import { DiceAnalogyComponent } from './dice-analogy/dice-analogy.component';
 import { HashTargetComponent } from './hash-target/hash-target.component';
 import { HashComponent } from './hash/hash.component';
 import { HashesComparedComponent } from './hashes-compared/hashes-compared.component';
 import { HexadecimalComponent } from './hexadecimal/hexadecimal.component';
-import { DiceAnalogyComponent } from './dice-analogy/dice-analogy.component';
-import { BitcoinEmissionChartComponent } from './bitcoin-emission-chart/bitcoin-emission-chart.component';
-import { TooltipModule } from 'primeng/tooltip';
+import { SeedAddressVisualComponent } from './seed-address-visual/seed-address-visual.component';
 
 @Component({
   selector: 'app-tools',
@@ -14,12 +16,14 @@ import { TooltipModule } from 'primeng/tooltip';
   standalone: true,
   imports: [
     TooltipModule,
+    CommonModule,
     HexadecimalComponent,
     HashComponent,
     HashesComparedComponent,
     HashTargetComponent,
     DiceAnalogyComponent,
     BitcoinEmissionChartComponent,
+    SeedAddressVisualComponent,
   ],
 })
 export class ToolsComponent {

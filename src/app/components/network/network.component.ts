@@ -9,6 +9,7 @@ import {
   MinersStats,
 } from './miners-panel/miners-panel.component';
 import { NodesPanelComponent } from './nodes-panel/nodes-panel.component';
+import { UsersPanelComponent } from './users-panel/users-panel.component';
 @Component({
   selector: 'app-network',
   standalone: true,
@@ -17,6 +18,7 @@ import { NodesPanelComponent } from './nodes-panel/nodes-panel.component';
     MinersPanelComponent,
     NodesPanelComponent,
     GraphPlotComponent,
+    UsersPanelComponent,
   ],
   templateUrl: './network.component.html',
   styleUrls: ['./network.component.scss'],

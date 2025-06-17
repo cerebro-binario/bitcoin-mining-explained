@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { MinersStats } from '../components/network/miners-panel/miners-panel.component';
 import { Node } from '../models/node';
+import { KeyService } from './key.service';
 
 @Injectable({ providedIn: 'root' })
 export class BitcoinNetworkService {
@@ -10,7 +11,7 @@ export class BitcoinNetworkService {
   nodes$ = this.nodesSubject.asObservable();
   nodes: Node[] = this.nodesSubject.getValue();
 
-  private nextId = 1;
+  private nextNodeId = 1;
 
   private miningTimeout: any;
 
@@ -39,7 +40,7 @@ export class BitcoinNetworkService {
     totalHashRate: 0,
   };
 
-  constructor() {
+  constructor(private keyService: KeyService) {
     this.startMiningLoop();
   }
 
@@ -60,19 +61,43 @@ export class BitcoinNetworkService {
   }
 
   addNode(
-    isMiner: boolean,
+    nodeType: 'miner' | 'peer' | 'user',
     name?: string,
     hashRate: number | null = null,
     isCollapsed: boolean = false
   ): Node {
     const node = new Node({
-      id: this.nextId++,
-      isMiner,
+      id: this.nextNodeId++,
+      nodeType,
       name,
       hashRate,
       peers: [],
       isCollapsed,
     });
+
+    // Se for minerador, gera seed, keypair e endereços
+    if (nodeType === 'miner') {
+      const seed = this.keyService.generateSeed();
+      const mnemonic = seed.join(' ');
+      const addresses = this.keyService.deriveBitcoinAddresses(mnemonic, 1, 0);
+      addresses.forEach((address) => {
+        address.bip44.nodeId = node.id;
+        address.bip49.nodeId = node.id;
+        address.bip84.nodeId = node.id;
+      });
+      node.wallet.seed = seed;
+      node.wallet.addresses = addresses;
+      node.miningAddress = addresses[0].bip84.address;
+    } else {
+      node.wallet = {
+        step: 'choose',
+        seed: [],
+        seedPassphrase: '',
+        passphrase: '',
+        addresses: [],
+      };
+    }
+
     this.nodes.push(node);
     this.nodesSubject.next(this.nodes);
     return node;

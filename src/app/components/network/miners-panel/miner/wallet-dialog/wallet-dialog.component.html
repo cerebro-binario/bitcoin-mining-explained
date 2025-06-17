@@ -1,0 +1,37 @@
+<div
+  class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 backdrop-blur"
+  (click)="onBackdropClick($event)"
+>
+  <div
+    class="bg-zinc-800 rounded-lg shadow-lg pt-6 min-w-[320px] max-w-[90vw] w-full max-h-[95vh] h-full flex flex-col relative"
+  >
+    <button
+      class="absolute top-2 right-2 text-zinc-400 hover:text-red-400"
+      (click)="onClose()"
+      title="Fechar"
+    >
+      <i class="pi pi-times text-lg"></i>
+    </button>
+    <h2
+      class="text-lg font-bold text-blue-400 mb-4 px-6 flex items-center gap-4"
+    >
+      Carteira
+      <span
+        class="text-xs font-semibold text-zinc-300 bg-zinc-700 rounded px-2 py-1"
+        *ngIf="node"
+      >
+        Nó #{{ node.id
+        }}<ng-container *ngIf="node.name"> — {{ node.name }}</ng-container>
+      </span>
+    </h2>
+
+    <div class="w-full flex-1 min-h-0 flex flex-col">
+      <app-wallet
+        [node]="node"
+        [wallet]="node.wallet"
+        (deriveNextAddress)="deriveNextAddress()"
+        class="h-full"
+      ></app-wallet>
+    </div>
+  </div>
+</div>

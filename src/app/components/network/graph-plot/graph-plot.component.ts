@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 
 @Component({
@@ -89,7 +89,13 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
             [attr.cx]="getX(i)"
             [attr.cy]="getY(i)"
             r="24"
-            [attr.fill]="node.isMiner ? '#2563eb' : '#22d3ee'"
+            [attr.fill]="
+              node.nodeType === 'miner'
+                ? '#2563eb'
+                : node.nodeType === 'peer'
+                ? '#22d3ee'
+                : '#6b7280'
+            "
             stroke="#fff"
             stroke-width="2"
           />
@@ -101,7 +107,13 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
             fill="#fff"
             font-weight="bold"
           >
-            {{ node.isMiner ? 'M' : 'N' }}{{ node.id }}
+            {{
+              node.nodeType === 'miner'
+                ? 'M'
+                : node.nodeType === 'peer'
+                ? 'N'
+                : 'U'
+            }}{{ node.id }}
           </text>
         </ng-container>
       </svg>

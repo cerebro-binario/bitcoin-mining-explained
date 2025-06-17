@@ -1,7 +1,12 @@
 import * as CryptoJS from 'crypto-js';
-import { pipe, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
-import { Block, BlockNode, Transaction } from './block.model';
+import {
+  Block,
+  BlockNode,
+  Transaction,
+  generateTransactionId,
+} from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
   EVENT_LOG_REASONS,
@@ -15,6 +20,9 @@ import {
 
 import { areConsensusVersionsCompatible } from './consensus.model';
 import { Height } from './height.model';
+import { BipType, BitcoinAddressData, Wallet } from './wallet.model';
+
+import { getAddressType } from '../utils/tools';
 
 export interface Neighbor {
   latency: number;
@@ -23,21 +31,7 @@ export interface Neighbor {
 }
 
 export type Balances = {
-  [address: string]:
-    | {
-        balance: number;
-        nodeName?: string;
-        utxos: {
-          output: {
-            value: number;
-            scriptPubKey: string;
-          };
-          blockHeight: number;
-          txId: string;
-          outputIndex: number;
-        }[];
-      }
-    | undefined;
+  [address: string]: BitcoinAddressData | undefined;
 };
 
 export class Node {
@@ -50,26 +44,16 @@ export class Node {
   isSearchingPeers: boolean = false;
 
   isSyncing: boolean = false;
-  pendingBlocks: Block[] = [];
   isAddingBlock: boolean = false;
 
   // Log de eventos de propagação/validação de blocos
   events: NodeEvent[] = [];
 
-  // Rastreamento de peers durante o sync inicial
-  syncPeers: {
-    nodeId: number;
-    latency: number;
-    status: 'pending' | 'validating' | 'valid' | 'invalid';
-    blockchainLength?: number;
-    work?: number;
-  }[] = [];
-
   id: number = 0;
   peers: Neighbor[] = [];
 
   // Campos para minerador
-  isMiner: boolean = false;
+  nodeType: 'miner' | 'peer' | 'user' = 'miner';
   name: string = '';
   hashRate: number | null = null;
   currentHashRate: number = 0; // Hash rate real sendo alcançado
@@ -132,7 +116,29 @@ export class Node {
   private pendingConsensusEvents: { height: number; event: NodeEvent }[] = [];
 
   // Estrutura para rastrear UTXOs e saldos (Unspent Transaction Outputs)
-  balances: Balances = {};
+  private _balances: Balances = {};
+  public balances$: BehaviorSubject<Balances> = new BehaviorSubject<Balances>(
+    this._balances
+  );
+
+  get balances(): Balances {
+    return this._balances;
+  }
+  set balances(val: Balances) {
+    this._balances = val;
+    this.balances$.next(val);
+    this.updateWalletFromBalances();
+  }
+
+  wallet: Wallet = {
+    step: 'choose',
+    seed: [],
+    seedPassphrase: '',
+    passphrase: '',
+    addresses: [],
+  };
+
+  pendingTransactions: Transaction[] = [];
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -232,30 +238,26 @@ export class Node {
     const previousHash =
       lastBlock?.hash ||
       '0000000000000000000000000000000000000000000000000000000000000000';
-
     // Calcula o nBits correto para o novo bloco
     const { next } = this.getDifficulty(lastBlock);
     const nBits = next?.nBits || lastBlock?.nBits || this.INITIAL_NBITS;
-
     const blockHeight = lastBlock ? lastBlock.height + 1 : 0;
     const subsidy = this.calculateBlockSubsidy(blockHeight);
-
     // Cria a transação coinbase
+    const coinbaseOutputs = [
+      {
+        value: subsidy,
+        scriptPubKey: this.miningAddress,
+      },
+    ];
     const coinbaseTx: Transaction = {
-      id: CryptoJS.SHA256(timestamp.toString()).toString(),
+      id: generateTransactionId([], coinbaseOutputs, timestamp),
       inputs: [], // Coinbase não tem inputs
-      outputs: [
-        {
-          value: subsidy,
-          scriptPubKey: this.miningAddress,
-        },
-      ],
+      outputs: coinbaseOutputs,
       signature: '', // Coinbase não precisa de assinatura
     };
-
     // Adiciona a coinbase como primeira transação
     const transactions = [coinbaseTx];
-
     this.currentBlock = new Block({
       id: blockHeight,
       height: blockHeight,
@@ -269,7 +271,6 @@ export class Node {
       consensusVersion:
         this.consensus.getConsensusForHeight(blockHeight).version,
     });
-
     return this.currentBlock;
   }
 
@@ -456,19 +457,6 @@ export class Node {
       blockHeight / this.consensus.parameters.halvingInterval
     );
     return Math.floor(this.SUBSIDY / Math.pow(2, halvings));
-  }
-
-  // Função utilitária para buscar um ancestral seguindo previousHash a partir de um bloco base
-  private getAncestorBlock(
-    block: Block,
-    ancestorHeight: number,
-    blockResolver: (hash: string) => Block | undefined
-  ): Block | undefined {
-    let current: Block | undefined = block;
-    while (current && current.height > ancestorHeight) {
-      current = blockResolver(current.previousHash);
-    }
-    return current && current.height === ancestorHeight ? current : undefined;
   }
 
   // Método para ordenar os blocos, movendo forks mortos para o final
@@ -697,19 +685,6 @@ export class Node {
       }
     }
     this.activeForkHeights = forkHeights;
-  }
-
-  // Update the difficulty adjustment interval based on block height
-  private getDifficultyAdjustmentInterval(height: number): number {
-    const epoch = this.consensus.getConsensusForHeight(height);
-    if (!epoch) {
-      throw new Error(`No consensus parameters found for height ${height}`);
-    }
-    return epoch.parameters.difficultyAdjustmentInterval;
-  }
-
-  private getCurrentConsensusParameters(): ConsensusVersion {
-    return this.consensus.getConsensusForHeight(this.currentBlock?.height || 0);
   }
 
   // Método para validar um bloco individual
@@ -1168,17 +1143,6 @@ export class Node {
         return;
       }
     }
-  }
-
-  private downloadGenesisFromPeer(peer: Node) {
-    const heightIndex = peer.getHeightIndex(0);
-    return peer.heights[heightIndex]?.blocks.map((h) => h.block) || [];
-  }
-
-  private downloadBlockFromPeer(height: number, hash: string, peer: Node) {
-    const heightIndex = peer.getHeightIndex(height);
-    return peer.heights[heightIndex]?.blocks.find((h) => h.block.hash === hash)
-      ?.block;
   }
 
   private downloadParentBlockFromPeer(block: Block, peer: Node) {
@@ -1665,27 +1629,31 @@ export class Node {
 
   // Método para validar e processar transações
   private validateAndProcessTransactions(block: Block): boolean {
+    // Cria uma cópia do UTXO set atual para validação
     const tempUtxoSet = { ...this.balances };
 
-    for (const tx of block.transactions) {
-      if (tx.inputs.length === 0) continue;
-
+    // Processa cada transação (exceto coinbase)
+    for (let i = 1; i < block.transactions.length; i++) {
+      const tx = block.transactions[i];
       let inputSum = 0;
       let outputSum = 0;
-      const affectedAddresses = new Set<string>();
 
+      // Processa inputs
       for (const input of tx.inputs) {
         const addressData = tempUtxoSet[input.scriptPubKey];
-        if (!addressData) return false;
+        if (!addressData) {
+          return false; // UTXO não encontrado
+        }
 
         const utxo = addressData.utxos.find(
           (u) => u.txId === input.txid && u.outputIndex === input.vout
         );
 
-        if (!utxo) return false;
+        if (!utxo) {
+          return false; // UTXO não encontrado
+        }
 
         inputSum += utxo.output.value;
-        affectedAddresses.add(input.scriptPubKey);
 
         // Remove o UTXO gasto
         const newUtxos = addressData.utxos.filter(
@@ -1694,13 +1662,12 @@ export class Node {
 
         if (newUtxos.length > 0) {
           tempUtxoSet[input.scriptPubKey] = {
+            ...addressData,
             balance: addressData.balance - utxo.output.value,
             utxos: newUtxos,
           };
         } else {
-          const newBalances = { ...this.balances };
-          delete newBalances[input.scriptPubKey];
-          this.balances = newBalances;
+          delete tempUtxoSet[input.scriptPubKey];
         }
       }
 
@@ -1708,21 +1675,37 @@ export class Node {
       for (let i = 0; i < tx.outputs.length; i++) {
         const output = tx.outputs[i];
         outputSum += output.value;
-        affectedAddresses.add(output.scriptPubKey);
 
         // Adiciona novo UTXO
+        const isMinerCoinbase = output.scriptPubKey === this.miningAddress;
         const addressData = tempUtxoSet[output.scriptPubKey] || {
+          address: output.scriptPubKey,
           balance: 0,
           utxos: [],
+          nodeId: undefined, // não há uma forma de saber o nodeId de um endereço apenas com o scriptPubKey
+          // TODO: verificar se há algum outro modo de saber o nodeId de um endereço
+          ...(isMinerCoinbase
+            ? { keys: this.wallet.addresses[0].bip84.keys }
+            : {
+                keys: {
+                  pub: { hex: '', decimal: '' },
+                  priv: { hex: '', decimal: '', wif: '' },
+                },
+              }),
+          addressType: getAddressType(output.scriptPubKey),
         };
+
         addressData.utxos.push({
           output,
           blockHeight: block.height,
           txId: tx.id,
           outputIndex: i,
         });
-        addressData.balance += output.value;
-        tempUtxoSet[output.scriptPubKey] = addressData;
+
+        tempUtxoSet[output.scriptPubKey] = {
+          ...addressData,
+          balance: addressData.balance + output.value,
+        };
       }
 
       // Valida que inputs >= outputs
@@ -1732,8 +1715,8 @@ export class Node {
     }
 
     // Se chegou aqui, todas as transações são válidas
-    // Atualiza o UTXO set real
-    this.balances = tempUtxoSet;
+    // Atualiza o UTXO set real forçando uma nova referência para reatividade
+    this.balances = { ...tempUtxoSet };
     return true;
   }
 
@@ -1744,26 +1727,46 @@ export class Node {
 
     const subsidy = this.calculateBlockSubsidy(block.height);
     const address = coinbase.outputs[0].scriptPubKey;
+
+    // Cria ou atualiza o endereço do minerador
+    const isMinerCoinbase = address === this.miningAddress;
     const addressData = this.balances[address] || {
+      address,
       balance: 0,
       utxos: [],
-      nodeName: `Minerador ${block.minerId}`,
+      nodeId: block.minerId,
+      ...(isMinerCoinbase
+        ? { keys: this.wallet.addresses[0].bip84.keys }
+        : {
+            keys: {
+              pub: { hex: '', decimal: '' },
+              priv: { hex: '', decimal: '', wif: '' },
+            },
+          }),
+      addressType: getAddressType(address),
     };
 
+    // Verifica se a coinbase já foi processada
     if (addressData.utxos.some((u) => u.txId === coinbase.id)) {
       return;
     }
 
+    // Adiciona o UTXO da coinbase
     addressData.utxos.push({
       output: coinbase.outputs[0],
       blockHeight: block.height,
       txId: coinbase.id,
       outputIndex: 0,
     });
+
+    // Atualiza o saldo
     addressData.balance += subsidy;
 
-    this.balances[address] = addressData;
-    this.balances = { ...this.balances };
+    // Atualiza o mapa de saldos forçando uma nova referência para reatividade
+    this.balances = {
+      ...this.balances,
+      [address]: { ...addressData },
+    };
   }
 
   // Método para atualizar o UTXO set durante um reorg
@@ -1780,6 +1783,9 @@ export class Node {
 
   // Método para reverter as transações de um bloco
   private revertBlockTransactions(block: Block): void {
+    // Cria uma cópia do UTXO set atual para validação
+    const tempUtxoSet = { ...this.balances };
+
     // Reverte as transações normais (não coinbase) na ordem inversa
     for (let i = block.transactions.length - 1; i > 0; i--) {
       const tx = block.transactions[i];
@@ -1787,32 +1793,37 @@ export class Node {
       // Remove os outputs da transação do UTXO set
       for (let j = 0; j < tx.outputs.length; j++) {
         const output = tx.outputs[j];
-        const addressData = this.balances[output.scriptPubKey];
+        const addressData = tempUtxoSet[output.scriptPubKey];
         if (addressData) {
           const newUtxos = addressData.utxos.filter(
             (u) => !(u.txId === tx.id && u.outputIndex === j)
           );
-          const newBalances = { ...this.balances };
+
           if (newUtxos.length > 0) {
-            newBalances[output.scriptPubKey] = {
+            tempUtxoSet[output.scriptPubKey] = {
+              ...addressData,
               balance: addressData.balance - output.value,
               utxos: newUtxos,
-              nodeName: addressData.nodeName,
             };
           } else {
-            delete newBalances[output.scriptPubKey];
+            delete tempUtxoSet[output.scriptPubKey];
           }
-          this.balances = newBalances;
         }
       }
 
       // Restaura os inputs como UTXOs
       for (const input of tx.inputs) {
-        const addressData = this.balances[input.scriptPubKey] || {
+        const addressData = tempUtxoSet[input.scriptPubKey] || {
+          address: input.scriptPubKey,
           balance: 0,
           utxos: [],
-          nodeName: `Minerador ${block.minerId}`,
+          keys: {
+            pub: { hex: '', decimal: '' },
+            priv: { hex: '', decimal: '', wif: '' },
+          },
+          addressType: getAddressType(input.scriptPubKey),
         };
+
         addressData.utxos.push({
           output: {
             value: input.value,
@@ -1822,10 +1833,11 @@ export class Node {
           txId: input.txid,
           outputIndex: input.vout,
         });
-        addressData.balance += input.value;
-        const newBalances = { ...this.balances };
-        newBalances[input.scriptPubKey] = addressData;
-        this.balances = newBalances;
+
+        tempUtxoSet[input.scriptPubKey] = {
+          ...addressData,
+          balance: addressData.balance + input.value,
+        };
       }
     }
 
@@ -1833,23 +1845,52 @@ export class Node {
     const coinbase = block.transactions[0];
     if (coinbase) {
       const address = coinbase.outputs[0].scriptPubKey;
-      const addressData = this.balances[address];
+      const addressData = tempUtxoSet[address];
       if (addressData) {
         const newUtxos = addressData.utxos.filter(
           (u) => !(u.txId === coinbase.id && u.outputIndex === 0)
         );
-        const newBalances = { ...this.balances };
+
         if (newUtxos.length > 0) {
-          newBalances[address] = {
+          tempUtxoSet[address] = {
+            ...addressData,
             balance: addressData.balance - coinbase.outputs[0].value,
             utxos: newUtxos,
-            nodeName: addressData.nodeName,
           };
         } else {
-          delete newBalances[address];
+          delete tempUtxoSet[address];
         }
-        this.balances = newBalances;
       }
     }
+
+    // Atualiza o UTXO set real forçando uma nova referência para reatividade
+    this.balances = { ...tempUtxoSet };
+  }
+
+  updateWalletFromBalances() {
+    if (!this.wallet || !this.wallet.addresses) return;
+
+    for (const addressObj of this.wallet.addresses) {
+      for (const bipType of Object.keys(addressObj) as BipType[]) {
+        const addressData = addressObj[bipType];
+        const balanceData = this.balances[addressData.address];
+        if (balanceData) {
+          addressData.balance = balanceData.balance;
+          addressData.utxos = balanceData.utxos;
+        } else {
+          addressData.balance = 0;
+          addressData.utxos = [];
+        }
+      }
+    }
+
+    // Força mudança de referência para detecção pelo Angular
+    this.wallet = { ...this.wallet };
+  }
+
+  public addTransaction(tx: Transaction) {
+    if (!this.currentBlock) return;
+    if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
+    this.currentBlock.addTransaction(tx);
   }
 }

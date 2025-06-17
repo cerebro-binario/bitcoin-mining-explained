@@ -1,0 +1,290 @@
+<div class="w-full h-full flex-1 flex flex-col min-h-0">
+  <!-- Tabs header -->
+  <div class="flex border-b border-zinc-700 mb-2">
+    <button
+      class="px-4 py-2 font-semibold focus:outline-none transition border-b-2"
+      [class.text-white]="activeTab === 'enderecos'"
+      [class.text-zinc-400]="activeTab !== 'enderecos'"
+      [class.border-blue-500]="activeTab === 'enderecos'"
+      [class.border-transparent]="activeTab !== 'enderecos'"
+      (click)="activeTab = 'enderecos'"
+    >
+      Endereços
+    </button>
+    <button
+      class="px-4 py-2 font-semibold focus:outline-none transition border-b-2"
+      [class.text-white]="activeTab === 'transacoes'"
+      [class.text-zinc-400]="activeTab !== 'transacoes'"
+      [class.border-blue-500]="activeTab === 'transacoes'"
+      [class.border-transparent]="activeTab !== 'transacoes'"
+      (click)="activeTab = 'transacoes'"
+    >
+      Transações
+    </button>
+    <button
+      class="px-4 py-2 font-semibold focus:outline-none transition border-b-2"
+      [class.text-white]="activeTab === 'enviar'"
+      [class.text-zinc-400]="activeTab !== 'enviar'"
+      [class.border-blue-500]="activeTab === 'enviar'"
+      [class.border-transparent]="activeTab !== 'enviar'"
+      (click)="activeTab = 'enviar'"
+    >
+      Enviar
+    </button>
+  </div>
+
+  <!-- Tabs content -->
+  <div class="flex-1 min-h-0 flex flex-col h-full">
+    <div [hidden]="activeTab !== 'enderecos'" class="h-full">
+      <div class="flex-1 min-h-0 flex flex-col h-full mt-4">
+        <div class="px-6 flex-1 min-h-0 flex flex-col">
+          <app-address-list
+            [hideTitle]="true"
+            [addresses]="addressesDisplay"
+            [pagination]="pagination"
+            [canDeriveNextAddress]="true"
+            (deriveNextAddress)="onDeriveNextAddress()"
+            (changeAddressType)="onChangeAddressType($event)"
+            class="flex-1 min-h-0"
+          ></app-address-list>
+        </div>
+        <div
+          *ngIf="totalPagesDisplay > 1"
+          class="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 px-6 bg-zinc-900 rounded-b-lg border-t border-zinc-700 mt-2"
+        >
+          <!-- Indicador de página atual -->
+          <div
+            class="flex flex-1 items-center justify-start gap-2 text-white/80 text-sm font-mono"
+          >
+            <span class="text-zinc-400">Página</span>
+            <span class="font-bold text-blue-300"
+              >#{{ currentPageDisplay }}</span
+            >
+            <span class="text-zinc-400">of</span>
+            <span class="font-bold text-blue-300">{{ totalPagesDisplay }}</span>
+            <span class="text-zinc-500"
+              >({{ pagePercent | number : "1.0-2" }}%)</span
+            >
+          </div>
+
+          <!-- Botões de navegação -->
+          <div class="flex flex-1 items-center justify-center gap-1">
+            <button
+              pButton
+              icon="pi pi-angle-double-left"
+              class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+              (click)="goToFirstPage()"
+              [disabled]="prevDisabled"
+              [ngClass]="{ 'opacity-50': prevDisabled }"
+              title="Primeira página"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-angle-left"
+              class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+              (click)="goToPreviousPage()"
+              [disabled]="prevDisabled"
+              [ngClass]="{ 'opacity-50': prevDisabled }"
+              title="Página anterior"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-refresh"
+              class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+              (click)="goToRandomPage()"
+              title="Página aleatória"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-angle-right"
+              class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+              (click)="goToNextPage()"
+              [disabled]="nextDisabled"
+              [ngClass]="{ 'opacity-50': nextDisabled }"
+              title="Próxima página"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-angle-double-right"
+              class="p-button-sm p-button-rounded p-button-text text-zinc-400 hover:text-blue-400"
+              (click)="goToLastPage()"
+              [disabled]="nextDisabled"
+              [ngClass]="{ 'opacity-50': nextDisabled }"
+              title="Última página"
+            ></button>
+          </div>
+
+          <!-- Input para pular para página -->
+          <form
+            class="flex flex-1 items-center justify-end gap-2"
+            (submit)="jumpToPage(); $event.preventDefault()"
+            autocomplete="off"
+          >
+            <input
+              type="text"
+              [(ngModel)]="jumpPageInput"
+              name="jumpPageInput"
+              placeholder="Página #"
+              class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white font-mono w-24 focus:outline-none focus:border-blue-400"
+              style="min-width: 120px"
+            />
+            <button
+              pButton
+              type="submit"
+              icon="pi pi-arrow-right"
+              class="p-button-sm p-button-rounded p-button-text text-blue-400"
+              label="Ir para"
+              style="min-width: 60px"
+            ></button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div [hidden]="activeTab !== 'transacoes'" class="h-full">
+      <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
+        <app-transaction-list
+          [transactions]="transactionViews"
+          [walletAddresses]="walletAddressesList"
+          class="flex-1"
+        ></app-transaction-list>
+      </div>
+    </div>
+    <div [hidden]="activeTab !== 'enviar'" class="h-full">
+      <div class="px-6 flex-1 min-h-0 flex flex-col h-full mt-4">
+        <form
+          class="flex flex-col gap-6 w-full max-w-2xl"
+          (submit)="onSendTransaction($event)"
+        >
+          <h2 class="text-lg font-semibold text-white mb-2">
+            Enviar transação
+          </h2>
+          <div class="flex flex-col gap-1">
+            <label for="destino" class="text-zinc-400 text-sm"
+              >Endereço de destino</label
+            >
+            <input
+              id="destino"
+              name="destino"
+              type="text"
+              [(ngModel)]="sendToAddress"
+              (input)="onSendAddressChange()"
+              (focus)="onSendAddressFocus()"
+              (blur)="onSendAddressBlur()"
+              [ngClass]="{
+                'border-red-500':
+                  sendAddressTouched &&
+                  !sendAddressFocused &&
+                  sendToAddressValid === false,
+                'border-zinc-700': !(
+                  sendAddressTouched &&
+                  !sendAddressFocused &&
+                  sendToAddressValid === false
+                )
+              }"
+              class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+              placeholder="Endereço Bitcoin"
+            />
+            <div
+              *ngIf="
+                sendAddressTouched &&
+                !sendAddressFocused &&
+                sendToAddressValid === false
+              "
+              class="text-xs text-red-400 mt-1"
+            >
+              {{ sendToAddressErrorMsg }}
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center mt-4">
+              <label for="valor" class="text-zinc-400 text-sm"
+                >Valor (BTC)</label
+              >
+              <!-- Saldo disponível -->
+              <div class="flex items-center gap-2">
+                <span class="text-zinc-400 text-xs">Saldo disponível:</span>
+                <span
+                  class="font-mono text-blue-400 text-xs"
+                  title="Saldo total disponível para envio"
+                  >{{
+                    availableBalance / 100000000 | number : "1.8-8"
+                  }}
+                  BTC</span
+                >
+                <i class="pi pi-wallet text-blue-400"></i>
+              </div>
+            </div>
+            <input
+              id="valor"
+              name="valor"
+              type="number"
+              step="any"
+              min="0"
+              [(ngModel)]="sendAmount"
+              (input)="onSendAmountChange()"
+              (focus)="onSendAmountFocus()"
+              (blur)="onSendAmountBlur()"
+              [ngClass]="{
+                'border-red-500':
+                  sendAmountTouched &&
+                  !sendAmountFocused &&
+                  sendAmountValid === false,
+                'border-zinc-700': !(
+                  sendAmountTouched &&
+                  !sendAmountFocused &&
+                  sendAmountValid === false
+                )
+              }"
+              class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+              placeholder="0.00000000"
+            />
+            <div
+              *ngIf="
+                sendAmountTouched &&
+                !sendAmountFocused &&
+                sendAmountValid === false
+              "
+              class="text-xs text-red-400 mt-1"
+            >
+              {{ sendAmountErrorMsg }}
+            </div>
+          </div>
+          <div
+            *ngIf="sendError"
+            class="text-red-400 bg-red-900/30 border border-red-800 rounded px-3 py-2 text-sm font-medium"
+          >
+            {{ sendError }}
+          </div>
+          <div
+            *ngIf="sendSuccess"
+            class="text-green-400 bg-green-900/30 border border-green-800 rounded px-3 py-2 text-sm font-medium"
+          >
+            {{ sendSuccess }}
+          </div>
+          <div class="flex gap-2 justify-end mt-4">
+            <button
+              type="button"
+              class="p-2 px-4 rounded bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
+              (click)="activeTab = 'transacoes'"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              [disabled]="sendButtonDisabled"
+              [ngClass]="{
+                'bg-blue-600 text-white hover:bg-blue-500': !sendButtonDisabled,
+                'bg-zinc-800 text-zinc-500 cursor-not-allowed':
+                  sendButtonDisabled
+              }"
+              [style.cursor]="sendButtonDisabled ? 'not-allowed' : 'pointer'"
+              class="p-2 px-4 rounded transition-colors"
+            >
+              Enviar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

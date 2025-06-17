@@ -1,7 +1,7 @@
 <div
-  class="h-full w-full bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700"
+  class="flex flex-col h-full min-h-0 w-full bg-zinc-800 rounded-lg shadow p-6 border border-zinc-700"
 >
-  <div class="flex items-center justify-between mb-2">
+  <div class="flex items-center justify-between mb-4">
     <h3 class="text-lg font-semibold text-blue-400">Bloco Atual</h3>
     <span
       *ngIf="miningElapsed !== undefined"
@@ -10,9 +10,10 @@
     >
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="space-y-4">
-      <div class="grid grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 min-h-0">
+    <!-- Coluna 1: Metadados do Bloco -->
+    <div class="space-y-3 min-w-0">
+      <div class="grid grid-cols-2 gap-x-4 gap-y-1">
         <div>
           <span class="text-xs text-zinc-400">ID:</span>
           <span class="font-mono text-sm text-white block">{{
@@ -29,25 +30,42 @@
 
         <div class="col-span-2">
           <span class="text-xs text-zinc-400">Hash Anterior:</span>
-          <span class="font-mono text-sm text-white block truncate">{{
-            block?.previousHash ||
-              "0000000000000000000000000000000000000000000000000000000000000000"
-          }}</span>
+          <span
+            class="font-mono text-[11px] text-white block truncate break-all max-w-full"
+            [title]="block?.previousHash"
+          >
+            {{ block?.previousHash || "0".repeat(64) }}
+          </span>
         </div>
 
         <div class="col-span-2">
           <span class="text-xs text-zinc-400">Hash Atual:</span>
-          <span class="font-mono text-sm text-white block truncate">{{
-            block?.hash ||
-              "0000000000000000000000000000000000000000000000000000000000000000"
-          }}</span>
+          <span
+            class="font-mono text-[11px] text-white block truncate break-all max-w-full"
+            [title]="block?.hash"
+          >
+            {{ block?.hash || "0".repeat(64) }}
+          </span>
+        </div>
+
+        <div class="col-span-2">
+          <span class="text-xs text-zinc-400">Merkle Root:</span>
+          <span
+            class="font-mono text-[11px] text-white block truncate break-all max-w-full"
+            [title]="block?.merkleRoot"
+          >
+            {{ block?.merkleRoot || "-" }}
+          </span>
         </div>
 
         <div class="col-span-2">
           <span class="text-xs text-zinc-400">Target:</span>
-          <span class="font-mono text-sm text-white block truncate">{{
-            target
-          }}</span>
+          <span
+            class="font-mono text-[11px] text-white block truncate break-all max-w-full"
+            [title]="target"
+          >
+            {{ target }}
+          </span>
         </div>
 
         <div>
@@ -66,39 +84,70 @@
       </div>
     </div>
 
-    <div class="space-y-4">
-      <div>
+    <!-- Coluna 2: Transações -->
+    <div class="space-y-3 min-w-0 flex flex-col h-full min-h-0">
+      <div class="flex flex-col h-full min-h-0">
         <span class="text-xs text-zinc-400"
           >Transações ({{ block?.transactions?.length || 0 }}):</span
         >
-        <div class="mt-2 space-y-2">
-          <div
-            *ngFor="let tx of block?.transactions"
-            class="bg-zinc-900 p-3 rounded"
-          >
-            <div class="flex items-center justify-between">
-              <span class="text-xs text-zinc-400">ID:</span>
-              <span class="font-mono text-xs text-white truncate">{{
-                tx.id
-              }}</span>
-            </div>
-            <div class="mt-1">
-              <span class="text-xs text-zinc-400">Inputs:</span>
-              <div *ngFor="let input of tx.inputs" class="ml-2">
-                <span class="font-mono text-xs text-white truncate block">
-                  {{ input.txid }}:{{ input.vout }}
-                </span>
+        <div
+          class="mt-2 flex flex-col gap-0 h-full min-h-0 overflow-y-auto pr-1"
+        >
+          <ng-container *ngFor="let tx of block?.transactions; let i = index">
+            <div
+              class="bg-zinc-900 p-3 rounded border border-zinc-700 relative mb-2 last:mb-0 min-w-0"
+            >
+              <div class="flex items-center justify-between mb-1 min-w-0">
+                <span class="text-xs text-zinc-400">ID:</span>
+                <span
+                  class="font-mono text-[11px] text-white truncate break-all max-w-[160px] md:max-w-[220px]"
+                  [title]="tx.id"
+                  >{{ tx.id }}</span
+                >
+                <span
+                  *ngIf="i === 0"
+                  class="ml-2 text-[9px] bg-blue-700 text-white px-1.5 py-0.5 rounded font-bold tracking-wide"
+                  >COINBASE</span
+                >
+              </div>
+              <div class="mt-1">
+                <span class="text-xs text-zinc-400">Inputs:</span>
+                <div
+                  *ngIf="tx.inputs.length === 0"
+                  class="ml-2 text-xs text-zinc-500"
+                >
+                  -
+                </div>
+                <div *ngFor="let input of tx.inputs" class="ml-2">
+                  <span
+                    class="font-mono text-[11px] text-white truncate break-all block max-w-full"
+                    [title]="input.txid"
+                  >
+                    {{ input.txid }}:{{ input.vout }}
+                    <span class="text-zinc-400"
+                      >({{ input.value / 100000000 }} BTC)</span
+                    >
+                  </span>
+                </div>
+              </div>
+              <div class="mt-1">
+                <span class="text-xs text-zinc-400">Outputs:</span>
+                <div *ngFor="let output of tx.outputs" class="ml-2">
+                  <span
+                    class="font-mono text-[11px] text-white truncate break-all block max-w-full"
+                    [title]="output.scriptPubKey"
+                  >
+                    {{ output.value / 100000000 }} BTC →
+                    {{ output.scriptPubKey }}
+                  </span>
+                </div>
               </div>
             </div>
-            <div class="mt-1">
-              <span class="text-xs text-zinc-400">Outputs:</span>
-              <div *ngFor="let output of tx.outputs" class="ml-2">
-                <span class="font-mono text-xs text-white truncate block">
-                  {{ output.value / 100000000 }} BTC → {{ output.scriptPubKey }}
-                </span>
-              </div>
-            </div>
-          </div>
+            <div
+              *ngIf="i < (block?.transactions?.length || 0) - 1"
+              class="border-t border-zinc-700 mx-2"
+            ></div>
+          </ng-container>
         </div>
       </div>
     </div>
