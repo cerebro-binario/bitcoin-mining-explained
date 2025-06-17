@@ -37,7 +37,9 @@
         </button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4">
+        <div
+          class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px]"
+        >
           <h2
             class="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2"
           >
@@ -59,120 +61,189 @@
             >
           </h2>
           <ng-container *ngIf="miner.currentBlock; else noBlock">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <div class="text-xs text-zinc-400">Height</div>
-                <div class="font-mono text-lg text-blue-400">
-                  {{ miner.currentBlock.height }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-zinc-400">Timestamp</div>
-                <div class="font-mono text-sm">
-                  {{ miner.currentBlock.timestamp | date : "medium" }}
-                </div>
-              </div>
-              <div class="col-span-2">
-                <div class="text-xs text-zinc-400">Hash Anterior</div>
-                <div class="font-mono text-xs break-all text-zinc-300">
-                  {{ miner.currentBlock.previousHash || "0".repeat(64) }}
-                </div>
-              </div>
-              <div class="col-span-2">
-                <div class="text-xs text-zinc-400">Hash Atual</div>
-                <div class="font-mono text-xs break-all text-green-400">
-                  {{ miner.currentBlock.hash || "0".repeat(64) }}
-                </div>
-              </div>
-              <div class="col-span-2">
-                <div class="text-xs text-zinc-400">Merkle Root</div>
-                <div class="font-mono text-xs break-all text-zinc-300">
-                  {{ miner.currentBlock.merkleRoot || "-" }}
-                </div>
-              </div>
-              <div class="col-span-2">
-                <div class="text-xs text-zinc-400">Target</div>
-                <div class="font-mono text-xs break-all text-zinc-300">
-                  {{ getTarget(miner.currentBlock) }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-zinc-400">Nonce</div>
-                <div class="font-mono text-lg text-yellow-400">
-                  {{ miner.currentBlock.nonce | number }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-zinc-400">Consenso</div>
-                <div class="font-mono text-sm">
-                  v{{ miner.currentBlock.consensusVersion }}
-                </div>
-              </div>
+            <!-- Tabs -->
+            <div class="flex gap-2 border-b border-zinc-800">
+              <button
+                class="px-4 py-2 text-sm font-medium transition-colors"
+                [ngClass]="
+                  activeTab === 'metadata'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-zinc-400 hover:text-zinc-300'
+                "
+                (click)="activeTab = 'metadata'"
+              >
+                Metadados
+              </button>
+              <button
+                class="px-4 py-2 text-sm font-medium transition-colors"
+                [ngClass]="
+                  activeTab === 'transactions'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-zinc-400 hover:text-zinc-300'
+                "
+                (click)="activeTab = 'transactions'"
+              >
+                Transações ({{ miner.currentBlock.transactions.length }})
+              </button>
             </div>
 
-            <!-- Transações -->
-            <div class="mt-4">
-              <div class="text-xs text-zinc-400 mb-2">
-                Transações ({{ miner.currentBlock.transactions.length }}):
-              </div>
-              <div class="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                <ng-container
-                  *ngFor="
-                    let tx of miner.currentBlock.transactions;
-                    let i = index
-                  "
-                >
-                  <div
-                    class="bg-zinc-800/50 p-3 rounded border border-zinc-700"
-                  >
-                    <div class="flex items-center justify-between mb-1">
-                      <span class="text-xs text-zinc-400">ID:</span>
-                      <span
-                        class="font-mono text-xs text-zinc-300 truncate max-w-[200px]"
-                        [title]="tx.id"
-                      >
-                        {{ tx.id }}
-                      </span>
-                      <span
-                        *ngIf="i === 0"
-                        class="ml-2 text-[9px] bg-blue-700 text-white px-1.5 py-0.5 rounded font-bold tracking-wide"
-                        >COINBASE</span
-                      >
-                    </div>
-                    <div class="mt-1">
-                      <span class="text-xs text-zinc-400">Inputs:</span>
-                      <div
-                        *ngIf="tx.inputs.length === 0"
-                        class="ml-2 text-xs text-zinc-500"
-                      >
-                        -
-                      </div>
-                      <div *ngFor="let input of tx.inputs" class="ml-2">
-                        <span
-                          class="font-mono text-xs text-zinc-300 truncate block max-w-full"
-                          [title]="input.txid"
-                        >
-                          {{ input.txid }}:{{ input.vout }}
-                          <span class="text-zinc-400"
-                            >({{ input.value / 100000000 }} BTC)</span
-                          >
-                        </span>
-                      </div>
-                    </div>
-                    <div class="mt-1">
-                      <span class="text-xs text-zinc-400">Outputs:</span>
-                      <div *ngFor="let output of tx.outputs" class="ml-2">
-                        <span
-                          class="font-mono text-xs text-zinc-300 truncate block max-w-full"
-                          [title]="output.scriptPubKey"
-                        >
-                          {{ output.value / 100000000 }} BTC →
-                          {{ output.scriptPubKey }}
-                        </span>
-                      </div>
+            <!-- Conteúdo das Tabs -->
+            <div class="flex-1 min-h-0">
+              <!-- Metadados -->
+              <div
+                *ngIf="activeTab === 'metadata'"
+                class="h-full flex flex-col min-h-0"
+              >
+                <div class="grid grid-cols-2 gap-4 flex-1 overflow-y-auto">
+                  <div>
+                    <div class="text-xs text-zinc-400">Height</div>
+                    <div class="font-mono text-lg text-blue-400">
+                      {{ miner.currentBlock.height }}
                     </div>
                   </div>
-                </ng-container>
+                  <div>
+                    <div class="text-xs text-zinc-400">Timestamp</div>
+                    <div class="font-mono text-sm">
+                      {{ miner.currentBlock.timestamp | date : "medium" }}
+                    </div>
+                  </div>
+                  <div class="col-span-2">
+                    <div class="text-xs text-zinc-400">Hash Anterior</div>
+                    <div class="font-mono text-xs break-all text-zinc-300">
+                      {{ miner.currentBlock.previousHash || "0".repeat(64) }}
+                    </div>
+                  </div>
+                  <div class="col-span-2">
+                    <div class="text-xs text-zinc-400">Hash Atual</div>
+                    <div class="font-mono text-xs break-all text-green-400">
+                      {{ miner.currentBlock.hash || "0".repeat(64) }}
+                    </div>
+                  </div>
+                  <div class="col-span-2">
+                    <div class="text-xs text-zinc-400">Merkle Root</div>
+                    <div class="font-mono text-xs break-all text-zinc-300">
+                      {{ miner.currentBlock.merkleRoot || "-" }}
+                    </div>
+                  </div>
+                  <div class="col-span-2">
+                    <div class="text-xs text-zinc-400">Target</div>
+                    <div class="font-mono text-xs break-all text-zinc-300">
+                      {{ getTarget(miner.currentBlock) }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-zinc-400">Nonce</div>
+                    <div class="font-mono text-lg text-yellow-400">
+                      {{ miner.currentBlock.nonce | number }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-zinc-400">Consenso</div>
+                    <div class="font-mono text-sm">
+                      v{{ miner.currentBlock.consensusVersion }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transações -->
+              <div
+                *ngIf="activeTab === 'transactions'"
+                class="h-full flex flex-col min-h-0"
+              >
+                <div class="space-y-4 flex-1 overflow-y-auto pr-2">
+                  <ng-container
+                    *ngFor="
+                      let tx of miner.currentBlock.transactions;
+                      let i = index
+                    "
+                  >
+                    <div
+                      class="bg-zinc-800/50 rounded-lg border border-zinc-700 overflow-hidden"
+                    >
+                      <!-- Cabeçalho da Transação -->
+                      <div
+                        class="bg-zinc-900/50 px-4 py-2 flex items-center justify-between border-b border-zinc-700"
+                      >
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs text-zinc-400"
+                            >#{{ i + 1 }}</span
+                          >
+                          <span
+                            *ngIf="i === 0"
+                            class="text-[9px] bg-blue-700 text-white px-1.5 py-0.5 rounded font-bold tracking-wide"
+                            >COINBASE</span
+                          >
+                        </div>
+                        <span
+                          class="font-mono text-xs text-zinc-300 truncate max-w-[300px]"
+                          [title]="tx.id"
+                        >
+                          {{ tx.id }}
+                        </span>
+                      </div>
+
+                      <!-- Corpo da Transação -->
+                      <div class="p-4 space-y-3">
+                        <!-- Inputs -->
+                        <div>
+                          <div class="text-xs font-medium text-zinc-400 mb-2">
+                            Inputs
+                          </div>
+                          <div
+                            *ngIf="tx.inputs.length === 0"
+                            class="text-xs text-zinc-500 ml-2"
+                          >
+                            -
+                          </div>
+                          <div
+                            *ngFor="let input of tx.inputs"
+                            class="ml-2 mb-2 last:mb-0"
+                          >
+                            <div class="flex items-center gap-2">
+                              <span
+                                class="font-mono text-xs text-zinc-300 truncate flex-1"
+                                [title]="input.txid"
+                              >
+                                {{ input.txid }}:{{ input.vout }}
+                              </span>
+                              <span
+                                class="text-xs text-zinc-400 whitespace-nowrap"
+                              >
+                                {{ input.value / 100000000 }} BTC
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Outputs -->
+                        <div>
+                          <div class="text-xs font-medium text-zinc-400 mb-2">
+                            Outputs
+                          </div>
+                          <div
+                            *ngFor="let output of tx.outputs"
+                            class="ml-2 mb-2 last:mb-0"
+                          >
+                            <div class="flex items-center gap-2">
+                              <span
+                                class="text-xs text-zinc-400 whitespace-nowrap"
+                              >
+                                {{ output.value / 100000000 }} BTC
+                              </span>
+                              <span
+                                class="font-mono text-xs text-zinc-300 truncate flex-1"
+                                [title]="output.scriptPubKey"
+                              >
+                                → {{ output.scriptPubKey }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
               </div>
             </div>
           </ng-container>

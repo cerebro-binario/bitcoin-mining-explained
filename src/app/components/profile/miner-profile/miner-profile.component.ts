@@ -12,6 +12,7 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
 })
 export class MinerProfileComponent {
   miner: BitcoinNode | undefined;
+  activeTab: 'metadata' | 'transactions' = 'metadata';
 
   constructor(
     private route: ActivatedRoute,
