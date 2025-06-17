@@ -12,4 +12,7 @@ import { TransactionView } from '../wallet.component';
 export class TransactionListComponent {
   @Input() transactions: TransactionView[] = [];
   @Input() walletAddresses: string[] = [];
+  @Input() totalTransactions: number = 0;
+  @Input() currentPage: number = 1;
+  @Input() pageSize: number = 10;
 }

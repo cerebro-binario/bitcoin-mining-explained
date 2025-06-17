@@ -68,6 +68,9 @@
         <app-transaction-list
           [transactions]="pagedTransactionViews"
           [walletAddresses]="walletAddressesList"
+          [totalTransactions]="transactionViews.length"
+          [currentPage]="transactionCurrentPageDisplay"
+          [pageSize]="transactionPagination.pageSize"
           class="flex-1 h-full"
         ></app-transaction-list>
         <app-pagination-bar

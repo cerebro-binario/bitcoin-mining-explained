@@ -570,7 +570,9 @@ export class WalletComponent {
       blockNode = blockNode.children[0];
     }
     this.transactions = transactions;
-    this.transactionViews = transactionViews;
+    this.transactionViews = transactionViews.sort(
+      (a, b) => b.timestamp - a.timestamp
+    );
     this.updateTransactionTotalPages();
     this.updateTransactionViews();
   }
