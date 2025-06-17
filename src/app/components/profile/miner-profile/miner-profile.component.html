@@ -289,42 +289,58 @@
           ></app-wallet>
         </div>
       </div>
+
+      <!-- Blockchain -->
       <div
         class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 overflow-hidden"
       >
-        <h2 class="text-xl font-bold text-blue-300 mb-2">Blockchain Local</h2>
-        <div *ngIf="miner.heights.length > 0; else noChain">
-          <div class="text-zinc-200">
-            Altura: {{ miner.heights.length - 1 }}
+        <div
+          class="flex items-center justify-between mb-4 cursor-pointer hover:bg-zinc-700/50 p-2 rounded transition-colors"
+          (click)="toggleBlockchainVisibility()"
+        >
+          <div class="flex items-center gap-2">
+            <h3 class="text-xl font-bold text-blue-300 mb-2">
+              Blockchain Local
+            </h3>
+            <span class="text-xs text-zinc-400">
+              {{ miner.heights.length > 0 ? miner.heights.length - 1 : 0 }}
+              blocos
+              <span *ngIf="miner.getLatestBlock()"
+                >(Último: #{{ miner.getLatestBlock()?.height }})</span
+              >
+            </span>
           </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full text-xs text-zinc-300 mt-2">
-              <thead>
-                <tr>
-                  <th class="px-2 py-1">#</th>
-                  <th class="px-2 py-1">Hash</th>
-                  <th class="px-2 py-1">Txs</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- <tr *ngFor="let h of miner?.heights?.slice(-10).reverse()">
-                  <td class="px-2 py-1">{{ h.n }}</td>
-                  <td class="px-2 py-1 font-mono truncate max-w-[200px]">
-                    {{ h.blocks[0]?.block.hash }}
-                  </td>
-                  <td class="px-2 py-1">
-                    {{ h.blocks[0]?.block.transactions?.length }}
-                  </td>
-                </tr> -->
-              </tbody>
-            </table>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-zinc-400">{{
+              isBlockchainVisible ? "Recolher" : "Expandir"
+            }}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-zinc-400 transition-transform"
+              [ngClass]="{ 'rotate-180': isBlockchainVisible }"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
           </div>
         </div>
-        <ng-template #noChain>
-          <div class="text-zinc-500 italic">
-            Blockchain ainda não inicializada.
-          </div>
-        </ng-template>
+        <div
+          class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
+          [ngStyle]="{
+            'max-height': !isBlockchainVisible ? '0px' : null,
+            opacity: isBlockchainVisible ? '1' : '0',
+            overflow: isBlockchainVisible ? 'visible' : 'hidden',
+          }"
+        >
+          <app-blockchain [node]="miner"></app-blockchain>
+        </div>
       </div>
     </div>
   </ng-container>
