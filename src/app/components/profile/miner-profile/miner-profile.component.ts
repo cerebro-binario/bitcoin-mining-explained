@@ -24,4 +24,23 @@ export class MinerProfileComponent {
       );
     });
   }
+
+  startMining() {
+    if (!this.miner || this.miner.isMining) return;
+
+    // Cria um novo bloco se não houver um atual
+    if (!this.miner.currentBlock) {
+      this.miner.currentBlock = this.miner.initBlockTemplate();
+    }
+
+    this.miner.isMining = true;
+    this.miner.miningLastTickTime = Date.now();
+  }
+
+  stopMining() {
+    if (!this.miner || !this.miner.isMining) return;
+
+    this.miner.isMining = false;
+    this.miner.miningLastTickTime = null;
+  }
 }

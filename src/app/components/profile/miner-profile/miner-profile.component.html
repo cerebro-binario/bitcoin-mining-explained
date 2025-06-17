@@ -24,41 +24,69 @@
         <button
           *ngIf="!miner?.isMining"
           class="ml-4 px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition"
-          (click)="miner.isMining = true"
+          (click)="startMining()"
         >
           Iniciar Mineração
         </button>
         <button
           *ngIf="miner?.isMining"
           class="ml-4 px-3 py-1 rounded bg-yellow-600 text-white text-sm font-semibold hover:bg-yellow-700 transition"
-          (click)="miner.isMining = false"
+          (click)="stopMining()"
         >
           Pausar Mineração
         </button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4">
-          <h2 class="text-xl font-bold text-blue-300 mb-2">Bloco Atual</h2>
-          <div *ngIf="miner?.currentBlock; else noBlock" class="text-zinc-200">
-            <div>
-              <span class="font-semibold">Height:</span>
-              {{ miner.currentBlock?.height }}
+          <h2
+            class="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2"
+          >
+            Bloco Atual
+            <span
+              *ngIf="miner.isMining"
+              class="ml-2 px-2 py-0.5 rounded bg-green-900 text-green-400 text-xs font-semibold"
+              >Minerando</span
+            >
+            <span
+              *ngIf="!miner.isMining"
+              class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold"
+              >Parado</span
+            >
+          </h2>
+          <ng-container *ngIf="miner.currentBlock; else noBlock">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <div class="text-xs text-zinc-400">Height</div>
+                <div class="font-mono text-lg text-blue-400">
+                  {{ miner.currentBlock.height }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-zinc-400">Nonce</div>
+                <div class="font-mono text-lg text-yellow-400">
+                  {{ miner.currentBlock.nonce }}
+                </div>
+              </div>
+              <div class="col-span-2">
+                <div class="text-xs text-zinc-400">Hash</div>
+                <div class="font-mono text-xs break-all text-green-400">
+                  {{ miner.currentBlock.hash }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-zinc-400">Timestamp</div>
+                <div class="font-mono text-xs">
+                  {{ miner.currentBlock.timestamp | date : "medium" }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-zinc-400">Transações</div>
+                <div class="font-mono text-lg">
+                  {{ miner.currentBlock.transactions.length }}
+                </div>
+              </div>
             </div>
-            <div>
-              <span class="font-semibold">Nonce:</span>
-              {{ miner.currentBlock?.nonce }}
-            </div>
-            <div>
-              <span class="font-semibold">Txs:</span>
-              {{ miner.currentBlock?.transactions?.length }}
-            </div>
-            <div>
-              <span class="font-semibold">Hash:</span>
-              <span class="font-mono text-xs">{{
-                miner.currentBlock?.hash ?? "N/A"
-              }}</span>
-            </div>
-          </div>
+          </ng-container>
           <ng-template #noBlock>
             <div class="text-zinc-500 italic">Nenhum bloco em mineração.</div>
           </ng-template>
