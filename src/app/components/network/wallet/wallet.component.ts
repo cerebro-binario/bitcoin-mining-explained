@@ -16,13 +16,14 @@ import {
   BipType,
   BitcoinAddressData,
   BitcoinUTXO,
+  TransactionHistory,
   Wallet,
 } from '../../../models/wallet.model';
 import { KeyService } from '../../../services/key.service';
 import { ceilBigInt } from '../../../utils/tools';
 import { AddressListComponent } from './address-list/address-list.component';
-import { TransactionListComponent } from './transaction-list/transaction-list.component';
 import { PaginationBarComponent } from './pagination-bar.component';
+import { TransactionListComponent } from './transaction-list/transaction-list.component';
 
 export interface TransactionDetail {
   type: 'input' | 'output' | 'change';
@@ -462,114 +463,112 @@ export class WalletComponent {
    * Atualiza a lista de transações da carteira, buscando na main chain do node
    */
   private updateWalletTransactions() {
-    if (!this._wallet || !this.node) {
+    if (!this._wallet) {
       this.transactions = [];
       this.transactionViews = [];
       return;
     }
+
+    // Junta todas as transações dos endereços da wallet
+    const txMap = new Map<string, TransactionHistory>();
+    this._wallet.addresses
+      .flatMap((addrObj) => Object.values(addrObj))
+      .forEach((addr) => {
+        addr.transactions?.forEach((tx) => {
+          txMap.set(tx.tx.id, tx);
+        });
+      });
+
+    const transactionsHistory = Array.from(txMap.values());
+
+    // Monta os transactionViews como antes, mas usando apenas as transações relevantes
     const walletAddresses = new Set(
       this._wallet.addresses
         .flatMap((addrObj) => Object.values(addrObj))
         .map((addr) => addr.address)
     );
-    const transactions: Transaction[] = [];
     const transactionViews: TransactionView[] = [];
-    let blockNode = this.node.genesis;
-    while (blockNode) {
-      const block = blockNode.block;
-      for (const tx of block.transactions) {
-        const involved =
-          tx.inputs.some((input) => walletAddresses.has(input.scriptPubKey)) ||
-          tx.outputs.some((output) => walletAddresses.has(output.scriptPubKey));
-        if (involved) {
-          transactions.push(tx);
-          const timestamp = block.timestamp;
-          const status = 'Confirmada';
-          const details: TransactionDetail[] = [];
-          // Adiciona todos os inputs
-          tx.inputs.forEach((input) => {
-            details.push({
-              type: 'input',
-              value: input.value,
-              address: input.scriptPubKey,
-              addressType: detectBipType(input.scriptPubKey),
-              isWallet: walletAddresses.has(input.scriptPubKey),
-              txId: input.txid,
-              vout: input.vout,
-            });
-          });
-          // Adiciona todos os outputs
-          tx.outputs.forEach((output, idx) => {
-            const isWallet = walletAddresses.has(output.scriptPubKey);
-            // Se for output para a wallet E a transação tem input da wallet, é troco
-            let detailType: TransactionDetail['type'] = 'output';
-            if (
-              isWallet &&
-              tx.inputs.some((i) => walletAddresses.has(i.scriptPubKey))
-            ) {
-              detailType = 'change';
-            }
-            details.push({
-              type: detailType,
-              value: output.value,
-              address: output.scriptPubKey,
-              addressType: detectBipType(output.scriptPubKey),
-              isWallet,
-              txId: tx.id,
-              vout: idx,
-            });
-          });
 
-          // 1. Linha "Enviada" consolidada
-          const hasInputFromWallet = tx.inputs.some((i) =>
-            walletAddresses.has(i.scriptPubKey)
-          );
-          if (hasInputFromWallet) {
-            // Valor realmente enviado para fora (soma dos outputs externos)
-            const valueSent = tx.outputs
-              .filter((o) => !walletAddresses.has(o.scriptPubKey))
-              .reduce((sum, o) => sum + o.value, 0);
-            const externalOutputs = tx.outputs.filter(
-              (o) => !walletAddresses.has(o.scriptPubKey)
-            );
-            const address =
-              externalOutputs.length > 0
-                ? externalOutputs[0].scriptPubKey
-                : '—';
-            transactionViews.push({
-              id: tx.id,
-              type: 'Enviada',
-              value: valueSent,
-              address,
-              addressType: detectBipType(address),
-              timestamp,
-              status,
-              details,
-            });
-          }
-          // 2. Linha "Recebida" consolidada (apenas se não for change nem enviada)
-          if (!hasInputFromWallet) {
-            const outputsToWallet = tx.outputs.filter((o) =>
-              walletAddresses.has(o.scriptPubKey)
-            );
-            outputsToWallet.forEach((o) => {
-              transactionViews.push({
-                id: tx.id,
-                type: tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
-                value: o.value,
-                address: o.scriptPubKey,
-                addressType: detectBipType(o.scriptPubKey),
-                timestamp,
-                status,
-                details,
-              });
-            });
-          }
+    for (const history of transactionsHistory) {
+      // Se quiser timestamp real, armazene junto ao processar blocos
+      const timestamp = history.timestamp;
+      const status = history.status || 'Confirmada';
+      const details: TransactionDetail[] = [];
+
+      history.tx.inputs.forEach((input) => {
+        details.push({
+          type: 'input',
+          value: input.value,
+          address: input.scriptPubKey,
+          addressType: detectBipType(input.scriptPubKey),
+          isWallet: walletAddresses.has(input.scriptPubKey),
+          txId: input.txid,
+          vout: input.vout,
+        });
+      });
+      history.tx.outputs.forEach((output, idx) => {
+        const isWallet = walletAddresses.has(output.scriptPubKey);
+        let detailType: TransactionDetail['type'] = 'output';
+        if (
+          isWallet &&
+          history.tx.inputs.some((i) => walletAddresses.has(i.scriptPubKey))
+        ) {
+          detailType = 'change';
         }
+        details.push({
+          type: detailType,
+          value: output.value,
+          address: output.scriptPubKey,
+          addressType: detectBipType(output.scriptPubKey),
+          isWallet,
+          txId: history.tx.id,
+          vout: idx,
+        });
+      });
+
+      const hasInputFromWallet = history.tx.inputs.some((i) =>
+        walletAddresses.has(i.scriptPubKey)
+      );
+      if (hasInputFromWallet) {
+        const valueSent = history.tx.outputs
+          .filter((o) => !walletAddresses.has(o.scriptPubKey))
+          .reduce((sum, o) => sum + o.value, 0);
+        const externalOutputs = history.tx.outputs.filter(
+          (o) => !walletAddresses.has(o.scriptPubKey)
+        );
+        const address =
+          externalOutputs.length > 0 ? externalOutputs[0].scriptPubKey : '—';
+        transactionViews.push({
+          id: history.tx.id,
+          type: 'Enviada',
+          value: valueSent,
+          address,
+          addressType: detectBipType(address),
+          timestamp,
+          status,
+          details,
+        });
       }
-      blockNode = blockNode.children[0];
+      if (!hasInputFromWallet) {
+        const outputsToWallet = history.tx.outputs.filter((o) =>
+          walletAddresses.has(o.scriptPubKey)
+        );
+        outputsToWallet.forEach((o) => {
+          transactionViews.push({
+            id: history.tx.id,
+            type: history.tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
+            value: o.value,
+            address: o.scriptPubKey,
+            addressType: detectBipType(o.scriptPubKey),
+            timestamp,
+            status,
+            details,
+          });
+        });
+      }
     }
-    this.transactions = transactions;
+
+    this.transactions = transactionsHistory.map((h) => h.tx);
     this.transactionViews = transactionViews.sort(
       (a, b) => b.timestamp - a.timestamp
     );

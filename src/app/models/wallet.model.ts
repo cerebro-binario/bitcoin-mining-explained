@@ -1,3 +1,5 @@
+import { Transaction } from './block.model';
+
 export const MAX_PRIVATE_KEY_VALUE = BigInt(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140'
 );
@@ -29,6 +31,13 @@ export interface BitcoinUTXO {
   outputIndex: number;
 }
 
+export interface TransactionHistory {
+  tx: Transaction;
+  timestamp: number;
+  blockHeight: number;
+  status?: string;
+}
+
 export interface BitcoinAddressData {
   nodeId?: number;
   keys: Keys;
@@ -36,6 +45,7 @@ export interface BitcoinAddressData {
   balance: number;
   utxos: BitcoinUTXO[];
   addressType: BipType;
+  transactions: TransactionHistory[];
 }
 
 export type BipType = 'bip44' | 'bip49' | 'bip84';

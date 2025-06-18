@@ -1655,6 +1655,17 @@ export class Node {
 
         inputSum += utxo.output.value;
 
+        // Adiciona transação ao histórico do endereço (input)
+        if (!addressData.transactions) addressData.transactions = [];
+        if (!addressData.transactions.some((t) => t.tx.id === tx.id)) {
+          addressData.transactions.push({
+            tx,
+            timestamp: block.timestamp,
+            blockHeight: block.height,
+            status: 'Confirmada',
+          });
+        }
+
         // Remove o UTXO gasto
         const newUtxos = addressData.utxos.filter(
           (u) => !(u.txId === input.txid && u.outputIndex === input.vout)
@@ -1665,6 +1676,7 @@ export class Node {
             ...addressData,
             balance: addressData.balance - utxo.output.value,
             utxos: newUtxos,
+            transactions: addressData.transactions,
           };
         } else {
           delete tempUtxoSet[input.scriptPubKey];
@@ -1682,8 +1694,7 @@ export class Node {
           address: output.scriptPubKey,
           balance: 0,
           utxos: [],
-          nodeId: undefined, // não há uma forma de saber o nodeId de um endereço apenas com o scriptPubKey
-          // TODO: verificar se há algum outro modo de saber o nodeId de um endereço
+          nodeId: undefined,
           ...(isMinerCoinbase
             ? { keys: this.wallet.addresses[0].bip84.keys }
             : {
@@ -1693,7 +1704,19 @@ export class Node {
                 },
               }),
           addressType: getAddressType(output.scriptPubKey),
+          transactions: [],
         };
+
+        // Adiciona transação ao histórico do endereço (output)
+        if (!addressData.transactions) addressData.transactions = [];
+        if (!addressData.transactions.some((t) => t.tx.id === tx.id)) {
+          addressData.transactions.push({
+            tx,
+            timestamp: block.timestamp,
+            blockHeight: block.height,
+            status: 'Confirmada',
+          });
+        }
 
         addressData.utxos.push({
           output,
@@ -1705,6 +1728,7 @@ export class Node {
         tempUtxoSet[output.scriptPubKey] = {
           ...addressData,
           balance: addressData.balance + output.value,
+          transactions: addressData.transactions,
         };
       }
 
@@ -1744,6 +1768,7 @@ export class Node {
             },
           }),
       addressType: getAddressType(address),
+      transactions: [],
     };
 
     // Verifica se a coinbase já foi processada
@@ -1758,6 +1783,17 @@ export class Node {
       txId: coinbase.id,
       outputIndex: 0,
     });
+
+    // Adiciona coinbase ao histórico do endereço
+    if (!addressData.transactions) addressData.transactions = [];
+    if (!addressData.transactions.some((t) => t.tx.id === coinbase.id)) {
+      addressData.transactions.push({
+        tx: coinbase,
+        timestamp: block.timestamp,
+        blockHeight: block.height,
+        status: 'Confirmada',
+      });
+    }
 
     // Atualiza o saldo
     addressData.balance += subsidy;
@@ -1804,6 +1840,9 @@ export class Node {
               ...addressData,
               balance: addressData.balance - output.value,
               utxos: newUtxos,
+              transactions:
+                addressData.transactions?.filter((t) => t.tx.id !== tx.id) ||
+                [],
             };
           } else {
             delete tempUtxoSet[output.scriptPubKey];
@@ -1822,6 +1861,7 @@ export class Node {
             priv: { hex: '', decimal: '', wif: '' },
           },
           addressType: getAddressType(input.scriptPubKey),
+          transactions: [],
         };
 
         addressData.utxos.push({
@@ -1834,9 +1874,14 @@ export class Node {
           outputIndex: input.vout,
         });
 
+        // Remove a transação do histórico do endereço
+        addressData.transactions =
+          addressData.transactions?.filter((t) => t.tx.id !== tx.id) || [];
+
         tempUtxoSet[input.scriptPubKey] = {
           ...addressData,
           balance: addressData.balance + input.value,
+          transactions: addressData.transactions,
         };
       }
     }
@@ -1851,11 +1896,17 @@ export class Node {
           (u) => !(u.txId === coinbase.id && u.outputIndex === 0)
         );
 
+        // Remove a coinbase do histórico do endereço
+        addressData.transactions =
+          addressData.transactions?.filter((t) => t.tx.id !== coinbase.id) ||
+          [];
+
         if (newUtxos.length > 0) {
           tempUtxoSet[address] = {
             ...addressData,
             balance: addressData.balance - coinbase.outputs[0].value,
             utxos: newUtxos,
+            transactions: addressData.transactions,
           };
         } else {
           delete tempUtxoSet[address];
@@ -1877,9 +1928,11 @@ export class Node {
         if (balanceData) {
           addressData.balance = balanceData.balance;
           addressData.utxos = balanceData.utxos;
+          addressData.transactions = balanceData.transactions;
         } else {
           addressData.balance = 0;
           addressData.utxos = [];
+          addressData.transactions = [];
         }
       }
     }

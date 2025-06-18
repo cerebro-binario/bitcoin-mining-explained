@@ -55,7 +55,7 @@ export class AddressListComponent {
       | undefined;
   } = {};
 
-  selectedAddress: any = null;
+  selectedAddress: BitcoinAddressData | null = null;
   showAddressDialog = false;
 
   get first() {

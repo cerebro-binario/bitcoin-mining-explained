@@ -525,6 +525,7 @@
 
 <!-- Dialog de detalhes do endereço -->
 <app-address-details-dialog
+  *ngIf="selectedAddress"
   [visible]="showAddressDialog"
   [addressData]="selectedAddress"
   (close)="closeAddressDialog()"
