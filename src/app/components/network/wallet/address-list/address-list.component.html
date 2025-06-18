@@ -344,40 +344,52 @@
                       <label class="block text-xs text-zinc-500 mb-1"
                         >UTXOs</label
                       >
-                      <table
+                      <div
                         *ngIf="data.utxos.length > 0; else noUtxos"
-                        class="min-w-full text-xs text-left bg-zinc-900 rounded"
+                        class="flex flex-col gap-4"
                       >
-                        <thead>
-                          <tr>
-                            <th class="px-4 py-2">TxID</th>
-                            <th class="px-4 py-2">Out</th>
-                            <th class="px-4 py-2 text-right">Valor</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            *ngFor="
-                              let utxo of getUtxosPage(data.address, data.utxos)
-                            "
+                        <div
+                          *ngFor="
+                            let utxo of getUtxosPage(data.address, data.utxos)
+                          "
+                          class="bg-zinc-800 rounded-lg shadow p-4 flex items-center gap-6 border border-zinc-700 relative"
+                        >
+                          <div
+                            class="flex items-center justify-center bg-blue-900/60 rounded-full w-12 h-12"
                           >
-                            <td
-                              class="font-mono text-xs text-white/80 px-4 py-3"
-                            >
-                              {{ utxo.txId }}
-                            </td>
-                            <td class="px-4 py-3">{{ utxo.outputIndex }}</td>
-                            <td
-                              class="px-4 py-3 text-right font-mono text-zinc-200"
+                            <i
+                              class="pi pi-money-bill text-2xl text-blue-400"
+                            ></i>
+                          </div>
+                          <div class="flex-1">
+                            <div
+                              class="text-lg font-bold text-green-300 flex items-center gap-2"
                             >
                               {{
                                 utxo.output.value / 100000000 | number : "1.8-8"
                               }}
-                              BTC
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                              <span class="text-base text-zinc-400">BTC</span>
+                            </div>
+                            <div class="text-xs text-zinc-400 mt-1">
+                              <span class="font-semibold">TxID:</span>
+                              <span class="font-mono break-all">{{
+                                utxo.txId
+                              }}</span>
+                              <span class="mx-2">|</span>
+                              <span class="font-semibold">Out:</span>
+                              <span class="font-mono">{{
+                                utxo.outputIndex
+                              }}</span>
+                            </div>
+                            <div class="text-xs text-zinc-500 mt-2 italic">
+                              UTXO = "Unspent Transaction Output"<br />
+                              Pense como uma nota digital: para gastar, é
+                              preciso assinar com a chave privada
+                              correspondente.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       <app-pagination-bar
                         *ngIf="
                           data.utxos.length >
