@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { BitcoinAddressData } from '../../../../models/wallet.model';
+import { BitcoinAddressData, BipType } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
+import { getAddressType } from '../../../../utils/tools';
 
 @Component({
   selector: 'app-address-details',
@@ -56,12 +57,19 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     const nodes = this.bitcoinNetworkService.nodes;
     const minerNode = nodes.find((node: any) => node.id === this.nodeId);
 
-    if (minerNode) {
-      const addressData = minerNode.balances[this.addressId];
-      if (addressData) {
-        this.addressData = addressData;
-        this.nodeId = minerNode.id;
-        this.calculateSpentUtxos();
+    if (minerNode && minerNode.wallet && minerNode.wallet.addresses) {
+      // Primeiro, descobre o tipo BIP do endereço
+      const addressType = getAddressType(this.addressId);
+
+      // Depois, busca diretamente no tipo BIP correto
+      for (const addressObj of minerNode.wallet.addresses) {
+        const addressData = addressObj[addressType];
+        if (addressData && addressData.address === this.addressId) {
+          this.addressData = addressData;
+          this.nodeId = minerNode.id;
+          this.calculateSpentUtxos();
+          return;
+        }
       }
     }
   }
@@ -99,7 +107,7 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
             }
             this.spentUtxos.push({
               output,
-              blockHeight: undefined,
+              blockHeight: addrTx.blockHeight,
               txId: tx.id,
               outputIndex: idx,
               spentInTxId,
