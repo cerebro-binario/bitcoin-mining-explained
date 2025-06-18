@@ -105,7 +105,7 @@
               icon="pi pi-search"
               class="p-button-text p-button-xs ml-2 text-blue-400 hover:text-blue-600"
               title="Ver detalhes do endereço"
-              (click)="openAddressDialog(data)"
+              (click)="openAddressDetails(data)"
             ></button>
           </td>
           <td class="px-4 py-2 text-zinc-500 font-mono">
@@ -458,40 +458,38 @@
                       <app-pagination-bar
                         *ngIf="
                           data.utxos.length >
-                          (utxoPagination[data.address]?.pageSize || 10)
+                          (utxoPagination[data.address].pageSize || 10)
                         "
                         [currentPage]="
-                          utxoPagination[data.address]?.currentPage || 1
+                          utxoPagination[data.address].currentPage || 1
                         "
                         [totalPages]="
                           getUtxoTotalPages(data.address, data.utxos)
                         "
                         [percent]="
-                          ((utxoPagination[data.address]?.currentPage || 1) /
+                          ((utxoPagination[data.address].currentPage || 1) /
                             getUtxoTotalPages(data.address, data.utxos)) *
                           100
                         "
                         [prevDisabled]="
-                          (utxoPagination[data.address]?.currentPage || 1) === 1
+                          (utxoPagination[data.address].currentPage || 1) === 1
                         "
                         [nextDisabled]="
-                          (utxoPagination[data.address]?.currentPage || 1) ===
+                          (utxoPagination[data.address].currentPage || 1) ===
                           getUtxoTotalPages(data.address, data.utxos)
                         "
                         (goToFirst)="goToUtxoPage(data.address, 1, data.utxos)"
                         (goToPrevious)="
                           goToUtxoPage(
                             data.address,
-                            (utxoPagination[data.address]?.currentPage || 1) -
-                              1,
+                            (utxoPagination[data.address].currentPage || 1) - 1,
                             data.utxos
                           )
                         "
                         (goToNext)="
                           goToUtxoPage(
                             data.address,
-                            (utxoPagination[data.address]?.currentPage || 1) +
-                              1,
+                            (utxoPagination[data.address].currentPage || 1) + 1,
                             data.utxos
                           )
                         "
@@ -522,11 +520,3 @@
     </p-table>
   </div>
 </div>
-
-<!-- Dialog de detalhes do endereço -->
-<app-address-details-dialog
-  *ngIf="selectedAddress"
-  [visible]="showAddressDialog"
-  [addressData]="selectedAddress"
-  (close)="closeAddressDialog()"
-></app-address-details-dialog>

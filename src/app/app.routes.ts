@@ -11,6 +11,7 @@ import { ProfilePageLayout } from './layouts/profile-page.layout';
 import { MainDashboardComponent } from './components/profile/main-dashboard/main-dashboard.component';
 import { MinersListV2Component } from './components/profile/miners-list-v2/miners-list-v2.component';
 import { NetworkOverviewComponent } from './components/network/network-overview/network-overview.component';
+import { AddressDetailsComponent } from './components/network/wallet/address-list/address-details.component';
 
 export const routes: Routes = [
   {
@@ -20,7 +21,10 @@ export const routes: Routes = [
   {
     path: 'miner/:id',
     component: ProfilePageLayout,
-    children: [{ path: '', component: MinerProfileComponent }],
+    children: [
+      { path: '', component: MinerProfileComponent },
+      { path: 'addresses/:address', component: AddressDetailsComponent },
+    ],
   },
   {
     path: 'dashboard/miners',

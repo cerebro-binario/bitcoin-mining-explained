@@ -5,19 +5,13 @@ import { TableModule } from 'primeng/table';
 import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { copyToClipboard } from '../../../../utils/tools';
 import { PaginationBarComponent } from '../pagination-bar.component';
-import { AddressDetailsDialogComponent } from './address-details-dialog.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-address-list',
   templateUrl: './address-list.component.html',
   standalone: true,
-  imports: [
-    CommonModule,
-    TableModule,
-    ButtonModule,
-    PaginationBarComponent,
-    AddressDetailsDialogComponent,
-  ],
+  imports: [CommonModule, TableModule, ButtonModule, PaginationBarComponent],
 })
 export class AddressListComponent {
   private _pagination: {
@@ -46,17 +40,10 @@ export class AddressListComponent {
   @Output() changeAddressType = new EventEmitter<BipType | 'all-bip-types'>();
 
   utxoPagination: {
-    [address: string]:
-      | {
-          currentPage: number;
-          pageSize: number;
-          totalPages: number;
-        }
-      | undefined;
+    [address: string]: { currentPage: number; pageSize: number };
   } = {};
 
-  selectedAddress: BitcoinAddressData | null = null;
-  showAddressDialog = false;
+  constructor(private router: Router) {}
 
   get first() {
     if (!this._pagination) return 0;
@@ -96,17 +83,17 @@ export class AddressListComponent {
     this.utxoPagination[address] = {
       currentPage: Math.max(1, Math.min(page, totalPages)),
       pageSize: this.utxoPagination[address]?.pageSize || 10,
-      totalPages,
     };
   }
 
-  openAddressDialog(address: any) {
-    this.selectedAddress = address;
-    this.showAddressDialog = true;
-  }
-
-  closeAddressDialog() {
-    this.showAddressDialog = false;
-    this.selectedAddress = null;
+  openAddressDetails(addressData: BitcoinAddressData) {
+    if (this.nodeId) {
+      this.router.navigate([
+        '/miner',
+        this.nodeId,
+        'addresses',
+        addressData.address,
+      ]);
+    }
   }
 }
