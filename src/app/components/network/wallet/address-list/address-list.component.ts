@@ -5,13 +5,19 @@ import { TableModule } from 'primeng/table';
 import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { copyToClipboard } from '../../../../utils/tools';
 import { PaginationBarComponent } from '../pagination-bar.component';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-address-list',
   templateUrl: './address-list.component.html',
   standalone: true,
-  imports: [CommonModule, TableModule, ButtonModule, PaginationBarComponent],
+  imports: [
+    CommonModule,
+    TableModule,
+    ButtonModule,
+    PaginationBarComponent,
+    RouterLink,
+  ],
 })
 export class AddressListComponent {
   private _pagination: {

@@ -99,14 +99,14 @@
               class="pi pi-verified text-blue-400 text-xs ml-1"
               title="Este endereço pertence a este nó"
             ></i>
-            <button
+            <!-- <button
               pButton
               type="button"
               icon="pi pi-search"
               class="p-button-text p-button-xs ml-2 text-blue-400 hover:text-blue-600"
               title="Ver detalhes do endereço"
               (click)="openAddressDetails(data)"
-            ></button>
+            ></button> -->
           </td>
           <td class="px-4 py-2 text-zinc-500 font-mono">
             {{ first + index + 1 }}
@@ -117,7 +117,12 @@
             [class.text-blue-300]="data.addressType === 'bip49'"
             [class.text-purple-300]="data.addressType === 'bip84'"
           >
-            {{ data.address }}
+            <a
+              [routerLink]="['/miner', nodeId, 'addresses', data.address]"
+              class="hover:underline"
+            >
+              {{ data.address }}
+            </a>
           </td>
           <td class="px-4 py-2 text-right font-mono text-zinc-200">
             {{ data.balance / 100000000 | number : "1.8-8" }}
