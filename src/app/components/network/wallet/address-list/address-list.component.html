@@ -99,6 +99,14 @@
               class="pi pi-verified text-blue-400 text-xs ml-1"
               title="Este endereço pertence a este nó"
             ></i>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-search"
+              class="p-button-text p-button-xs ml-2 text-blue-400 hover:text-blue-600"
+              title="Ver detalhes do endereço"
+              (click)="openAddressDialog(data)"
+            ></button>
           </td>
           <td class="px-4 py-2 text-zinc-500 font-mono">
             {{ first + index + 1 }}
@@ -514,3 +522,10 @@
     </p-table>
   </div>
 </div>
+
+<!-- Dialog de detalhes do endereço -->
+<app-address-details-dialog
+  [visible]="showAddressDialog"
+  [addressData]="selectedAddress"
+  (close)="closeAddressDialog()"
+></app-address-details-dialog>

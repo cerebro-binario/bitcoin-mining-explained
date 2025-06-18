@@ -5,12 +5,19 @@ import { TableModule } from 'primeng/table';
 import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { copyToClipboard } from '../../../../utils/tools';
 import { PaginationBarComponent } from '../pagination-bar.component';
+import { AddressDetailsDialogComponent } from './address-details-dialog.component';
 
 @Component({
   selector: 'app-address-list',
   templateUrl: './address-list.component.html',
   standalone: true,
-  imports: [CommonModule, TableModule, ButtonModule, PaginationBarComponent],
+  imports: [
+    CommonModule,
+    TableModule,
+    ButtonModule,
+    PaginationBarComponent,
+    AddressDetailsDialogComponent,
+  ],
 })
 export class AddressListComponent {
   private _pagination: {
@@ -47,6 +54,9 @@ export class AddressListComponent {
         }
       | undefined;
   } = {};
+
+  selectedAddress: any = null;
+  showAddressDialog = false;
 
   get first() {
     if (!this._pagination) return 0;
@@ -88,5 +98,15 @@ export class AddressListComponent {
       pageSize: this.utxoPagination[address]?.pageSize || 10,
       totalPages,
     };
+  }
+
+  openAddressDialog(address: any) {
+    this.selectedAddress = address;
+    this.showAddressDialog = true;
+  }
+
+  closeAddressDialog() {
+    this.showAddressDialog = false;
+    this.selectedAddress = null;
   }
 }

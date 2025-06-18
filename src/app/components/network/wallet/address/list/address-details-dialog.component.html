@@ -1,0 +1,97 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '500px' }"
+  (onHide)="onClose()"
+>
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full">
+      <span>Detalhes do Endereço</span>
+      <button
+        type="button"
+        pButton
+        icon="pi pi-times"
+        class="p-button-text p-button-sm"
+        (click)="onClose()"
+      ></button>
+    </div>
+  </ng-template>
+  <div *ngIf="addressData">
+    <div class="mb-4">
+      <div class="text-xs text-zinc-500 mb-1">Endereço</div>
+      <div class="font-mono break-all text-zinc-200 flex items-center gap-2">
+        {{ addressData.address }}
+        <button
+          pButton
+          type="button"
+          icon="pi pi-copy"
+          class="p-button-text p-button-xs"
+          (click)="copyToClipboard(addressData.address)"
+        ></button>
+      </div>
+    </div>
+    <div class="mb-4">
+      <div class="text-xs text-zinc-500 mb-1">Chave Pública</div>
+      <div class="flex flex-col gap-1">
+        <div>
+          <span class="text-xs text-zinc-400 mr-2">Hex:</span>
+          <span class="font-mono text-xs text-blue-300 break-all">{{
+            addressData.keys?.pub?.hex
+          }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-zinc-400 mr-2">Decimal:</span>
+          <span class="font-mono text-xs text-blue-300 break-all">{{
+            addressData.keys?.pub?.decimal
+          }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="mb-4">
+      <div class="text-xs text-zinc-500 mb-1">Chave Privada</div>
+      <div class="flex flex-col gap-1">
+        <div>
+          <span class="text-xs text-zinc-400 mr-2">Hex:</span>
+          <span class="font-mono text-xs text-green-300 break-all">{{
+            addressData.keys?.priv?.hex
+          }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-zinc-400 mr-2">Decimal:</span>
+          <span class="font-mono text-xs text-green-300 break-all">{{
+            addressData.keys?.priv?.decimal
+          }}</span>
+        </div>
+        <div>
+          <span class="text-xs text-zinc-400 mr-2">WIF:</span>
+          <span class="font-mono text-xs text-green-300 break-all">{{
+            addressData.keys?.priv?.wif
+          }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="mb-4">
+      <div class="text-xs text-zinc-500 mb-1">UTXOs</div>
+      <div *ngIf="addressData.utxos?.length > 0; else noUtxos">
+        <div
+          *ngFor="let utxo of addressData.utxos"
+          class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg shadow p-3 mb-2"
+        >
+          <div class="font-mono text-xs text-zinc-200">
+            Valor: {{ utxo.output.value / 100000000 | number : "1.8-8" }} BTC
+          </div>
+          <div class="font-mono text-xs text-zinc-400">
+            TxID: {{ utxo.txId }}
+          </div>
+          <div class="font-mono text-xs text-zinc-400">
+            Out: {{ utxo.outputIndex }}
+          </div>
+        </div>
+      </div>
+      <ng-template #noUtxos>
+        <div class="text-zinc-500 italic">Nenhum UTXO para este endereço.</div>
+      </ng-template>
+    </div>
+  </div>
+</p-dialog>
