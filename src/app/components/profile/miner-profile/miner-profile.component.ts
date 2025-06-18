@@ -4,10 +4,10 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { KeyService } from '../../../services/key.service';
-import { EventComponent } from '../../network/events/event/event.component';
-import { WalletComponent } from '../../network/wallet/wallet.component';
 import { BlockchainComponent } from '../../network/blockchain/blockchain.component';
+import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
+import { WalletComponent } from '../../network/wallet/wallet.component';
 
 @Component({
   selector: 'app-miner-profile',
@@ -92,6 +92,9 @@ export class MinerProfileComponent {
     );
 
     if (newAddress) {
+      Object.values(newAddress).forEach(
+        (address) => (address.nodeId = this.miner.id)
+      );
       const newWallet = { ...this.miner.wallet };
       newWallet.addresses = [...newWallet.addresses, newAddress];
       this.miner.wallet = newWallet;
