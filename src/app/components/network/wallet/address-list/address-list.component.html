@@ -352,41 +352,82 @@
                           *ngFor="
                             let utxo of getUtxosPage(data.address, data.utxos)
                           "
-                          class="bg-zinc-800 rounded-lg shadow p-4 flex items-center gap-6 border border-zinc-700 relative"
+                          class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg shadow-lg p-6 flex items-center gap-6 border-2 border-zinc-700 relative overflow-hidden"
                         >
+                          <!-- Marca d'água -->
                           <div
-                            class="flex items-center justify-center bg-blue-900/60 rounded-full w-12 h-12"
+                            class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
                           >
                             <i
-                              class="pi pi-money-bill text-2xl text-blue-400"
+                              class="pi pi-bitcoin text-[200px] text-white"
                             ></i>
                           </div>
-                          <div class="flex-1">
+
+                          <!-- Elementos decorativos -->
+                          <div
+                            class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-zinc-600"
+                          ></div>
+                          <div
+                            class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-zinc-600"
+                          ></div>
+
+                          <!-- Ícone e valor principal -->
+                          <div
+                            class="flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-800 rounded-full w-16 h-16 shadow-lg relative"
+                          >
+                            <i
+                              class="pi pi-money-bill text-3xl text-blue-300"
+                            ></i>
+                          </div>
+
+                          <div class="flex-1 relative">
+                            <!-- Valor em destaque -->
                             <div
-                              class="text-lg font-bold text-green-300 flex items-center gap-2"
+                              class="text-2xl font-bold text-green-300 flex items-center gap-2 mb-2"
                             >
                               {{
                                 utxo.output.value / 100000000 | number : "1.8-8"
                               }}
                               <span class="text-base text-zinc-400">BTC</span>
                             </div>
-                            <div class="text-xs text-zinc-400 mt-1">
-                              <span class="font-semibold">TxID:</span>
-                              <span class="font-mono break-all">{{
+
+                            <!-- Número de série (TxID) -->
+                            <div
+                              class="text-xs text-zinc-400 mt-3 font-mono tracking-wider"
+                            >
+                              <span class="text-zinc-500">Nº de Série:</span>
+                              <span class="ml-2 break-all">{{
                                 utxo.txId
                               }}</span>
-                              <span class="mx-2">|</span>
-                              <span class="font-semibold">Out:</span>
-                              <span class="font-mono">{{
-                                utxo.outputIndex
-                              }}</span>
                             </div>
-                            <div class="text-xs text-zinc-500 mt-2 italic">
-                              UTXO = "Unspent Transaction Output"<br />
+
+                            <!-- Out como referência -->
+                            <div class="text-xs text-zinc-400 mt-1 font-mono">
+                              <span class="text-zinc-500">Referência:</span>
+                              <span class="ml-2">{{ utxo.outputIndex }}</span>
+                            </div>
+
+                            <!-- Explicação didática -->
+                            <div
+                              class="text-xs text-zinc-500 mt-3 italic border-t border-zinc-700 pt-3"
+                            >
+                              <span class="font-semibold text-zinc-400"
+                                >UTXO</span
+                              >
+                              = "Unspent Transaction Output"<br />
                               Pense como uma nota digital: para gastar, é
                               preciso assinar com a chave privada
                               correspondente.
                             </div>
+                          </div>
+
+                          <!-- Elemento decorativo direito -->
+                          <div
+                            class="absolute right-4 top-1/2 -translate-y-1/2 opacity-20"
+                          >
+                            <i
+                              class="pi pi-shield text-[100px] text-blue-400"
+                            ></i>
                           </div>
                         </div>
                       </div>
