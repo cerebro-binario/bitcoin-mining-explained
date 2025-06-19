@@ -287,7 +287,7 @@ export class Node {
     }
 
     const tickTime = now - this.miningLastTickTime;
-    block.miningElapsed += tickTime;
+    this.miningElapsed = block.miningElapsed += tickTime;
     this.miningLastTickTime = now;
 
     if (hashRate === null) {
