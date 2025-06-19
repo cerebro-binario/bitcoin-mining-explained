@@ -44,7 +44,7 @@ export interface BitcoinAddressData {
   address: string;
   balance: number;
   utxos: BitcoinUTXO[];
-  addressType: BipType;
+  bipFormat: BipType;
   transactions: TransactionHistory[];
 }
 

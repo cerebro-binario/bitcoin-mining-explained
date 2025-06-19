@@ -23,7 +23,8 @@
         [pagination]="pagination"
         [nodeId]="node.id"
         [showPrivateKey]="displayMode === 'all-private-keys'"
-        (changeAddressType)="onChangeAddressType($event)"
+        [bipFormat]="bipFormat"
+        (bipFormatChange)="onChangeBipFormat($event)"
         class="h-full"
       ></app-address-list>
     </div>

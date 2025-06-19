@@ -84,17 +84,18 @@
               title="Endereço externo"
             ></i>
           </td>
-          <td class="px-3 py-2">
-            <span
-              class="flex items-center gap-2"
-              [ngClass]="{
-                'text-green-300': tx.addressType === 'bip44',
-                'text-blue-300': tx.addressType === 'bip49',
-                'text-purple-300': tx.addressType === 'bip84'
-              }"
+          <td
+            class="px-4 py-2 font-mono break-all"
+            [class.text-green-300]="tx.bipType === 'bip44'"
+            [class.text-blue-300]="tx.bipType === 'bip49'"
+            [class.text-purple-300]="tx.bipType === 'bip84'"
+          >
+            <a
+              [routerLink]="['/miners', nodeId, 'addresses', tx.address]"
+              class="hover:underline"
             >
               {{ tx.address }}
-            </span>
+            </a>
           </td>
           <td class="px-3 py-2">{{ tx.status }}</td>
           <td
@@ -137,21 +138,30 @@
                   <td class="px-2 py-1">
                     {{ d.value / 100000000 | number : "1.8-8" }}
                   </td>
-                  <td class="px-2 py-1 font-mono">
-                    <span
-                      [ngClass]="{
-                        'text-green-300': d.addressType === 'bip44',
-                        'text-blue-300': d.addressType === 'bip49',
-                        'text-purple-300': d.addressType === 'bip84'
-                      }"
-                      >{{ d.address }}</span
+                  <td
+                    class="px-4 py-2 font-mono break-all"
+                    [class.text-green-300]="d.bipType === 'bip44'"
+                    [class.text-blue-300]="d.bipType === 'bip49'"
+                    [class.text-purple-300]="d.bipType === 'bip84'"
+                  >
+                    <a
+                      [routerLink]="['/miners', nodeId, 'addresses', d.address]"
+                      class="hover:underline"
                     >
+                      {{ d.address }}
+                    </a>
+                    <span class="text-xs text-zinc-500 ml-2">
+                      <span *ngIf="d.bipType === 'bip44'">Legacy</span>
+                      <span *ngIf="d.bipType === 'bip49'">SegWit</span>
+                      <span *ngIf="d.bipType === 'bip84'">Native</span>
+                      <span *ngIf="!d.bipType">—</span>
+                    </span>
                   </td>
                   <td class="px-2 py-1">
-                    <span *ngIf="d.addressType === 'bip44'">Legacy</span>
-                    <span *ngIf="d.addressType === 'bip49'">SegWit</span>
-                    <span *ngIf="d.addressType === 'bip84'">Native</span>
-                    <span *ngIf="!d.addressType">—</span>
+                    <span *ngIf="d.bipType === 'bip44'">Legacy</span>
+                    <span *ngIf="d.bipType === 'bip49'">SegWit</span>
+                    <span *ngIf="d.bipType === 'bip84'">Native</span>
+                    <span *ngIf="!d.bipType">—</span>
                   </td>
                   <td class="px-2 py-1">
                     <span *ngIf="d.isWallet" class="text-blue-400">Sim</span>

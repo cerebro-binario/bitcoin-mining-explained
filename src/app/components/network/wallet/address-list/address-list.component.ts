@@ -27,7 +27,7 @@ export class AddressListComponent {
   } | null = null;
 
   @Input() addresses: BitcoinAddressData[] = [];
-  @Input() addressType: BipType | 'all-bip-types' = 'bip84';
+  @Input() bipFormat: BipType | 'all-bip-types' = 'bip84';
   @Input() nodeId: number | null = null;
   @Input() hideTitle = false;
   @Input() showPrivateKey = false;
@@ -44,7 +44,7 @@ export class AddressListComponent {
 
   @Input() canDeriveNextAddress = false;
   @Output() deriveNextAddress = new EventEmitter<void>();
-  @Output() changeAddressType = new EventEmitter<BipType | 'all-bip-types'>();
+  @Output() bipFormatChange = new EventEmitter<BipType | 'all-bip-types'>();
 
   utxoPagination: {
     [address: string]: { currentPage: number; pageSize: number };
@@ -67,9 +67,9 @@ export class AddressListComponent {
     copyToClipboard(text);
   }
 
-  onAddressTypeChange(type: BipType | 'all-bip-types') {
-    this.addressType = type;
-    this.changeAddressType.emit(type);
+  onBipFormatChange(type: BipType | 'all-bip-types') {
+    this.bipFormat = type;
+    this.bipFormatChange.emit(type);
   }
 
   getUtxosPage(address: string, utxos: any[]) {

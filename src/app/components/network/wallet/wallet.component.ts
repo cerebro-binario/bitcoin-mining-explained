@@ -40,7 +40,7 @@ export interface TransactionView {
   type: 'Recebida' | 'Enviada' | 'Coinbase';
   value: number; // valor principal consolidado
   address: string; // endereço principal (destino ou recebido)
-  addressType?: BipType;
+  bipType?: BipType;
   timestamp: number;
   status: string;
   details: TransactionDetail[];
@@ -64,6 +64,7 @@ export interface TransactionView {
 })
 export class WalletComponent {
   private _wallet: Wallet | null = null;
+  private _bipFormat: BipType | 'all-bip-types' = 'bip84';
   private goToLastPageAfterWalletUpdate = false;
 
   activeTab: 'enderecos' | 'transacoes' | 'enviar' = 'enderecos';
@@ -78,11 +79,15 @@ export class WalletComponent {
     }
   }
   @Input() node!: Node;
+  @Input() set bipFormat(bipFormat: BipType | 'all-bip-types') {
+    this._bipFormat = bipFormat;
+    this.updateView();
+  }
   @Output() deriveNextAddress = new EventEmitter<void>();
+  @Output() bipFormatChange = new EventEmitter<BipType | 'all-bip-types'>();
 
   addresses: BitcoinAddressData[] = [];
   addressesDisplay: BitcoinAddressData[] = [];
-  addressType: BipType | 'all-bip-types' = 'bip84';
   pagination = {
     pageSize: 10,
     currentPage: 0n,
@@ -133,6 +138,10 @@ export class WalletComponent {
     );
   }
 
+  get bipFormat(): BipType | 'all-bip-types' {
+    return this._bipFormat;
+  }
+
   constructor(private keyService: KeyService) {}
 
   private updateView() {
@@ -147,13 +156,13 @@ export class WalletComponent {
     if (!this._wallet) return;
     this.addresses = [];
 
-    if (this.addressType === 'all-bip-types') {
+    if (this.bipFormat === 'all-bip-types') {
       this.addresses = this._wallet.addresses.reduce((acc, address) => {
         return [...acc, ...Object.values(address)];
       }, [] as BitcoinAddressData[]);
     } else {
       this.addresses = this._wallet.addresses.map(
-        (address) => address[this.addressType as BipType]
+        (address) => address[this.bipFormat as BipType]
       );
     }
   }
@@ -171,8 +180,9 @@ export class WalletComponent {
     this.goToLastPageAfterWalletUpdate = true;
   }
 
-  onChangeAddressType(type: BipType | 'all-bip-types') {
-    this.addressType = type;
+  onChangeBipFormat(bipFormat: BipType | 'all-bip-types') {
+    this.bipFormat = bipFormat;
+    this.bipFormatChange.emit(bipFormat);
     this.updateView();
   }
 
@@ -404,7 +414,7 @@ export class WalletComponent {
       (addr.utxos || []).map((utxo: BitcoinUTXO) => ({
         ...utxo,
         address: addr.address, // extra para UI
-        bipType: addr.addressType, // extra para UI
+        bipType: addr.bipFormat, // extra para UI
       }))
     );
     utxos.sort(
@@ -543,7 +553,7 @@ export class WalletComponent {
           type: 'Enviada',
           value: valueSent,
           address,
-          addressType: detectBipType(address),
+          bipType: detectBipType(address),
           timestamp,
           status,
           details,
@@ -559,7 +569,7 @@ export class WalletComponent {
             type: history.tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
             value: o.value,
             address: o.scriptPubKey,
-            addressType: detectBipType(o.scriptPubKey),
+            bipType: detectBipType(o.scriptPubKey),
             timestamp,
             status,
             details,

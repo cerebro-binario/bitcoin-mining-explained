@@ -122,7 +122,7 @@ export class KeyService {
           address: bip44Address,
           balance: 0,
           utxos: [],
-          addressType: 'bip44',
+          bipFormat: 'bip44',
           transactions: [],
         },
         bip49: {
@@ -130,7 +130,7 @@ export class KeyService {
           address: bip49Address,
           balance: 0,
           utxos: [],
-          addressType: 'bip49',
+          bipFormat: 'bip49',
           transactions: [],
         },
         bip84: {
@@ -138,7 +138,7 @@ export class KeyService {
           address: bip84Address,
           balance: 0,
           utxos: [],
-          addressType: 'bip84',
+          bipFormat: 'bip84',
           transactions: [],
         },
       };
@@ -176,7 +176,7 @@ export class KeyService {
           address: bip44Address,
           balance: 0,
           utxos: [],
-          addressType: 'bip44',
+          bipFormat: 'bip44',
           transactions: [],
         },
         bip49: {
@@ -184,7 +184,7 @@ export class KeyService {
           address: bip49Address,
           balance: 0,
           utxos: [],
-          addressType: 'bip49',
+          bipFormat: 'bip49',
           transactions: [],
         },
         bip84: {
@@ -192,7 +192,7 @@ export class KeyService {
           address: bip84Address,
           balance: 0,
           utxos: [],
-          addressType: 'bip84',
+          bipFormat: 'bip84',
           transactions: [],
         },
       };

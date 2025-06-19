@@ -128,6 +128,8 @@
                 <app-wallet
                   [node]="miner"
                   [wallet]="miner.wallet"
+                  [bipFormat]="walletBipFormat"
+                  (bipFormatChange)="onWalletBipFormatChange($event)"
                   (deriveNextAddress)="deriveNextAddress()"
                   class="h-full"
                 ></app-wallet>
@@ -487,6 +489,8 @@
           <app-blockchain-balance
             [node]="miner"
             [displayModeInput]="displayModeBlockchainBalance"
+            [bipFormat]="chainBipFormat"
+            (bipFormatChange)="onChainBipFormatChange($event)"
             (displayModeChange)="onBlockchainBalanceDisplayModeChange($event)"
             class="flex flex-col flex-1 min-h-0 h-full"
           ></app-blockchain-balance>

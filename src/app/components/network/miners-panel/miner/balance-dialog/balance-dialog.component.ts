@@ -54,7 +54,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     { label: 'Mostrar todos', value: 'all-private-keys' },
     { label: 'Apenas com saldo', value: 'with-balance' },
   ];
-  addressType: BipType | 'all-bip-types' = 'bip84';
+  bipFormat: BipType | 'all-bip-types' = 'bip84';
 
   // Paginator customizado
   pagination = {
@@ -100,8 +100,8 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     this.addresses = entries.reduce((acc, [address, balance]) => {
       if (!balance) return acc;
       if (
-        this.addressType === 'all-bip-types' ||
-        balance.addressType === this.addressType
+        this.bipFormat === 'all-bip-types' ||
+        balance.bipFormat === this.bipFormat
       ) {
         acc.push(balance);
       }
@@ -114,7 +114,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     const offset = currentPage * BigInt(pageSize);
 
     let start =
-      this.addressType === 'all-bip-types' ? offset / 3n + 1n : offset + 1n;
+      this.bipFormat === 'all-bip-types' ? offset / 3n + 1n : offset + 1n;
 
     const addresses =
       this.keyService.deriveBitcoinAddressesFromSequentialPrivateKey(
@@ -122,7 +122,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         start
       );
 
-    if (this.addressType === 'all-bip-types') {
+    if (this.bipFormat === 'all-bip-types') {
       const skip = Number(offset % 3n);
 
       this.addresses = addresses
@@ -136,7 +136,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
         .slice(skip, this.pagination.pageSize + skip);
     } else {
       this.addresses = addresses.map(
-        (address) => address[this.addressType as BipType]
+        (address) => address[this.bipFormat as BipType]
       );
     }
   }
@@ -162,7 +162,7 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     if (this.displayMode === 'all-private-keys') {
       // Valor máximo do grupo secp256k1
       const totalRecords =
-        this.addressType === 'all-bip-types'
+        this.bipFormat === 'all-bip-types'
           ? TOTAL_PRIVATE_KEY_RECORDS * 3n
           : TOTAL_PRIVATE_KEY_RECORDS;
       this.pagination = {
@@ -193,8 +193,8 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     this.updateView();
   }
 
-  onChangeAddressType(addressType: BipType | 'all-bip-types') {
-    this.addressType = addressType;
+  onChangeBipFormat(bipFormat: BipType | 'all-bip-types') {
+    this.bipFormat = bipFormat;
     this.updateView();
   }
 

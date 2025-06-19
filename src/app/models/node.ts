@@ -1703,7 +1703,7 @@ export class Node {
                   priv: { hex: '', decimal: '', wif: '' },
                 },
               }),
-          addressType: getAddressType(output.scriptPubKey),
+          bipFormat: getAddressType(output.scriptPubKey),
           transactions: [],
         };
 
@@ -1767,7 +1767,7 @@ export class Node {
               priv: { hex: '', decimal: '', wif: '' },
             },
           }),
-      addressType: getAddressType(address),
+      bipFormat: getAddressType(address),
       transactions: [],
     };
 
@@ -1860,7 +1860,7 @@ export class Node {
             pub: { hex: '', decimal: '' },
             priv: { hex: '', decimal: '', wif: '' },
           },
-          addressType: getAddressType(input.scriptPubKey),
+          bipFormat: getAddressType(input.scriptPubKey),
           transactions: [],
         };
 

@@ -39,9 +39,11 @@ import { PaginationBarComponent } from '../../wallet/pagination-bar.component';
 export class BlockchainBalanceComponent implements OnInit, OnChanges {
   @Input() node!: Node;
   @Input() displayModeInput: 'all-private-keys' | 'with-balance' | undefined;
+  @Input() bipFormat: BipType | 'all-bip-types' = 'bip84';
   @Output() displayModeChange = new EventEmitter<
     'all-private-keys' | 'with-balance'
   >();
+  @Output() bipFormatChange = new EventEmitter<BipType | 'all-bip-types'>();
 
   addresses: BitcoinAddressData[] = [];
   addressesDisplay: BitcoinAddressData[] = [];
@@ -51,7 +53,6 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
     { label: 'Mostrar todos', value: 'all-private-keys' },
     { label: 'Apenas com saldo', value: 'with-balance' },
   ];
-  addressType: BipType | 'all-bip-types' = 'bip84';
 
   pagination = {
     pageSize: 10,
@@ -99,8 +100,8 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
     this.addresses = entries.reduce((acc, [address, balance]) => {
       if (!balance) return acc;
       if (
-        this.addressType === 'all-bip-types' ||
-        balance.addressType === this.addressType
+        this.bipFormat === 'all-bip-types' ||
+        balance.bipFormat === this.bipFormat
       ) {
         acc.push(balance);
       }
@@ -112,13 +113,13 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
     const { currentPage, pageSize } = this.pagination;
     const offset = currentPage * BigInt(pageSize);
     let start =
-      this.addressType === 'all-bip-types' ? offset / 3n + 1n : offset + 1n;
+      this.bipFormat === 'all-bip-types' ? offset / 3n + 1n : offset + 1n;
     const addresses =
       this.keyService.deriveBitcoinAddressesFromSequentialPrivateKey(
         this.pagination.pageSize,
         start
       );
-    if (this.addressType === 'all-bip-types') {
+    if (this.bipFormat === 'all-bip-types') {
       const skip = Number(offset % 3n);
       this.addresses = addresses
         .reduce((acc, address) => {
@@ -129,7 +130,7 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
         .slice(skip, this.pagination.pageSize + skip);
     } else {
       this.addresses = addresses.map(
-        (address) => address[this.addressType as BipType]
+        (address) => address[this.bipFormat as BipType]
       );
     }
   }
@@ -148,7 +149,7 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
   updateTotalPages() {
     if (this.displayMode === 'all-private-keys') {
       const totalRecords =
-        this.addressType === 'all-bip-types'
+        this.bipFormat === 'all-bip-types'
           ? TOTAL_PRIVATE_KEY_RECORDS * 3n
           : TOTAL_PRIVATE_KEY_RECORDS;
       this.pagination = {
@@ -176,8 +177,9 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
     this.displayModeChange.emit(this.displayMode);
   }
 
-  onChangeAddressType(addressType: BipType | 'all-bip-types') {
-    this.addressType = addressType;
+  onChangeBipFormat(format: BipType | 'all-bip-types') {
+    this.bipFormat = format;
+    this.bipFormatChange.emit(format);
     this.updateView();
   }
 

@@ -44,8 +44,9 @@
             [addresses]="addressesDisplay"
             [pagination]="pagination"
             [canDeriveNextAddress]="true"
+            [bipFormat]="bipFormat"
             (deriveNextAddress)="onDeriveNextAddress()"
-            (changeAddressType)="onChangeAddressType($event)"
+            (bipFormatChange)="onChangeBipFormat($event)"
             class="flex-1 min-h-0"
           ></app-address-list>
           <app-pagination-bar

@@ -10,6 +10,7 @@ import { BlockchainComponent } from '../../network/blockchain/blockchain.compone
 import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
+import { BipType } from '../../../models/wallet.model';
 
 @Component({
   selector: 'app-miner-profile',
@@ -34,6 +35,8 @@ export class MinerProfileComponent {
   showWalletDetails = false;
   displayModeBlockchainBalance: 'all-private-keys' | 'with-balance' =
     'with-balance';
+  walletBipFormat: BipType | 'all-bip-types' = 'bip84';
+  chainBipFormat: BipType | 'all-bip-types' = 'bip84';
   hashRateOptions = [
     { label: '1 H/s', value: 1 },
     { label: '1k H/s', value: 1000 },
@@ -67,6 +70,12 @@ export class MinerProfileComponent {
       }
       if (params['tab']) {
         this.activeTab = params['tab'] as 'metadata' | 'transactions';
+      }
+      if (params['walletBipFormat']) {
+        this.walletBipFormat = params['walletBipFormat'] as BipType;
+      }
+      if (params['chainBipFormat']) {
+        this.chainBipFormat = params['chainBipFormat'] as BipType;
       }
     });
   }
@@ -201,6 +210,32 @@ export class MinerProfileComponent {
   setActiveTab(tab: 'metadata' | 'transactions') {
     this.activeTab = tab;
     const queryParams = { ...this.route.snapshot.queryParams, tab };
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  onWalletBipFormatChange(format: BipType | 'all-bip-types') {
+    this.walletBipFormat = format;
+    const queryParams = {
+      ...this.route.snapshot.queryParams,
+      walletBipFormat: format,
+    };
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  onChainBipFormatChange(format: BipType | 'all-bip-types') {
+    this.chainBipFormat = format;
+    const queryParams = {
+      ...this.route.snapshot.queryParams,
+      chainBipFormat: format,
+    };
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
