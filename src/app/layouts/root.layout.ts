@@ -1,12 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import {
-  ActivatedRoute,
-  Router,
-  RouterLink,
-  RouterLinkActive,
-  RouterOutlet,
-} from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ThemeService } from '../services/theme.service';
 
 @Component({
@@ -40,8 +34,8 @@ import { ThemeService } from '../services/theme.service';
                 routerLinkActive="text-blue-400 border-b-2 border-blue-400"
                 class="text-zinc-300 hover:text-blue-400 transition-colors py-2 px-1 border-b-2 border-transparent"
               >
-                <i class="pi pi-home mr-2"></i>
-                Visão Geral
+                <i class="pi pi-globe mr-2"></i>
+                Rede
               </a>
               <a
                 routerLink="/tools"
@@ -50,14 +44,6 @@ import { ThemeService } from '../services/theme.service';
               >
                 <i class="pi pi-wrench mr-2"></i>
                 Ferramentas
-              </a>
-              <a
-                routerLink="/network"
-                routerLinkActive="text-blue-400 border-b-2 border-blue-400"
-                class="text-zinc-300 hover:text-blue-400 transition-colors py-2 px-1 border-b-2 border-transparent"
-              >
-                <i class="pi pi-globe mr-2"></i>
-                Rede
               </a>
             </div>
 
@@ -85,8 +71,8 @@ import { ThemeService } from '../services/theme.service';
                 class="block px-3 py-2 rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-blue-400 transition-colors"
                 (click)="closeMobileMenu()"
               >
-                <i class="pi pi-home mr-2"></i>
-                Visão Geral
+                <i class="pi pi-globe mr-2"></i>
+                Rede
               </a>
               <a
                 routerLink="/tools"
@@ -96,15 +82,6 @@ import { ThemeService } from '../services/theme.service';
               >
                 <i class="pi pi-wrench mr-2"></i>
                 Ferramentas
-              </a>
-              <a
-                routerLink="/network"
-                routerLinkActive="bg-zinc-800 text-blue-400"
-                class="block px-3 py-2 rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-blue-400 transition-colors"
-                (click)="closeMobileMenu()"
-              >
-                <i class="pi pi-globe mr-2"></i>
-                Rede
               </a>
             </div>
           </div>
@@ -121,11 +98,7 @@ import { ThemeService } from '../services/theme.service';
 export class RootLayout {
   mobileMenuOpen = false;
 
-  constructor(
-    private themeService: ThemeService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
+  constructor(private themeService: ThemeService) {}
 
   ngOnInit(): void {
     const theme = this.themeService.getTheme();
