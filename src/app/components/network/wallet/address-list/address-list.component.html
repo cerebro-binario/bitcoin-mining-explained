@@ -119,6 +119,9 @@
           >
             <a
               [routerLink]="['/miner', nodeId, 'addresses', data.address]"
+              [queryParams]="
+                showPrivateKey ? { pk: data.keys.priv.decimal } : {}
+              "
               class="hover:underline"
             >
               {{ data.address }}
@@ -469,11 +472,13 @@
                           utxoPagination[data.address].currentPage || 1
                         "
                         [totalPages]="
-                          getUtxoTotalPages(data.address, data.utxos)
+                          toNumber(getUtxoTotalPages(data.address, data.utxos))
                         "
                         [percent]="
                           ((utxoPagination[data.address].currentPage || 1) /
-                            getUtxoTotalPages(data.address, data.utxos)) *
+                            toNumber(
+                              getUtxoTotalPages(data.address, data.utxos)
+                            )) *
                           100
                         "
                         [prevDisabled]="
@@ -481,20 +486,28 @@
                         "
                         [nextDisabled]="
                           (utxoPagination[data.address].currentPage || 1) ===
-                          getUtxoTotalPages(data.address, data.utxos)
+                          toNumber(getUtxoTotalPages(data.address, data.utxos))
                         "
-                        (goToFirst)="goToUtxoPage(data.address, 1, data.utxos)"
+                        (goToFirst)="
+                          goToUtxoPage(data.address, getFirstPage(), data.utxos)
+                        "
                         (goToPrevious)="
                           goToUtxoPage(
                             data.address,
-                            (utxoPagination[data.address].currentPage || 1) - 1,
+                            toBigInt(
+                              (utxoPagination[data.address].currentPage || 1) -
+                                1
+                            ),
                             data.utxos
                           )
                         "
                         (goToNext)="
                           goToUtxoPage(
                             data.address,
-                            (utxoPagination[data.address].currentPage || 1) + 1,
+                            toBigInt(
+                              (utxoPagination[data.address].currentPage || 1) +
+                                1
+                            ),
                             data.utxos
                           )
                         "

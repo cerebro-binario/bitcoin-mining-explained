@@ -22,6 +22,7 @@
         [addresses]="addressesDisplay"
         [pagination]="pagination"
         [nodeId]="node.id"
+        [showPrivateKey]="displayMode === 'all-private-keys'"
         (changeAddressType)="onChangeAddressType($event)"
         class="h-full"
       ></app-address-list>

@@ -248,9 +248,19 @@ export class BalanceDialogComponent implements OnInit, OnDestroy {
     this.pagination.currentPage = rand;
     this.updateView();
   }
-  jumpToPage() {
+  onJumpToPage() {
     try {
-      let page = BigInt(this.jumpPageInput);
+      const page = BigInt(this.jumpPageInput);
+      this.jumpToPage(page);
+    } catch (error) {
+      // Se não conseguir converter para BigInt, ignora
+      console.warn('Invalid page number:', this.jumpPageInput);
+    }
+    this.jumpPageInput = '';
+  }
+  jumpToPage(pageInt: bigint) {
+    try {
+      let page = pageInt;
       if (page < 1n) page = 1n;
       if (page > this.pagination.totalPages) page = this.pagination.totalPages;
       this.pagination.currentPage = page - 1n;

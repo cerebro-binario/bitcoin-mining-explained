@@ -233,9 +233,9 @@ export class WalletComponent {
     this.pagination.currentPage = rand;
     this.updateView();
   }
-  jumpToPage(pageInt: number) {
+  jumpToPage(pageInt: bigint) {
     try {
-      let page = BigInt(pageInt);
+      let page = pageInt;
       if (page < 1n) page = 1n;
       if (page > this.pagination.totalPages) page = this.pagination.totalPages;
       this.pagination.currentPage = page - 1n;
@@ -636,9 +636,9 @@ export class WalletComponent {
     this.transactionPagination.currentPage = rand;
     this.updateTransactionViews();
   }
-  transactionJumpToPage(pageInt: number) {
+  transactionJumpToPage(pageInt: bigint) {
     try {
-      let page = BigInt(pageInt);
+      let page = pageInt;
       if (page < 1n) page = 1n;
       if (page > this.transactionPagination.totalPages)
         page = this.transactionPagination.totalPages;

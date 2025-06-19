@@ -10,8 +10,8 @@ import {
   TOTAL_PRIVATE_KEY_RECORDS,
 } from '../../../../models/wallet.model';
 import { KeyService } from '../../../../services/key.service';
-import { AddressListComponent } from '../../wallet/address-list/address-list.component';
 import { ceilBigInt } from '../../../../utils/tools';
+import { AddressListComponent } from '../../wallet/address-list/address-list.component';
 import { PaginationBarComponent } from '../../wallet/pagination-bar.component';
 
 @Component({
@@ -215,14 +215,9 @@ export class BlockchainBalanceComponent implements OnInit {
     this.updateView();
   }
 
-  jumpToPage(pageInt: number) {
-    const page = Number(pageInt);
-    if (
-      !isNaN(page) &&
-      page > 0 &&
-      page <= Number(this.pagination.totalPages)
-    ) {
-      this.pagination.currentPage = BigInt(page - 1);
+  jumpToPage(pageInt: bigint) {
+    if (pageInt > 0n && pageInt <= this.pagination.totalPages) {
+      this.pagination.currentPage = pageInt - 1n;
       this.updateView();
     }
     this.jumpPageInput = '';

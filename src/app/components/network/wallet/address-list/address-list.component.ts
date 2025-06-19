@@ -30,6 +30,7 @@ export class AddressListComponent {
   @Input() addressType: BipType | 'all-bip-types' = 'bip84';
   @Input() nodeId: number | null = null;
   @Input() hideTitle = false;
+  @Input() showPrivateKey = false;
 
   @Input() set pagination(
     value: {
@@ -79,17 +80,31 @@ export class AddressListComponent {
     return utxos.slice(start, end);
   }
 
-  getUtxoTotalPages(address: string, utxos: any[]) {
+  getUtxoTotalPages(address: string, utxos: any[]): bigint {
     const pageSize = this.utxoPagination[address]?.pageSize || 10;
-    return Math.ceil(utxos.length / pageSize) || 1;
+    return BigInt(Math.ceil(utxos.length / pageSize) || 1);
   }
 
-  goToUtxoPage(address: string, page: number, utxos: any[]) {
-    const totalPages = this.getUtxoTotalPages(address, utxos);
+  goToUtxoPage(address: string, page: bigint, utxos: any[]) {
+    const totalPages = Number(this.getUtxoTotalPages(address, utxos));
+    const pageNumber = Number(page);
     this.utxoPagination[address] = {
-      currentPage: Math.max(1, Math.min(page, totalPages)),
+      currentPage: Math.max(1, Math.min(pageNumber, totalPages)),
       pageSize: this.utxoPagination[address]?.pageSize || 10,
     };
+  }
+
+  // Métodos auxiliares para o template
+  toNumber(value: bigint): number {
+    return Number(value);
+  }
+
+  toBigInt(value: number): bigint {
+    return BigInt(value);
+  }
+
+  getFirstPage(): bigint {
+    return 1n;
   }
 
   openAddressDetails(addressData: BitcoinAddressData) {
@@ -99,6 +114,11 @@ export class AddressListComponent {
         this.nodeId,
         'addresses',
         addressData.address,
+        {
+          queryParams: {
+            pk: addressData.keys?.priv?.hex,
+          },
+        },
       ]);
     }
   }

@@ -21,14 +21,19 @@ export class PaginationBarComponent {
   @Output() goToPrevious = new EventEmitter<void>();
   @Output() goToNext = new EventEmitter<void>();
   @Output() goToLast = new EventEmitter<void>();
-  @Output() jumpToPage = new EventEmitter<number>();
+  @Output() jumpToPage = new EventEmitter<bigint>();
 
   jumpPageInput: string = '';
 
   onJumpToPage() {
-    const page = Number(this.jumpPageInput);
-    if (!isNaN(page) && page > 0 && page <= this.totalPages) {
-      this.jumpToPage.emit(page);
+    try {
+      const page = BigInt(this.jumpPageInput);
+      if (page > 0n && page <= BigInt(this.totalPages)) {
+        this.jumpToPage.emit(page);
+      }
+    } catch (error) {
+      // Se não conseguir converter para BigInt, ignora
+      console.warn('Invalid page number:', this.jumpPageInput);
     }
     this.jumpPageInput = '';
   }
