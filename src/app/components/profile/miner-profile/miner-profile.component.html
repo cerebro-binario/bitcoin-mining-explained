@@ -489,13 +489,27 @@
                       >
                         <i class="pi pi-copy"></i>
                       </button>
-                      <button
-                        (click)="copyToClipboard(peer.node.name)"
-                        class="text-zinc-400 hover:text-blue-400"
-                        title="Copiar nome"
+                      <a
+                        *ngIf="peer.node.nodeType === 'miner'"
+                        [routerLink]="['/miners', peer.node.id]"
+                        class="text-blue-400 hover:underline font-semibold cursor-pointer"
+                        title="Ver perfil do minerador"
+                        >Ver perfil</a
                       >
-                        <i class="pi pi-id-card"></i>
-                      </button>
+                      <a
+                        *ngIf="peer.node.nodeType === 'user'"
+                        [routerLink]="['/users', peer.node.id]"
+                        class="text-blue-400 hover:underline font-semibold cursor-pointer"
+                        title="Ver perfil do usuário"
+                        >Ver perfil</a
+                      >
+                      <a
+                        *ngIf="peer.node.nodeType === 'peer'"
+                        [routerLink]="['/nodes', peer.node.id]"
+                        class="text-blue-400 hover:underline font-semibold cursor-pointer"
+                        title="Ver perfil do nó"
+                        >Ver perfil</a
+                      >
                     </td>
                   </tr>
                 </tbody>
