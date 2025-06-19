@@ -387,6 +387,88 @@
             class="flex flex-col flex-1 min-h-0 h-full"
           ></app-blockchain-balance>
         </div>
+
+        <!-- Painel de Peers Conectados -->
+        <div
+          class="bg-zinc-900 rounded-lg shadow flex flex-col gap-4 w-full max-w-7xl p-6"
+        >
+          <h2
+            class="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2"
+          >
+            Peers Conectados
+            <span class="text-xs text-zinc-400"
+              >({{ miner.peers.length }})</span
+            >
+          </h2>
+          <ng-container *ngIf="miner.peers.length > 0; else noPeers">
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead>
+                  <tr class="text-zinc-400 border-b border-zinc-700">
+                    <th class="px-4 py-2 text-left">ID</th>
+                    <th class="px-4 py-2 text-left">Nome</th>
+                    <th class="px-4 py-2 text-left">Tipo</th>
+                    <th class="px-4 py-2 text-left">Latência</th>
+                    <th class="px-4 py-2 text-left">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    *ngFor="let peer of miner.peers"
+                    class="border-b border-zinc-800 hover:bg-zinc-800/40 transition"
+                  >
+                    <td class="px-4 py-2 font-mono text-blue-400">
+                      {{ peer.node.id }}
+                    </td>
+                    <td class="px-4 py-2">{{ peer.node.name }}</td>
+                    <td class="px-4 py-2">
+                      <span [ngSwitch]="peer.node.nodeType">
+                        <span *ngSwitchCase="'miner'">
+                          <i class="pi pi-cog text-yellow-400 mr-1"></i
+                          >Minerador
+                        </span>
+                        <span *ngSwitchCase="'peer'">
+                          <i class="pi pi-globe text-blue-400 mr-1"></i>Nó
+                        </span>
+                        <span *ngSwitchCase="'user'">
+                          <i class="pi pi-user text-green-400 mr-1"></i>Usuário
+                        </span>
+                        <span *ngSwitchDefault>
+                          <i
+                            class="pi pi-question-circle text-zinc-400 mr-1"
+                          ></i
+                          >Desconhecido
+                        </span>
+                      </span>
+                    </td>
+                    <td class="px-4 py-2">{{ peer.latency }} ms</td>
+                    <td class="px-4 py-2">
+                      <button
+                        (click)="copyToClipboard(peer.node.id.toString())"
+                        class="text-zinc-400 hover:text-blue-400 mr-2"
+                        title="Copiar ID"
+                      >
+                        <i class="pi pi-copy"></i>
+                      </button>
+                      <button
+                        (click)="copyToClipboard(peer.node.name)"
+                        class="text-zinc-400 hover:text-blue-400"
+                        title="Copiar nome"
+                      >
+                        <i class="pi pi-id-card"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+          <ng-template #noPeers>
+            <div class="text-zinc-500 italic py-8 text-center">
+              Nenhum peer conectado a este minerador.
+            </div>
+          </ng-template>
+        </div>
       </div>
 
       <!-- Blockchain -->
