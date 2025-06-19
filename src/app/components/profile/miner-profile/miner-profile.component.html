@@ -183,7 +183,7 @@
                       }"
                       optionLabel="label"
                       optionValue="value"
-                      class="bg-zinc-800 text-blue-300 font-mono text-xs"
+                      class="bg-zinc-800 text-blue-300 text-xs"
                       [panelStyle]="{
                         background: '#18181b',
                         color: '#cbd5e1',
@@ -195,9 +195,10 @@
                           <i
                             class="pi pi-bolt text-blue-400 flex items-center text-xs"
                           ></i>
-                          <span class="flex items-center text-xs">{{
-                            option?.label || "Máximo"
-                          }}</span>
+                          <span
+                            class="flex items-center text-xs text-zinc-400"
+                            >{{ option?.label || "Máximo" }}</span
+                          >
                         </div>
                       </ng-template>
                       <ng-template pTemplate="item" let-option>
