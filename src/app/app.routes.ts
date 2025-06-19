@@ -13,6 +13,7 @@ import { MinersListV2Component } from './components/profile/miners-list-v2/miner
 import { NetworkOverviewComponent } from './components/network/network-overview/network-overview.component';
 import { AddressDetailsComponent } from './components/network/wallet/address-list/address-details.component';
 import { MinerExistsGuard } from './guards/miner-exists.guard';
+import { V2Layout } from './layouts/v2.layout';
 
 export const routes: Routes = [
   {
@@ -31,6 +32,13 @@ export const routes: Routes = [
   {
     path: 'dashboard/miners',
     component: MinersListV2Component,
+  },
+  {
+    path: 'v2',
+    component: V2Layout,
+    children: [
+      // Aqui ficarão as rotas filhas do v2
+    ],
   },
   {
     path: '',
