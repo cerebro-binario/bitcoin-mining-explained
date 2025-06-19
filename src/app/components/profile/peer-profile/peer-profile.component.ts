@@ -232,10 +232,6 @@ export class PeerProfileComponent implements OnInit {
     return `${hours}h ${minutes}m`;
   }
 
-  getNetworkVersion(): string {
-    return this.node.consensus.version.toString();
-  }
-
   getBandwidthUsage(): string {
     const bandwidth = this.node.peers.length * 50; // 50 KB/s por peer
     if (bandwidth > 1024) {
