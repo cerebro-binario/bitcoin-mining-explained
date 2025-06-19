@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
@@ -11,7 +10,7 @@ import { getAddressType } from '../../../../utils/tools';
 @Component({
   selector: 'app-address-details',
   standalone: true,
-  imports: [CommonModule, BreadcrumbModule],
+  imports: [CommonModule],
   templateUrl: './address-details.component.html',
   styleUrls: ['./address-details.component.scss'],
 })
@@ -22,12 +21,9 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
   spentUtxos: any[] = [];
   private subscription = new Subscription();
   private privateKeyParam?: string;
-  breadcrumbHome = { icon: 'pi pi-home', routerLink: ['/'] };
-  breadcrumbItems: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private bitcoinNetworkService: BitcoinNetworkService,
     private keyService: KeyService
   ) {}
@@ -38,7 +34,6 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
         this.nodeId = +paramMap.get('id')!;
         this.addressId = paramMap.get('address')!;
         this.loadAddressData();
-        this.updateBreadcrumb();
       })
     );
 
@@ -250,28 +245,5 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
 
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
-  }
-
-  goBack() {
-    this.router.navigate(['/miner', this.nodeId]);
-  }
-
-  updateBreadcrumb() {
-    this.breadcrumbItems = [
-      { label: 'Mineradores', routerLink: ['/miner'] },
-      this.nodeId
-        ? {
-            label: `Miner #${this.nodeId}`,
-            routerLink: ['/miner', this.nodeId],
-          }
-        : null,
-      this.nodeId
-        ? {
-            label: 'Endereços',
-            routerLink: ['/miner', this.nodeId, 'addresses'],
-          }
-        : null,
-      this.addressId ? { label: 'Detalhes', disabled: true } : null,
-    ].filter(Boolean);
   }
 }

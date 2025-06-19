@@ -1,22 +1,142 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {
+  ActivatedRoute,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { ThemeService } from '../services/theme.service';
 
 @Component({
   selector: 'app-root-layout',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
     <div class="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      <router-outlet></router-outlet>
+      <!-- Navbar Global Fixa -->
+      <nav
+        class="fixed top-0 left-0 right-0 z-50 bg-zinc-900 border-b border-zinc-800 shadow-lg"
+      >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <!-- Logo/Brand -->
+            <div class="flex items-center">
+              <a
+                routerLink="/"
+                class="flex items-center space-x-2 text-xl font-bold text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                <i class="pi pi-bitcoin text-2xl"></i>
+                <span class="hidden sm:inline">Bitcoin Mining Explained</span>
+                <span class="sm:hidden">BME</span>
+              </a>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="hidden md:flex items-center space-x-8">
+              <a
+                routerLink="/"
+                routerLinkActive="text-blue-400 border-b-2 border-blue-400"
+                class="text-zinc-300 hover:text-blue-400 transition-colors py-2 px-1 border-b-2 border-transparent"
+              >
+                <i class="pi pi-home mr-2"></i>
+                Visão Geral
+              </a>
+              <a
+                routerLink="/tools"
+                routerLinkActive="text-blue-400 border-b-2 border-blue-400"
+                class="text-zinc-300 hover:text-blue-400 transition-colors py-2 px-1 border-b-2 border-transparent"
+              >
+                <i class="pi pi-wrench mr-2"></i>
+                Ferramentas
+              </a>
+              <a
+                routerLink="/network"
+                routerLinkActive="text-blue-400 border-b-2 border-blue-400"
+                class="text-zinc-300 hover:text-blue-400 transition-colors py-2 px-1 border-b-2 border-transparent"
+              >
+                <i class="pi pi-globe mr-2"></i>
+                Rede
+              </a>
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+              <button
+                type="button"
+                class="text-zinc-300 hover:text-blue-400 transition-colors"
+                (click)="toggleMobileMenu()"
+              >
+                <i class="pi pi-bars text-xl"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mobile menu -->
+          <div
+            *ngIf="mobileMenuOpen"
+            class="md:hidden border-t border-zinc-800"
+          >
+            <div class="px-2 pt-2 pb-3 space-y-1">
+              <a
+                routerLink="/"
+                routerLinkActive="bg-zinc-800 text-blue-400"
+                class="block px-3 py-2 rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-blue-400 transition-colors"
+                (click)="closeMobileMenu()"
+              >
+                <i class="pi pi-home mr-2"></i>
+                Visão Geral
+              </a>
+              <a
+                routerLink="/tools"
+                routerLinkActive="bg-zinc-800 text-blue-400"
+                class="block px-3 py-2 rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-blue-400 transition-colors"
+                (click)="closeMobileMenu()"
+              >
+                <i class="pi pi-wrench mr-2"></i>
+                Ferramentas
+              </a>
+              <a
+                routerLink="/network"
+                routerLinkActive="bg-zinc-800 text-blue-400"
+                class="block px-3 py-2 rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-blue-400 transition-colors"
+                (click)="closeMobileMenu()"
+              >
+                <i class="pi pi-globe mr-2"></i>
+                Rede
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content com padding-top para compensar a navbar fixa -->
+      <main class="flex-1 pt-16">
+        <router-outlet></router-outlet>
+      </main>
     </div>
   `,
 })
 export class RootLayout {
-  constructor(private themeService: ThemeService) {}
+  mobileMenuOpen = false;
+
+  constructor(
+    private themeService: ThemeService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
     const theme = this.themeService.getTheme();
     this.themeService.applyTheme(theme);
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen = false;
   }
 }

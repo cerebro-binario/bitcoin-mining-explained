@@ -10,16 +10,22 @@ export const routes: Routes = [
     path: '',
     component: RootLayout,
     children: [
-      { path: '', component: NetworkOverviewComponent },
+      {
+        path: '',
+        component: NetworkOverviewComponent,
+        data: { breadcrumb: 'Visão Geral' },
+      },
       {
         path: 'miners/:id',
         component: MinerProfileComponent,
         canActivate: [MinerExistsGuard],
+        data: { breadcrumb: 'Minerador' },
       },
       {
         path: 'miners/:id/addresses/:address',
         component: AddressDetailsComponent,
         canActivate: [MinerExistsGuard],
+        data: { breadcrumb: 'Endereço' },
       },
     ],
   },
