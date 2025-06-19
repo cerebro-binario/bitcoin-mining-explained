@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { BitcoinAddressData, BipType } from '../../../../models/wallet.model';
+import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { KeyService } from '../../../../services/key.service';
 import { getAddressType } from '../../../../utils/tools';
@@ -47,7 +47,6 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
       this.route.queryParamMap.subscribe((queryParamMap) => {
         const pk = queryParamMap.get('pk');
         if (pk) {
-          console.log('Chave privada recebida via query param:', pk);
           this.privateKeyParam = pk;
           this.loadAddressData();
         }
@@ -77,7 +76,6 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     let foundAddressData = this.findAddressInMinerWallet(minerNode);
 
     if (foundAddressData) {
-      console.log('Endereço encontrado na wallet do miner');
       this.addressData = foundAddressData;
       this.calculateSpentUtxos();
       return;
@@ -87,7 +85,6 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     foundAddressData = this.findAddressInGlobalBalance(minerNode);
 
     if (foundAddressData) {
-      console.log('Endereço encontrado no balanço global');
       this.addressData = foundAddressData;
       this.calculateSpentUtxos();
       return;
@@ -103,9 +100,6 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
         // 3.1. Buscar novamente na wallet do miner (agora com as chaves)
         foundAddressData = this.findAddressInMinerWallet(minerNode);
         if (foundAddressData) {
-          console.log(
-            'Endereço encontrado na wallet do miner após reconstrução'
-          );
           // Mescla os dados da wallet com as chaves reconstruídas
           this.addressData = {
             ...foundAddressData,
@@ -118,9 +112,6 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
         // 3.2. Buscar novamente no balanço global (agora com as chaves)
         foundAddressData = this.findAddressInGlobalBalance(minerNode);
         if (foundAddressData) {
-          console.log(
-            'Endereço encontrado no balanço global após reconstrução'
-          );
           // Mescla os dados do balanço global com as chaves reconstruídas
           this.addressData = {
             ...foundAddressData,
@@ -131,14 +122,13 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
         }
 
         // Se não encontrou em nenhum lugar, usa os dados reconstruídos
-        console.log('Usando dados reconstruídos da chave privada');
         this.addressData = reconstructedData;
         this.calculateSpentUtxos();
         return;
       }
     }
 
-    console.warn('Endereço não encontrado em nenhuma fonte');
+    console.error('Endereço não encontrado em nenhuma fonte');
   }
 
   private findAddressInMinerWallet(

@@ -45,10 +45,6 @@ export class MinerExistsGuard implements CanActivate {
       this.router.navigate(['/network/overview']);
       return false;
     }
-
-    console.log(
-      `MinerExistsGuard: Miner com ID ${minerId} encontrado - permitindo acesso`
-    );
     return true;
   }
 }
