@@ -165,7 +165,9 @@
                 class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold flex items-center gap-1"
               >
                 <i class="pi pi-clock"></i>
-                {{ (miner.miningElapsed / 1000).toFixed(1) }}s
+                <span class="inline-block min-w-[3.5em] text-right"
+                  >{{ (miner.miningElapsed / 1000).toFixed(1) }}s</span
+                >
               </span>
               <!-- Hash Rate Configurado (dropdown) -->
               <span
