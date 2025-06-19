@@ -85,28 +85,19 @@
       <ng-template #body let-data let-index="rowIndex" let-expanded="expanded">
         <tr class="border-b border-zinc-700 last:border-0">
           <td class="p-4 align-middle flex items-center">
-            <!-- <button
-              pButton
-              type="button"
-              [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-              [pRowToggler]="data"
-              class="p-button-text p-0 text-white/70 hover:text-white focus:ring-0 focus:outline-none"
-              style="height: 1.7rem; width: 1.7rem"
-              [attr.aria-label]="expanded ? 'Colapsar' : 'Expandir'"
-            ></button> -->
-            <i
-              *ngIf="data.nodeId === nodeId"
-              class="pi pi-verified text-blue-400 text-xs ml-1"
-              title="Este endereço pertence a este nó"
-            ></i>
-            <!-- <button
-              pButton
-              type="button"
-              icon="pi pi-search"
-              class="p-button-text p-button-xs ml-2 text-blue-400 hover:text-blue-600"
-              title="Ver detalhes do endereço"
-              (click)="openAddressDetails(data)"
-            ></button> -->
+            <ng-container *ngIf="data.nodeId === nodeId; else placeholder">
+              <i
+                class="pi pi-verified text-blue-400 text-xs ml-1"
+                title="Este endereço pertence a este nó"
+              ></i>
+            </ng-container>
+            <ng-template #placeholder>
+              <i
+                class="pi pi-verified text-xs ml-1"
+                style="opacity: 0; pointer-events: none"
+                aria-hidden="true"
+              ></i>
+            </ng-template>
           </td>
           <td class="px-4 py-2 text-zinc-500 font-mono">
             {{ first + index + 1 }}
