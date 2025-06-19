@@ -91,10 +91,10 @@ export class Node {
   private peerBlockSubscriptions: { [peerId: number]: Subscription } = {};
   private orphanBlocks: Map<string, Block[]> = new Map(); // chave: previousHash, valor: blocos órfãos que dependem desse hash
 
-  private blockBroadcastPipe = (peer: Node) =>
+  private blockBroadcastPipe = (peer: Node, latency: number) =>
     pipe(
       filter((block: Block) => this.onPeerBlockFiltering(block, peer)),
-      delay((Math.floor(Math.random() * 3) + 1) * 1000),
+      delay(latency),
       tap((block: Block) => this.onPeerBlockProcessing(block, peer)),
       tap((block: Block) => this.onPeerBlockProcessingComplete(block, peer))
     );
@@ -796,7 +796,7 @@ export class Node {
 
       if (!this.peerBlockSubscriptions[peer.id!]) {
         this.peerBlockSubscriptions[peer.id!] = peer.blockBroadcast$
-          .pipe(this.blockBroadcastPipe(peer))
+          .pipe(this.blockBroadcastPipe(peer, latency))
           .subscribe();
       }
 
@@ -815,7 +815,7 @@ export class Node {
 
       if (!peer.peerBlockSubscriptions[this.id!]) {
         peer.peerBlockSubscriptions[this.id!] = this.blockBroadcast$
-          .pipe(peer.blockBroadcastPipe(this))
+          .pipe(peer.blockBroadcastPipe(this, latency))
           .subscribe();
       }
 
