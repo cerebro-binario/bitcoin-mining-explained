@@ -1,5 +1,19 @@
 <div class="relative">
+  <!-- Indicação visual de blockchain vazia -->
+  <div
+    *ngIf="node.heights.length <= 1"
+    class="flex flex-col items-center justify-center py-16 text-zinc-500"
+  >
+    <i class="pi pi-database text-5xl mb-4"></i>
+    <span class="text-lg font-semibold"
+      >Nenhum bloco encontrado na blockchain local.</span
+    >
+    <span class="text-sm"
+      >Aguarde a mineração do primeiro bloco ou conecte-se à rede.</span
+    >
+  </div>
   <cdk-virtual-scroll-viewport
+    *ngIf="node.heights.length > 1"
     orientation="horizontal"
     [itemSize]="itemSize"
     [minBufferPx]="nToleratedItems * itemSize"
