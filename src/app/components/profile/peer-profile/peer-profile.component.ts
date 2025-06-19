@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SelectModule } from 'primeng/select';
@@ -11,6 +11,7 @@ import { BlockchainComponent } from '../../network/blockchain/blockchain.compone
 import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
+import { Block } from '../../../models/block.model';
 
 @Component({
   selector: 'app-peer-profile',
@@ -27,7 +28,7 @@ import { WalletComponent } from '../../network/wallet/wallet.component';
     SelectModule,
   ],
 })
-export class PeerProfileComponent {
+export class PeerProfileComponent implements OnInit {
   node!: BitcoinNode;
   activeTab: 'metadata' | 'transactions' = 'metadata';
   showAllLogs = false;
@@ -200,9 +201,7 @@ export class PeerProfileComponent {
     });
   }
 
-  // Métodos específicos para full nodes
   getNodeStatus(): string {
-    // Para full nodes, consideramos online se tem peers conectados
     return this.node.peers.length > 0 ? 'Online' : 'Offline';
   }
 
@@ -216,8 +215,9 @@ export class PeerProfileComponent {
     return this.node.heights.length > 0 ? this.node.heights.length - 1 : 0;
   }
 
-  getLatestBlock() {
-    return this.node.getLatestBlock();
+  getLatestBlock(): Block | null {
+    const block = this.node.getLatestBlock();
+    return block || null;
   }
 
   getConnectedPeersCount(): number {
@@ -225,7 +225,6 @@ export class PeerProfileComponent {
   }
 
   getNodeUptime(): string {
-    // Mock uptime baseado no tempo desde a criação do nó
     const now = Date.now();
     const uptime = Math.floor((now - (this.node as any).createdAt) / 1000) || 0;
     const hours = Math.floor(uptime / 3600);
@@ -238,11 +237,15 @@ export class PeerProfileComponent {
   }
 
   getBandwidthUsage(): string {
-    // Mock bandwidth baseado no número de peers
     const bandwidth = this.node.peers.length * 50; // 50 KB/s por peer
     if (bandwidth > 1024) {
       return `${(bandwidth / 1024).toFixed(1)} MB/s`;
     }
     return `${bandwidth} KB/s`;
+  }
+
+  getTarget(block: Block | null): string {
+    if (!block) return '0'.repeat(64);
+    return block.target.toString(16).padStart(64, '0');
   }
 }

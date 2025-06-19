@@ -111,14 +111,14 @@
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl">
-          <!-- Informações do Nó -->
+          <!-- Último Bloco -->
           <div
-            class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px] overflow-hidden"
+            class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[650px] overflow-hidden"
           >
             <h2
               class="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2"
             >
-              Informações do Nó
+              Último Bloco
               <div class="flex items-center justify-between flex-1">
                 <div class="flex items-center">
                   <span
@@ -127,9 +127,10 @@
                     {{ getNodeStatus() }}
                   </span>
                   <span
+                    *ngIf="getLatestBlock()?.consensusVersion"
                     class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold"
                   >
-                    v{{ getNetworkVersion() }}
+                    v{{ getLatestBlock()?.consensusVersion }}
                   </span>
                 </div>
                 <!-- Uptime -->
@@ -143,254 +144,296 @@
                 </span>
               </div>
             </h2>
-            <!-- Tabs -->
-            <div class="flex gap-2 border-b border-zinc-800">
-              <button
-                class="px-4 py-2 text-sm font-medium transition-colors"
-                [ngClass]="
-                  activeTab === 'metadata'
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-zinc-400 hover:text-zinc-300'
-                "
-                (click)="setActiveTab('metadata')"
+
+            <!-- Estado sem blocos -->
+            <div
+              *ngIf="!getLatestBlock()"
+              class="flex-1 flex flex-col items-center justify-center text-center px-6"
+            >
+              <div
+                class="w-24 h-24 mb-6 rounded-full bg-zinc-800 flex items-center justify-center"
               >
-                Metadados
-              </button>
-              <button
-                class="px-4 py-2 text-sm font-medium transition-colors"
-                [ngClass]="
-                  activeTab === 'transactions'
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-zinc-400 hover:text-zinc-300'
-                "
-                (click)="setActiveTab('transactions')"
-              >
-                Transações
-              </button>
+                <i class="pi pi-box text-4xl text-zinc-600"></i>
+              </div>
+              <h3 class="text-xl font-bold text-zinc-400 mb-2">
+                Nenhum Bloco Encontrado
+              </h3>
+              <p class="text-zinc-500 max-w-md">
+                Este nó ainda não recebeu nenhum bloco da rede. Aguarde até que
+                o nó sincronize com outros peers ou até que um novo bloco seja
+                minerado.
+              </p>
             </div>
 
-            <!-- Conteúdo das Tabs -->
-            <div class="flex-1 min-h-0">
-              <!-- Metadados -->
-              <div
-                *ngIf="activeTab === 'metadata'"
-                class="h-full flex flex-col min-h-0"
-              >
-                <div class="grid grid-cols-2 gap-4 flex-1 overflow-y-auto">
-                  <div>
-                    <div class="text-xs text-zinc-400">Block Height</div>
-                    <div class="font-mono text-lg text-blue-400">
-                      {{ getBlockHeight() }}
+            <!-- Conteúdo quando há blocos -->
+            <ng-container *ngIf="getLatestBlock()">
+              <!-- Tabs -->
+              <div class="flex gap-2 border-b border-zinc-800">
+                <button
+                  class="px-4 py-2 text-sm font-medium transition-colors"
+                  [ngClass]="
+                    activeTab === 'metadata'
+                      ? 'text-blue-400 border-b-2 border-blue-400'
+                      : 'text-zinc-400 hover:text-zinc-300'
+                  "
+                  (click)="setActiveTab('metadata')"
+                >
+                  Metadados
+                </button>
+                <button
+                  class="px-4 py-2 text-sm font-medium transition-colors"
+                  [ngClass]="
+                    activeTab === 'transactions'
+                      ? 'text-blue-400 border-b-2 border-blue-400'
+                      : 'text-zinc-400 hover:text-zinc-300'
+                  "
+                  (click)="setActiveTab('transactions')"
+                >
+                  Transações ({{ getLatestBlock()?.transactions?.length || 0 }})
+                </button>
+              </div>
+
+              <!-- Conteúdo das Tabs -->
+              <div class="flex-1 min-h-0">
+                <!-- Metadados -->
+                <div
+                  *ngIf="activeTab === 'metadata'"
+                  class="h-full flex flex-col min-h-0"
+                >
+                  <div class="grid grid-cols-2 gap-4 flex-1 overflow-y-auto">
+                    <div>
+                      <div class="text-xs text-zinc-400">Height</div>
+                      <div class="font-mono text-lg text-blue-400">
+                        {{ getLatestBlock()?.height || 0 }}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-xs text-zinc-400">Peers Conectados</div>
-                    <div class="font-mono text-lg text-green-400">
-                      {{ getConnectedPeersCount() }}
+                    <div>
+                      <div class="text-xs text-zinc-400">Timestamp</div>
+                      <div class="font-mono">
+                        {{ getLatestBlock()?.timestamp | date : "medium" }}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-xs text-zinc-400">Versão da Rede</div>
-                    <div class="font-mono text-lg text-zinc-300">
-                      v{{ getNetworkVersion() }}
+                    <div class="col-span-2">
+                      <div class="text-xs text-zinc-400">Hash Anterior</div>
+                      <div class="font-mono break-all text-zinc-300">
+                        0x{{ getLatestBlock()?.previousHash || "0".repeat(64) }}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-xs text-zinc-400">Uptime</div>
-                    <div class="font-mono text-lg text-yellow-400">
-                      {{ getNodeUptime() }}
+                    <div class="col-span-2">
+                      <div class="text-xs text-zinc-400">Hash Atual</div>
+                      <div class="font-mono break-all text-green-400">
+                        0x{{ getLatestBlock()?.hash || "0".repeat(64) }}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-xs text-zinc-400">Bandwidth</div>
-                    <div class="font-mono text-lg text-purple-400">
-                      {{ getBandwidthUsage() }}
+                    <div class="col-span-2">
+                      <div class="text-xs text-zinc-400">Merkle Root</div>
+                      <div class="font-mono break-all text-zinc-300">
+                        0x{{ getLatestBlock()?.merkleRoot || "0".repeat(64) }}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div class="text-xs text-zinc-400">Status</div>
-                    <div class="font-mono text-lg">
-                      <span [ngClass]="getNodeStatusClass()">
-                        {{ getNodeStatus() }}
-                      </span>
+                    <div class="col-span-2">
+                      <div class="text-xs text-zinc-400">Target</div>
+                      <div class="font-mono break-all text-zinc-300">
+                        {{ getTarget(getLatestBlock()) }}
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-span-2" *ngIf="getLatestBlock()">
-                    <div class="text-xs text-zinc-400">Último Bloco</div>
-                    <div class="font-mono break-all text-zinc-300">
-                      0x{{ getLatestBlock()?.hash || "0".repeat(64) }}
+                    <div>
+                      <div class="text-xs text-zinc-400">Nonce</div>
+                      <div class="font-mono text-lg text-yellow-400">
+                        {{ getLatestBlock()?.nonce | number }}
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-span-2" *ngIf="getLatestBlock()">
-                    <div class="text-xs text-zinc-400">
-                      Timestamp do Último Bloco
+                    <div>
+                      <div class="text-xs text-zinc-400">Consenso</div>
+                      <div class="font-mono text-lg">
+                        v{{ getLatestBlock()?.consensusVersion }}
+                      </div>
                     </div>
-                    <div class="font-mono text-zinc-300">
-                      {{ getLatestBlock()?.timestamp | date : "medium" }}
+                    <div>
+                      <div class="text-xs text-zinc-400">Minerador</div>
+                      <div class="font-mono text-lg text-blue-400">
+                        #{{ getLatestBlock()?.minerId }}
+                      </div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-zinc-400">
+                        Tempo de Mineração
+                      </div>
+                      <div class="font-mono text-lg text-purple-400">
+                        {{ (getLatestBlock()?.miningElapsed || 0) / 1000 }}s
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Transações -->
-              <div
-                *ngIf="activeTab === 'transactions'"
-                class="h-full flex flex-col min-h-0"
-              >
-                <div class="space-y-4 flex-1 overflow-y-auto pr-2">
-                  <ng-container
-                    *ngFor="let tx of node.pendingTransactions; let i = index"
-                  >
-                    <div
-                      class="bg-zinc-800/50 rounded-lg border border-zinc-700 overflow-hidden"
+                <!-- Transações -->
+                <div
+                  *ngIf="activeTab === 'transactions'"
+                  class="h-full flex flex-col min-h-0"
+                >
+                  <div class="space-y-4 flex-1 overflow-y-auto pr-2">
+                    <ng-container
+                      *ngFor="
+                        let tx of getLatestBlock()?.transactions || [];
+                        let i = index
+                      "
                     >
-                      <!-- Cabeçalho da Transação -->
                       <div
-                        class="bg-zinc-900/50 px-4 py-2 flex items-center justify-between border-b border-zinc-700"
+                        class="bg-zinc-800/50 rounded-lg border border-zinc-700 overflow-hidden"
                       >
-                        <div class="flex items-center gap-2">
-                          <span class="text-xs text-zinc-400"
-                            >#{{ i + 1 }}</span
-                          >
-                          <span
-                            class="text-[9px] bg-orange-700 text-white px-1.5 py-0.5 rounded font-bold tracking-wide"
-                            >PENDING</span
-                          >
-                        </div>
-                        <span
-                          class="font-mono text-xs text-zinc-300 truncate max-w-[300px]"
-                          [title]="tx.id"
+                        <!-- Cabeçalho da Transação -->
+                        <div
+                          class="bg-zinc-900/50 px-4 py-2 flex items-center justify-between border-b border-zinc-700"
                         >
-                          {{ tx.id }}
-                        </span>
-                      </div>
-
-                      <!-- Corpo da Transação -->
-                      <div class="p-4 space-y-3">
-                        <!-- Inputs -->
-                        <div>
-                          <div class="text-xs font-medium text-zinc-400 mb-2">
-                            Inputs ({{ tx.inputs.length }})
-                          </div>
-                          <div
-                            *ngIf="tx.inputs.length === 0"
-                            class="text-xs text-zinc-500 ml-2"
-                          >
-                            -
-                          </div>
-                          <div
-                            *ngFor="let input of tx.inputs"
-                            class="ml-2 mb-2 last:mb-0"
-                          >
-                            <div
-                              class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-red-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs text-zinc-400"
+                              >#{{ i + 1 }}</span
                             >
-                              <!-- Marca d'água -->
+                            <span
+                              *ngIf="i === 0"
+                              class="text-[9px] bg-blue-700 text-white px-1.5 py-0.5 rounded font-bold tracking-wide"
+                              >COINBASE</span
+                            >
+                          </div>
+                          <span
+                            class="font-mono text-xs text-zinc-300 truncate max-w-[300px]"
+                            [title]="tx.id"
+                          >
+                            {{ tx.id }}
+                          </span>
+                        </div>
+
+                        <!-- Corpo da Transação -->
+                        <div class="p-4 space-y-3">
+                          <!-- Inputs -->
+                          <div>
+                            <div class="text-xs font-medium text-zinc-400 mb-2">
+                              Inputs ({{ tx.inputs.length }})
+                            </div>
+                            <div
+                              *ngIf="tx.inputs.length === 0"
+                              class="text-xs text-zinc-500 ml-2"
+                            >
+                              -
+                            </div>
+                            <div
+                              *ngFor="let input of tx.inputs"
+                              class="ml-2 mb-2 last:mb-0"
+                            >
                               <div
-                                class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
+                                class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-red-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
                               >
-                                <i
-                                  class="pi pi-arrow-down text-[60px] text-red-500"
-                                ></i>
-                              </div>
-                              <!-- Cantos decorativos -->
-                              <div
-                                class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-red-400"
-                              ></div>
-                              <div
-                                class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-red-400"
-                              ></div>
-                              <!-- Ícone principal -->
-                              <div
-                                class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
-                              >
-                                <i
-                                  class="pi pi-arrow-down text-lg text-red-400"
-                                ></i>
-                              </div>
-                              <!-- Conteúdo -->
-                              <div class="flex-1 z-10">
+                                <!-- Marca d'água -->
                                 <div
-                                  class="text-base font-bold text-yellow-400 flex items-center gap-2"
+                                  class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
                                 >
-                                  {{ (input.value / 1e8).toFixed(8) }}
-                                  <span class="text-xs text-zinc-400">BTC</span>
+                                  <i
+                                    class="pi pi-arrow-down text-[60px] text-red-500"
+                                  ></i>
                                 </div>
-                                <div class="text-xs text-zinc-400">
-                                  {{ input.scriptPubKey }}
+                                <!-- Cantos decorativos -->
+                                <div
+                                  class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-red-400"
+                                ></div>
+                                <div
+                                  class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-red-400"
+                                ></div>
+                                <!-- Ícone principal -->
+                                <div
+                                  class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
+                                >
+                                  <i
+                                    class="pi pi-arrow-down text-lg text-red-400"
+                                  ></i>
+                                </div>
+                                <!-- Conteúdo -->
+                                <div class="flex-1 z-10">
+                                  <div
+                                    class="text-base font-bold text-yellow-400 flex items-center gap-2"
+                                  >
+                                    {{ (input.value / 1e8).toFixed(8) }}
+                                    <span class="text-xs text-zinc-400"
+                                      >BTC</span
+                                    >
+                                  </div>
+                                  <div class="text-xs text-zinc-400">
+                                    {{ input.scriptPubKey }}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Outputs -->
+                          <div>
+                            <div class="text-xs font-medium text-zinc-400 mb-2">
+                              Outputs ({{ tx.outputs.length }})
+                            </div>
+                            <div
+                              *ngFor="let output of tx.outputs"
+                              class="ml-2 mb-2 last:mb-0"
+                            >
+                              <div
+                                class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-green-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
+                              >
+                                <!-- Marca d'água -->
+                                <div
+                                  class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
+                                >
+                                  <i
+                                    class="pi pi-arrow-up text-[60px] text-green-500"
+                                  ></i>
+                                </div>
+                                <!-- Cantos decorativos -->
+                                <div
+                                  class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-green-400"
+                                ></div>
+                                <div
+                                  class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-green-400"
+                                ></div>
+                                <!-- Ícone principal -->
+                                <div
+                                  class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
+                                >
+                                  <i
+                                    class="pi pi-arrow-up text-lg text-green-400"
+                                  ></i>
+                                </div>
+                                <!-- Conteúdo -->
+                                <div class="flex-1 z-10">
+                                  <div
+                                    class="text-base font-bold text-yellow-400 flex items-center gap-2"
+                                  >
+                                    {{ (output.value / 1e8).toFixed(8) }}
+                                    <span class="text-xs text-zinc-400"
+                                      >BTC</span
+                                    >
+                                  </div>
+                                  <div class="text-xs text-zinc-400">
+                                    {{ output.scriptPubKey }}
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-
-                        <!-- Outputs -->
-                        <div>
-                          <div class="text-xs font-medium text-zinc-400 mb-2">
-                            Outputs ({{ tx.outputs.length }})
-                          </div>
-                          <div
-                            *ngFor="let output of tx.outputs"
-                            class="ml-2 mb-2 last:mb-0"
-                          >
-                            <div
-                              class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-green-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
-                            >
-                              <!-- Marca d'água -->
-                              <div
-                                class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
-                              >
-                                <i
-                                  class="pi pi-arrow-up text-[60px] text-green-500"
-                                ></i>
-                              </div>
-                              <!-- Cantos decorativos -->
-                              <div
-                                class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-green-400"
-                              ></div>
-                              <div
-                                class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-green-400"
-                              ></div>
-                              <!-- Ícone principal -->
-                              <div
-                                class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
-                              >
-                                <i
-                                  class="pi pi-arrow-up text-lg text-green-400"
-                                ></i>
-                              </div>
-                              <!-- Conteúdo -->
-                              <div class="flex-1 z-10">
-                                <div
-                                  class="text-base font-bold text-yellow-400 flex items-center gap-2"
-                                >
-                                  {{ (output.value / 1e8).toFixed(8) }}
-                                  <span class="text-xs text-zinc-400">BTC</span>
-                                </div>
-                                <div class="text-xs text-zinc-400">
-                                  {{ output.scriptPubKey }}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
                       </div>
+                    </ng-container>
+                    <div
+                      *ngIf="!getLatestBlock()?.transactions?.length"
+                      class="text-zinc-500 italic py-8 text-center"
+                    >
+                      Nenhuma transação neste bloco.
                     </div>
-                  </ng-container>
-                  <div
-                    *ngIf="node.pendingTransactions.length === 0"
-                    class="text-zinc-500 italic py-8 text-center"
-                  >
-                    Nenhuma transação pendente neste nó.
                   </div>
                 </div>
               </div>
-            </div>
+            </ng-container>
           </div>
 
           <!-- Eventos -->
           <div
-            class="bg-zinc-900 rounded-lg shadow pt-6 flex flex-col gap-4 h-[600px] overflow-hidden relative"
+            class="bg-zinc-900 rounded-lg shadow pt-6 flex flex-col gap-4 h-[650px] overflow-hidden relative"
           >
             <h2 class="text-xl font-bold text-blue-300 mb-2 px-6">Eventos</h2>
             <div class="flex-1 min-h-0 overflow-y-auto relative px-6 pb-6">
