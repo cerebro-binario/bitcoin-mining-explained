@@ -83,7 +83,7 @@ export class BitcoinNetworkService {
     });
 
     // Se for minerador, gera seed, keypair e endereços
-    if (nodeType === 'miner') {
+    if (nodeType === 'miner' || nodeType === 'peer') {
       const seed = this.keyService.generateSeed();
       const mnemonic = seed.join(' ');
       const addresses = this.keyService.deriveBitcoinAddresses(mnemonic, 1, 0);

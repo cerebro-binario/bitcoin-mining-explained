@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import type { Node as BitcoinNode } from '../../../models/node';
+import { BipType } from '../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { KeyService } from '../../../services/key.service';
 import { BlockchainComponent } from '../../network/blockchain/blockchain.component';
 import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
-import { BipType } from '../../../models/wallet.model';
 
 @Component({
   selector: 'app-peer-profile',
