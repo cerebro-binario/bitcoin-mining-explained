@@ -193,7 +193,7 @@
                       <ng-template pTemplate="selectedItem" let-option>
                         <div class="flex items-center h-full gap-1">
                           <i
-                            class="pi pi-bolt text-blue-400 flex items-center"
+                            class="pi pi-bolt text-blue-400 flex items-center text-xs"
                           ></i>
                           <span class="flex items-center text-xs">{{
                             option?.label || "Máximo"
@@ -218,7 +218,7 @@
                 <span
                   class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold flex items-center gap-1"
                 >
-                  <i class="pi pi-clock flex items-center"></i>
+                  <i class="pi pi-clock flex items-center text-xs"></i>
                   <div class="min-w-[3.5em] text-right">
                     {{ (miner.miningElapsed / 1000).toFixed(1) }}s
                   </div>
