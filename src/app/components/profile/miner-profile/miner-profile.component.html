@@ -334,18 +334,52 @@
                               *ngFor="let input of tx.inputs"
                               class="ml-2 mb-2 last:mb-0"
                             >
-                              <div class="flex items-center gap-2">
-                                <span
-                                  class="font-mono text-xs text-zinc-300 truncate flex-1"
-                                  [title]="input.txid"
+                              <div
+                                class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-red-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
+                              >
+                                <!-- Marca d'água -->
+                                <div
+                                  class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
                                 >
-                                  {{ input.txid }}:{{ input.vout }}
-                                </span>
-                                <span
-                                  class="text-xs text-zinc-400 whitespace-nowrap"
+                                  <i
+                                    class="pi pi-arrow-down text-[60px] text-red-500"
+                                  ></i>
+                                </div>
+                                <!-- Cantos decorativos -->
+                                <div
+                                  class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-red-400"
+                                ></div>
+                                <div
+                                  class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-red-400"
+                                ></div>
+                                <!-- Ícone principal -->
+                                <div
+                                  class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
                                 >
-                                  {{ input.value / 100000000 }} BTC
-                                </span>
+                                  <i
+                                    class="pi pi-arrow-down text-lg text-red-400"
+                                  ></i>
+                                </div>
+                                <!-- Conteúdo -->
+                                <div class="flex-1 z-10">
+                                  <div
+                                    class="text-base font-bold text-yellow-400 flex items-center gap-2"
+                                  >
+                                    {{ input.value / 100000000 }}
+                                    <span class="text-xs text-zinc-400"
+                                      >BTC</span
+                                    >
+                                  </div>
+                                  <div
+                                    class="text-xs text-zinc-400 font-mono truncate"
+                                    [title]="input.txid"
+                                  >
+                                    {{ input.txid }}
+                                  </div>
+                                  <div class="text-xs text-zinc-500 font-mono">
+                                    #{{ input.vout }}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -359,18 +393,49 @@
                               *ngFor="let output of tx.outputs"
                               class="ml-2 mb-2 last:mb-0"
                             >
-                              <div class="flex items-center gap-2">
-                                <span
-                                  class="text-xs text-zinc-400 whitespace-nowrap"
+                              <div
+                                class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-green-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
+                              >
+                                <!-- Marca d'água -->
+                                <div
+                                  class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
                                 >
-                                  {{ output.value / 100000000 }} BTC
-                                </span>
-                                <span
-                                  class="font-mono text-xs text-zinc-300 truncate flex-1"
-                                  [title]="output.scriptPubKey"
+                                  <i
+                                    class="pi pi-arrow-up text-[60px] text-green-500"
+                                  ></i>
+                                </div>
+                                <!-- Cantos decorativos -->
+                                <div
+                                  class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-green-400"
+                                ></div>
+                                <div
+                                  class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-green-400"
+                                ></div>
+                                <!-- Ícone principal -->
+                                <div
+                                  class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
                                 >
-                                  → {{ output.scriptPubKey }}
-                                </span>
+                                  <i
+                                    class="pi pi-arrow-up text-lg text-green-400"
+                                  ></i>
+                                </div>
+                                <!-- Conteúdo -->
+                                <div class="flex-1 z-10">
+                                  <div
+                                    class="text-base font-bold text-yellow-400 flex items-center gap-2"
+                                  >
+                                    {{ output.value / 100000000 }}
+                                    <span class="text-xs text-zinc-400"
+                                      >BTC</span
+                                    >
+                                  </div>
+                                  <div
+                                    class="text-xs text-zinc-400 font-mono truncate"
+                                    [title]="output.scriptPubKey"
+                                  >
+                                    {{ output.scriptPubKey }}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
