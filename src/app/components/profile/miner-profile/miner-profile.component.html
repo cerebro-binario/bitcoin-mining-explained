@@ -78,9 +78,13 @@
                 <div>
                   <div class="text-xs text-zinc-400">Endereço principal</div>
                   <div class="flex items-center gap-2">
-                    <span class="font-mono text-xs text-blue-400">{{
-                      miner.miningAddress
-                    }}</span>
+                    <a
+                      routerLink="/miners/{{ miner.id }}/addresses/{{
+                        miner.miningAddress
+                      }}"
+                      class="font-mono text-xs text-blue-400"
+                      >{{ miner.miningAddress }}</a
+                    >
                     <button
                       (click)="copyToClipboard(miner.miningAddress)"
                       class="text-zinc-400 hover:text-blue-400"
