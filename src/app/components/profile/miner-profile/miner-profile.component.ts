@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { KeyService } from '../../../services/key.service';
@@ -23,7 +23,7 @@ import { WalletComponent } from '../../network/wallet/wallet.component';
     BlockchainComponent,
     BlockchainBalanceComponent,
     FormsModule,
-    DropdownModule,
+    SelectModule,
   ],
 })
 export class MinerProfileComponent {

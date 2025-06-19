@@ -160,14 +160,11 @@
               <span
                 class="ml-2 rounded bg-zinc-800 text-blue-300 text-xs font-semibold flex items-center gap-1"
               >
-                <p-dropdown
+                <p-select
                   [options]="hashRateOptions"
                   [(ngModel)]="miner.hashRate"
                   (onChange)="onHashRateDropdownChange($event.value)"
                   [style]="{ 'min-width': '7em' }"
-                  [showClear]="false"
-                  [autoDisplayFirst]="false"
-                  [dropdownIcon]="'pi pi-chevron-down'"
                   optionLabel="label"
                   optionValue="value"
                   class="bg-zinc-800 text-blue-300 font-mono text-xs border border-zinc-700 rounded"
@@ -180,7 +177,7 @@
                   <ng-template pTemplate="item" let-option>
                     <span>{{ option.label }}</span>
                   </ng-template>
-                </p-dropdown>
+                </p-select>
               </span>
               <!-- Hash Rate Real -->
               <span
