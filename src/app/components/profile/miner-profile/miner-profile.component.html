@@ -202,7 +202,7 @@
                       ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-zinc-400 hover:text-zinc-300'
                   "
-                  (click)="activeTab = 'metadata'"
+                  (click)="setActiveTab('metadata')"
                 >
                   Metadados
                 </button>
@@ -213,7 +213,7 @@
                       ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-zinc-400 hover:text-zinc-300'
                   "
-                  (click)="activeTab = 'transactions'"
+                  (click)="setActiveTab('transactions')"
                 >
                   Transações ({{ miner.currentBlock.transactions.length }})
                 </button>

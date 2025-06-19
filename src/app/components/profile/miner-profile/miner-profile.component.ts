@@ -53,18 +53,20 @@ export class MinerProfileComponent {
       const minerId = parseInt(params['id']);
       this.miner = this.networkService.nodes.find(
         (n) => n.id === minerId && n.nodeType === 'miner'
-      )!;
+      ) as BitcoinNode;
       if (!this.miner) {
         this.router.navigate(['/']);
       }
     });
     this.route.queryParams.subscribe((params) => {
       this.showWalletDetails = params['wallet'] === 'open';
-      if (
-        params['displayMode'] === 'all-private-keys' ||
-        params['displayMode'] === 'with-balance'
-      ) {
-        this.displayModeBlockchainBalance = params['displayMode'];
+      if (params['displayMode']) {
+        this.displayModeBlockchainBalance = params['displayMode'] as
+          | 'all-private-keys'
+          | 'with-balance';
+      }
+      if (params['tab']) {
+        this.activeTab = params['tab'] as 'metadata' | 'transactions';
       }
     });
   }
@@ -192,6 +194,16 @@ export class MinerProfileComponent {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { displayMode: mode },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  setActiveTab(tab: 'metadata' | 'transactions') {
+    this.activeTab = tab;
+    const queryParams = { ...this.route.snapshot.queryParams, tab };
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
       queryParamsHandling: 'merge',
     });
   }
