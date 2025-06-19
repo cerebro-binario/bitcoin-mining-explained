@@ -56,6 +56,9 @@ export class MinerProfileComponent {
         this.router.navigate(['/']);
       }
     });
+    this.route.queryParams.subscribe((params) => {
+      this.showWalletDetails = params['wallet'] === 'open';
+    });
   }
 
   showNodeLogs() {
@@ -163,5 +166,14 @@ export class MinerProfileComponent {
 
   onHashRateDropdownChange(val: number | null) {
     this.miner.hashRate = val;
+  }
+
+  toggleWalletDetails() {
+    this.showWalletDetails = !this.showWalletDetails;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { wallet: this.showWalletDetails ? 'open' : null },
+      queryParamsHandling: 'merge',
+    });
   }
 }
