@@ -37,7 +37,7 @@ export class NetworkOverviewComponent {
     } else if (node.nodeType === 'peer') {
       this.router.navigate(['/peers', node.id]);
     } else if (node.nodeType === 'user') {
-      this.router.navigate(['/user', node.id]);
+      this.router.navigate(['/users', node.id]);
     }
   }
 }

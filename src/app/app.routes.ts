@@ -3,6 +3,7 @@ import { NetworkOverviewComponent } from './components/network/network-overview/
 import { AddressDetailsComponent } from './components/network/wallet/address-list/address-details.component';
 import { MinerProfileComponent } from './components/profile/miner-profile/miner-profile.component';
 import { PeerProfileComponent } from './components/profile/peer-profile/peer-profile.component';
+import { UserProfileComponent } from './components/profile/user-profile/user-profile.component';
 import { NodeExistsGuard } from './guards/miner-exists.guard';
 import { RootLayout } from './layouts/root.layout';
 
@@ -33,6 +34,11 @@ export const routes: Routes = [
       {
         path: 'peers/:id/addresses/:address',
         component: AddressDetailsComponent,
+        canActivate: [NodeExistsGuard],
+      },
+      {
+        path: 'users/:id',
+        component: UserProfileComponent,
         canActivate: [NodeExistsGuard],
       },
     ],
