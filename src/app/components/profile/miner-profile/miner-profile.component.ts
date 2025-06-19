@@ -77,6 +77,9 @@ export class MinerProfileComponent {
       if (params['chainBipFormat']) {
         this.chainBipFormat = params['chainBipFormat'] as BipType;
       }
+      if (params['blockchain'] !== undefined) {
+        this.isBlockchainVisible = params['blockchain'] === 'open';
+      }
     });
   }
 
@@ -90,6 +93,11 @@ export class MinerProfileComponent {
 
   toggleBlockchainVisibility() {
     this.isBlockchainVisible = !this.isBlockchainVisible;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { blockchain: this.isBlockchainVisible ? 'open' : 'closed' },
+      queryParamsHandling: 'merge',
+    });
   }
 
   startMining() {
