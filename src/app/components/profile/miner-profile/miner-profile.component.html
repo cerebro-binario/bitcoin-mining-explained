@@ -417,6 +417,8 @@
           </h2>
           <app-blockchain-balance
             [node]="miner"
+            [displayModeInput]="displayModeBlockchainBalance"
+            (displayModeChange)="onBlockchainBalanceDisplayModeChange($event)"
             class="flex flex-col flex-1 min-h-0 h-full"
           ></app-blockchain-balance>
         </div>

@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  Output,
+  EventEmitter,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -28,8 +36,12 @@ import { PaginationBarComponent } from '../../wallet/pagination-bar.component';
   templateUrl: './blockchain-balance.component.html',
   styleUrls: ['./blockchain-balance.component.scss'],
 })
-export class BlockchainBalanceComponent implements OnInit {
+export class BlockchainBalanceComponent implements OnInit, OnChanges {
   @Input() node!: Node;
+  @Input() displayModeInput: 'all-private-keys' | 'with-balance' | undefined;
+  @Output() displayModeChange = new EventEmitter<
+    'all-private-keys' | 'with-balance'
+  >();
 
   addresses: BitcoinAddressData[] = [];
   addressesDisplay: BitcoinAddressData[] = [];
@@ -58,6 +70,13 @@ export class BlockchainBalanceComponent implements OnInit {
       this.updateView();
     });
     this.updateView();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['displayModeInput'] && this.displayModeInput) {
+      this.displayMode = this.displayModeInput;
+      this.updateView();
+    }
   }
 
   private updateView() {
@@ -154,6 +173,7 @@ export class BlockchainBalanceComponent implements OnInit {
   onDisplayModeChange() {
     this.pagination.currentPage = 0n;
     this.updateView();
+    this.displayModeChange.emit(this.displayMode);
   }
 
   onChangeAddressType(addressType: BipType | 'all-bip-types') {

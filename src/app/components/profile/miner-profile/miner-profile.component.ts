@@ -32,6 +32,8 @@ export class MinerProfileComponent {
   showAllLogs = false;
   isBlockchainVisible = true;
   showWalletDetails = false;
+  displayModeBlockchainBalance: 'all-private-keys' | 'with-balance' =
+    'with-balance';
   hashRateOptions = [
     { label: '1 H/s', value: 1 },
     { label: '1k H/s', value: 1000 },
@@ -58,6 +60,12 @@ export class MinerProfileComponent {
     });
     this.route.queryParams.subscribe((params) => {
       this.showWalletDetails = params['wallet'] === 'open';
+      if (
+        params['displayMode'] === 'all-private-keys' ||
+        params['displayMode'] === 'with-balance'
+      ) {
+        this.displayModeBlockchainBalance = params['displayMode'];
+      }
     });
   }
 
@@ -173,6 +181,17 @@ export class MinerProfileComponent {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { wallet: this.showWalletDetails ? 'open' : null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  onBlockchainBalanceDisplayModeChange(
+    mode: 'all-private-keys' | 'with-balance'
+  ) {
+    this.displayModeBlockchainBalance = mode;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { displayMode: mode },
       queryParamsHandling: 'merge',
     });
   }
