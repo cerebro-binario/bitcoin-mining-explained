@@ -109,7 +109,7 @@
             [class.text-purple-300]="data.addressType === 'bip84'"
           >
             <a
-              [routerLink]="['/miner', nodeId, 'addresses', data.address]"
+              [routerLink]="['/miners', nodeId, 'addresses', data.address]"
               [queryParams]="
                 showPrivateKey ? { pk: data.keys.priv.decimal } : {}
               "

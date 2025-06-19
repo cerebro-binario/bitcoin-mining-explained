@@ -33,7 +33,7 @@ export class NetworkOverviewComponent {
   onEntitySelected(node: BitcoinNode) {
     this.selectedEntity = node;
     if (node.nodeType === 'miner') {
-      this.router.navigate(['/miner', node.id]);
+      this.router.navigate(['/miners', node.id]);
     } else if (node.nodeType === 'peer') {
       this.router.navigate(['/node', node.id]);
     } else if (node.nodeType === 'user') {

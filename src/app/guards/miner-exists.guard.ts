@@ -25,9 +25,9 @@ export class MinerExistsGuard implements CanActivate {
     // Verifica se o parâmetro id existe e é um número válido
     if (!minerIdParam || isNaN(+minerIdParam)) {
       console.warn(
-        `MinerExistsGuard: ID inválido "${minerIdParam}" - redirecionando para /network/overview`
+        `MinerExistsGuard: ID inválido "${minerIdParam}" - redirecionando para /`
       );
-      this.router.navigate(['/network/overview']);
+      this.router.navigate(['/']);
       return false;
     }
 
@@ -40,9 +40,9 @@ export class MinerExistsGuard implements CanActivate {
 
     if (!minerExists) {
       console.warn(
-        `MinerExistsGuard: Miner com ID ${minerId} não encontrado - redirecionando para /network/overview`
+        `MinerExistsGuard: Miner com ID ${minerId} não encontrado - redirecionando para /`
       );
-      this.router.navigate(['/network/overview']);
+      this.router.navigate(['/']);
       return false;
     }
     return true;

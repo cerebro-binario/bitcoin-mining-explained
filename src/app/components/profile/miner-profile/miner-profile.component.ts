@@ -43,7 +43,7 @@ export class MinerProfileComponent {
         (n) => n.id === minerId && n.nodeType === 'miner'
       )!;
       if (!this.miner) {
-        this.router.navigate(['/network/overview']);
+        this.router.navigate(['/']);
       }
     });
   }
