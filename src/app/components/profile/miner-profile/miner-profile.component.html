@@ -151,9 +151,45 @@
               >
               <span
                 *ngIf="miner.miningElapsed !== undefined"
-                class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold"
-                >⏱️ {{ (miner.miningElapsed / 1000).toFixed(1) }}s</span
+                class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold flex items-center gap-1"
               >
+                <i class="pi pi-clock"></i>
+                {{ (miner.miningElapsed / 1000).toFixed(1) }}s
+              </span>
+              <!-- Hash Rate Configurado (dropdown) -->
+              <span
+                class="ml-2 rounded bg-zinc-800 text-blue-300 text-xs font-semibold flex items-center gap-1"
+              >
+                <p-dropdown
+                  [options]="hashRateOptions"
+                  [(ngModel)]="miner.hashRate"
+                  (onChange)="onHashRateDropdownChange($event.value)"
+                  [style]="{ 'min-width': '7em' }"
+                  [showClear]="false"
+                  [autoDisplayFirst]="false"
+                  [dropdownIcon]="'pi pi-chevron-down'"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="bg-zinc-800 text-blue-300 font-mono text-xs border border-zinc-700 rounded"
+                  [panelStyle]="{ background: '#18181b', color: '#cbd5e1' }"
+                >
+                  <ng-template pTemplate="selectedItem" let-option>
+                    <i class="pi pi-bolt mr-1 text-blue-400"></i>
+                    <span>{{ option?.label || "Máximo" }}</span>
+                  </ng-template>
+                  <ng-template pTemplate="item" let-option>
+                    <span>{{ option.label }}</span>
+                  </ng-template>
+                </p-dropdown>
+              </span>
+              <!-- Hash Rate Real -->
+              <span
+                *ngIf="miner.currentHashRate !== undefined"
+                class="ml-2 px-2 py-0.5 rounded bg-blue-900 text-blue-300 text-xs font-semibold flex items-center gap-1"
+              >
+                <i class="pi pi-bolt"></i>
+                {{ miner.currentHashRate }} H/s
+              </span>
             </h2>
             <ng-container *ngIf="miner.currentBlock; else noBlock">
               <!-- Tabs -->

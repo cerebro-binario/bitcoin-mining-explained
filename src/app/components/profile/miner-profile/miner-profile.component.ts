@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { KeyService } from '../../../services/key.service';
@@ -20,6 +22,8 @@ import { WalletComponent } from '../../network/wallet/wallet.component';
     EventComponent,
     BlockchainComponent,
     BlockchainBalanceComponent,
+    FormsModule,
+    DropdownModule,
   ],
 })
 export class MinerProfileComponent {
@@ -28,6 +32,12 @@ export class MinerProfileComponent {
   showAllLogs = false;
   isBlockchainVisible = true;
   showWalletDetails = false;
+  hashRateOptions = [
+    { label: '1.000 H/s', value: 1000 },
+    { label: '10.000 H/s', value: 10000 },
+    { label: '100.000 H/s', value: 100000 },
+    { label: 'Máximo', value: null },
+  ];
 
   constructor(
     private route: ActivatedRoute,
@@ -141,5 +151,17 @@ export class MinerProfileComponent {
 
   copyToClipboard(value: string) {
     navigator.clipboard.writeText(value);
+  }
+
+  setPresetHashRate(val: number) {
+    this.miner.hashRate = val;
+  }
+
+  setMaxHashRate() {
+    this.miner.hashRate = null;
+  }
+
+  onHashRateDropdownChange(val: number | null) {
+    this.miner.hashRate = val;
   }
 }
