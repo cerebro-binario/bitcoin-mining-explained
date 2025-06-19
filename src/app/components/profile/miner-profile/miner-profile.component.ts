@@ -33,9 +33,9 @@ export class MinerProfileComponent {
   isBlockchainVisible = true;
   showWalletDetails = false;
   hashRateOptions = [
-    { label: '1.000 H/s', value: 1000 },
-    { label: '10.000 H/s', value: 10000 },
-    { label: '100.000 H/s', value: 100000 },
+    { label: '1 H/s', value: 1 },
+    { label: '1k H/s', value: 1000 },
+    { label: '10k H/s', value: 10000 },
     { label: 'Máximo', value: null },
   ];
 
