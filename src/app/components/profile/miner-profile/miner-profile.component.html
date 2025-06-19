@@ -6,11 +6,8 @@
       <div class="w-full max-w-7xl flex flex-col gap-8">
         <div class="flex items-center gap-6 max-w-7xl">
           <h1 class="text-3xl font-bold text-blue-400">
-            Minerador #{{ miner.id }}
+            {{ miner.name }}
           </h1>
-          <span class="text-lg text-zinc-300">{{
-            miner.name || "Sem nome"
-          }}</span>
           <span
             class="ml-4 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center min-w-[110px] transition-colors"
             [ngClass]="
