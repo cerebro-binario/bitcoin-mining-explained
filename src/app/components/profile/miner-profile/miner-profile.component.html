@@ -164,31 +164,46 @@
                 *ngIf="miner.isMining"
                 class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold flex items-center gap-1"
               >
-                <i class="pi pi-clock"></i>
-                <span class="inline-block min-w-[3.5em] text-right"
+                <i class="pi pi-clock flex items-center"></i>
+                <span class="min-w-[3.5em] text-right flex items-center"
                   >{{ (miner.miningElapsed / 1000).toFixed(1) }}s</span
                 >
               </span>
               <!-- Hash Rate Configurado (dropdown) -->
               <span
-                class="ml-2 rounded bg-zinc-800 text-blue-300 text-xs font-semibold flex items-center gap-1"
+                class="ml-2 rounded text-blue-300 text-xs font-semibold flex items-center gap-1"
               >
                 <p-select
                   [options]="hashRateOptions"
                   [(ngModel)]="miner.hashRate"
                   (onChange)="onHashRateDropdownChange($event.value)"
-                  [style]="{ 'min-width': '7em' }"
+                  [style]="{
+                    'min-width': '7em',
+                    'font-size': '0.75rem',
+                    height: '1.5rem',
+                    'line-height': '1.5rem',
+                    background: 'rgb(39 39 42)',
+                    border: 'none',
+                    'padding-top': '0',
+                    'padding-bottom': '0'
+                  }"
                   optionLabel="label"
                   optionValue="value"
-                  class="bg-zinc-800 text-blue-300 font-mono text-xs border border-zinc-700 rounded"
+                  class="bg-zinc-800 text-blue-300 font-mono text-xs"
                   [panelStyle]="{ background: '#18181b', color: '#cbd5e1' }"
                 >
                   <ng-template pTemplate="selectedItem" let-option>
-                    <i class="pi pi-bolt mr-1 text-blue-400"></i>
-                    <span>{{ option?.label || "Máximo" }}</span>
+                    <div class="flex items-center h-full gap-1">
+                      <i class="pi pi-bolt text-blue-400 flex items-center"></i>
+                      <span class="flex items-center">{{
+                        option?.label || "Máximo"
+                      }}</span>
+                    </div>
                   </ng-template>
                   <ng-template pTemplate="item" let-option>
-                    <span>{{ option.label }}</span>
+                    <div class="flex items-center h-full">
+                      <span class="text-xs">{{ option.label }}</span>
+                    </div>
                   </ng-template>
                 </p-select>
               </span>
@@ -197,8 +212,10 @@
                 *ngIf="miner.currentHashRate !== undefined"
                 class="ml-2 px-2 py-0.5 rounded bg-blue-900 text-blue-300 text-xs font-semibold flex items-center gap-1"
               >
-                <i class="pi pi-bolt"></i>
-                {{ miner.currentHashRate }} H/s
+                <i class="pi pi-bolt flex items-center"></i>
+                <span class="flex items-center"
+                  >{{ miner.currentHashRate }} H/s</span
+                >
               </span>
             </h2>
             <ng-container *ngIf="miner.currentBlock; else noBlock">
