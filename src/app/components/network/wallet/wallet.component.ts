@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
@@ -142,7 +143,21 @@ export class WalletComponent {
     return this._bipFormat;
   }
 
-  constructor(private keyService: KeyService) {}
+  constructor(
+    private keyService: KeyService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
+    // Lê a aba ativa dos query params
+    this.route.queryParams.subscribe((params) => {
+      if (params['walletTab']) {
+        this.activeTab = params['walletTab'] as
+          | 'enderecos'
+          | 'transacoes'
+          | 'enviar';
+      }
+    });
+  }
 
   private updateView() {
     this.updateAddresses();
@@ -676,6 +691,16 @@ export class WalletComponent {
         BigInt(this.transactionPagination.pageSize)
       ),
     };
+  }
+
+  setActiveTab(tab: 'enderecos' | 'transacoes' | 'enviar') {
+    this.activeTab = tab;
+    // Salva a aba ativa nos query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { walletTab: tab },
+      queryParamsHandling: 'merge',
+    });
   }
 }
 

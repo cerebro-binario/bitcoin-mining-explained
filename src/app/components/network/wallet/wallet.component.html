@@ -7,7 +7,7 @@
       [class.text-zinc-400]="activeTab !== 'enderecos'"
       [class.border-blue-500]="activeTab === 'enderecos'"
       [class.border-transparent]="activeTab !== 'enderecos'"
-      (click)="activeTab = 'enderecos'"
+      (click)="setActiveTab('enderecos')"
     >
       Endereços
     </button>
@@ -17,7 +17,7 @@
       [class.text-zinc-400]="activeTab !== 'transacoes'"
       [class.border-blue-500]="activeTab === 'transacoes'"
       [class.border-transparent]="activeTab !== 'transacoes'"
-      (click)="activeTab = 'transacoes'"
+      (click)="setActiveTab('transacoes')"
     >
       Transações
     </button>
@@ -27,7 +27,7 @@
       [class.text-zinc-400]="activeTab !== 'enviar'"
       [class.border-blue-500]="activeTab === 'enviar'"
       [class.border-transparent]="activeTab !== 'enviar'"
-      (click)="activeTab = 'enviar'"
+      (click)="setActiveTab('enviar')"
     >
       Enviar
     </button>
