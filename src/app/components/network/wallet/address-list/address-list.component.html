@@ -109,7 +109,7 @@
             [class.text-purple-300]="data.bipFormat === 'bip84'"
           >
             <a
-              [routerLink]="['/miners', nodeId, 'addresses', data.address]"
+              [routerLink]="['addresses', data.address]"
               [queryParams]="
                 showPrivateKey ? { pk: data.keys.priv.decimal } : {}
               "
