@@ -10,7 +10,7 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
 @Injectable({
   providedIn: 'root',
 })
-export class MinerExistsGuard implements CanActivate {
+export class NodeExistsGuard implements CanActivate {
   constructor(
     private bitcoinNetworkService: BitcoinNetworkService,
     private router: Router
