@@ -1,0 +1,620 @@
+<div
+  class="w-full h-full flex flex-col items-center justify-start p-8 bg-zinc-950 overflow-auto"
+>
+  <ng-container *ngIf="node; else notFound">
+    <div class="w-full flex flex-col gap-8 items-center">
+      <div class="w-full max-w-7xl flex flex-col gap-8">
+        <div class="flex items-center gap-6 max-w-7xl">
+          <h1 class="text-3xl font-bold text-blue-400">
+            Full Node #{{ node.id }}
+          </h1>
+          <span
+            class="ml-4 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center min-w-[110px] transition-colors"
+            [ngClass]="getNodeStatusClass()"
+          >
+            {{ getNodeStatus() }}
+          </span>
+        </div>
+        <div class="w-full max-w-7xl">
+          <div
+            class="bg-zinc-900 rounded-lg shadow flex flex-col gap-2 p-6 mb-4"
+          >
+            <!-- Balanço geral -->
+            <div
+              class="flex flex-col md:flex-row items-center justify-between gap-6"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="bg-blue-900/60 rounded-full p-4 flex items-center justify-center"
+                >
+                  <i class="pi pi-wallet text-3xl text-blue-400"></i>
+                </div>
+                <div>
+                  <div class="text-xs text-zinc-400">Saldo total</div>
+                  <div class="text-2xl font-bold text-blue-300">
+                    {{ getTotalBalanceBTC() }}
+                    <span class="text-base text-zinc-400">BTC</span>
+                  </div>
+                  <div
+                    class="text-xs text-zinc-500"
+                    *ngIf="getTotalBalanceUSD()"
+                  >
+                    ≈ {{ getTotalBalanceUSD() }} USD
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col md:flex-row gap-4">
+                <div>
+                  <div class="text-xs text-zinc-400">Endereços</div>
+                  <div class="text-lg font-mono text-zinc-200">
+                    {{ node.wallet.addresses.length }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-zinc-400">UTXOs</div>
+                  <div class="text-lg font-mono text-zinc-200">
+                    {{ getTotalUtxos() }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-zinc-400">Peers conectados</div>
+                  <div class="text-lg font-mono text-zinc-200">
+                    {{ getConnectedPeersCount() }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              class="w-full md:w-auto flex items-center justify-center gap-2 py-3 px-6 mt-4 rounded-lg transition-all shadow mx-auto"
+              [ngClass]="
+                showWalletDetails
+                  ? 'bg-zinc-800/60 hover:bg-zinc-700 text-zinc-400 focus:outline-none'
+                  : 'bg-blue-900/60 hover:bg-blue-800 text-blue-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400'
+              "
+              (click)="toggleWalletDetails()"
+              [attr.aria-expanded]="showWalletDetails"
+              title="Clique para ver endereços, transações e enviar BTC"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  showWalletDetails ? 'pi-chevron-up' : 'pi-chevron-down'
+                "
+              ></i>
+              <span>
+                {{
+                  showWalletDetails
+                    ? "Ocultar detalhes da carteira"
+                    : "Ver detalhes da carteira"
+                }}
+              </span>
+            </button>
+            <div
+              class="transition-all duration-300"
+              [ngStyle]="{
+                height: showWalletDetails ? '70vh' : '0',
+                'max-height': showWalletDetails ? '70vh' : '0',
+                opacity: showWalletDetails ? '1' : '0'
+              }"
+            >
+              <div class="flex flex-col flex-1 min-h-0 pt-4 w-full h-full">
+                <app-wallet
+                  [node]="node"
+                  [wallet]="node.wallet"
+                  [bipFormat]="walletBipFormat"
+                  (bipFormatChange)="onWalletBipFormatChange($event)"
+                  (deriveNextAddress)="deriveNextAddress()"
+                  class="h-full"
+                ></app-wallet>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl">
+          <!-- Informações do Nó -->
+          <div
+            class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 h-[600px] overflow-hidden"
+          >
+            <h2
+              class="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2"
+            >
+              Informações do Nó
+              <div class="flex items-center justify-between flex-1">
+                <div class="flex items-center">
+                  <span
+                    class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold w-[5.5rem] text-center"
+                  >
+                    {{ getNodeStatus() }}
+                  </span>
+                  <span
+                    class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold"
+                  >
+                    v{{ getNetworkVersion() }}
+                  </span>
+                </div>
+                <!-- Uptime -->
+                <span
+                  class="ml-2 px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-xs font-semibold flex items-center gap-1"
+                >
+                  <i class="pi pi-clock flex items-center text-xs"></i>
+                  <div class="min-w-[3.5em] text-right">
+                    {{ getNodeUptime() }}
+                  </div>
+                </span>
+              </div>
+            </h2>
+            <!-- Tabs -->
+            <div class="flex gap-2 border-b border-zinc-800">
+              <button
+                class="px-4 py-2 text-sm font-medium transition-colors"
+                [ngClass]="
+                  activeTab === 'metadata'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-zinc-400 hover:text-zinc-300'
+                "
+                (click)="setActiveTab('metadata')"
+              >
+                Metadados
+              </button>
+              <button
+                class="px-4 py-2 text-sm font-medium transition-colors"
+                [ngClass]="
+                  activeTab === 'transactions'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-zinc-400 hover:text-zinc-300'
+                "
+                (click)="setActiveTab('transactions')"
+              >
+                Transações
+              </button>
+            </div>
+
+            <!-- Conteúdo das Tabs -->
+            <div class="flex-1 min-h-0">
+              <!-- Metadados -->
+              <div
+                *ngIf="activeTab === 'metadata'"
+                class="h-full flex flex-col min-h-0"
+              >
+                <div class="grid grid-cols-2 gap-4 flex-1 overflow-y-auto">
+                  <div>
+                    <div class="text-xs text-zinc-400">Block Height</div>
+                    <div class="font-mono text-lg text-blue-400">
+                      {{ getBlockHeight() }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-zinc-400">Peers Conectados</div>
+                    <div class="font-mono text-lg text-green-400">
+                      {{ getConnectedPeersCount() }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-zinc-400">Versão da Rede</div>
+                    <div class="font-mono text-lg text-zinc-300">
+                      v{{ getNetworkVersion() }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-zinc-400">Uptime</div>
+                    <div class="font-mono text-lg text-yellow-400">
+                      {{ getNodeUptime() }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-zinc-400">Bandwidth</div>
+                    <div class="font-mono text-lg text-purple-400">
+                      {{ getBandwidthUsage() }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-zinc-400">Status</div>
+                    <div class="font-mono text-lg">
+                      <span [ngClass]="getNodeStatusClass()">
+                        {{ getNodeStatus() }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="col-span-2" *ngIf="getLatestBlock()">
+                    <div class="text-xs text-zinc-400">Último Bloco</div>
+                    <div class="font-mono break-all text-zinc-300">
+                      0x{{ getLatestBlock()?.hash || "0".repeat(64) }}
+                    </div>
+                  </div>
+                  <div class="col-span-2" *ngIf="getLatestBlock()">
+                    <div class="text-xs text-zinc-400">
+                      Timestamp do Último Bloco
+                    </div>
+                    <div class="font-mono text-zinc-300">
+                      {{ getLatestBlock()?.timestamp | date : "medium" }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transações -->
+              <div
+                *ngIf="activeTab === 'transactions'"
+                class="h-full flex flex-col min-h-0"
+              >
+                <div class="space-y-4 flex-1 overflow-y-auto pr-2">
+                  <ng-container
+                    *ngFor="let tx of node.pendingTransactions; let i = index"
+                  >
+                    <div
+                      class="bg-zinc-800/50 rounded-lg border border-zinc-700 overflow-hidden"
+                    >
+                      <!-- Cabeçalho da Transação -->
+                      <div
+                        class="bg-zinc-900/50 px-4 py-2 flex items-center justify-between border-b border-zinc-700"
+                      >
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs text-zinc-400"
+                            >#{{ i + 1 }}</span
+                          >
+                          <span
+                            class="text-[9px] bg-orange-700 text-white px-1.5 py-0.5 rounded font-bold tracking-wide"
+                            >PENDING</span
+                          >
+                        </div>
+                        <span
+                          class="font-mono text-xs text-zinc-300 truncate max-w-[300px]"
+                          [title]="tx.id"
+                        >
+                          {{ tx.id }}
+                        </span>
+                      </div>
+
+                      <!-- Corpo da Transação -->
+                      <div class="p-4 space-y-3">
+                        <!-- Inputs -->
+                        <div>
+                          <div class="text-xs font-medium text-zinc-400 mb-2">
+                            Inputs ({{ tx.inputs.length }})
+                          </div>
+                          <div
+                            *ngIf="tx.inputs.length === 0"
+                            class="text-xs text-zinc-500 ml-2"
+                          >
+                            -
+                          </div>
+                          <div
+                            *ngFor="let input of tx.inputs"
+                            class="ml-2 mb-2 last:mb-0"
+                          >
+                            <div
+                              class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-red-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
+                            >
+                              <!-- Marca d'água -->
+                              <div
+                                class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
+                              >
+                                <i
+                                  class="pi pi-arrow-down text-[60px] text-red-500"
+                                ></i>
+                              </div>
+                              <!-- Cantos decorativos -->
+                              <div
+                                class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-red-400"
+                              ></div>
+                              <div
+                                class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-red-400"
+                              ></div>
+                              <!-- Ícone principal -->
+                              <div
+                                class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
+                              >
+                                <i
+                                  class="pi pi-arrow-down text-lg text-red-400"
+                                ></i>
+                              </div>
+                              <!-- Conteúdo -->
+                              <div class="flex-1 z-10">
+                                <div
+                                  class="text-base font-bold text-yellow-400 flex items-center gap-2"
+                                >
+                                  {{ (input.value / 1e8).toFixed(8) }}
+                                  <span class="text-xs text-zinc-400">BTC</span>
+                                </div>
+                                <div class="text-xs text-zinc-400">
+                                  {{ input.scriptPubKey }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Outputs -->
+                        <div>
+                          <div class="text-xs font-medium text-zinc-400 mb-2">
+                            Outputs ({{ tx.outputs.length }})
+                          </div>
+                          <div
+                            *ngFor="let output of tx.outputs"
+                            class="ml-2 mb-2 last:mb-0"
+                          >
+                            <div
+                              class="relative bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg border-2 border-green-500 p-3 flex items-center gap-3 overflow-hidden min-h-[56px]"
+                            >
+                              <!-- Marca d'água -->
+                              <div
+                                class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
+                              >
+                                <i
+                                  class="pi pi-arrow-up text-[60px] text-green-500"
+                                ></i>
+                              </div>
+                              <!-- Cantos decorativos -->
+                              <div
+                                class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-green-400"
+                              ></div>
+                              <div
+                                class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-green-400"
+                              ></div>
+                              <!-- Ícone principal -->
+                              <div
+                                class="z-10 flex items-center justify-center bg-zinc-900 rounded-full w-8 h-8 shadow"
+                              >
+                                <i
+                                  class="pi pi-arrow-up text-lg text-green-400"
+                                ></i>
+                              </div>
+                              <!-- Conteúdo -->
+                              <div class="flex-1 z-10">
+                                <div
+                                  class="text-base font-bold text-yellow-400 flex items-center gap-2"
+                                >
+                                  {{ (output.value / 1e8).toFixed(8) }}
+                                  <span class="text-xs text-zinc-400">BTC</span>
+                                </div>
+                                <div class="text-xs text-zinc-400">
+                                  {{ output.scriptPubKey }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+                  <div
+                    *ngIf="node.pendingTransactions.length === 0"
+                    class="text-zinc-500 italic py-8 text-center"
+                  >
+                    Nenhuma transação pendente neste nó.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Eventos -->
+          <div
+            class="bg-zinc-900 rounded-lg shadow pt-6 flex flex-col gap-4 h-[600px] overflow-hidden relative"
+          >
+            <h2 class="text-xl font-bold text-blue-300 mb-2 px-6">Eventos</h2>
+            <div class="flex-1 min-h-0 overflow-y-auto relative px-6 pb-6">
+              <ng-container *ngIf="node.events.length > 0; else noEvents">
+                <ng-container
+                  *ngFor="let event of node.events | slice : 0 : 15"
+                >
+                  <app-event [event]="event"></app-event>
+                </ng-container>
+              </ng-container>
+              <ng-template #noEvents>
+                <div class="text-zinc-500 italic py-8 text-center">
+                  Nenhum evento registrado neste nó.
+                </div>
+              </ng-template>
+            </div>
+            <div class="fade-gradient"></div>
+            <button
+              *ngIf="node.events.length > 0"
+              (click)="showNodeLogs()"
+              class="absolute right-6 bottom-6 z-10 px-2 py-1 text-xs rounded bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition pointer-events-auto backdrop-blur-sm"
+            >
+              Ver tudo
+            </button>
+          </div>
+        </div>
+
+        <!-- Saldos da Blockchain -->
+        <div
+          class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 w-full max-w-7xl"
+        >
+          <h2 class="text-xl font-bold text-blue-300 mb-4 px-6">
+            Saldos, Endereços e UTXOs da Blockchain
+          </h2>
+          <app-blockchain-balance
+            [node]="node"
+            [displayModeInput]="displayModeBlockchainBalance"
+            [bipFormat]="chainBipFormat"
+            (bipFormatChange)="onChainBipFormatChange($event)"
+            (displayModeChange)="onBlockchainBalanceDisplayModeChange($event)"
+            class="flex flex-col flex-1 min-h-0 h-full"
+          ></app-blockchain-balance>
+        </div>
+
+        <!-- Painel de Peers Conectados -->
+        <div
+          class="bg-zinc-900 rounded-lg shadow flex flex-col gap-4 w-full max-w-7xl p-6"
+        >
+          <h2
+            class="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2"
+          >
+            Peers Conectados
+            <span class="text-xs text-zinc-400">({{ node.peers.length }})</span>
+          </h2>
+          <ng-container *ngIf="node.peers.length > 0; else noPeers">
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead>
+                  <tr class="text-zinc-400 border-b border-zinc-700">
+                    <th class="px-4 py-2 text-left">ID</th>
+                    <th class="px-4 py-2 text-left">Nome</th>
+                    <th class="px-4 py-2 text-left">Tipo</th>
+                    <th class="px-4 py-2 text-left">Latência</th>
+                    <th class="px-4 py-2 text-left">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    *ngFor="let peer of node.peers"
+                    class="border-b border-zinc-800 hover:bg-zinc-800/40 transition"
+                  >
+                    <td class="px-4 py-2 font-mono text-blue-400">
+                      {{ peer.node.id }}
+                    </td>
+                    <td class="px-4 py-2">{{ peer.node.name }}</td>
+                    <td class="px-4 py-2">
+                      <span [ngSwitch]="peer.node.nodeType">
+                        <span *ngSwitchCase="'miner'">
+                          <i class="pi pi-cog text-yellow-400 mr-1"></i
+                          >Minerador
+                        </span>
+                        <span *ngSwitchCase="'peer'">
+                          <i class="pi pi-globe text-blue-400 mr-1"></i>Nó
+                        </span>
+                        <span *ngSwitchCase="'user'">
+                          <i class="pi pi-user text-green-400 mr-1"></i>Usuário
+                        </span>
+                        <span *ngSwitchDefault>
+                          <i
+                            class="pi pi-question-circle text-zinc-400 mr-1"
+                          ></i
+                          >Desconhecido
+                        </span>
+                      </span>
+                    </td>
+                    <td class="px-4 py-2">{{ peer.latency }} ms</td>
+                    <td class="px-4 py-2">
+                      <button
+                        (click)="copyToClipboard(peer.node.id.toString())"
+                        class="text-zinc-400 hover:text-blue-400 mr-2"
+                        title="Copiar ID"
+                      >
+                        <i class="pi pi-copy"></i>
+                      </button>
+                      <a
+                        *ngIf="peer.node.nodeType === 'miner'"
+                        [routerLink]="['/miners', peer.node.id]"
+                        class="text-blue-400 hover:underline font-semibold cursor-pointer"
+                        title="Ver perfil do minerador"
+                        >Ver perfil</a
+                      >
+                      <a
+                        *ngIf="peer.node.nodeType === 'user'"
+                        [routerLink]="['/users', peer.node.id]"
+                        class="text-blue-400 hover:underline font-semibold cursor-pointer"
+                        title="Ver perfil do usuário"
+                        >Ver perfil</a
+                      >
+                      <a
+                        *ngIf="peer.node.nodeType === 'peer'"
+                        [routerLink]="['/peers', peer.node.id]"
+                        class="text-blue-400 hover:underline font-semibold cursor-pointer"
+                        title="Ver perfil do nó"
+                        >Ver perfil</a
+                      >
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+          <ng-template #noPeers>
+            <div class="text-zinc-500 italic py-8 text-center">
+              Nenhum peer conectado a este nó.
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Blockchain -->
+      <div
+        class="bg-zinc-900 rounded-lg shadow p-6 flex flex-col gap-4 overflow-hidden w-full"
+      >
+        <div
+          class="flex items-center justify-between mb-4 cursor-pointer hover:bg-zinc-700/50 p-2 rounded transition-colors"
+          (click)="toggleBlockchainVisibility()"
+        >
+          <div class="flex items-center gap-2">
+            <h3 class="text-xl font-bold text-blue-300 mb-2">
+              Blockchain Local
+            </h3>
+            <span class="text-xs text-zinc-400">
+              {{ node.heights.length > 0 ? node.heights.length - 1 : 0 }}
+              blocos
+              <span *ngIf="node.getLatestBlock()"
+                >(Último: #{{ node.getLatestBlock()?.height }})</span
+              >
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-zinc-400">{{
+              isBlockchainVisible ? "Recolher" : "Expandir"
+            }}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-zinc-400 transition-transform"
+              [ngClass]="{ 'rotate-180': isBlockchainVisible }"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </div>
+        </div>
+        <div
+          class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
+          [ngStyle]="{
+            'max-height': !isBlockchainVisible ? '0px' : null,
+            opacity: isBlockchainVisible ? '1' : '0',
+            overflow: isBlockchainVisible ? 'visible' : 'hidden',
+          }"
+        >
+          <app-blockchain [node]="node"></app-blockchain>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-template #notFound>
+    <div class="text-red-400 text-xl font-bold">Nó não encontrado.</div>
+  </ng-template>
+</div>
+
+<!-- Dialog de todos os logs -->
+<ng-template [ngIf]="showAllLogs && node">
+  <div
+    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 !m-0 backdrop-blur"
+    (click)="closeLogs()"
+  >
+    <div
+      class="bg-zinc-900 border border-zinc-800 rounded-lg pt-6 w-full max-w-4xl h-[80vh] flex flex-col shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between mb-4 px-6">
+        <span class="font-semibold text-blue-400"
+          >Eventos do Nó #{{ node.id }}</span
+        >
+        <button
+          (click)="closeLogs()"
+          class="text-zinc-400 hover:text-red-400 text-xl"
+        >
+          &times;
+        </button>
+      </div>
+      <ul class="flex-1 overflow-y-auto space-y-1 text-xs px-6 pb-6">
+        <li *ngFor="let event of node.events">
+          <app-event [event]="event"></app-event>
+        </li>
+      </ul>
+    </div>
+  </div>
+</ng-template>

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { NetworkOverviewComponent } from './components/network/network-overview/network-overview.component';
 import { AddressDetailsComponent } from './components/network/wallet/address-list/address-details.component';
 import { MinerProfileComponent } from './components/profile/miner-profile/miner-profile.component';
+import { PeerProfileComponent } from './components/profile/peer-profile/peer-profile.component';
 import { MinerExistsGuard } from './guards/miner-exists.guard';
 import { RootLayout } from './layouts/root.layout';
 
@@ -23,6 +24,14 @@ export const routes: Routes = [
         path: 'miners/:id/addresses/:address',
         component: AddressDetailsComponent,
         canActivate: [MinerExistsGuard],
+      },
+      {
+        path: 'peers/:id',
+        component: PeerProfileComponent,
+      },
+      {
+        path: 'peers/:id/addresses/:address',
+        component: AddressDetailsComponent,
       },
     ],
   },
