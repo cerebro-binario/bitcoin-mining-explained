@@ -66,10 +66,17 @@ export class BitcoinNetworkService {
     hashRate: number | null = null,
     isCollapsed: boolean = false
   ): Node {
+    // Define nome padrão conforme o tipo, se não for passado
+    let finalName = name;
+    if (!finalName) {
+      if (nodeType === 'miner') finalName = `Minerador #${this.nextNodeId}`;
+      else if (nodeType === 'user') finalName = `Usuário #${this.nextNodeId}`;
+      else finalName = `Nó #${this.nextNodeId}`;
+    }
     const node = new Node({
       id: this.nextNodeId++,
       nodeType,
-      name,
+      name: finalName,
       hashRate,
       peers: [],
       isCollapsed,
