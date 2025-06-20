@@ -1,6 +1,6 @@
 <div class="h-[calc(100vh-theme('spacing.16'))] flex flex-col overflow-hidden">
   <!-- Header -->
-  <div class="flex items-center gap-4 p-8 pb-0">
+  <div class="flex items-center gap-4 p-8 pb-0 max-w-7xl mx-auto w-full">
     <h1 class="text-3xl font-bold text-blue-400">Usuário #{{ user.id }}</h1>
   </div>
 
@@ -369,7 +369,9 @@
 
     <!-- Wallet criada -->
     <ng-container *ngIf="walletExists">
-      <div class="h-full flex flex-col overflow-hidden p-8">
+      <div
+        class="h-full flex flex-col overflow-hidden p-8 max-w-7xl mx-auto w-full"
+      >
         <app-wallet
           [wallet]="user.wallet!"
           [node]="user"
