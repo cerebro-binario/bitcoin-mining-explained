@@ -123,8 +123,8 @@
             <div
               class="transition-all duration-300"
               [ngStyle]="{
-                height: showWalletDetails ? '70vh' : '0',
-                'max-height': showWalletDetails ? '70vh' : '0',
+                'min-height': showWalletDetails ? '70vh' : '0',
+                'max-height': showWalletDetails ? '999999px' : '0',
                 opacity: showWalletDetails ? '1' : '0'
               }"
             >
