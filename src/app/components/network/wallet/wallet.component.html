@@ -91,140 +91,270 @@
       </div>
     </div>
     <div [hidden]="activeTab !== 'enviar'" class="h-full">
-      <div class="flex-1 min-h-0 flex flex-col h-full pt-4">
-        <form
-          class="flex flex-col gap-6 w-full max-w-2xl px-6"
-          (submit)="onSendTransaction($event)"
-        >
-          <h2 class="text-lg font-semibold text-white mb-2">
-            Enviar transação
-          </h2>
-          <div class="flex flex-col gap-1">
-            <label for="destino" class="text-zinc-400 text-sm"
-              >Endereço de destino</label
-            >
-            <input
-              id="destino"
-              name="destino"
-              type="text"
-              [(ngModel)]="sendToAddress"
-              (input)="onSendAddressChange()"
-              (focus)="onSendAddressFocus()"
-              (blur)="onSendAddressBlur()"
-              [ngClass]="{
-                'border-red-500':
-                  sendAddressTouched &&
-                  !sendAddressFocused &&
-                  sendToAddressValid === false,
-                'border-zinc-700': !(
+      <div class="flex-1 min-h-0 flex flex-row h-full pt-4 gap-8 px-4">
+        <!-- Coluna do Formulário -->
+        <div class="w-1/2 flex flex-col">
+          <form
+            class="flex flex-col gap-6 w-full"
+            (submit)="onSendTransaction($event)"
+          >
+            <h2 class="text-lg font-semibold text-white mb-2">
+              Enviar transação
+            </h2>
+            <div class="flex flex-col gap-1">
+              <label for="destino" class="text-zinc-400 text-sm"
+                >Endereço de destino</label
+              >
+              <input
+                id="destino"
+                name="destino"
+                type="text"
+                [(ngModel)]="sendToAddress"
+                (input)="onSendAddressChange()"
+                (focus)="onSendAddressFocus()"
+                (blur)="onSendAddressBlur()"
+                [ngClass]="{
+                  'border-red-500':
+                    sendAddressTouched &&
+                    !sendAddressFocused &&
+                    sendToAddressValid === false,
+                  'border-zinc-700': !(
+                    sendAddressTouched &&
+                    !sendAddressFocused &&
+                    sendToAddressValid === false
+                  )
+                }"
+                class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+                placeholder="Endereço Bitcoin"
+              />
+              <div
+                *ngIf="
                   sendAddressTouched &&
                   !sendAddressFocused &&
                   sendToAddressValid === false
-                )
-              }"
-              class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-              placeholder="Endereço Bitcoin"
-            />
-            <div
-              *ngIf="
-                sendAddressTouched &&
-                !sendAddressFocused &&
-                sendToAddressValid === false
-              "
-              class="text-xs text-red-400 mt-1"
-            >
-              {{ sendToAddressErrorMsg }}
-            </div>
-          </div>
-          <div class="flex flex-col gap-1">
-            <div class="flex justify-between items-center mt-4">
-              <label for="valor" class="text-zinc-400 text-sm"
-                >Valor (BTC)</label
+                "
+                class="text-xs text-red-400 mt-1"
               >
-              <!-- Saldo disponível -->
-              <div class="flex items-center gap-2">
-                <span class="text-zinc-400 text-xs">Saldo disponível:</span>
-                <span
-                  class="font-mono text-blue-400 text-xs"
-                  title="Saldo total disponível para envio"
-                  >{{
-                    availableBalance / 100000000 | number : "1.8-8"
-                  }}
-                  BTC</span
-                >
-                <i class="pi pi-wallet text-blue-400"></i>
+                {{ sendToAddressErrorMsg }}
               </div>
             </div>
-            <input
-              id="valor"
-              name="valor"
-              type="number"
-              step="any"
-              min="0"
-              [(ngModel)]="sendAmount"
-              (input)="onSendAmountChange()"
-              (focus)="onSendAmountFocus()"
-              (blur)="onSendAmountBlur()"
-              [ngClass]="{
-                'border-red-500':
-                  sendAmountTouched &&
-                  !sendAmountFocused &&
-                  sendAmountValid === false,
-                'border-zinc-700': !(
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between items-center mt-4">
+                <label for="valor" class="text-zinc-400 text-sm"
+                  >Valor (BTC)</label
+                >
+                <!-- Saldo disponível -->
+                <div class="flex items-center gap-2">
+                  <span class="text-zinc-400 text-xs">Saldo disponível:</span>
+                  <span
+                    class="font-mono text-blue-400 text-xs"
+                    title="Saldo total disponível para envio"
+                    >{{
+                      availableBalance / 100000000 | number : "1.8-8"
+                    }}
+                    BTC</span
+                  >
+                  <i class="pi pi-wallet text-blue-400"></i>
+                </div>
+              </div>
+              <input
+                id="valor"
+                name="valor"
+                type="number"
+                step="any"
+                min="0"
+                [(ngModel)]="sendAmount"
+                (input)="onSendAmountChange()"
+                (focus)="onSendAmountFocus()"
+                (blur)="onSendAmountBlur()"
+                [ngClass]="{
+                  'border-red-500':
+                    sendAmountTouched &&
+                    !sendAmountFocused &&
+                    sendAmountValid === false,
+                  'border-zinc-700': !(
+                    sendAmountTouched &&
+                    !sendAmountFocused &&
+                    sendAmountValid === false
+                  )
+                }"
+                class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
+                placeholder="0.00000000"
+              />
+              <div
+                *ngIf="
                   sendAmountTouched &&
                   !sendAmountFocused &&
                   sendAmountValid === false
-                )
-              }"
-              class="bg-zinc-800 border rounded px-3 py-2 text-white focus:outline-none focus:border-blue-400"
-              placeholder="0.00000000"
-            />
+                "
+                class="text-xs text-red-400 mt-1"
+              >
+                {{ sendAmountErrorMsg }}
+              </div>
+            </div>
             <div
-              *ngIf="
-                sendAmountTouched &&
-                !sendAmountFocused &&
-                sendAmountValid === false
-              "
-              class="text-xs text-red-400 mt-1"
+              *ngIf="sendError"
+              class="text-red-400 bg-red-900/30 border border-red-800 rounded px-3 py-2 text-sm font-medium"
             >
-              {{ sendAmountErrorMsg }}
+              {{ sendError }}
+            </div>
+            <div
+              *ngIf="sendSuccess"
+              class="text-green-400 bg-green-900/30 border border-green-800 rounded px-3 py-2 text-sm font-medium"
+            >
+              {{ sendSuccess }}
+            </div>
+
+            <div class="flex gap-2 justify-end mt-4">
+              <button
+                type="button"
+                class="p-2 px-4 rounded bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
+                (click)="activeTab = 'transacoes'"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                [disabled]="sendButtonDisabled"
+                [ngClass]="{
+                  'bg-blue-600 text-white hover:bg-blue-500':
+                    !sendButtonDisabled,
+                  'bg-zinc-800 text-zinc-500 cursor-not-allowed':
+                    sendButtonDisabled
+                }"
+                [style.cursor]="sendButtonDisabled ? 'not-allowed' : 'pointer'"
+                class="p-2 px-4 rounded transition-colors"
+              >
+                Enviar
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Coluna do Preview -->
+        <div class="w-1/2">
+          <!-- Preview da Transação -->
+          <div
+            *ngIf="showTransactionPreview"
+            class="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4"
+          >
+            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+              <i class="pi pi-eye text-blue-400"></i>
+              Preview da Transação
+            </h3>
+
+            <!-- Inputs -->
+            <div class="mb-4">
+              <h4
+                class="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2"
+              >
+                <i class="pi pi-arrow-right text-green-400"></i>
+                Inputs ({{ previewInputs.length }})
+              </h4>
+              <div class="space-y-2">
+                <div
+                  *ngFor="let input of previewInputs; trackBy: trackByAddress"
+                  class="bg-zinc-900/50 border border-zinc-600 rounded p-3"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1 min-w-0">
+                      <div class="text-white text-sm font-mono truncate">
+                        {{ input.address }}
+                      </div>
+                      <div class="text-zinc-400 text-xs mt-1">
+                        {{ input.bipType | uppercase }}
+                      </div>
+                    </div>
+                    <div class="text-right ml-3">
+                      <div class="text-green-400 font-mono text-sm">
+                        {{ input.value / 100000000 | number : "1.8-8" }} BTC
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Outputs -->
+            <div class="mb-4">
+              <h4
+                class="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2"
+              >
+                <i class="pi pi-arrow-left text-red-400"></i>
+                Outputs ({{ previewOutputs.length }})
+              </h4>
+              <div class="space-y-2">
+                <div
+                  *ngFor="let output of previewOutputs; trackBy: trackByAddress"
+                  class="bg-zinc-900/50 border rounded p-3"
+                  [ngClass]="{
+                    'border-blue-600': output.type === 'destination',
+                    'border-zinc-600': output.type === 'change'
+                  }"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1 min-w-0">
+                      <div class="text-white text-sm font-mono truncate">
+                        {{ output.address }}
+                      </div>
+                      <div class="flex items-center gap-2 mt-1">
+                        <span
+                          class="text-xs px-2 py-1 rounded"
+                          [ngClass]="{
+                            'bg-blue-900/50 text-blue-300':
+                              output.type === 'destination',
+                            'bg-zinc-700/50 text-zinc-300':
+                              output.type === 'change'
+                          }"
+                        >
+                          {{
+                            output.type === "destination" ? "Destino" : "Troco"
+                          }}
+                        </span>
+                        <span class="text-zinc-400 text-xs">
+                          {{ output.bipType | uppercase }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="text-right ml-3">
+                      <div
+                        class="font-mono text-sm"
+                        [ngClass]="{
+                          'text-blue-400': output.type === 'destination',
+                          'text-zinc-400': output.type === 'change'
+                        }"
+                      >
+                        {{ output.value / 100000000 | number : "1.8-8" }} BTC
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumo -->
+            <div class="border-t border-zinc-700 pt-3">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-zinc-400">Total Input:</span>
+                <span class="text-green-400 font-mono">
+                  {{ previewTotalInput / 100000000 | number : "1.8-8" }} BTC
+                </span>
+              </div>
+              <div class="flex justify-between items-center text-sm mt-1">
+                <span class="text-zinc-400">Total Output:</span>
+                <span class="text-red-400 font-mono">
+                  {{ previewTotalOutput / 100000000 | number : "1.8-8" }} BTC
+                </span>
+              </div>
+              <div class="flex justify-between items-center text-sm mt-1">
+                <span class="text-zinc-400">Taxa:</span>
+                <span class="text-yellow-400 font-mono">
+                  {{ previewFee / 100000000 | number : "1.8-8" }} BTC
+                </span>
+              </div>
             </div>
           </div>
-          <div
-            *ngIf="sendError"
-            class="text-red-400 bg-red-900/30 border border-red-800 rounded px-3 py-2 text-sm font-medium"
-          >
-            {{ sendError }}
-          </div>
-          <div
-            *ngIf="sendSuccess"
-            class="text-green-400 bg-green-900/30 border border-green-800 rounded px-3 py-2 text-sm font-medium"
-          >
-            {{ sendSuccess }}
-          </div>
-          <div class="flex gap-2 justify-end mt-4">
-            <button
-              type="button"
-              class="p-2 px-4 rounded bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
-              (click)="activeTab = 'transacoes'"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="sendButtonDisabled"
-              [ngClass]="{
-                'bg-blue-600 text-white hover:bg-blue-500': !sendButtonDisabled,
-                'bg-zinc-800 text-zinc-500 cursor-not-allowed':
-                  sendButtonDisabled
-              }"
-              [style.cursor]="sendButtonDisabled ? 'not-allowed' : 'pointer'"
-              class="p-2 px-4 rounded transition-colors"
-            >
-              Enviar
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>

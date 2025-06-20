@@ -114,6 +114,19 @@ export class WalletComponent {
   sendAmountValid: boolean | null = null;
   sendAmountErrorMsg: string = '';
 
+  // Preview da transação
+  showTransactionPreview = false;
+  previewInputs: { address: string; value: number; bipType?: BipType }[] = [];
+  previewOutputs: {
+    address: string;
+    value: number;
+    type: 'destination' | 'change';
+    bipType?: BipType;
+  }[] = [];
+  previewFee = 0;
+  previewTotalInput = 0;
+  previewTotalOutput = 0;
+
   selectedUtxos: BitcoinUTXO[] = [];
   changeAddress: string = '';
   changeAmount: number = 0;
@@ -293,6 +306,7 @@ export class WalletComponent {
 
   onSendAddressChange() {
     this.validateSendAddress();
+    this.updateTransactionPreview();
   }
 
   private validateSendAddress() {
@@ -327,6 +341,7 @@ export class WalletComponent {
 
   onSendAmountChange() {
     this.validateSendAmount();
+    this.updateTransactionPreview();
   }
 
   private validateSendAmount() {
@@ -701,6 +716,75 @@ export class WalletComponent {
       queryParams: { walletTab: tab },
       queryParamsHandling: 'merge',
     });
+  }
+
+  trackByAddress(index: number, item: { address: string }): string {
+    return item.address;
+  }
+
+  private updateTransactionPreview() {
+    if (
+      !this.sendToAddressValid ||
+      !this.sendAmountValid ||
+      !this.sendAmount ||
+      !this.sendToAddress
+    ) {
+      this.showTransactionPreview = false;
+      return;
+    }
+
+    const amountSats = Math.round(this.sendAmount * 1e8);
+    const fee = 0; // taxa fixa para exemplo
+    const { utxos, total } = this.selectUtxosFIFO(amountSats + fee);
+
+    if (total < amountSats + fee) {
+      this.showTransactionPreview = false;
+      return;
+    }
+
+    // Configura inputs do preview - precisamos encontrar o endereço correspondente
+    this.previewInputs = utxos.map((utxo) => {
+      // Encontra o endereço que contém este UTXO
+      const addressData = this.addresses.find((addr) =>
+        addr.utxos.some(
+          (u) => u.txId === utxo.txId && u.outputIndex === utxo.outputIndex
+        )
+      );
+
+      return {
+        address: addressData?.address || 'Endereço desconhecido',
+        value: utxo.output.value,
+        bipType: addressData?.bipFormat,
+      };
+    });
+
+    // Configura outputs do preview
+    this.previewOutputs = [
+      {
+        address: this.sendToAddress,
+        value: amountSats,
+        type: 'destination',
+        bipType: detectBipType(this.sendToAddress),
+      },
+    ];
+
+    // Adiciona output de change se necessário
+    const changeAmount = total - amountSats - fee;
+    if (changeAmount > 0) {
+      const changeAddress = this.getNextChangeAddress();
+      this.previewOutputs.push({
+        address: changeAddress,
+        value: changeAmount,
+        type: 'change',
+        bipType: detectBipType(changeAddress),
+      });
+    }
+
+    this.previewFee = fee;
+    this.previewTotalInput = total;
+    this.previewTotalOutput =
+      amountSats + (changeAmount > 0 ? changeAmount : 0);
+    this.showTransactionPreview = true;
   }
 }
 
