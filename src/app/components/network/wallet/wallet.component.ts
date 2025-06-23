@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import {
@@ -60,6 +61,7 @@ export interface TransactionView {
     TabsModule,
     TransactionListComponent,
     PaginationBarComponent,
+    SelectModule,
   ],
   templateUrl: './wallet.component.html',
 })
@@ -162,6 +164,16 @@ export class WalletComponent {
     totalPages: 0n,
   };
   pagedTransactionViews: TransactionView[] = [];
+
+  // Modo de assinatura
+  signatureMode: 'auto' | 'manual' = 'auto';
+  signedInputs: boolean[] = [];
+
+  // Estado para assinatura manual detalhada
+  inputSignatureScripts: (string | null)[] = [];
+  inputSignatureErrors: (string | null)[] = [];
+
+  selectedPrivateKey: (string | null)[] = [];
 
   get sendButtonDisabled(): boolean {
     return (
@@ -862,6 +874,7 @@ export class WalletComponent {
     this.previewTotalOutput =
       amountSats + (changeAmount > 0 ? changeAmount : 0);
     this.showTransactionPreview = true;
+    this.updateSignatureState();
   }
 
   private prepareAllUtxosForManualSelection() {
@@ -925,6 +938,70 @@ export class WalletComponent {
     item: BitcoinUTXO & { selected: boolean }
   ): string {
     return item.txId + item.outputIndex;
+  }
+
+  setSignatureMode(mode: 'auto' | 'manual') {
+    if (this.signatureMode === mode) return;
+    this.signatureMode = mode;
+    this.updateSignatureState();
+  }
+
+  updateSignatureState() {
+    if (this.signatureMode === 'auto') {
+      this.signedInputs = this.previewInputs.map(() => true);
+      this.inputSignatureScripts = this.previewInputs.map(
+        (input) => `SIG(${input.address})`
+      );
+      this.inputSignatureErrors = this.previewInputs.map(() => null);
+    } else {
+      this.signedInputs = this.previewInputs.map(() => false);
+      this.inputSignatureScripts = this.previewInputs.map(() => null);
+      this.inputSignatureErrors = this.previewInputs.map(() => null);
+    }
+  }
+
+  signInputManually(index: number) {
+    if (this.signatureMode === 'manual') {
+      this.signedInputs[index] = true;
+    }
+  }
+
+  get allInputsSigned(): boolean {
+    return this.signedInputs.every((s) => s);
+  }
+
+  // Retorna todas as chaves privadas disponíveis na carteira
+  get availablePrivateKeys(): { address: string; privateKey: string }[] {
+    if (!this._wallet) return [];
+    return this._wallet.addresses
+      .flatMap((addrObj) => Object.values(addrObj))
+      .map((addr) => ({
+        address: addr.address,
+        privateKey: addr.keys.priv.hex,
+      }));
+  }
+
+  // Tenta assinar um input manualmente com uma chave privada
+  trySignInputWithKey(inputIndex: number, privateKey: string) {
+    const input = this.previewInputs[inputIndex];
+    // Procura o endereço correspondente à chave
+    const keyEntry = this.availablePrivateKeys.find(
+      (k) => k.privateKey === privateKey
+    );
+    if (!keyEntry) {
+      this.inputSignatureErrors[inputIndex] =
+        'Chave não encontrada na carteira.';
+      return;
+    }
+    if (keyEntry.address !== input.address) {
+      this.inputSignatureErrors[inputIndex] =
+        'Chave não corresponde ao endereço deste input!';
+      return;
+    }
+    // Simula um script de assinatura didático
+    this.inputSignatureScripts[inputIndex] = `SIG(${keyEntry.address})`;
+    this.inputSignatureErrors[inputIndex] = null;
+    this.signedInputs[inputIndex] = true;
   }
 }
 
