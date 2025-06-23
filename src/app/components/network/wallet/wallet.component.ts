@@ -114,6 +114,19 @@ export class WalletComponent {
   sendAmountValid: boolean | null = null;
   sendAmountErrorMsg: string = '';
 
+  // Seleção de UTXO
+  utxoSelectionMode: 'auto' | 'manual' = 'auto';
+  allAvailableUtxos: (BitcoinUTXO & {
+    address: string;
+    bipType: BipType;
+    selected: boolean;
+  })[] = [];
+  manuallySelectedUtxos: (BitcoinUTXO & {
+    address: string;
+    bipType: BipType;
+  })[] = [];
+  manualSelectionTotal = 0;
+
   // Preview da transação
   showTransactionPreview = false;
   previewInputs: { address: string; value: number; bipType?: BipType }[] = [];
@@ -178,6 +191,7 @@ export class WalletComponent {
     this.displayAddresses();
     this.updateAvailableBalance();
     this.updateWalletTransactions();
+    this.prepareAllUtxosForManualSelection();
   }
 
   private updateAddresses() {
@@ -347,14 +361,31 @@ export class WalletComponent {
   private validateSendAmount() {
     if (typeof this.sendAmount !== 'number' || this.sendAmount <= 0) {
       this.sendAmountValid = false;
-      this.sendAmountErrorMsg = 'Informe um valor válido.';
+      this.sendAmountErrorMsg = 'Informe um valor válido para enviar.';
       return;
     }
-    if (this.sendAmount * 1e8 > this.availableBalance) {
-      this.sendAmountValid = false;
-      this.sendAmountErrorMsg = 'Saldo insuficiente para esta transação.';
-      return;
+
+    if (this.utxoSelectionMode === 'auto') {
+      if (this.sendAmount * 1e8 > this.availableBalance) {
+        this.sendAmountValid = false;
+        this.sendAmountErrorMsg = 'Saldo insuficiente para esta transação.';
+        return;
+      }
+    } else {
+      // Manual
+      if (this.manuallySelectedUtxos.length === 0) {
+        this.sendAmountValid = false;
+        this.sendAmountErrorMsg = 'Selecione pelo menos um UTXO para gastar.';
+        return;
+      }
+      if (this.sendAmount * 1e8 > this.manualSelectionTotal) {
+        this.sendAmountValid = false;
+        this.sendAmountErrorMsg =
+          'O valor a ser enviado não pode exceder o total dos UTXOs selecionados.';
+        return;
+      }
     }
+
     this.sendAmountValid = true;
     this.sendAmountErrorMsg = '';
   }
@@ -369,17 +400,35 @@ export class WalletComponent {
     this.sendError = '';
     this.sendSuccess = '';
 
-    // Seleção automática de UTXOs (modo simples)
     const amountSats = Math.round((this.sendAmount ?? 0) * 1e8);
     const fee = 0; // taxa fixa para exemplo
-    const { utxos, total } = this.selectUtxosFIFO(amountSats + fee);
-    if (total < amountSats + fee) {
-      this.sendAmountValid = false;
-      this.sendAmountErrorMsg = 'Saldo insuficiente para cobrir valor + taxa.';
-      return;
+
+    let utxosToSpend: BitcoinUTXO[];
+    let totalInput: number;
+
+    if (this.utxoSelectionMode === 'auto') {
+      const selection = this.selectUtxosFIFO(amountSats + fee);
+      if (selection.total < amountSats + fee) {
+        this.sendAmountValid = false;
+        this.sendAmountErrorMsg =
+          'Saldo insuficiente para cobrir valor + taxa.';
+        return;
+      }
+      utxosToSpend = selection.utxos;
+      totalInput = selection.total;
+    } else {
+      utxosToSpend = this.manuallySelectedUtxos;
+      totalInput = this.manualSelectionTotal;
+      if (totalInput < amountSats + fee) {
+        this.sendAmountValid = false;
+        this.sendAmountErrorMsg =
+          'UTXOs selecionados insuficientes para cobrir valor + taxa.';
+        return;
+      }
     }
-    this.selectedUtxos = utxos;
-    this.changeAmount = total - amountSats - fee;
+
+    this.selectedUtxos = utxosToSpend;
+    this.changeAmount = totalInput - amountSats - fee;
     this.changeAddress = this.getNextChangeAddress();
     this.txOutputs = [{ address: this.sendToAddress, value: amountSats }];
     if (this.changeAmount > 0) {
@@ -405,6 +454,9 @@ export class WalletComponent {
       this.sendToAddressErrorMsg = '';
       this.sendAmountValid = null;
       this.sendAmountErrorMsg = '';
+      this.utxoSelectionMode = 'auto'; // Volta para o modo auto
+      this.manuallySelectedUtxos = [];
+      this.manualSelectionTotal = 0;
       this.updateView();
     }
   }
@@ -439,14 +491,18 @@ export class WalletComponent {
   }
 
   // Seleção automática de UTXOs (FIFO), usando BitcoinUTXO
-  selectUtxosFIFO(amount: number): { utxos: BitcoinUTXO[]; total: number } {
-    const utxos: BitcoinUTXO[] = this.addresses.flatMap((addr) =>
-      (addr.utxos || []).map((utxo: BitcoinUTXO) => ({
-        ...utxo,
-        address: addr.address, // extra para UI
-        bipType: addr.bipFormat, // extra para UI
-      }))
-    );
+  selectUtxosFIFO(amount: number): {
+    utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
+    total: number;
+  } {
+    const utxos: (BitcoinUTXO & { address: string; bipType: BipType })[] =
+      this.addresses.flatMap((addr) =>
+        (addr.utxos || []).map((utxo: BitcoinUTXO) => ({
+          ...utxo,
+          address: addr.address, // extra para UI
+          bipType: addr.bipFormat, // extra para UI
+        }))
+      );
     utxos.sort(
       (a, b) =>
         a.blockHeight - b.blockHeight ||
@@ -454,7 +510,8 @@ export class WalletComponent {
         a.outputIndex - b.outputIndex
     );
     let total = 0;
-    const selected: BitcoinUTXO[] = [];
+    const selected: (BitcoinUTXO & { address: string; bipType: BipType })[] =
+      [];
     for (const utxo of utxos) {
       selected.push(utxo);
       total += utxo.output.value;
@@ -735,28 +792,38 @@ export class WalletComponent {
 
     const amountSats = Math.round(this.sendAmount * 1e8);
     const fee = 0; // taxa fixa para exemplo
-    const { utxos, total } = this.selectUtxosFIFO(amountSats + fee);
 
-    if (total < amountSats + fee) {
-      this.showTransactionPreview = false;
-      return;
+    let utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
+    let total: number;
+
+    if (this.utxoSelectionMode === 'auto') {
+      const selection = this.selectUtxosFIFO(amountSats + fee);
+      if (selection.total < amountSats + fee) {
+        this.showTransactionPreview = false;
+        return;
+      }
+      utxos = selection.utxos;
+      total = selection.total;
+    } else {
+      // Manual
+      if (this.manuallySelectedUtxos.length === 0) {
+        this.showTransactionPreview = false;
+        return;
+      }
+      utxos = this.manuallySelectedUtxos;
+      total = this.manualSelectionTotal;
+      if (total < amountSats + fee) {
+        this.showTransactionPreview = false;
+        return;
+      }
     }
 
-    // Configura inputs do preview - precisamos encontrar o endereço correspondente
-    this.previewInputs = utxos.map((utxo) => {
-      // Encontra o endereço que contém este UTXO
-      const addressData = this.addresses.find((addr) =>
-        addr.utxos.some(
-          (u) => u.txId === utxo.txId && u.outputIndex === utxo.outputIndex
-        )
-      );
-
-      return {
-        address: addressData?.address || 'Endereço desconhecido',
-        value: utxo.output.value,
-        bipType: addressData?.bipFormat,
-      };
-    });
+    // Configura inputs do preview
+    this.previewInputs = utxos.map((utxo) => ({
+      address: utxo.address,
+      value: utxo.output.value,
+      bipType: utxo.bipType,
+    }));
 
     // Configura outputs do preview
     this.previewOutputs = [
@@ -785,6 +852,69 @@ export class WalletComponent {
     this.previewTotalOutput =
       amountSats + (changeAmount > 0 ? changeAmount : 0);
     this.showTransactionPreview = true;
+  }
+
+  private prepareAllUtxosForManualSelection() {
+    if (!this._wallet) {
+      this.allAvailableUtxos = [];
+      return;
+    }
+
+    // Preserva a seleção manual existente
+    const currentSelection = new Map<string, boolean>();
+    this.allAvailableUtxos.forEach((utxo) => {
+      const key = `${utxo.txId}-${utxo.outputIndex}`;
+      currentSelection.set(key, utxo.selected);
+    });
+
+    this.allAvailableUtxos = this.addresses
+      .flatMap((addr) =>
+        (addr.utxos || []).map((utxo) => {
+          const key = `${utxo.txId}-${utxo.outputIndex}`;
+          return {
+            ...utxo,
+            address: addr.address,
+            bipType: addr.bipFormat,
+            selected: currentSelection.get(key) || false, // Preserva seleção anterior
+          };
+        })
+      )
+      .sort((a, b) => b.output.value - a.output.value); // Ordena por valor
+  }
+
+  setUtxoSelectionMode(mode: 'auto' | 'manual') {
+    if (this.utxoSelectionMode === mode) return;
+
+    this.utxoSelectionMode = mode;
+    // Reseta a seleção manual ao trocar de modo
+    this.allAvailableUtxos.forEach((u) => (u.selected = false));
+    this.manuallySelectedUtxos = [];
+    this.manualSelectionTotal = 0;
+
+    // Revalida e atualiza o preview
+    this.validateSendAmount();
+    this.updateTransactionPreview();
+  }
+
+  onManualUtxoSelectionChange() {
+    this.manuallySelectedUtxos = this.allAvailableUtxos.filter(
+      (u) => u.selected
+    );
+    this.manualSelectionTotal = this.manuallySelectedUtxos.reduce(
+      (sum, u) => sum + u.output.value,
+      0
+    );
+
+    // Revalida e atualiza o preview com base na nova seleção
+    this.validateSendAmount();
+    this.updateTransactionPreview();
+  }
+
+  trackByUtxo(
+    index: number,
+    item: BitcoinUTXO & { selected: boolean }
+  ): string {
+    return item.txId + item.outputIndex;
   }
 }
 

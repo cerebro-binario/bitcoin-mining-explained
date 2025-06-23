@@ -192,6 +192,104 @@
                 {{ sendAmountErrorMsg }}
               </div>
             </div>
+
+            <!-- Seletor de Modo de UTXO -->
+            <div class="flex flex-col gap-2">
+              <label class="text-zinc-400 text-sm"
+                >Seleção de Inputs (UTXOs)</label
+              >
+              <div class="flex rounded-md shadow-sm w-full">
+                <button
+                  type="button"
+                  (click)="setUtxoSelectionMode('auto')"
+                  class="flex-1 p-2 text-sm font-medium transition-colors rounded-l-md"
+                  [ngClass]="{
+                    'bg-blue-600 text-white z-10 border-blue-500':
+                      utxoSelectionMode === 'auto',
+                    'bg-zinc-700 hover:bg-zinc-600 text-zinc-300 border-zinc-600':
+                      utxoSelectionMode !== 'auto'
+                  }"
+                >
+                  Automática
+                </button>
+                <button
+                  type="button"
+                  (click)="setUtxoSelectionMode('manual')"
+                  class="flex-1 p-2 text-sm font-medium transition-colors rounded-r-md -ml-px"
+                  [ngClass]="{
+                    'bg-blue-600 text-white z-10 border-blue-500':
+                      utxoSelectionMode === 'manual',
+                    'bg-zinc-700 hover:bg-zinc-600 text-zinc-300 border-zinc-600':
+                      utxoSelectionMode !== 'manual'
+                  }"
+                >
+                  Manual
+                </button>
+              </div>
+            </div>
+
+            <!-- Lista de UTXOs para seleção manual -->
+            <div
+              *ngIf="utxoSelectionMode === 'manual'"
+              class="flex flex-col gap-2"
+            >
+              <h4 class="text-zinc-300 text-sm">
+                Selecione os UTXOs para gastar:
+              </h4>
+              <div
+                class="max-h-60 overflow-y-auto space-y-2 p-3 bg-zinc-900/70 rounded-md border border-zinc-700"
+              >
+                <label
+                  *ngFor="let utxo of allAvailableUtxos"
+                  class="flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer w-full"
+                  [ngClass]="{
+                    'bg-blue-900/30': utxo.selected
+                  }"
+                >
+                  <input
+                    type="checkbox"
+                    [id]="'utxo-' + utxo.txId + utxo.outputIndex"
+                    class="h-4 w-4 rounded bg-zinc-800 border-zinc-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    [ngModel]="utxo.selected"
+                    (ngModelChange)="
+                      utxo.selected = $event; onManualUtxoSelectionChange()
+                    "
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center">
+                      <span class="font-mono text-green-400 text-sm">
+                        {{ utxo.output.value / 100000000 | number : "1.8-8" }}
+                        BTC
+                      </span>
+                      <span class="text-xs text-zinc-400 font-mono">
+                        {{ utxo.bipType | uppercase }}
+                      </span>
+                    </div>
+                    <div
+                      class="text-xs text-zinc-500 font-mono truncate mt-1"
+                      [title]="utxo.address"
+                    >
+                      {{ utxo.address }}
+                    </div>
+                  </div>
+                </label>
+                <div
+                  *ngIf="allAvailableUtxos.length === 0"
+                  class="text-center text-zinc-500 italic py-4"
+                >
+                  Nenhum UTXO disponível nesta carteira.
+                </div>
+              </div>
+              <div class="text-right text-sm mt-1">
+                <span class="text-zinc-400">Total Selecionado: </span>
+                <span class="font-mono text-white font-semibold">
+                  {{ manualSelectionTotal / 100000000 | number : "1.8-8" }}
+                  BTC</span
+                >
+              </div>
+            </div>
+
             <div
               *ngIf="sendError"
               class="text-red-400 bg-red-900/30 border border-red-800 rounded px-3 py-2 text-sm font-medium"
