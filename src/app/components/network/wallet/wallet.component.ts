@@ -129,7 +129,14 @@ export class WalletComponent {
 
   // Preview da transação
   showTransactionPreview = false;
-  previewInputs: { address: string; value: number; bipType?: BipType }[] = [];
+  previewInputs: {
+    address: string;
+    value: number;
+    bipType?: BipType;
+    height: number;
+    txId: string;
+    vout: number;
+  }[] = [];
   previewOutputs: {
     address: string;
     value: number;
@@ -823,6 +830,9 @@ export class WalletComponent {
       address: utxo.address,
       value: utxo.output.value,
       bipType: utxo.bipType,
+      height: utxo.blockHeight,
+      txId: utxo.txId,
+      vout: utxo.outputIndex,
     }));
 
     // Configura outputs do preview

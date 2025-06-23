@@ -242,13 +242,10 @@
                 <label
                   *ngFor="let utxo of allAvailableUtxos"
                   class="flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer w-full"
-                  [ngClass]="{
-                    'bg-blue-900/30': utxo.selected
-                  }"
+                  [ngClass]="{ 'bg-blue-900/30': utxo.selected }"
                 >
                   <input
                     type="checkbox"
-                    [id]="'utxo-' + utxo.txId + utxo.outputIndex"
                     class="h-4 w-4 rounded bg-zinc-800 border-zinc-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     [ngModel]="utxo.selected"
                     (ngModelChange)="
@@ -257,17 +254,27 @@
                     [ngModelOptions]="{ standalone: true }"
                   />
                   <div class="flex-1 min-w-0">
-                    <div class="flex justify-between items-center">
-                      <span class="font-mono text-green-400 text-sm">
+                    <div class="flex items-center justify-between">
+                      <span class="font-mono text-green-400 text-base">
                         {{ utxo.output.value / 100000000 | number : "1.8-8" }}
                         BTC
                       </span>
-                      <span class="text-xs text-zinc-400 font-mono">
-                        {{ utxo.bipType | uppercase }}
+                      <span class="text-xs text-zinc-400 font-mono ml-2">
+                        Bloco:
+                        <span class="text-white">{{ utxo.blockHeight }}</span>
                       </span>
                     </div>
                     <div
                       class="text-xs text-zinc-500 font-mono truncate mt-1"
+                      [title]="utxo.txId"
+                    >
+                      TXID:
+                      <span class="text-white">{{ utxo.txId }}</span>
+                      <span class="text-zinc-400 ml-2">vout:</span>
+                      <span class="text-white">{{ utxo.outputIndex }}</span>
+                    </div>
+                    <div
+                      class="text-xs text-zinc-500 font-mono truncate"
                       [title]="utxo.address"
                     >
                       {{ utxo.address }}
@@ -369,6 +376,26 @@
                         {{ input.value / 100000000 | number : "1.8-8" }}
                         <span class="text-base text-zinc-500">BTC</span>
                       </div>
+                    </div>
+                    <div
+                      class="flex flex-wrap gap-4 text-xs font-mono text-zinc-400 mb-1"
+                    >
+                      <span
+                        >Bloco:
+                        <span class="text-white">{{ input.height }}</span></span
+                      >
+                      <span
+                        >TXID:
+                        <span class="text-white" [title]="input.txId"
+                          >{{ input.txId | slice : 0 : 8 }}...{{
+                            input.txId | slice : -6
+                          }}</span
+                        ></span
+                      >
+                      <span
+                        >vout:
+                        <span class="text-white">{{ input.vout }}</span></span
+                      >
                     </div>
                     <div
                       class="text-xs text-zinc-400 mt-3 font-mono break-all"
