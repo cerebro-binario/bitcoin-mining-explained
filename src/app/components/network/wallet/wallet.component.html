@@ -459,70 +459,93 @@
                       <div class="text-xs text-zinc-500 mb-1">
                         Assinatura do Proprietário
                       </div>
+                      <!-- MODO MANUAL -->
                       <div
-                        class="p-2 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-center"
+                        *ngIf="signatureMode === 'manual'"
+                        class="flex flex-col gap-2 w-full"
                       >
-                        <ng-container
-                          *ngIf="signatureMode === 'manual'; else autoSignBlock"
-                        >
-                          <div class="flex flex-col items-center w-full">
-                            <div class="flex gap-2 items-center w-full">
-                              <p-select
-                                [options]="availablePrivateKeys"
-                                [(ngModel)]="selectedPrivateKey[i]"
-                                optionLabel="address"
-                                optionValue="privateKey"
-                                placeholder="Selecione a chave"
-                                [style]="{ width: '220px' }"
-                                [showClear]="true"
-                                [ngModelOptions]="{ standalone: true }"
-                                [disabled]="signedInputs[i]"
-                                [filter]="true"
-                                [appendTo]="'body'"
-                              ></p-select>
-                              <button
-                                *ngIf="!signedInputs[i]"
-                                type="button"
-                                (click)="
-                                  trySignInputWithKey(i, selectedPrivateKey[i]!)
-                                "
-                                class="px-4 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
-                                [disabled]="!selectedPrivateKey[i]"
-                              >
-                                Assinar Input
-                              </button>
-                              <div
-                                *ngIf="signedInputs[i]"
-                                class="text-green-400 font-mono text-sm flex items-center gap-2"
-                              >
-                                <i
-                                  class="pi pi-check-circle text-green-400"
-                                ></i>
-                                Assinado manualmente
-                              </div>
-                            </div>
-                            <div
-                              *ngIf="inputSignatureScripts[i]"
-                              class="mt-2 text-xs text-green-300 font-mono w-full text-left"
-                            >
-                              Script: {{ inputSignatureScripts[i] }}
-                            </div>
-                            <div
-                              *ngIf="inputSignatureErrors[i]"
-                              class="mt-1 text-xs text-red-400 font-mono w-full text-left"
-                            >
-                              {{ inputSignatureErrors[i] }}
-                            </div>
-                          </div>
-                        </ng-container>
-                        <ng-template #autoSignBlock>
-                          <div
-                            class="text-green-400 font-mono text-sm flex items-center gap-2"
+                        <div class="flex flex-row gap-2 items-center">
+                          <p-select
+                            [options]="availablePrivateKeys"
+                            [(ngModel)]="selectedPrivateKey[i]"
+                            optionLabel="address"
+                            optionValue="privateKey"
+                            placeholder="Selecione a chave"
+                            [style]="{ width: '220px' }"
+                            [showClear]="true"
+                            [ngModelOptions]="{ standalone: true }"
+                            [filter]="true"
+                            [appendTo]="'body'"
+                          ></p-select>
+                          <button
+                            type="button"
+                            (click)="
+                              trySignInputWithKey(i, selectedPrivateKey[i]!)
+                            "
+                            class="px-4 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
+                            [disabled]="!selectedPrivateKey[i]"
                           >
+                            Assinar Input
+                          </button>
+                        </div>
+                        <div
+                          *ngIf="inputSignatureScripts[i]"
+                          class="flex flex-col gap-1 mt-1 w-full"
+                        >
+                          <div class="flex items-center gap-2">
                             <i class="pi pi-check-circle text-green-400"></i>
-                            Assinado automaticamente
+                            <span class="text-green-400 font-mono text-sm"
+                              >Assinado manualmente</span
+                            >
                           </div>
-                        </ng-template>
+                          <div class="flex items-center gap-2 w-full">
+                            <span
+                              class="text-xs text-green-300 font-mono truncate bg-zinc-900 border border-zinc-700 rounded px-2 py-1"
+                              style="max-width: 320px"
+                            >
+                              {{ inputSignatureScripts[i] }}
+                            </span>
+                            <button
+                              type="button"
+                              class="ml-1 px-2 py-0.5 rounded bg-zinc-700 text-zinc-200 text-xs hover:bg-zinc-600"
+                              (click)="
+                                copyToClipboard(inputSignatureScripts[i]!)
+                              "
+                              title="Copiar assinatura"
+                            >
+                              Copiar
+                            </button>
+                          </div>
+                        </div>
+                        <div
+                          *ngIf="inputSignatureErrors[i]"
+                          class="mt-1 text-xs text-red-400 font-mono w-full text-left"
+                        >
+                          {{ inputSignatureErrors[i] }}
+                        </div>
+                      </div>
+                      <!-- MODO AUTO -->
+                      <div
+                        *ngIf="signatureMode === 'auto'"
+                        class="flex items-center gap-2 w-full"
+                      >
+                        <span class="text-green-400 font-mono text-sm"
+                          >Assinado automaticamente</span
+                        >
+                        <span
+                          class="text-xs text-green-300 font-mono truncate bg-zinc-900 border border-zinc-700 rounded px-2 py-1"
+                          style="max-width: 320px"
+                        >
+                          {{ inputSignatureScripts[i] }}
+                        </span>
+                        <button
+                          type="button"
+                          class="ml-1 px-2 py-0.5 rounded bg-zinc-700 text-zinc-200 text-xs hover:bg-zinc-600"
+                          (click)="copyToClipboard(inputSignatureScripts[i]!)"
+                          title="Copiar assinatura"
+                        >
+                          Copiar
+                        </button>
                       </div>
                     </div>
                   </div>

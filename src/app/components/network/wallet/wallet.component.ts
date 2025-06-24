@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import * as EC from 'elliptic';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -22,10 +23,12 @@ import {
   Wallet,
 } from '../../../models/wallet.model';
 import { KeyService } from '../../../services/key.service';
-import { ceilBigInt } from '../../../utils/tools';
+import { ceilBigInt, copyToClipboard } from '../../../utils/tools';
 import { AddressListComponent } from './address-list/address-list.component';
 import { PaginationBarComponent } from './pagination-bar.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
+
+const ec = new EC.ec('secp256k1');
 
 export interface TransactionDetail {
   type: 'input' | 'output' | 'change';
@@ -486,10 +489,10 @@ export class WalletComponent {
       return null;
     if (!this.selectedUtxos.length) return null;
     // Monta inputs a partir dos UTXOs selecionados
-    const inputs: TransactionInput[] = this.selectedUtxos.map((utxo) => ({
+    const inputs: TransactionInput[] = this.selectedUtxos.map((utxo, i) => ({
       txid: utxo.txId,
       vout: utxo.outputIndex,
-      scriptSig: '', // será preenchido na assinatura real
+      scriptSig: this.inputSignatureScripts[i] || '', // Propaga assinatura
       scriptPubKey: utxo.output?.scriptPubKey ?? '',
       value: utxo.output?.value ?? 0,
     }));
@@ -504,7 +507,7 @@ export class WalletComponent {
       id: generateTransactionId(inputs, outputs, timestamp),
       inputs,
       outputs,
-      signature: 'simulated', // ou assine de verdade depois
+      signature: 'simulated',
     };
     return tx;
   }
@@ -984,24 +987,35 @@ export class WalletComponent {
   // Tenta assinar um input manualmente com uma chave privada
   trySignInputWithKey(inputIndex: number, privateKey: string) {
     const input = this.previewInputs[inputIndex];
-    // Procura o endereço correspondente à chave
-    const keyEntry = this.availablePrivateKeys.find(
-      (k) => k.privateKey === privateKey
-    );
-    if (!keyEntry) {
-      this.inputSignatureErrors[inputIndex] =
-        'Chave não encontrada na carteira.';
-      return;
-    }
-    if (keyEntry.address !== input.address) {
-      this.inputSignatureErrors[inputIndex] =
-        'Chave não corresponde ao endereço deste input!';
-      return;
-    }
-    // Simula um script de assinatura didático
-    this.inputSignatureScripts[inputIndex] = `SIG(${keyEntry.address})`;
+    // Permite assinar quantas vezes quiser (sobrescreve assinatura anterior)
+    const message = `${input.txId}|${input.vout}|${input.address}`;
+    const key = ec.keyFromPrivate(privateKey, 'hex');
+    const signature = key.sign(message);
+    const derSign = signature.toDER('hex');
+    this.inputSignatureScripts[inputIndex] = derSign;
     this.inputSignatureErrors[inputIndex] = null;
     this.signedInputs[inputIndex] = true;
+  }
+
+  copyToClipboard(text: string) {
+    copyToClipboard(text);
+  }
+
+  // Função para assinar automaticamente um input com a chave correta
+  private signInputAuto(input: {
+    address: string;
+    txId: string;
+    vout: number;
+  }): string {
+    // Procura a chave privada do endereço
+    const keyEntry = this.availablePrivateKeys.find(
+      (k) => k.address === input.address
+    );
+    if (!keyEntry) return '';
+    const message = `${input.txId}|${input.vout}|${input.address}`;
+    const key = ec.keyFromPrivate(keyEntry.privateKey, 'hex');
+    const signature = key.sign(message);
+    return signature.toDER('hex');
   }
 }
 
