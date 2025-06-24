@@ -105,7 +105,6 @@ export class Block {
 
   public addTransaction(tx: Transaction): void {
     this.transactions.push(tx);
-    this.merkleRoot = this.calculateMerkleRoot();
   }
 }
 

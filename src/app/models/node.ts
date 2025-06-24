@@ -1959,6 +1959,26 @@ export class Node {
     if (!this.currentBlock) return;
     if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
     this.currentBlock.addTransaction(tx);
+
+    // Atualizar coinbase (recompensa) e hash do bloco
+    const coinbase = this.currentBlock.transactions[0];
+    const subsidy = this.calculateBlockSubsidy(this.currentBlock.height);
+    let totalFees = 0;
+    for (let i = 1; i < this.currentBlock.transactions.length; i++) {
+      const t = this.currentBlock.transactions[i];
+      const inputSum = t.inputs.reduce(
+        (sum, input) => sum + (input.value || 0),
+        0
+      );
+      const outputSum = t.outputs.reduce((sum, o) => sum + o.value, 0);
+      totalFees += Math.max(0, inputSum - outputSum);
+    }
+    coinbase.outputs[0].value = subsidy + totalFees;
+
+    // Atualizar Merkle root e hash do bloco
+    this.currentBlock.merkleRoot = this.currentBlock.calculateMerkleRoot();
+    this.currentBlock.hash = this.currentBlock.calculateHash();
+
     // Log de evento de adição de transação
     const event = this.addEvent('transaction-added', { tx });
     EventManager.complete(event);
