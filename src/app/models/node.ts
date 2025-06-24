@@ -1944,5 +1944,8 @@ export class Node {
     if (!this.currentBlock) return;
     if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
     this.currentBlock.addTransaction(tx);
+    // Log de evento de adição de transação
+    const event = this.addEvent('transaction-added', { tx });
+    EventManager.complete(event);
   }
 }

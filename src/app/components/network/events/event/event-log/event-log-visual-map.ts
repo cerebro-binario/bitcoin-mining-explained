@@ -189,4 +189,17 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     template:
       'Halving: Recompensa reduzida pela metade: {{oldSubsidy}} -> {{newSubsidy}} BTC',
   },
+  'transaction-added': {
+    color: 'text-green-400',
+    icon: 'pi pi-plus',
+    label: 'Transação adicionada',
+    template: 'Transação adicionada',
+  },
+  'transaction-added-details': {
+    color: 'text-green-400',
+    icon: 'pi pi-plus',
+    label: 'Transação adicionada',
+    template:
+      'Inputs: {{inputs}} | Outputs: {{outputs}} | Valor: {{value}} BTC',
+  },
 };

@@ -19,4 +19,19 @@ import { EventLogComponent } from './event-log/event-log.component';
 })
 export class EventComponent {
   @Input() event!: NodeEvent;
+
+  txTotalOutput(tx: any): number {
+    if (!tx?.outputs) return 0;
+    return tx.outputs.reduce((sum: number, o: any) => sum + (o.value || 0), 0);
+  }
+
+  txInputAddresses(tx: any): string {
+    if (!tx?.inputs) return '';
+    return tx.inputs.map((i: any) => i.scriptPubKey).join(', ');
+  }
+
+  txOutputAddresses(tx: any): string {
+    if (!tx?.outputs) return '';
+    return tx.outputs.map((o: any) => o.scriptPubKey).join(', ');
+  }
 }
