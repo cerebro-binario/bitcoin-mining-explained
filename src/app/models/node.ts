@@ -1,11 +1,10 @@
-import * as CryptoJS from 'crypto-js';
 import { BehaviorSubject, pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
 import {
   Block,
   BlockNode,
-  Transaction,
   generateTransactionId,
+  Transaction,
 } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
