@@ -151,6 +151,7 @@ export class WalletComponent {
   previewFee = 0;
   previewTotalInput = 0;
   previewTotalOutput = 0;
+  previewTxSize = 0;
 
   selectedUtxos: BitcoinUTXO[] = [];
   changeAddress: string = '';
@@ -417,48 +418,200 @@ export class WalletComponent {
     this.sendAmountErrorMsg = '';
   }
 
+  // Estima o tamanho da transação em bytes (didático, não exato)
+  private estimateTxSize(numInputs: number, numOutputs: number): number {
+    // Base: 10 bytes, cada input: 148 bytes, cada output: 34 bytes
+    return 10 + 148 * numInputs + 34 * numOutputs;
+  }
+
+  // Retorna a taxa estimada em satoshis para os inputs/outputs atuais
+  private estimateFee(
+    numInputs: number,
+    numOutputs: number,
+    satsPerVbyte = 10
+  ): number {
+    const size = this.estimateTxSize(numInputs, numOutputs);
+    return size * satsPerVbyte;
+  }
+
+  // --- Atualize o preview para usar a taxa realista ---
+  private updateTransactionPreview() {
+    if (
+      !this.sendToAddressValid ||
+      !this.sendAmountValid ||
+      !this.sendAmount ||
+      !this.sendToAddress
+    ) {
+      this.showTransactionPreview = false;
+      return;
+    }
+
+    const amountSats = Math.round(this.sendAmount * 1e8);
+
+    let utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
+    let total: number = 0;
+
+    if (this.utxoSelectionMode === 'auto') {
+      // Seleciona UTXOs suficientes para cobrir valor + taxa (estimada)
+      // Loop para garantir que a taxa seja suficiente mesmo se o número de inputs mudar
+      let needed = amountSats;
+      let selected: typeof utxos = [];
+      let fee = 0;
+      for (let tries = 0; tries < 5; tries++) {
+        const sel = this.selectUtxosFIFO(needed + fee);
+        selected = sel.utxos;
+        total = sel.total;
+        const numInputs = selected.length;
+        const numOutputs = total > amountSats + fee ? 2 : 1;
+        fee = this.estimateFee(numInputs, numOutputs);
+        needed = amountSats + fee;
+        if (total >= needed) break;
+      }
+      if (total < amountSats + fee) {
+        this.showTransactionPreview = false;
+        return;
+      }
+      utxos = selected;
+    } else {
+      // Manual
+      if (this.manuallySelectedUtxos.length === 0) {
+        this.showTransactionPreview = false;
+        return;
+      }
+      utxos = this.manuallySelectedUtxos;
+      total = this.manualSelectionTotal;
+      // Outputs: destino + troco se houver
+      const numInputs = utxos.length;
+      const numOutputs = total > amountSats ? 2 : 1;
+      const fee = this.estimateFee(numInputs, numOutputs);
+      if (total < amountSats + fee) {
+        this.showTransactionPreview = false;
+        return;
+      }
+    }
+
+    // Inputs do preview
+    this.previewInputs = utxos.map((utxo) => ({
+      address: utxo.address,
+      value: utxo.output.value,
+      bipType: utxo.bipType,
+      height: utxo.blockHeight,
+      txId: utxo.txId,
+      vout: utxo.outputIndex,
+    }));
+
+    // Calcule a taxa realista
+    const numInputs = utxos.length;
+    // Outputs: destino + troco se houver
+    let fee = this.estimateFee(numInputs, 2);
+    let change = total - amountSats - fee;
+    let outputs: {
+      address: string;
+      value: number;
+      type: 'change' | 'destination';
+      bipType?: BipType;
+    }[] = [
+      {
+        address: this.sendToAddress,
+        value: amountSats,
+        type: 'destination',
+        bipType: detectBipType(this.sendToAddress),
+      },
+    ];
+    if (change > 0) {
+      outputs.push({
+        address: this.getNextChangeAddress(),
+        value: change,
+        type: 'change',
+        bipType: detectBipType(this.getNextChangeAddress()),
+      });
+    } else {
+      // Se não há troco, recalcule fee para 1 output
+      fee = this.estimateFee(numInputs, 1);
+      change = total - amountSats - fee;
+      if (change > 0) {
+        outputs.push({
+          address: this.getNextChangeAddress(),
+          value: change,
+          type: 'change',
+          bipType: detectBipType(this.getNextChangeAddress()),
+        });
+      }
+    }
+
+    this.previewOutputs = outputs;
+    this.previewFee = fee;
+    this.previewTotalInput = total;
+    this.previewTotalOutput = outputs.reduce((sum, o) => sum + o.value, 0);
+    this.previewTxSize = this.estimateTxSize(numInputs, outputs.length);
+    this.showTransactionPreview = true;
+    this.updateSignatureState();
+  }
+
+  // --- Atualize o envio real para usar a taxa realista ---
   onSendTransaction(event: Event) {
     event.preventDefault();
     this.sendError = '';
     this.sendSuccess = '';
 
     const amountSats = Math.round((this.sendAmount ?? 0) * 1e8);
-    const fee = 0; // taxa fixa para exemplo
 
     let utxosToSpend: BitcoinUTXO[];
-    let totalInput: number;
+    let totalInput: number = 0;
+    let fee = 0;
+    let change = 0;
+    let outputs: { address: string; value: number }[] = [];
 
     if (this.utxoSelectionMode === 'auto') {
-      const selection = this.selectUtxosFIFO(amountSats + fee);
-      if (selection.total < amountSats + fee) {
+      // Seleciona UTXOs suficientes para cobrir valor + taxa
+      let needed = amountSats;
+      let selected: (BitcoinUTXO & { address: string; bipType: BipType })[] =
+        [];
+      for (let tries = 0; tries < 5; tries++) {
+        const sel = this.selectUtxosFIFO(needed + fee);
+        selected = sel.utxos;
+        totalInput = sel.total;
+        const numInputs = selected.length;
+        const numOutputs = totalInput > amountSats + fee ? 2 : 1;
+        fee = this.estimateFee(numInputs, numOutputs);
+        needed = amountSats + fee;
+        if (totalInput >= needed) break;
+      }
+      if (totalInput < amountSats + fee) {
         this.sendAmountValid = false;
         this.sendAmountErrorMsg =
           'Saldo insuficiente para cobrir valor + taxa.';
         return;
       }
-      utxosToSpend = selection.utxos;
-      totalInput = selection.total;
+      utxosToSpend = selected;
+      change = totalInput - amountSats - fee;
+      outputs = [{ address: this.sendToAddress, value: amountSats }];
+      if (change > 0) {
+        outputs.push({ address: this.getNextChangeAddress(), value: change });
+      }
     } else {
       utxosToSpend = this.manuallySelectedUtxos;
       totalInput = this.manualSelectionTotal;
+      const numInputs = utxosToSpend.length;
+      const numOutputs = totalInput > amountSats ? 2 : 1;
+      fee = this.estimateFee(numInputs, numOutputs);
       if (totalInput < amountSats + fee) {
         this.sendAmountValid = false;
         this.sendAmountErrorMsg =
           'UTXOs selecionados insuficientes para cobrir valor + taxa.';
         return;
       }
+      change = totalInput - amountSats - fee;
+      outputs = [{ address: this.sendToAddress, value: amountSats }];
+      if (change > 0) {
+        outputs.push({ address: this.getNextChangeAddress(), value: change });
+      }
     }
 
     this.selectedUtxos = utxosToSpend;
-    this.changeAmount = totalInput - amountSats - fee;
+    this.changeAmount = change;
     this.changeAddress = this.getNextChangeAddress();
-    this.txOutputs = [{ address: this.sendToAddress, value: amountSats }];
-    if (this.changeAmount > 0) {
-      this.txOutputs.push({
-        address: this.changeAddress,
-        value: this.changeAmount,
-      });
-    }
+    this.txOutputs = outputs;
 
     // Agora sim, cria a transação
     const tx = this.createTransaction();
@@ -799,85 +952,6 @@ export class WalletComponent {
 
   trackByAddress(index: number, item: { address: string }): string {
     return item.address;
-  }
-
-  private updateTransactionPreview() {
-    if (
-      !this.sendToAddressValid ||
-      !this.sendAmountValid ||
-      !this.sendAmount ||
-      !this.sendToAddress
-    ) {
-      this.showTransactionPreview = false;
-      return;
-    }
-
-    const amountSats = Math.round(this.sendAmount * 1e8);
-    const fee = 0; // taxa fixa para exemplo
-
-    let utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
-    let total: number;
-
-    if (this.utxoSelectionMode === 'auto') {
-      const selection = this.selectUtxosFIFO(amountSats + fee);
-      if (selection.total < amountSats + fee) {
-        this.showTransactionPreview = false;
-        return;
-      }
-      utxos = selection.utxos;
-      total = selection.total;
-    } else {
-      // Manual
-      if (this.manuallySelectedUtxos.length === 0) {
-        this.showTransactionPreview = false;
-        return;
-      }
-      utxos = this.manuallySelectedUtxos;
-      total = this.manualSelectionTotal;
-      if (total < amountSats + fee) {
-        this.showTransactionPreview = false;
-        return;
-      }
-    }
-
-    // Configura inputs do preview
-    this.previewInputs = utxos.map((utxo) => ({
-      address: utxo.address,
-      value: utxo.output.value,
-      bipType: utxo.bipType,
-      height: utxo.blockHeight,
-      txId: utxo.txId,
-      vout: utxo.outputIndex,
-    }));
-
-    // Configura outputs do preview
-    this.previewOutputs = [
-      {
-        address: this.sendToAddress,
-        value: amountSats,
-        type: 'destination',
-        bipType: detectBipType(this.sendToAddress),
-      },
-    ];
-
-    // Adiciona output de change se necessário
-    const changeAmount = total - amountSats - fee;
-    if (changeAmount > 0) {
-      const changeAddress = this.getNextChangeAddress();
-      this.previewOutputs.push({
-        address: changeAddress,
-        value: changeAmount,
-        type: 'change',
-        bipType: detectBipType(changeAddress),
-      });
-    }
-
-    this.previewFee = fee;
-    this.previewTotalInput = total;
-    this.previewTotalOutput =
-      amountSats + (changeAmount > 0 ? changeAmount : 0);
-    this.showTransactionPreview = true;
-    this.updateSignatureState();
   }
 
   private prepareAllUtxosForManualSelection() {
