@@ -952,8 +952,8 @@ export class WalletComponent {
   updateSignatureState() {
     if (this.signatureMode === 'auto') {
       this.signedInputs = this.previewInputs.map(() => true);
-      this.inputSignatureScripts = this.previewInputs.map(
-        (input) => `SIG(${input.address})`
+      this.inputSignatureScripts = this.previewInputs.map((input) =>
+        this.signInputAuto(input)
       );
       this.inputSignatureErrors = this.previewInputs.map(() => null);
     } else {
