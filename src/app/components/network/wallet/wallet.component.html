@@ -93,7 +93,7 @@
     <div [hidden]="activeTab !== 'enviar'" class="h-full">
       <div class="flex-1 min-h-0 flex flex-row h-full pt-4 gap-8 px-4">
         <!-- Coluna do Formulário -->
-        <div class="w-1/2 flex flex-col">
+        <div class="w-1/2 flex flex-col min-w-0">
           <form
             class="flex flex-col gap-6 w-full"
             (submit)="onSendTransaction($event)"
@@ -380,7 +380,7 @@
         </div>
 
         <!-- Coluna do Preview -->
-        <div class="w-1/2">
+        <div class="w-1/2 min-w-0 flex flex-col">
           <!-- Preview da Transação -->
           <div
             *ngIf="showTransactionPreview"
@@ -475,7 +475,7 @@
                             [ngModelOptions]="{ standalone: true }"
                             [filter]="true"
                             [appendTo]="'body'"
-                            styleClass="flex-1"
+                            styleClass="max-w-xs w-full"
                           ></p-select>
                           <button
                             type="button"
