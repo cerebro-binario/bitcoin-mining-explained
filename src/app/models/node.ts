@@ -1749,7 +1749,22 @@ export class Node {
     if (!coinbase || coinbase.inputs.length > 0) return;
 
     const subsidy = this.calculateBlockSubsidy(block.height);
+    // Calcula as fees das transações do bloco
+    let totalFees = 0;
+    for (let i = 1; i < block.transactions.length; i++) {
+      const tx = block.transactions[i];
+      const inputSum = tx.inputs.reduce(
+        (sum, input) => sum + (input.value || 0),
+        0
+      );
+      const outputSum = tx.outputs.reduce((sum, o) => sum + o.value, 0);
+      const fee = Math.max(0, inputSum - outputSum);
+      totalFees += fee;
+    }
     const address = coinbase.outputs[0].scriptPubKey;
+
+    // Atualiza o valor do output da coinbase para subsidy + fees
+    coinbase.outputs[0].value = subsidy + totalFees;
 
     // Cria ou atualiza o endereço do minerador
     const isMinerCoinbase = address === this.miningAddress;
@@ -1794,8 +1809,8 @@ export class Node {
       });
     }
 
-    // Atualiza o saldo
-    addressData.balance += subsidy;
+    // Atualiza o saldo (subsidy + fees)
+    addressData.balance += subsidy + totalFees;
 
     // Atualiza o mapa de saldos forçando uma nova referência para reatividade
     this.balances = {
