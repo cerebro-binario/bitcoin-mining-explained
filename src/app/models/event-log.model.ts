@@ -41,7 +41,7 @@ export type EventLogType =
   | 'transactions-synced'
   | 'transaction-added'
   | 'transaction-received'
-  | 'invalid-transaction'
+  | 'transaction-rejected'
   | 'duplicate-transaction';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
@@ -100,7 +100,7 @@ export type NodeEventLogReasons =
   | 'invalid-target'
   | 'block-not-found'
   | 'consensus-incompatible'
-  | 'invalid-transaction'
+  | 'transaction-rejected'
   | 'invalid-transaction-fee';
 
 export const EVENT_LOG_REASONS: Record<NodeEventLogReasons, string> = {
@@ -116,5 +116,5 @@ export const EVENT_LOG_REASONS: Record<NodeEventLogReasons, string> = {
   'invalid-transaction-fee': 'Bloco com taxa de transação inválida',
   'block-not-found': 'Bloco não encontrado',
   'consensus-incompatible': 'Consenso incompatível',
-  'invalid-transaction': 'Transação inválida',
+  'transaction-rejected': 'Transação rejeitada',
 };

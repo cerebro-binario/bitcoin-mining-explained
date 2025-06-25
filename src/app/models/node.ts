@@ -175,7 +175,7 @@ export class Node {
   addBlock(block: Block): NodeEventLogReasons | undefined {
     // Primeiro valida e processa as transações
     if (!this.validateAndProcessTransactions(block)) {
-      return 'invalid-transaction';
+      return 'transaction-rejected';
     }
 
     // Continua com o processamento normal do bloco
@@ -1025,12 +1025,13 @@ export class Node {
         });
 
         // 2. Validação
-        if (this.isValidTransaction(tx)) {
+        const { valid, reason } = this.isValidTransaction(tx);
+        if (valid) {
           this.addTransaction(tx, event, false); // logTxData = false, não mostra template de novo
           syncedCount++;
         } else {
-          EventManager.log(event, 'invalid-transaction', {
-            reason: 'Transação inválida durante sync',
+          EventManager.log(event, 'transaction-rejected', {
+            reason: reason || 'Transação inválida durante sync',
             txId: tx.id,
           });
         }
@@ -2202,10 +2203,10 @@ export class Node {
     });
 
     // 5. Valide a transação (assinaturas, UTXOs, etc)
-    const valid = this.isValidTransaction(tx);
+    const { valid, reason } = this.isValidTransaction(tx);
     if (!valid) {
-      EventManager.log(receiveEvent, 'invalid-transaction', {
-        reason: 'Transação inválida',
+      EventManager.log(receiveEvent, 'transaction-rejected', {
+        reason: reason || 'Transação inválida',
       });
       EventManager.fail(receiveEvent);
       return;
@@ -2222,7 +2223,7 @@ export class Node {
     EventManager.complete(receiveEvent);
   }
 
-  isValidTransaction(tx: Transaction): boolean {
+  isValidTransaction(tx: Transaction): { valid: boolean; reason?: string } {
     // 1. Validação básica de estrutura
     if (
       !tx.id ||
@@ -2231,10 +2232,7 @@ export class Node {
       tx.inputs.length === 0 ||
       tx.outputs.length === 0
     ) {
-      console.log(
-        `[Node ${this.id}] Transaction ${tx.id} rejected: invalid structure`
-      );
-      return false;
+      return { valid: false, reason: 'Estrutura da transação inválida' };
     }
 
     // 2. Validação de inputs (UTXOs)
@@ -2243,26 +2241,26 @@ export class Node {
       // Verifica se o UTXO existe no estado atual
       const utxo = this.findUtxo(input.txid, input.vout);
       if (!utxo) {
-        console.log(
-          `[Node ${this.id}] Transaction ${tx.id} rejected: UTXO not found (${input.txid}:${input.vout})`
-        );
-        return false;
+        return {
+          valid: false,
+          reason: `UTXO não encontrado (${input.txid}:${input.vout})`,
+        };
       }
 
       // Verifica se o endereço do input corresponde ao UTXO
       if (utxo.output.scriptPubKey.address !== input.scriptPubKey.address) {
-        console.log(
-          `[Node ${this.id}] Transaction ${tx.id} rejected: address mismatch`
-        );
-        return false;
+        return {
+          valid: false,
+          reason: 'Endereço do input não corresponde ao UTXO',
+        };
       }
 
       // Verifica se o valor do input corresponde ao UTXO
       if (utxo.output.value !== input.value) {
-        console.log(
-          `[Node ${this.id}] Transaction ${tx.id} rejected: value mismatch`
-        );
-        return false;
+        return {
+          valid: false,
+          reason: 'Valor do input não corresponde ao UTXO',
+        };
       }
 
       totalInputValue += input.value;
@@ -2272,29 +2270,23 @@ export class Node {
     let totalOutputValue = 0;
     for (const output of tx.outputs) {
       if (output.value <= 0) {
-        console.log(
-          `[Node ${this.id}] Transaction ${tx.id} rejected: invalid output value`
-        );
-        return false;
+        return { valid: false, reason: 'Valor de output inválido' };
       }
       totalOutputValue += output.value;
     }
 
     // 4. Validação de valores (inputs >= outputs)
     if (totalInputValue < totalOutputValue) {
-      console.log(
-        `[Node ${this.id}] Transaction ${tx.id} rejected: insufficient funds (${totalInputValue} < ${totalOutputValue})`
-      );
-      return false;
+      return {
+        valid: false,
+        reason: `Fundos insuficientes (${totalInputValue} < ${totalOutputValue})`,
+      };
     }
 
     // 5. Validação de assinaturas
     for (const input of tx.inputs) {
       if (!input.scriptSig || input.scriptSig.length === 0) {
-        console.log(
-          `[Node ${this.id}] Transaction ${tx.id} rejected: missing signature`
-        );
-        return false;
+        return { valid: false, reason: 'Assinatura ausente no input' };
       }
 
       if (
@@ -2305,25 +2297,16 @@ export class Node {
           input.vout
         )
       ) {
-        console.log(
-          `[Node ${this.id}] Transaction ${tx.id} rejected: invalid signature`
-        );
-        return false;
+        return { valid: false, reason: 'Assinatura inválida' };
       }
     }
 
     // 6. Verifica se não é uma transação duplicada
     if (this.isTransactionDuplicate(tx.id)) {
-      console.log(
-        `[Node ${this.id}] Transaction ${tx.id} rejected: duplicate transaction`
-      );
-      return false;
+      return { valid: false, reason: 'Transação duplicada' };
     }
 
-    console.log(
-      `[Node ${this.id}] Transaction ${tx.id} validated successfully`
-    );
-    return true;
+    return { valid: true };
   }
 
   // Método auxiliar para encontrar um UTXO específico

@@ -214,11 +214,11 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     label: 'Transação recebida',
     template: 'Transação recebida de peer #{{peerId}}',
   },
-  'invalid-transaction': {
+  'transaction-rejected': {
     color: 'text-red-500',
     icon: 'pi pi-times-circle',
-    label: 'Transação inválida',
-    template: 'Transação inválida: {{reason}}',
+    label: 'Transação rejeitada',
+    template: 'Transação rejeitada: {{reason}}',
   },
   'duplicate-transaction': {
     color: 'text-amber-400',
