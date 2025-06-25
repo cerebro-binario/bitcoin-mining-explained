@@ -1018,11 +1018,15 @@ export class Node {
           tx,
           peerId: peer.id,
         });
+        // 2. Log de validação
+        EventManager.log(event, 'validating-transaction', {
+          txId: tx.id,
+          peerId: peer.id,
+        });
 
         // 2. Validação
         if (this.isValidTransaction(tx)) {
           this.addTransaction(tx, event, false); // logTxData = false, não mostra template de novo
-          EventManager.log(event, 'transaction-added', { txId: tx.id });
           syncedCount++;
         } else {
           EventManager.log(event, 'invalid-transaction', {
@@ -2191,7 +2195,13 @@ export class Node {
       this.initBlockTemplate(lastBlock);
     }
 
-    // 4. Valide a transação (assinaturas, UTXOs, etc)
+    // 4. Log de validação
+    EventManager.log(receiveEvent, 'validating-transaction', {
+      txId: tx.id,
+      peerId: peer.id,
+    });
+
+    // 5. Valide a transação (assinaturas, UTXOs, etc)
     const valid = this.isValidTransaction(tx);
     if (!valid) {
       EventManager.log(receiveEvent, 'invalid-transaction', {
@@ -2201,14 +2211,14 @@ export class Node {
       return;
     }
 
-    // 5. Adicione ao bloco atual (passando o evento de recebimento)
+    // 6. Adicione ao bloco atual (passando o evento de recebimento)
     // NÃO passar o tx no log para não duplicar o template visual
     this.addTransaction(tx, receiveEvent, false);
 
-    // 6. Propague para outros peers (exceto o de origem)
+    // 7. Propague para outros peers (exceto o de origem)
     this.broadcastTransaction(tx, peer.id);
 
-    // 7. Completa o evento de recebimento
+    // 8. Completa o evento de recebimento
     EventManager.complete(receiveEvent);
   }
 

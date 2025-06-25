@@ -225,4 +225,9 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     icon: 'pi pi-exclamation-triangle',
     label: 'Transação já recebida (ignorando...)',
   },
+  'validating-transaction': {
+    color: 'text-blue-400',
+    icon: 'pi pi-cog',
+    label: 'Validando transação',
+  },
 };

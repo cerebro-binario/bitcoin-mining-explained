@@ -22,6 +22,7 @@ export type EventLogType =
   | 'sync-failed'
   | 'block-received'
   | 'validating-block'
+  | 'validating-transaction'
   | 'block-rejected'
   | 'block-validated'
   | 'peer-rotation'
