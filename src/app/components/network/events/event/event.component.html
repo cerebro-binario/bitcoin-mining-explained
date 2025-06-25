@@ -79,9 +79,9 @@ eventLogVisual;
           <span
             *ngFor="let input of event.data.tx.inputs"
             class="font-mono text-green-400 truncate max-w-xs"
-            [title]="input.scriptPubKey"
+            [title]="input.scriptPubKey.address"
           >
-            {{ input.scriptPubKey }}
+            {{ input.scriptPubKey.address }}
           </span>
         </span>
       </div>
@@ -94,9 +94,9 @@ eventLogVisual;
           <span
             *ngFor="let output of event.data.tx.outputs"
             class="font-mono text-blue-400 truncate max-w-xs"
-            [title]="output.scriptPubKey"
+            [title]="output.scriptPubKey.address"
           >
-            {{ output.scriptPubKey }}
+            {{ output.scriptPubKey.address }}
           </span>
         </span>
       </div>
