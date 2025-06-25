@@ -647,13 +647,19 @@ export class WalletComponent {
       txid: utxo.txId,
       vout: utxo.outputIndex,
       scriptSig: this.inputSignatureScripts[i] || '', // Propaga assinatura
-      scriptPubKey: utxo.output?.scriptPubKey ?? '',
+      scriptPubKey: utxo.output?.scriptPubKey ?? {
+        address: '',
+        pubKey: '',
+      },
       value: utxo.output?.value ?? 0,
     }));
     // Monta outputs (destino + change)
     const outputs: TransactionOutput[] = this.txOutputs.map((o) => ({
       value: o.value,
-      scriptPubKey: o.address, // ou gere o script a partir do endereço
+      scriptPubKey: {
+        address: o.address, // ou gere o script a partir do endereço
+        pubKey: '',
+      },
     }));
     const timestamp = Date.now();
     // Cria a transação
@@ -772,27 +778,29 @@ export class WalletComponent {
         details.push({
           type: 'input',
           value: input.value,
-          address: input.scriptPubKey,
-          addressType: detectBipType(input.scriptPubKey),
-          isWallet: walletAddresses.has(input.scriptPubKey),
+          address: input.scriptPubKey.address,
+          addressType: detectBipType(input.scriptPubKey.address),
+          isWallet: walletAddresses.has(input.scriptPubKey.address),
           txId: input.txid,
           vout: input.vout,
         });
       });
       history.tx.outputs.forEach((output, idx) => {
-        const isWallet = walletAddresses.has(output.scriptPubKey);
+        const isWallet = walletAddresses.has(output.scriptPubKey.address);
         let detailType: TransactionDetail['type'] = 'output';
         if (
           isWallet &&
-          history.tx.inputs.some((i) => walletAddresses.has(i.scriptPubKey))
+          history.tx.inputs.some((i) =>
+            walletAddresses.has(i.scriptPubKey.address)
+          )
         ) {
           detailType = 'change';
         }
         details.push({
           type: detailType,
           value: output.value,
-          address: output.scriptPubKey,
-          addressType: detectBipType(output.scriptPubKey),
+          address: output.scriptPubKey.address,
+          addressType: detectBipType(output.scriptPubKey.address),
           isWallet,
           txId: history.tx.id,
           vout: idx,
@@ -800,17 +808,19 @@ export class WalletComponent {
       });
 
       const hasInputFromWallet = history.tx.inputs.some((i) =>
-        walletAddresses.has(i.scriptPubKey)
+        walletAddresses.has(i.scriptPubKey.address)
       );
       if (hasInputFromWallet) {
         const valueSent = history.tx.outputs
-          .filter((o) => !walletAddresses.has(o.scriptPubKey))
+          .filter((o) => !walletAddresses.has(o.scriptPubKey.address))
           .reduce((sum, o) => sum + o.value, 0);
         const externalOutputs = history.tx.outputs.filter(
-          (o) => !walletAddresses.has(o.scriptPubKey)
+          (o) => !walletAddresses.has(o.scriptPubKey.address)
         );
         const address =
-          externalOutputs.length > 0 ? externalOutputs[0].scriptPubKey : '—';
+          externalOutputs.length > 0
+            ? externalOutputs[0].scriptPubKey.address
+            : '—';
         transactionViews.push({
           id: history.tx.id,
           type: 'Enviada',
@@ -824,15 +834,15 @@ export class WalletComponent {
       }
       if (!hasInputFromWallet) {
         const outputsToWallet = history.tx.outputs.filter((o) =>
-          walletAddresses.has(o.scriptPubKey)
+          walletAddresses.has(o.scriptPubKey.address)
         );
         outputsToWallet.forEach((o) => {
           transactionViews.push({
             id: history.tx.id,
             type: history.tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
             value: o.value,
-            address: o.scriptPubKey,
-            bipType: detectBipType(o.scriptPubKey),
+            address: o.scriptPubKey.address,
+            bipType: detectBipType(o.scriptPubKey.address),
             timestamp,
             status,
             details,

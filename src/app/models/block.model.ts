@@ -108,6 +108,11 @@ export class Block {
   }
 }
 
+export interface ScriptPubKey {
+  address: string;
+  pubKey: string;
+}
+
 export interface Transaction {
   id: string;
   inputs: TransactionInput[];
@@ -119,13 +124,13 @@ export interface TransactionInput {
   txid: string; // ID da transação que criou o UTXO
   vout: number; // Índice do output na transação anterior
   scriptSig: string; // Assinatura do input
-  scriptPubKey: string; // Endereço do dono do UTXO
+  scriptPubKey: ScriptPubKey; // Endereço do dono do UTXO
   value: number; // Valor do UTXO em satoshis
 }
 
 export interface TransactionOutput {
   value: number; // Valor em satoshis
-  scriptPubKey: string; // Script de bloqueio (endereço do destinatário)
+  scriptPubKey: ScriptPubKey; // Script de bloqueio (endereço do destinatário)
 }
 
 // Representa um nó na árvore de blocos

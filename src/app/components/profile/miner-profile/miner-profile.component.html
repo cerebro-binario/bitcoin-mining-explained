@@ -79,13 +79,13 @@
                   <div class="flex items-center gap-2">
                     <a
                       routerLink="/miners/{{ miner.id }}/addresses/{{
-                        miner.miningAddress
+                        miner.miningAddress.address
                       }}"
                       class="font-mono text-xs text-blue-400"
-                      >{{ miner.miningAddress }}</a
+                      >{{ miner.miningAddress.address }}</a
                     >
                     <button
-                      (click)="copyToClipboard(miner.miningAddress)"
+                      (click)="copyToClipboard(miner.miningAddress.address)"
                       class="text-zinc-400 hover:text-blue-400"
                       title="Copiar"
                     >
@@ -464,9 +464,9 @@
                                   </div>
                                   <div
                                     class="text-xs text-zinc-400 font-mono truncate"
-                                    [title]="output.scriptPubKey"
+                                    [title]="output.scriptPubKey.address"
                                   >
-                                    {{ output.scriptPubKey }}
+                                    {{ output.scriptPubKey.address }}
                                   </div>
                                 </div>
                               </div>

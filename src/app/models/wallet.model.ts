@@ -1,4 +1,4 @@
-import { Transaction } from './block.model';
+import { ScriptPubKey, Transaction } from './block.model';
 
 export const MAX_PRIVATE_KEY_VALUE = BigInt(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140'
@@ -24,7 +24,7 @@ export interface Keys {
 export interface BitcoinUTXO {
   output: {
     value: number;
-    scriptPubKey: string;
+    scriptPubKey: ScriptPubKey;
   };
   blockHeight: number;
   txId: string;

@@ -10,10 +10,7 @@ import {
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
-import {
-  Transaction,
-  generateTransactionId,
-} from '../../../../models/block.model';
+import { Transaction } from '../../../../models/block.model';
 import { IConsensusParameters } from '../../../../models/consensus.model';
 import { Node } from '../../../../models/node';
 import { AddressService } from '../../../../services/address.service';
@@ -160,40 +157,6 @@ export class MinerComponent {
     this.hashRateChange.emit(rate);
   }
 
-  createTransaction() {
-    // Gera um endereço aleatório para o destinatário
-    const recipientAddress = this.addressService.generateRandomAddress();
-    const timestamp = Date.now();
-    // Cria uma nova transação
-    const tx: Transaction = {
-      id: generateTransactionId(
-        [],
-        [
-          {
-            value: 1000000, // 0.01 BTC em satoshis
-            scriptPubKey: recipientAddress,
-          },
-        ],
-        timestamp
-      ),
-      inputs: [],
-      outputs: [
-        {
-          value: 1000000, // 0.01 BTC em satoshis
-          scriptPubKey: recipientAddress,
-        },
-      ],
-      signature: this.miner.name, // Usando o nome do miner como assinatura temporária
-    };
-    // TODO: Adicionar a transação à mempool do miner
-    // TODO: Iniciar a propagação da transação
-    // this.propagateTransaction(tx, miner);
-    this.transactionBroadcasted.emit({
-      minerId: this.miner.id!,
-      transaction: tx,
-    });
-  }
-
   toggleBlockchainVisibility() {
     this.isBlockchainVisible = !this.isBlockchainVisible;
   }
@@ -294,10 +257,10 @@ export class MinerComponent {
   }
 
   get utxos() {
-    return this.miner.balances[this.miner.miningAddress]?.utxos || [];
+    return this.miner.balances[this.miner.miningAddress.address]?.utxos || [];
   }
 
   get balance() {
-    return this.miner.balances[this.miner.miningAddress]?.balance || 0;
+    return this.miner.balances[this.miner.miningAddress.address]?.balance || 0;
   }
 }

@@ -5,6 +5,7 @@ import {
   Block,
   BlockNode,
   generateTransactionId,
+  ScriptPubKey,
   Transaction,
   TransactionInput,
   TransactionOutput,
@@ -65,7 +66,24 @@ export class Node {
   private lastHashRateUpdate: number = 0;
   currentBlock?: Block;
   isMining: boolean = false;
-  miningAddress: string = ''; // Endereço para receber recompensas de mineração
+  miningAddress: BitcoinAddressData = {
+    keys: {
+      pub: {
+        hex: '',
+        decimal: '',
+      },
+      priv: {
+        hex: '',
+        decimal: '',
+        wif: '',
+      },
+    },
+    address: '',
+    balance: 0,
+    utxos: [],
+    bipFormat: 'bip84',
+    transactions: [],
+  }; // Endereço para receber recompensas de mineração
 
   // Cronômetro de mineração
   miningLastHashTime: number | null = null;
@@ -257,7 +275,10 @@ export class Node {
     const coinbaseOutputs = [
       {
         value: subsidy,
-        scriptPubKey: this.miningAddress,
+        scriptPubKey: {
+          address: this.miningAddress.address,
+          pubKey: this.miningAddress.keys.pub.hex,
+        },
       },
     ];
     const coinbaseTx: Transaction = {
@@ -1772,7 +1793,7 @@ export class Node {
 
       // Processa inputs
       for (const input of tx.inputs) {
-        const addressData = tempUtxoSet[input.scriptPubKey];
+        const addressData = tempUtxoSet[input.scriptPubKey.address];
         if (!addressData) {
           return false; // UTXO não encontrado
         }
@@ -1804,14 +1825,14 @@ export class Node {
         );
 
         if (newUtxos.length > 0) {
-          tempUtxoSet[input.scriptPubKey] = {
+          tempUtxoSet[input.scriptPubKey.address] = {
             ...addressData,
             balance: addressData.balance - utxo.output.value,
             utxos: newUtxos,
             transactions: addressData.transactions,
           };
         } else {
-          delete tempUtxoSet[input.scriptPubKey];
+          delete tempUtxoSet[input.scriptPubKey.address];
         }
       }
 
@@ -1821,9 +1842,10 @@ export class Node {
         outputSum += output.value;
 
         // Adiciona novo UTXO
-        const isMinerCoinbase = output.scriptPubKey === this.miningAddress;
-        const addressData = tempUtxoSet[output.scriptPubKey] || {
-          address: output.scriptPubKey,
+        const isMinerCoinbase =
+          output.scriptPubKey.address === this.miningAddress.address;
+        const addressData = tempUtxoSet[output.scriptPubKey.address] || {
+          address: output.scriptPubKey.address,
           balance: 0,
           utxos: [],
           nodeId: undefined,
@@ -1835,7 +1857,7 @@ export class Node {
                   priv: { hex: '', decimal: '', wif: '' },
                 },
               }),
-          bipFormat: getAddressType(output.scriptPubKey),
+          bipFormat: getAddressType(output.scriptPubKey.address),
           transactions: [],
         };
 
@@ -1857,7 +1879,7 @@ export class Node {
           outputIndex: i,
         });
 
-        tempUtxoSet[output.scriptPubKey] = {
+        tempUtxoSet[output.scriptPubKey.address] = {
           ...addressData,
           balance: addressData.balance + output.value,
           transactions: addressData.transactions,
@@ -1894,13 +1916,13 @@ export class Node {
       const fee = Math.max(0, inputSum - outputSum);
       totalFees += fee;
     }
-    const address = coinbase.outputs[0].scriptPubKey;
+    const address = coinbase.outputs[0].scriptPubKey.address;
 
     // Atualiza o valor do output da coinbase para subsidy + fees
     coinbase.outputs[0].value = subsidy + totalFees;
 
     // Cria ou atualiza o endereço do minerador
-    const isMinerCoinbase = address === this.miningAddress;
+    const isMinerCoinbase = address === this.miningAddress.address;
     const addressData = this.balances[address] || {
       address,
       balance: 0,
@@ -1976,14 +1998,14 @@ export class Node {
       // Remove os outputs da transação do UTXO set
       for (let j = 0; j < tx.outputs.length; j++) {
         const output = tx.outputs[j];
-        const addressData = tempUtxoSet[output.scriptPubKey];
+        const addressData = tempUtxoSet[output.scriptPubKey.address];
         if (addressData) {
           const newUtxos = addressData.utxos.filter(
             (u) => !(u.txId === tx.id && u.outputIndex === j)
           );
 
           if (newUtxos.length > 0) {
-            tempUtxoSet[output.scriptPubKey] = {
+            tempUtxoSet[output.scriptPubKey.address] = {
               ...addressData,
               balance: addressData.balance - output.value,
               utxos: newUtxos,
@@ -1992,22 +2014,22 @@ export class Node {
                 [],
             };
           } else {
-            delete tempUtxoSet[output.scriptPubKey];
+            delete tempUtxoSet[output.scriptPubKey.address];
           }
         }
       }
 
       // Restaura os inputs como UTXOs
       for (const input of tx.inputs) {
-        const addressData = tempUtxoSet[input.scriptPubKey] || {
-          address: input.scriptPubKey,
+        const addressData = tempUtxoSet[input.scriptPubKey.address] || {
+          address: input.scriptPubKey.address,
           balance: 0,
           utxos: [],
           keys: {
             pub: { hex: '', decimal: '' },
             priv: { hex: '', decimal: '', wif: '' },
           },
-          bipFormat: getAddressType(input.scriptPubKey),
+          bipFormat: getAddressType(input.scriptPubKey.address),
           transactions: [],
         };
 
@@ -2025,7 +2047,7 @@ export class Node {
         addressData.transactions =
           addressData.transactions?.filter((t) => t.tx.id !== tx.id) || [];
 
-        tempUtxoSet[input.scriptPubKey] = {
+        tempUtxoSet[input.scriptPubKey.address] = {
           ...addressData,
           balance: addressData.balance + input.value,
           transactions: addressData.transactions,
@@ -2036,7 +2058,7 @@ export class Node {
     // Reverte a coinbase
     const coinbase = block.transactions[0];
     if (coinbase) {
-      const address = coinbase.outputs[0].scriptPubKey;
+      const address = coinbase.outputs[0].scriptPubKey.address;
       const addressData = tempUtxoSet[address];
       if (addressData) {
         const newUtxos = addressData.utxos.filter(
@@ -2190,7 +2212,7 @@ export class Node {
       }
 
       // Verifica se o endereço do input corresponde ao UTXO
-      if (utxo.output.scriptPubKey !== input.scriptPubKey) {
+      if (utxo.output.scriptPubKey.address !== input.scriptPubKey.address) {
         console.log(
           `[Node ${this.id}] Transaction ${tx.id} rejected: address mismatch`
         );
@@ -2240,7 +2262,7 @@ export class Node {
       if (
         !this.verifySignature(
           input.scriptSig,
-          input.scriptPubKey,
+          input.scriptPubKey.pubKey,
           input.txid,
           input.vout
         )
@@ -2270,7 +2292,7 @@ export class Node {
   private findUtxo(
     txId: string,
     vout: number
-  ): { output: { value: number; scriptPubKey: string } } | null {
+  ): { output: { value: number; scriptPubKey: ScriptPubKey } } | null {
     for (const addressData of Object.values(this.balances)) {
       if (!addressData) continue;
 

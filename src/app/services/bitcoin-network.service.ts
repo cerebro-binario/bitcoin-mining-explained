@@ -94,7 +94,7 @@ export class BitcoinNetworkService {
       });
       node.wallet.seed = seed;
       node.wallet.addresses = addresses;
-      node.miningAddress = addresses[0].bip84.address;
+      node.miningAddress = addresses[0].bip84;
     } else {
       node.wallet = {
         step: 'choose',
