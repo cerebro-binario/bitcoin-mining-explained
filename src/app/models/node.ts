@@ -1013,9 +1013,16 @@ export class Node {
     let syncedCount = 0;
     for (const tx of peerTransactions) {
       if (!myTransactionIds.has(tx.id)) {
-        // Valida a transação antes de adicionar
+        // 1. Log de recebimento (mostra o template da tx)
+        EventManager.log(event, 'transaction-received', {
+          tx,
+          peerId: peer.id,
+        });
+
+        // 2. Validação
         if (this.isValidTransaction(tx)) {
-          this.addTransaction(tx, event);
+          this.addTransaction(tx, event, false); // logTxData = false, não mostra template de novo
+          EventManager.log(event, 'transaction-added', { txId: tx.id });
           syncedCount++;
         } else {
           EventManager.log(event, 'invalid-transaction', {
