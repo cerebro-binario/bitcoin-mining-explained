@@ -39,7 +39,9 @@ export type EventLogType =
   | 'transaction-added-details'
   | 'transactions-synced'
   | 'transaction-added'
-  | 'transaction-received';
+  | 'transaction-received'
+  | 'invalid-transaction'
+  | 'duplicate-transaction';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 

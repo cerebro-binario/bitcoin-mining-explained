@@ -2110,7 +2110,11 @@ export class Node {
     this.wallet = { ...this.wallet };
   }
 
-  public addTransaction(tx: Transaction, event?: NodeEvent) {
+  public addTransaction(
+    tx: Transaction,
+    event?: NodeEvent,
+    logTxData: boolean = true
+  ) {
     if (!this.currentBlock) return;
     if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
     this.currentBlock.addTransaction(tx);
@@ -2136,7 +2140,7 @@ export class Node {
     // Log da transação adicionada
     if (event) {
       // Se há um evento pai, adiciona como log
-      EventManager.log(event, 'transaction-added', { tx });
+      EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
     } else {
       // Se não há evento pai, cria um novo evento principal
       const txEvent = this.addEvent('transaction-added', { tx });
@@ -2149,32 +2153,43 @@ export class Node {
   }
 
   onPeerTransactionReceived(tx: Transaction, peer: Node) {
-    // 1. Se já está no bloco atual, ignore
+    // 1. Cria evento de recebimento
+    const receiveEvent = this.addEvent('transaction-received', {
+      peerId: peer.id,
+      tx,
+    });
+
+    // 2. Se já está no bloco atual, loga e finaliza
     if (
       this.currentBlock &&
       this.currentBlock.transactions.find((t) => t.id === tx.id)
     ) {
+      EventManager.log(receiveEvent, 'duplicate-transaction', {
+        reason: 'Transação já existe no bloco atual, ignorando.',
+      });
+      EventManager.complete(receiveEvent);
       return;
     }
 
-    // 2. Se não há currentBlock, crie um automaticamente
+    // 3. Se não há currentBlock, crie um automaticamente
     if (!this.currentBlock) {
       const lastBlock = this.getLatestBlock();
-      const newBlock = this.initBlockTemplate(lastBlock);
+      this.initBlockTemplate(lastBlock);
     }
 
-    // 3. Valide a transação (assinaturas, UTXOs, etc)
-    if (!this.isValidTransaction(tx)) {
+    // 4. Valide a transação (assinaturas, UTXOs, etc)
+    const valid = this.isValidTransaction(tx);
+    if (!valid) {
+      EventManager.log(receiveEvent, 'invalid-transaction', {
+        reason: 'Transação inválida',
+      });
+      EventManager.fail(receiveEvent);
       return;
     }
 
-    // 4. Cria evento de recebimento
-    const receiveEvent = this.addEvent('transaction-received', {
-      peerId: peer.id,
-    });
-
     // 5. Adicione ao bloco atual (passando o evento de recebimento)
-    this.addTransaction(tx, receiveEvent);
+    // NÃO passar o tx no log para não duplicar o template visual
+    this.addTransaction(tx, receiveEvent, false);
 
     // 6. Propague para outros peers (exceto o de origem)
     this.broadcastTransaction(tx, peer.id);
