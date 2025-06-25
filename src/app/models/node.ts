@@ -991,7 +991,7 @@ export class Node {
     // Se não há currentBlock, crie um automaticamente
     if (!this.currentBlock) {
       const lastBlock = this.getLatestBlock();
-      const newBlock = this.initBlockTemplate(lastBlock);
+      this.initBlockTemplate(lastBlock);
     }
 
     // Garante que temos um currentBlock agora
@@ -1013,9 +1013,16 @@ export class Node {
     let syncedCount = 0;
     for (const tx of peerTransactions) {
       if (!myTransactionIds.has(tx.id)) {
-        // Adiciona a transação ao bloco atual
-        this.addTransaction(tx, event);
-        syncedCount++;
+        // Valida a transação antes de adicionar
+        if (this.isValidTransaction(tx)) {
+          this.addTransaction(tx, event);
+          syncedCount++;
+        } else {
+          EventManager.log(event, 'invalid-transaction', {
+            reason: 'Transação inválida durante sync',
+            txId: tx.id,
+          });
+        }
       }
     }
 
