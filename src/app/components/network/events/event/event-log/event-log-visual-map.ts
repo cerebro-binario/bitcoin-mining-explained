@@ -202,4 +202,16 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     template:
       'Inputs: {{inputs}} | Outputs: {{outputs}} | Valor: {{value}} BTC',
   },
+  'transactions-synced': {
+    color: 'text-green-400',
+    icon: 'pi pi-check',
+    label: 'Transações sincronizadas',
+    template: 'Transações sincronizadas com peer #{{peerId}}',
+  },
+  'transaction-received': {
+    color: 'text-blue-400',
+    icon: 'pi pi-download',
+    label: 'Transação recebida',
+    template: 'Transação recebida de peer #{{peerId}}',
+  },
 };

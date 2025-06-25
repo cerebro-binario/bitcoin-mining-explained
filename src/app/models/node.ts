@@ -1,10 +1,13 @@
 import { BehaviorSubject, pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
+import * as EC from 'elliptic';
 import {
   Block,
   BlockNode,
   generateTransactionId,
   Transaction,
+  TransactionInput,
+  TransactionOutput,
 } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
@@ -22,6 +25,8 @@ import { Height } from './height.model';
 import { BipType, BitcoinAddressData, Wallet } from './wallet.model';
 
 import { getAddressType } from '../utils/tools';
+
+const ec = new EC.ec('secp256k1');
 
 export interface Neighbor {
   latency: number;
@@ -88,6 +93,7 @@ export class Node {
 
   blockBroadcast$ = new Subject<Block>();
   private peerBlockSubscriptions: { [peerId: number]: Subscription } = {};
+  private peerTransactionSubscriptions: { [peerId: number]: Subscription } = {};
   private orphanBlocks: Map<string, Block[]> = new Map(); // chave: previousHash, valor: blocos órfãos que dependem desse hash
 
   private blockBroadcastPipe = (peer: Node, latency: number) =>
@@ -110,7 +116,7 @@ export class Node {
   // Mapa para rastrear quando o broadcast foi feito
   private blockReceivedTimestamps: Map<string, number> = new Map();
 
-  private readonly CONNECTION_TTL = 1 * 60 * 1000; // 5 minutos em ms
+  private readonly CONNECTION_TTL = 5 * 60 * 1000; // 5 minutos em ms
 
   private pendingConsensusEvents: { height: number; event: NodeEvent }[] = [];
 
@@ -138,6 +144,11 @@ export class Node {
   };
 
   pendingTransactions: Transaction[] = [];
+
+  public transactionBroadcast$ = new Subject<{
+    tx: Transaction;
+    fromPeerId?: number;
+  }>();
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -799,6 +810,31 @@ export class Node {
           .subscribe();
       }
 
+      // Subscription de transação: só se ainda não existe
+      if (!this.peerTransactionSubscriptions[peer.id!]) {
+        console.log(
+          `[Node ${this.id}] Creating transaction subscription for peer ${peer.id} with latency ${latency}ms`
+        );
+        this.peerTransactionSubscriptions[peer.id!] = peer.transactionBroadcast$
+          .pipe(delay(latency))
+          .subscribe(({ tx, fromPeerId }) => {
+            console.log(
+              `[Node ${this.id}] Subscription received transaction ${tx.id} from peer ${peer.id}, fromPeerId: ${fromPeerId}`
+            );
+            if (fromPeerId !== this.id) {
+              this.onPeerTransactionReceived(tx, peer);
+            } else {
+              console.log(
+                `[Node ${this.id}] Ignoring own transaction ${tx.id}`
+              );
+            }
+          });
+      } else {
+        console.log(
+          `[Node ${this.id}] Transaction subscription already exists for peer ${peer.id}`
+        );
+      }
+
       this.syncWith(peer, event);
     }
 
@@ -816,6 +852,31 @@ export class Node {
         peer.peerBlockSubscriptions[this.id!] = this.blockBroadcast$
           .pipe(peer.blockBroadcastPipe(this, latency))
           .subscribe();
+      }
+
+      // Subscription de transação: só se ainda não existe
+      if (!peer.peerTransactionSubscriptions[this.id!]) {
+        console.log(
+          `[Peer ${peer.id}] Creating transaction subscription for node ${this.id} with latency ${latency}ms`
+        );
+        peer.peerTransactionSubscriptions[this.id!] = this.transactionBroadcast$
+          .pipe(delay(latency))
+          .subscribe(({ tx, fromPeerId }) => {
+            console.log(
+              `[Peer ${peer.id}] Subscription received transaction ${tx.id} from node ${this.id}, fromPeerId: ${fromPeerId}`
+            );
+            if (fromPeerId !== peer.id) {
+              peer.onPeerTransactionReceived(tx, this);
+            } else {
+              console.log(
+                `[Peer ${peer.id}] Ignoring own transaction ${tx.id}`
+              );
+            }
+          });
+      } else {
+        console.log(
+          `[Peer ${peer.id}] Transaction subscription already exists for node ${this.id}`
+        );
       }
 
       peer.syncWith(this, peerEvent);
@@ -837,11 +898,29 @@ export class Node {
       reason?: string;
     }
   ) {
-    this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
-    delete this.peerBlockSubscriptions[peer.id!];
+    console.log(`[Node ${this.id}] Disconnecting from peer ${peer.id}`);
+
+    if (this.peerBlockSubscriptions[peer.id!]) {
+      console.log(
+        `[Node ${this.id}] Unsubscribing from block broadcast of peer ${peer.id}`
+      );
+      this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
+      delete this.peerBlockSubscriptions[peer.id!];
+    }
+
+    if (this.peerTransactionSubscriptions[peer.id!]) {
+      console.log(
+        `[Node ${this.id}] Unsubscribing from transaction broadcast of peer ${peer.id}`
+      );
+      this.peerTransactionSubscriptions[peer.id!]?.unsubscribe();
+      delete this.peerTransactionSubscriptions[peer.id!];
+    }
 
     // Remove o peer da lista de vizinhos deste nó
     this.peers = this.peers.filter((n) => n.node.id !== peer.id);
+    console.log(
+      `[Node ${this.id}] Removed peer ${peer.id} from peers list. Remaining peers: ${this.peers.length}`
+    );
 
     if (event) {
       EventManager.log(event.ref, event.logType, {
@@ -881,7 +960,50 @@ export class Node {
       EventManager.log(event, 'already-in-sync', { peerId: peer.id });
     }
 
+    // Sincronizar transações do bloco atual
+    this.syncCurrentBlockTransactions(peer, event);
+
     EventManager.log(event, 'sync-completed', { peerId: peer.id });
+  }
+
+  private syncCurrentBlockTransactions(peer: Node, event: NodeEvent) {
+    // Se não há currentBlock, crie um automaticamente
+    if (!this.currentBlock) {
+      const lastBlock = this.getLatestBlock();
+      const newBlock = this.initBlockTemplate(lastBlock);
+    }
+
+    // Garante que temos um currentBlock agora
+    if (!this.currentBlock) {
+      return;
+    }
+
+    // Só sincroniza se o peer tem bloco atual
+    if (!peer.currentBlock) {
+      return;
+    }
+
+    // Pega as transações do peer que não estão no bloco atual deste nó
+    const peerTransactions = peer.currentBlock.transactions.slice(1); // Exclui coinbase
+    const myTransactionIds = new Set(
+      this.currentBlock.transactions.slice(1).map((tx) => tx.id)
+    );
+
+    let syncedCount = 0;
+    for (const tx of peerTransactions) {
+      if (!myTransactionIds.has(tx.id)) {
+        // Adiciona a transação ao bloco atual
+        this.addTransaction(tx, event);
+        syncedCount++;
+      }
+    }
+
+    if (syncedCount > 0) {
+      EventManager.log(event, 'transactions-synced', {
+        peerId: peer.id,
+        count: syncedCount,
+      });
+    }
   }
 
   // Método centralizado para processar um bloco recebido
@@ -1286,7 +1408,7 @@ export class Node {
       EventManager.log(searchPeersEvent, 'peer-found', { peerId: peer.id });
 
       if (this.isPeerConsensusCompatible(peer)) {
-        const latency = 3000 + Math.floor(Math.random() * 7001); // 3000-10000ms (3-10 segundos)
+        const latency = 50 + Math.floor(Math.random() * 451); // 50-500ms (mais realista)
         this.connectToPeerWithEviction(peer, latency, searchPeersEvent);
         peersConnected++;
 
@@ -1315,7 +1437,13 @@ export class Node {
 
   private checkPeerConnectionsTTL() {
     this.peers.forEach((p) => {
-      if (p.connectedAt < Date.now() - this.CONNECTION_TTL) {
+      const timeSinceConnection = Date.now() - p.connectedAt;
+      const timeUntilTimeout = this.CONNECTION_TTL - timeSinceConnection;
+
+      if (timeSinceConnection > this.CONNECTION_TTL) {
+        console.log(
+          `[Node ${this.id}] Peer ${p.node.id} connection timeout after ${timeSinceConnection}ms`
+        );
         this.disconnectFromPeer(p.node, undefined, {
           eventType: 'peer-disconnected',
           logType: 'connection-timeout',
@@ -1325,6 +1453,11 @@ export class Node {
           eventType: 'peer-disconnected',
           logType: 'connection-timeout',
         });
+      } else if (timeUntilTimeout < 30000) {
+        // Log quando faltar menos de 30 segundos
+        console.log(
+          `[Node ${this.id}] Peer ${p.node.id} will timeout in ${timeUntilTimeout}ms`
+        );
       }
     });
   }
@@ -1955,7 +2088,7 @@ export class Node {
     this.wallet = { ...this.wallet };
   }
 
-  public addTransaction(tx: Transaction) {
+  public addTransaction(tx: Transaction, event?: NodeEvent) {
     if (!this.currentBlock) return;
     if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
     this.currentBlock.addTransaction(tx);
@@ -1971,16 +2104,266 @@ export class Node {
         0
       );
       const outputSum = t.outputs.reduce((sum, o) => sum + o.value, 0);
-      totalFees += Math.max(0, inputSum - outputSum);
+      const fee = Math.max(0, inputSum - outputSum);
+      totalFees += fee;
     }
     coinbase.outputs[0].value = subsidy + totalFees;
-
-    // Atualizar Merkle root e hash do bloco
     this.currentBlock.merkleRoot = this.currentBlock.calculateMerkleRoot();
     this.currentBlock.hash = this.currentBlock.calculateHash();
 
-    // Log de evento de adição de transação
-    const event = this.addEvent('transaction-added', { tx });
-    EventManager.complete(event);
+    // Log da transação adicionada
+    if (event) {
+      // Se há um evento pai, adiciona como log
+      EventManager.log(event, 'transaction-added', { tx });
+    } else {
+      // Se não há evento pai, cria um novo evento principal
+      const txEvent = this.addEvent('transaction-added', { tx });
+      EventManager.complete(txEvent);
+    }
+  }
+
+  broadcastTransaction(tx: Transaction, fromPeerId?: number) {
+    this.transactionBroadcast$.next({ tx, fromPeerId });
+  }
+
+  onPeerTransactionReceived(tx: Transaction, peer: Node) {
+    // 1. Se já está no bloco atual, ignore
+    if (
+      this.currentBlock &&
+      this.currentBlock.transactions.find((t) => t.id === tx.id)
+    ) {
+      return;
+    }
+
+    // 2. Se não há currentBlock, crie um automaticamente
+    if (!this.currentBlock) {
+      const lastBlock = this.getLatestBlock();
+      const newBlock = this.initBlockTemplate(lastBlock);
+    }
+
+    // 3. Valide a transação (assinaturas, UTXOs, etc)
+    if (!this.isValidTransaction(tx)) {
+      return;
+    }
+
+    // 4. Cria evento de recebimento
+    const receiveEvent = this.addEvent('transaction-received', {
+      tx,
+      peerId: peer.id,
+    });
+
+    // 5. Adicione ao bloco atual (passando o evento de recebimento)
+    this.addTransaction(tx, receiveEvent);
+
+    // 6. Propague para outros peers (exceto o de origem)
+    this.broadcastTransaction(tx, peer.id);
+
+    // 7. Completa o evento de recebimento
+    EventManager.complete(receiveEvent);
+  }
+
+  isValidTransaction(tx: Transaction): boolean {
+    // 1. Validação básica de estrutura
+    if (
+      !tx.id ||
+      !tx.inputs ||
+      !tx.outputs ||
+      tx.inputs.length === 0 ||
+      tx.outputs.length === 0
+    ) {
+      console.log(
+        `[Node ${this.id}] Transaction ${tx.id} rejected: invalid structure`
+      );
+      return false;
+    }
+
+    // 2. Validação de inputs (UTXOs)
+    let totalInputValue = 0;
+    for (const input of tx.inputs) {
+      // Verifica se o UTXO existe no estado atual
+      const utxo = this.findUtxo(input.txid, input.vout);
+      if (!utxo) {
+        console.log(
+          `[Node ${this.id}] Transaction ${tx.id} rejected: UTXO not found (${input.txid}:${input.vout})`
+        );
+        return false;
+      }
+
+      // Verifica se o endereço do input corresponde ao UTXO
+      if (utxo.output.scriptPubKey !== input.scriptPubKey) {
+        console.log(
+          `[Node ${this.id}] Transaction ${tx.id} rejected: address mismatch`
+        );
+        return false;
+      }
+
+      // Verifica se o valor do input corresponde ao UTXO
+      if (utxo.output.value !== input.value) {
+        console.log(
+          `[Node ${this.id}] Transaction ${tx.id} rejected: value mismatch`
+        );
+        return false;
+      }
+
+      totalInputValue += input.value;
+    }
+
+    // 3. Validação de outputs
+    let totalOutputValue = 0;
+    for (const output of tx.outputs) {
+      if (output.value <= 0) {
+        console.log(
+          `[Node ${this.id}] Transaction ${tx.id} rejected: invalid output value`
+        );
+        return false;
+      }
+      totalOutputValue += output.value;
+    }
+
+    // 4. Validação de valores (inputs >= outputs)
+    if (totalInputValue < totalOutputValue) {
+      console.log(
+        `[Node ${this.id}] Transaction ${tx.id} rejected: insufficient funds (${totalInputValue} < ${totalOutputValue})`
+      );
+      return false;
+    }
+
+    // 5. Validação de assinaturas
+    for (const input of tx.inputs) {
+      if (!input.scriptSig || input.scriptSig.length === 0) {
+        console.log(
+          `[Node ${this.id}] Transaction ${tx.id} rejected: missing signature`
+        );
+        return false;
+      }
+
+      if (
+        !this.verifySignature(
+          input.scriptSig,
+          input.scriptPubKey,
+          input.txid,
+          input.vout
+        )
+      ) {
+        console.log(
+          `[Node ${this.id}] Transaction ${tx.id} rejected: invalid signature`
+        );
+        return false;
+      }
+    }
+
+    // 6. Verifica se não é uma transação duplicada
+    if (this.isTransactionDuplicate(tx.id)) {
+      console.log(
+        `[Node ${this.id}] Transaction ${tx.id} rejected: duplicate transaction`
+      );
+      return false;
+    }
+
+    console.log(
+      `[Node ${this.id}] Transaction ${tx.id} validated successfully`
+    );
+    return true;
+  }
+
+  // Método auxiliar para encontrar um UTXO específico
+  private findUtxo(
+    txId: string,
+    vout: number
+  ): { output: { value: number; scriptPubKey: string } } | null {
+    for (const addressData of Object.values(this.balances)) {
+      if (!addressData) continue;
+
+      const utxo = addressData.utxos.find(
+        (u) => u.txId === txId && u.outputIndex === vout
+      );
+      if (utxo) {
+        return {
+          output: {
+            value: utxo.output.value,
+            scriptPubKey: utxo.output.scriptPubKey,
+          },
+        };
+      }
+    }
+    return null;
+  }
+
+  // Método auxiliar para verificar se uma transação já existe
+  private isTransactionDuplicate(txId: string): boolean {
+    // Verifica se já existe no bloco atual
+    if (
+      this.currentBlock &&
+      this.currentBlock.transactions.find((t) => t.id === txId)
+    ) {
+      return true;
+    }
+
+    // Verifica se já existe em algum bloco da blockchain
+    for (const height of this.heights) {
+      for (const blockNode of height.blocks) {
+        if (blockNode.block.transactions.find((t) => t.id === txId)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Método auxiliar para verificar assinatura
+  private verifySignature(
+    scriptSig: string,
+    scriptPubKey: string,
+    txId: string,
+    vout: number
+  ): boolean {
+    try {
+      // Verifica se a assinatura não está vazia
+      if (!scriptSig || scriptSig.length === 0) {
+        return false;
+      }
+
+      // Verifica se é um formato hexadecimal válido
+      if (!/^[0-9a-fA-F]+$/.test(scriptSig)) {
+        return false;
+      }
+
+      // Verifica se a assinatura tem formato DER válido
+      if (scriptSig.length < 70) {
+        return false;
+      }
+
+      // Cria a mensagem que foi assinada
+      const message = `${txId}|${vout}|${scriptPubKey}`;
+
+      // Em um sistema real, aqui extrairia a chave pública do scriptPubKey
+      // Por enquanto, vamos simular que o scriptPubKey contém a chave pública
+      // ou que podemos extraí-la do endereço
+
+      try {
+        // Tenta usar o scriptPubKey como chave pública diretamente
+        const key = ec.keyFromPublic(scriptPubKey, 'hex');
+        const isValid = key.verify(message, scriptSig);
+        console.log(
+          `[Node ${this.id}] Signature verification for ${scriptPubKey}: ${isValid}`
+        );
+        return isValid;
+      } catch (keyError) {
+        // Se não conseguir extrair a chave pública, tenta uma abordagem alternativa
+        // Em um sistema real, aqui extrairia a chave pública do scriptPubKey de forma correta
+
+        console.log(
+          `[Node ${this.id}] Could not extract public key from scriptPubKey: ${keyError}`
+        );
+
+        // Fallback: verifica se a assinatura tem formato válido
+        // Em um sistema real, aqui implementaria a extração correta da chave pública
+        return scriptSig.length >= 70 && /^[0-9a-fA-F]+$/.test(scriptSig);
+      }
+    } catch (error) {
+      console.log(`[Node ${this.id}] Signature verification error: ${error}`);
+      return false;
+    }
   }
 }

@@ -7,7 +7,8 @@ export type NodeEventType =
   | 'consensus-change'
   | 'difficulty-adjustment'
   | 'halving'
-  | 'transaction-added';
+  | 'transaction-added'
+  | 'transaction-received';
 
 export type EventLogType =
   | 'peer-found'
@@ -35,7 +36,10 @@ export type EventLogType =
   | 'removing-incompatible-blocks-completed'
   | 'difficulty-adjustment'
   | 'halving'
-  | 'transaction-added-details';
+  | 'transaction-added-details'
+  | 'transactions-synced'
+  | 'transaction-added'
+  | 'transaction-received';
 
 export type NodeEventState = 'pending' | 'completed' | 'failed';
 

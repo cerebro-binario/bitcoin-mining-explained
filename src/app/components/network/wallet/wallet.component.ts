@@ -617,6 +617,7 @@ export class WalletComponent {
     const tx = this.createTransaction();
     if (tx) {
       this.node.addTransaction(tx);
+      this.node.broadcastTransaction(tx);
       this.sendSuccess = 'Transação enviada!';
       // Limpar campos, etc...
       this.sendToAddress = '';
