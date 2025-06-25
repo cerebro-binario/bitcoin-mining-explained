@@ -125,7 +125,8 @@
               [ngStyle]="{
                 'min-height': showWalletDetails ? '70vh' : '0',
                 'max-height': showWalletDetails ? '999999px' : '0',
-                opacity: showWalletDetails ? '1' : '0'
+                opacity: showWalletDetails ? '1' : '0',
+                'pointer-events': showWalletDetails ? 'auto' : 'none'
               }"
             >
               <div class="flex flex-col flex-1 min-h-0 pt-4 w-full h-full">
