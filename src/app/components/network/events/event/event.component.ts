@@ -34,4 +34,8 @@ export class EventComponent {
     if (!tx?.outputs) return '';
     return tx.outputs.map((o: any) => o.scriptPubKey).join(', ');
   }
+
+  copyToClipboard(value: string) {
+    navigator.clipboard.writeText(value);
+  }
 }

@@ -2170,7 +2170,6 @@ export class Node {
 
     // 4. Cria evento de recebimento
     const receiveEvent = this.addEvent('transaction-received', {
-      tx,
       peerId: peer.id,
     });
 

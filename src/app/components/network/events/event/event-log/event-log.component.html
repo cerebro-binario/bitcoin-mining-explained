@@ -19,4 +19,84 @@
       <span [ngClass]="part.class">{{ part.value }}</span>
     </ng-container>
   </div>
+
+  @let tx = log.data?.tx;
+  <div class="ml-4 flex flex-col gap-1.5" *ngIf="tx">
+    <!-- Card visual para transação -->
+    <div
+      class="relative rounded-lg border-l-4 border-green-500 bg-zinc-900/80 shadow p-4 flex flex-col gap-3 my-2"
+    >
+      <!-- TxID -->
+      <div class="flex items-center gap-2">
+        <span class="text-zinc-400 text-xs">TxID:</span>
+        <span
+          class="font-mono text-green-300 truncate max-w-[200px]"
+          [title]="tx.id"
+        >
+          {{ tx.id | slice : 0 : 16 }}...{{ tx.id | slice : -6 }}
+        </span>
+        <button
+          (click)="copyToClipboard(tx.id)"
+          class="ml-1 text-zinc-400 hover:text-green-400"
+          title="Copiar TxID"
+        >
+          <i class="pi pi-copy"></i>
+        </button>
+      </div>
+      <!-- Valor total -->
+      <div class="flex items-center gap-2">
+        <i class="pi pi-bitcoin text-yellow-400"></i>
+        <span class="text-zinc-400 text-xs">Valor total:</span>
+        <span class="font-mono text-yellow-300">
+          {{ txTotalOutput(tx) / 100000000 | number : "1.8-8" }}
+          <span class="text-base text-yellow-200">BTC</span>
+        </span>
+      </div>
+      <!-- Inputs e Outputs visualmente -->
+      <div
+        class="flex flex-col md:flex-row gap-4 items-start justify-between mt-2"
+      >
+        <!-- Inputs -->
+        <div class="flex-1">
+          <div class="flex items-center gap-1 mb-1">
+            <i class="pi pi-arrow-down text-red-400"></i>
+            <span class="text-zinc-400 text-xs"
+              >De ({{ tx.inputs?.length }})</span
+            >
+          </div>
+          <div class="flex flex-col gap-1">
+            <span
+              *ngFor="let input of tx.inputs"
+              class="font-mono text-green-400 truncate max-w-[180px] bg-zinc-800/60 rounded px-2 py-1"
+              [title]="input.scriptPubKey.address"
+            >
+              {{ input.scriptPubKey.address }}
+            </span>
+          </div>
+        </div>
+        <!-- Seta visual -->
+        <div class="flex items-center justify-center mx-2">
+          <i class="pi pi-arrow-right text-zinc-500 text-2xl"></i>
+        </div>
+        <!-- Outputs -->
+        <div class="flex-1">
+          <div class="flex items-center gap-1 mb-1">
+            <i class="pi pi-arrow-up text-green-400"></i>
+            <span class="text-zinc-400 text-xs"
+              >Para ({{ tx.outputs?.length }})</span
+            >
+          </div>
+          <div class="flex flex-col gap-1">
+            <span
+              *ngFor="let output of tx.outputs"
+              class="font-mono text-blue-400 truncate max-w-[180px] bg-zinc-800/60 rounded px-2 py-1"
+              [title]="output.scriptPubKey.address"
+            >
+              {{ output.scriptPubKey.address }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
