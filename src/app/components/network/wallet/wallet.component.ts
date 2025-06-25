@@ -616,6 +616,12 @@ export class WalletComponent {
     // Agora sim, cria a transação
     const tx = this.createTransaction();
     if (tx) {
+      // Validação completa antes de enviar
+      const { valid, reason } = this.node.isValidTransaction(tx);
+      if (!valid) {
+        this.sendError = reason || 'Transação inválida.';
+        return;
+      }
       this.node.addTransaction(tx);
       this.node.broadcastTransaction(tx);
       this.sendSuccess = 'Transação enviada!';
