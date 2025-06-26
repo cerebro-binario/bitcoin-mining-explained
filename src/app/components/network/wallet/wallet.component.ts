@@ -618,11 +618,11 @@ export class WalletComponent {
     if (tx) {
       // Validação completa antes de enviar
       const { valid, reason } = this.node.isValidTransaction(tx);
-      if (!valid) {
+      if (!valid && !this.node.isMalicious) {
         this.sendError = reason || 'Transação inválida.';
         return;
       }
-      this.node.addTransaction(tx);
+      this.node.addTransaction(tx, undefined, true, true); // isLocal = true
       this.node.broadcastTransaction(tx);
       this.sendSuccess = 'Transação enviada!';
       // Limpar campos, etc...

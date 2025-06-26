@@ -1,6 +1,7 @@
 export type NodeEventType =
   | 'block-mined'
   | 'block-received'
+  | 'block-rejected'
   | 'peer-search'
   | 'peer-requested-connection'
   | 'peer-disconnected'

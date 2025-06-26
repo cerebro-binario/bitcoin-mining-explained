@@ -38,6 +38,39 @@
           >
             Pausar Mineração
           </button>
+          <div class="flex-grow"></div>
+          <!-- Toggle Modo Malicioso -->
+          <label
+            class="flex items-center gap-2 cursor-pointer ml-4 select-none"
+          >
+            <input
+              type="checkbox"
+              [(ngModel)]="miner.isMalicious"
+              class="hidden"
+            />
+            <span
+              class="w-10 h-5 flex items-center bg-zinc-800 rounded-full p-1 transition-colors"
+              [class.bg-red-600]="miner.isMalicious"
+            >
+              <span
+                class="bg-white w-4 h-4 rounded-full shadow transform transition-transform"
+                [class.translate-x-5]="miner.isMalicious"
+              ></span>
+            </span>
+            <span
+              class="text-xs font-semibold"
+              [class.text-red-400]="miner.isMalicious"
+              [class.text-zinc-400]="!miner.isMalicious"
+              title="Permite criar e minerar transações inválidas para fins didáticos"
+            >
+              Modo Malicioso
+            </span>
+            <i
+              class="pi pi-exclamation-triangle text-red-400"
+              *ngIf="miner.isMalicious"
+              title="Modo malicioso ativo!"
+            ></i>
+          </label>
         </div>
         <div class="w-full max-w-7xl">
           <div

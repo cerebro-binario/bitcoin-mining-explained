@@ -168,6 +168,8 @@ export class Node {
     fromPeerId?: number;
   }>();
 
+  isMalicious: boolean = false;
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }
@@ -368,7 +370,20 @@ export class Node {
   private handleMinedBlock(block: Block) {
     block.minerId = this.id;
 
-    this.addBlock(block);
+    const addResult = this.addBlock(block);
+
+    // Se o bloco não foi adicionado (foi rejeitado), não continue o fluxo!
+    if (addResult) {
+      // Log de rejeição local
+      const event = this.addEvent('block-rejected', {
+        block,
+        reason: addResult,
+      });
+      EventManager.fail(event);
+      // Cria um novo bloco para continuar minerando normalmente
+      this.initBlockTemplate(block);
+      return;
+    }
 
     // Log de bloco minerado localmente
     const event = this.addEvent('block-mined', { block });
@@ -1807,6 +1822,18 @@ export class Node {
     // Processa cada transação (exceto coinbase)
     for (let i = 1; i < block.transactions.length; i++) {
       const tx = block.transactions[i];
+
+      // Se for malicioso e o bloco foi minerado por este nó, pula a validação
+      const isOwnBlock = block.minerId === this.id;
+      if (!(this.isMalicious && isOwnBlock)) {
+        // Validação completa da transação
+        const { valid, reason } = this.isValidTransaction(tx);
+        if (!valid) {
+          // Opcional: log do motivo da rejeição
+          return false;
+        }
+      }
+
       let inputSum = 0;
       let outputSum = 0;
 
@@ -2132,36 +2159,31 @@ export class Node {
   public addTransaction(
     tx: Transaction,
     event?: NodeEvent,
-    logTxData: boolean = true
+    logTxData: boolean = true,
+    isLocal: boolean = false
   ) {
     if (!this.currentBlock) return;
     if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
-    this.currentBlock.addTransaction(tx);
 
-    // Atualizar coinbase (recompensa) e hash do bloco
-    const coinbase = this.currentBlock.transactions[0];
-    const subsidy = this.calculateBlockSubsidy(this.currentBlock.height);
-    let totalFees = 0;
-    for (let i = 1; i < this.currentBlock.transactions.length; i++) {
-      const t = this.currentBlock.transactions[i];
-      const inputSum = t.inputs.reduce(
-        (sum, input) => sum + (input.value || 0),
-        0
-      );
-      const outputSum = t.outputs.reduce((sum, o) => sum + o.value, 0);
-      const fee = Math.max(0, inputSum - outputSum);
-      totalFees += fee;
+    // Se for malicioso e a transação é local, permite adicionar mesmo se inválida
+    if (this.isMalicious && isLocal) {
+      this.currentBlock.addTransaction(tx);
+      if (event) {
+        EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
+      } else {
+        const txEvent = this.addEvent('transaction-added', { tx });
+        EventManager.complete(txEvent);
+      }
+      return;
     }
-    coinbase.outputs[0].value = subsidy + totalFees;
-    this.currentBlock.merkleRoot = this.currentBlock.calculateMerkleRoot();
-    this.currentBlock.hash = this.currentBlock.calculateHash();
 
-    // Log da transação adicionada
+    // Validação normal
+    const { valid } = this.isValidTransaction(tx);
+    if (!valid) return;
+    this.currentBlock.addTransaction(tx);
     if (event) {
-      // Se há um evento pai, adiciona como log
       EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
     } else {
-      // Se não há evento pai, cria um novo evento principal
       const txEvent = this.addEvent('transaction-added', { tx });
       EventManager.complete(txEvent);
     }
