@@ -1128,6 +1128,42 @@ export class WalletComponent {
     this.clearSendMessages();
     this.selectedPrivateKey[index] = value;
   }
+
+  // Saldo projetado considerando UTXOs gastos e outputs criados no bloco atual
+  get projectedBalance(): number {
+    if (!this._wallet || !this.node?.currentBlock) return this.availableBalance;
+    // 1. Todos os UTXOs da carteira
+    let utxos = this._wallet.addresses
+      .flatMap((addrObj) => Object.values(addrObj))
+      .flatMap((addr) => addr.utxos || []);
+    // 2. Remova UTXOs já gastos por transações do bloco atual
+    const spentInputs = new Set<string>();
+    for (const tx of this.node.currentBlock.transactions) {
+      for (const input of tx.inputs) {
+        spentInputs.add(`${input.txid}:${input.vout}`);
+      }
+    }
+    utxos = utxos.filter(
+      (utxo) => !spentInputs.has(`${utxo.txId}:${utxo.outputIndex}`)
+    );
+    // 3. Some o valor dos UTXOs restantes
+    let balance = utxos.reduce((sum, utxo) => sum + utxo.output.value, 0);
+    // 4. Adicione outputs das transações do bloco atual (exceto coinbase) que pertencem à carteira
+    const walletAddresses = new Set(
+      this._wallet.addresses
+        .flatMap((addrObj) => Object.values(addrObj))
+        .map((addr) => addr.address)
+    );
+    for (let i = 1; i < this.node.currentBlock.transactions.length; i++) {
+      const tx = this.node.currentBlock.transactions[i];
+      for (const output of tx.outputs) {
+        if (walletAddresses.has(output.scriptPubKey.address)) {
+          balance += output.value;
+        }
+      }
+    }
+    return balance;
+  }
 }
 
 function detectBipType(address: string): BipType | undefined {
