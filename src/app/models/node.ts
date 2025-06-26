@@ -1841,18 +1841,20 @@ export class Node {
     for (let i = 1; i < block.transactions.length; i++) {
       const tx = block.transactions[i];
 
-      // Se for malicioso e o bloco foi minerado por este nó, pula a validação
+      // Se for malicioso e o bloco foi minerado por este nó, pula validação E processamento dos UTXOs
       const isOwnBlock = block.minerId === this.id;
-      if (!(this.isMalicious && isOwnBlock)) {
-        // Validação completa da transação (sem verificar duplicidade no bloco atual)
-        const { valid, reason } = this.isValidTransactionForBlock(tx);
-        if (!valid) {
-          return {
-            valid: false,
-            reason: reason || 'Transação inválida',
-            txId: tx.id,
-          };
-        }
+      if (this.isMalicious && isOwnBlock) {
+        continue;
+      }
+
+      // Validação completa da transação (sem verificar duplicidade no bloco atual)
+      const { valid, reason } = this.isValidTransactionForBlock(tx);
+      if (!valid) {
+        return {
+          valid: false,
+          reason: reason || 'Transação inválida',
+          txId: tx.id,
+        };
       }
 
       let inputSum = 0;
