@@ -1,14 +1,12 @@
+import * as EC from 'elliptic';
 import { BehaviorSubject, pipe, Subject, Subscription } from 'rxjs';
 import { delay, filter, tap } from 'rxjs/operators';
-import * as EC from 'elliptic';
 import {
   Block,
   BlockNode,
   generateTransactionId,
   ScriptPubKey,
   Transaction,
-  TransactionInput,
-  TransactionOutput,
 } from './block.model';
 import { ConsensusVersion, DEFAULT_CONSENSUS } from './consensus.model';
 import {
@@ -176,7 +174,9 @@ export class Node {
 
   addBlock(block: Block): NodeEventLogReasons | undefined {
     // Primeiro valida e processa as transações
-    if (!this.validateAndProcessTransactions(block)) {
+    const validationResult = this.validateAndProcessTransactions(block);
+    if (!validationResult.valid) {
+      // Retorna apenas o tipo correto, a informação específica será adicionada nos logs
       return 'transaction-rejected';
     }
 
@@ -379,6 +379,20 @@ export class Node {
         block,
         reason: addResult,
       });
+
+      // Se foi rejeitado por transação, adiciona informação específica
+      if (addResult === 'transaction-rejected') {
+        // Revalida para obter a informação específica
+        const validationResult = this.validateAndProcessTransactions(block);
+        if (!validationResult.valid) {
+          EventManager.log(event, 'transaction-rejected', {
+            reason: validationResult.reason,
+            txId: validationResult.txId?.slice(0, 8) + '...',
+            blockHeight: block.height,
+          });
+        }
+      }
+
       EventManager.fail(event);
       // Cria um novo bloco para continuar minerando normalmente
       this.initBlockTemplate(block);
@@ -1815,7 +1829,11 @@ export class Node {
   }
 
   // Método para validar e processar transações
-  private validateAndProcessTransactions(block: Block): boolean {
+  private validateAndProcessTransactions(block: Block): {
+    valid: boolean;
+    reason?: string;
+    txId?: string;
+  } {
     // Cria uma cópia do UTXO set atual para validação
     const tempUtxoSet = { ...this.balances };
 
@@ -1826,11 +1844,14 @@ export class Node {
       // Se for malicioso e o bloco foi minerado por este nó, pula a validação
       const isOwnBlock = block.minerId === this.id;
       if (!(this.isMalicious && isOwnBlock)) {
-        // Validação completa da transação
-        const { valid, reason } = this.isValidTransaction(tx);
+        // Validação completa da transação (sem verificar duplicidade no bloco atual)
+        const { valid, reason } = this.isValidTransactionForBlock(tx);
         if (!valid) {
-          // Opcional: log do motivo da rejeição
-          return false;
+          return {
+            valid: false,
+            reason: reason || 'Transação inválida',
+            txId: tx.id,
+          };
         }
       }
 
@@ -1841,7 +1862,7 @@ export class Node {
       for (const input of tx.inputs) {
         const addressData = tempUtxoSet[input.scriptPubKey.address];
         if (!addressData) {
-          return false; // UTXO não encontrado
+          return { valid: false, reason: 'UTXO não encontrado', txId: tx.id };
         }
 
         const utxo = addressData.utxos.find(
@@ -1849,7 +1870,7 @@ export class Node {
         );
 
         if (!utxo) {
-          return false; // UTXO não encontrado
+          return { valid: false, reason: 'UTXO não encontrado', txId: tx.id };
         }
 
         inputSum += utxo.output.value;
@@ -1934,14 +1955,14 @@ export class Node {
 
       // Valida que inputs >= outputs
       if (inputSum < outputSum) {
-        return false;
+        return { valid: false, reason: 'Fundos insuficientes', txId: tx.id };
       }
     }
 
     // Se chegou aqui, todas as transações são válidas
     // Atualiza o UTXO set real forçando uma nova referência para reatividade
     this.balances = { ...tempUtxoSet };
-    return true;
+    return { valid: true };
   }
 
   // Método para processar a coinbase
@@ -2168,6 +2189,10 @@ export class Node {
     // Se for malicioso e a transação é local, permite adicionar mesmo se inválida
     if (this.isMalicious && isLocal) {
       this.currentBlock.addTransaction(tx);
+      // Atualiza as fees da coinbase sem recalcular o hash
+      this.updateCoinbaseFees();
+      // NÃO recalcula o hash durante a mineração - isso invalidaria o hash atual
+      // this.currentBlock.hash = this.currentBlock.calculateHash();
       if (event) {
         EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
       } else {
@@ -2181,12 +2206,43 @@ export class Node {
     const { valid } = this.isValidTransaction(tx);
     if (!valid) return;
     this.currentBlock.addTransaction(tx);
+    // Atualiza as fees da coinbase sem recalcular o hash
+    this.updateCoinbaseFees();
+    // NÃO recalcula o hash durante a mineração - isso invalidaria o hash atual
+    // this.currentBlock.hash = this.currentBlock.calculateHash();
     if (event) {
       EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
     } else {
       const txEvent = this.addEvent('transaction-added', { tx });
       EventManager.complete(txEvent);
     }
+  }
+
+  // Atualiza as fees da coinbase sem recalcular o hash do bloco
+  private updateCoinbaseFees(): void {
+    if (!this.currentBlock || this.currentBlock.transactions.length === 0)
+      return;
+
+    const coinbase = this.currentBlock.transactions[0];
+    if (!coinbase || coinbase.inputs.length > 0) return; // Não é coinbase
+
+    const subsidy = this.calculateBlockSubsidy(this.currentBlock.height);
+
+    // Calcula as fees das transações do bloco (exceto coinbase)
+    let totalFees = 0;
+    for (let i = 1; i < this.currentBlock.transactions.length; i++) {
+      const tx = this.currentBlock.transactions[i];
+      const inputSum = tx.inputs.reduce(
+        (sum, input) => sum + (input.value || 0),
+        0
+      );
+      const outputSum = tx.outputs.reduce((sum, o) => sum + o.value, 0);
+      const fee = Math.max(0, inputSum - outputSum);
+      totalFees += fee;
+    }
+
+    // Atualiza apenas o valor da coinbase
+    coinbase.outputs[0].value = subsidy + totalFees;
   }
 
   broadcastTransaction(tx: Transaction, fromPeerId?: number) {
@@ -2331,6 +2387,96 @@ export class Node {
     return { valid: true };
   }
 
+  // Método específico para validar transações em blocos (não verifica duplicidade no bloco atual)
+  isValidTransactionForBlock(tx: Transaction): {
+    valid: boolean;
+    reason?: string;
+  } {
+    // 1. Validação básica de estrutura
+    if (
+      !tx.id ||
+      !tx.inputs ||
+      !tx.outputs ||
+      tx.inputs.length === 0 ||
+      tx.outputs.length === 0
+    ) {
+      return { valid: false, reason: 'Estrutura da transação inválida' };
+    }
+
+    // 2. Validação de inputs (UTXOs)
+    let totalInputValue = 0;
+    for (const input of tx.inputs) {
+      // Verifica se o UTXO existe no estado atual
+      const utxo = this.findUtxo(input.txid, input.vout);
+      if (!utxo) {
+        return {
+          valid: false,
+          reason: `UTXO não encontrado (${input.txid}:${input.vout})`,
+        };
+      }
+
+      // Verifica se o endereço do input corresponde ao UTXO
+      if (utxo.output.scriptPubKey.address !== input.scriptPubKey.address) {
+        return {
+          valid: false,
+          reason: 'Endereço do input não corresponde ao UTXO',
+        };
+      }
+
+      // Verifica se o valor do input corresponde ao UTXO
+      if (utxo.output.value !== input.value) {
+        return {
+          valid: false,
+          reason: 'Valor do input não corresponde ao UTXO',
+        };
+      }
+
+      totalInputValue += input.value;
+    }
+
+    // 3. Validação de outputs
+    let totalOutputValue = 0;
+    for (const output of tx.outputs) {
+      if (output.value <= 0) {
+        return { valid: false, reason: 'Valor de output inválido' };
+      }
+      totalOutputValue += output.value;
+    }
+
+    // 4. Validação de valores (inputs >= outputs)
+    if (totalInputValue < totalOutputValue) {
+      return {
+        valid: false,
+        reason: `Fundos insuficientes (${totalInputValue} < ${totalOutputValue})`,
+      };
+    }
+
+    // 5. Validação de assinaturas
+    for (const input of tx.inputs) {
+      if (!input.scriptSig || input.scriptSig.length === 0) {
+        return { valid: false, reason: 'Assinatura ausente no input' };
+      }
+
+      if (
+        !this.verifySignature(
+          input.scriptSig,
+          input.scriptPubKey.pubKey,
+          input.txid,
+          input.vout
+        )
+      ) {
+        return { valid: false, reason: 'Assinatura inválida' };
+      }
+    }
+
+    // 6. Verifica se não é uma transação duplicada APENAS na blockchain (não no bloco atual)
+    if (this.isTransactionDuplicateInBlockchain(tx.id)) {
+      return { valid: false, reason: 'Transação duplicada na blockchain' };
+    }
+
+    return { valid: true };
+  }
+
   // Método auxiliar para encontrar um UTXO específico
   private findUtxo(
     txId: string,
@@ -2364,6 +2510,20 @@ export class Node {
       return true;
     }
 
+    // Verifica se já existe em algum bloco da blockchain
+    for (const height of this.heights) {
+      for (const blockNode of height.blocks) {
+        if (blockNode.block.transactions.find((t) => t.id === txId)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Método auxiliar para verificar se uma transação já existe na blockchain (não no bloco atual)
+  private isTransactionDuplicateInBlockchain(txId: string): boolean {
     // Verifica se já existe em algum bloco da blockchain
     for (const height of this.heights) {
       for (const blockNode of height.blocks) {

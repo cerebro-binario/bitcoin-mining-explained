@@ -218,7 +218,7 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     color: 'text-red-500',
     icon: 'pi pi-times-circle',
     label: 'Transação rejeitada',
-    template: 'Transação rejeitada: {{reason}}',
+    template: 'Transação rejeitada: {{reason}} (TxID: {{txId}})',
   },
   'duplicate-transaction': {
     color: 'text-amber-400',
