@@ -1110,6 +1110,21 @@ export class Node {
           block,
           reason: EVENT_LOG_REASONS[reason],
         });
+      } else if (reason === 'transaction-rejected') {
+        // Revalida para obter a informação específica
+        const validationResult = this.validateAndProcessTransactions(block);
+        if (!validationResult.valid) {
+          EventManager.log(event, 'block-rejected', {
+            reason: `${EVENT_LOG_REASONS[reason]}: ${
+              validationResult.reason || ''
+            }`,
+            txId: validationResult.txId,
+          });
+        } else {
+          EventManager.log(event, 'block-rejected', {
+            reason: EVENT_LOG_REASONS[reason],
+          });
+        }
       } else {
         EventManager.log(event, 'block-rejected', {
           block,
