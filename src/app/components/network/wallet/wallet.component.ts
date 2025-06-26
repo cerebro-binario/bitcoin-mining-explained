@@ -342,6 +342,7 @@ export class WalletComponent {
   }
 
   onSendAddressChange() {
+    this.clearSendMessages();
     this.validateSendAddress();
     this.updateTransactionPreview();
   }
@@ -366,6 +367,7 @@ export class WalletComponent {
   }
 
   onSendAddressFocus() {
+    this.clearSendMessages();
     this.sendAddressFocused = true;
     this.sendToAddressErrorMsg = '';
   }
@@ -377,6 +379,7 @@ export class WalletComponent {
   }
 
   onSendAmountChange() {
+    this.clearSendMessages();
     this.validateSendAmount();
     this.updateTransactionPreview();
   }
@@ -414,6 +417,7 @@ export class WalletComponent {
   }
 
   onSendAmountFocus() {
+    this.clearSendMessages();
     this.sendAmountFocused = true;
     this.sendAmountErrorMsg = '';
   }
@@ -1001,19 +1005,19 @@ export class WalletComponent {
 
   setUtxoSelectionMode(mode: 'auto' | 'manual') {
     if (this.utxoSelectionMode === mode) return;
-
+    this.clearSendMessages();
     this.utxoSelectionMode = mode;
     // Reseta a seleção manual ao trocar de modo
     this.allAvailableUtxos.forEach((u) => (u.selected = false));
     this.manuallySelectedUtxos = [];
     this.manualSelectionTotal = 0;
-
     // Revalida e atualiza o preview
     this.validateSendAmount();
     this.updateTransactionPreview();
   }
 
   onManualUtxoSelectionChange() {
+    this.clearSendMessages();
     this.manuallySelectedUtxos = this.allAvailableUtxos.filter(
       (u) => u.selected
     );
@@ -1021,7 +1025,6 @@ export class WalletComponent {
       (sum, u) => sum + u.output.value,
       0
     );
-
     // Revalida e atualiza o preview com base na nova seleção
     this.validateSendAmount();
     this.updateTransactionPreview();
@@ -1107,6 +1110,18 @@ export class WalletComponent {
     const key = ec.keyFromPrivate(keyEntry.privateKey, 'hex');
     const signature = key.sign(message);
     return signature.toDER('hex');
+  }
+
+  // Adiciona método para limpar mensagens de erro/sucesso
+  clearSendMessages() {
+    this.sendError = '';
+    this.sendSuccess = '';
+  }
+
+  // Handler para mudança de chave privada no modo manual
+  onPrivateKeySelectChange(index: number, value: string | null) {
+    this.clearSendMessages();
+    this.selectedPrivateKey[index] = value;
   }
 }
 

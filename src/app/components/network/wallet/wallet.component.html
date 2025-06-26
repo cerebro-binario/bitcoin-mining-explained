@@ -504,6 +504,9 @@
                             [filter]="true"
                             [appendTo]="'body'"
                             styleClass="max-w-xs w-full"
+                            (onChange)="
+                              onPrivateKeySelectChange(i, $event.value)
+                            "
                           ></p-select>
                           <button
                             type="button"
