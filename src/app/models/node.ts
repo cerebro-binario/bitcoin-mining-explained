@@ -1875,7 +1875,11 @@ export class Node {
       }
 
       // Validação completa da transação (sem verificar duplicidade no bloco atual)
-      const { valid, reason } = this.isValidTransactionForBlock(tx, block);
+      const { valid, reason } = this.isValidTransactionForBlock(
+        tx,
+        block,
+        tempUtxoSet
+      );
       if (!valid) {
         return {
           valid: false,
@@ -1991,6 +1995,113 @@ export class Node {
     // Se chegou aqui, todas as transações são válidas
     // Atualiza o UTXO set real forçando uma nova referência para reatividade
     this.balances = { ...tempUtxoSet };
+    return { valid: true };
+  }
+
+  // Método específico para validar transações em blocos (não verifica duplicidade no bloco atual)
+  isValidTransactionForBlock(
+    tx: Transaction,
+    blockContext?: Block,
+    utxoSet?: { [address: string]: BitcoinAddressData | undefined }
+  ): {
+    valid: boolean;
+    reason?: string;
+  } {
+    // 1. Validação básica de estrutura
+    if (
+      !tx.id ||
+      !tx.inputs ||
+      !tx.outputs ||
+      tx.inputs.length === 0 ||
+      tx.outputs.length === 0
+    ) {
+      return { valid: false, reason: 'Estrutura da transação inválida' };
+    }
+
+    // 2. Validação de inputs (UTXOs)
+    let totalInputValue = 0;
+    for (const input of tx.inputs) {
+      let utxo = null;
+      if (utxoSet) {
+        const addressData = utxoSet[input.scriptPubKey.address];
+        if (addressData) {
+          utxo = addressData.utxos.find(
+            (u) => u.txId === input.txid && u.outputIndex === input.vout
+          );
+        }
+      }
+      if (!utxo) {
+        utxo = this.findUtxo(input.txid, input.vout);
+      }
+      if (!utxo) {
+        return {
+          valid: false,
+          reason: `UTXO não encontrado (${input.txid}:${input.vout})`,
+        };
+      }
+
+      // Verifica se o endereço do input corresponde ao UTXO
+      if (utxo.output.scriptPubKey.address !== input.scriptPubKey.address) {
+        return {
+          valid: false,
+          reason: 'Endereço do input não corresponde ao UTXO',
+        };
+      }
+
+      // Verifica se o valor do input corresponde ao UTXO
+      if (utxo.output.value !== input.value) {
+        return {
+          valid: false,
+          reason: 'Valor do input não corresponde ao UTXO',
+        };
+      }
+
+      totalInputValue += input.value;
+    }
+
+    // 3. Validação de outputs
+    let totalOutputValue = 0;
+    for (const output of tx.outputs) {
+      if (output.value <= 0) {
+        return { valid: false, reason: 'Valor de output inválido' };
+      }
+      totalOutputValue += output.value;
+    }
+
+    // 4. Validação de valores (inputs >= outputs)
+    if (totalInputValue < totalOutputValue) {
+      return {
+        valid: false,
+        reason: `Fundos insuficientes (${totalInputValue} < ${totalOutputValue})`,
+      };
+    }
+
+    // 5. Validação de assinaturas
+    for (const input of tx.inputs) {
+      if (!input.scriptSig || input.scriptSig.length === 0) {
+        return { valid: false, reason: 'Assinatura ausente no input' };
+      }
+
+      if (
+        !this.verifySignature(
+          input.scriptSig,
+          input.scriptPubKey.pubKey,
+          input.txid,
+          input.vout
+        )
+      ) {
+        return { valid: false, reason: 'Assinatura inválida' };
+      }
+    }
+
+    // 6. Verifica se não é uma transação duplicada APENAS no ramo do bloco
+    if (
+      blockContext &&
+      this.isTransactionDuplicateInBranch(tx.id, blockContext)
+    ) {
+      return { valid: false, reason: 'Transação duplicada no ramo do fork' };
+    }
+
     return { valid: true };
   }
 
@@ -2447,102 +2558,6 @@ export class Node {
     // 6. Verifica se não é uma transação duplicada
     if (this.isTransactionDuplicate(tx.id)) {
       return { valid: false, reason: 'Transação duplicada' };
-    }
-
-    return { valid: true };
-  }
-
-  // Método específico para validar transações em blocos (não verifica duplicidade no bloco atual)
-  isValidTransactionForBlock(
-    tx: Transaction,
-    blockContext?: Block
-  ): {
-    valid: boolean;
-    reason?: string;
-  } {
-    // 1. Validação básica de estrutura
-    if (
-      !tx.id ||
-      !tx.inputs ||
-      !tx.outputs ||
-      tx.inputs.length === 0 ||
-      tx.outputs.length === 0
-    ) {
-      return { valid: false, reason: 'Estrutura da transação inválida' };
-    }
-
-    // 2. Validação de inputs (UTXOs)
-    let totalInputValue = 0;
-    for (const input of tx.inputs) {
-      // Verifica se o UTXO existe no estado atual
-      const utxo = this.findUtxo(input.txid, input.vout);
-      if (!utxo) {
-        return {
-          valid: false,
-          reason: `UTXO não encontrado (${input.txid}:${input.vout})`,
-        };
-      }
-
-      // Verifica se o endereço do input corresponde ao UTXO
-      if (utxo.output.scriptPubKey.address !== input.scriptPubKey.address) {
-        return {
-          valid: false,
-          reason: 'Endereço do input não corresponde ao UTXO',
-        };
-      }
-
-      // Verifica se o valor do input corresponde ao UTXO
-      if (utxo.output.value !== input.value) {
-        return {
-          valid: false,
-          reason: 'Valor do input não corresponde ao UTXO',
-        };
-      }
-
-      totalInputValue += input.value;
-    }
-
-    // 3. Validação de outputs
-    let totalOutputValue = 0;
-    for (const output of tx.outputs) {
-      if (output.value <= 0) {
-        return { valid: false, reason: 'Valor de output inválido' };
-      }
-      totalOutputValue += output.value;
-    }
-
-    // 4. Validação de valores (inputs >= outputs)
-    if (totalInputValue < totalOutputValue) {
-      return {
-        valid: false,
-        reason: `Fundos insuficientes (${totalInputValue} < ${totalOutputValue})`,
-      };
-    }
-
-    // 5. Validação de assinaturas
-    for (const input of tx.inputs) {
-      if (!input.scriptSig || input.scriptSig.length === 0) {
-        return { valid: false, reason: 'Assinatura ausente no input' };
-      }
-
-      if (
-        !this.verifySignature(
-          input.scriptSig,
-          input.scriptPubKey.pubKey,
-          input.txid,
-          input.vout
-        )
-      ) {
-        return { valid: false, reason: 'Assinatura inválida' };
-      }
-    }
-
-    // 6. Verifica se não é uma transação duplicada APENAS no ramo do bloco
-    if (
-      blockContext &&
-      this.isTransactionDuplicateInBranch(tx.id, blockContext)
-    ) {
-      return { valid: false, reason: 'Transação duplicada no ramo do fork' };
     }
 
     return { valid: true };
