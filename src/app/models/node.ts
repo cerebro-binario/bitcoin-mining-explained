@@ -1848,7 +1848,7 @@ export class Node {
       }
 
       // Validação completa da transação (sem verificar duplicidade no bloco atual)
-      const { valid, reason } = this.isValidTransactionForBlock(tx);
+      const { valid, reason } = this.isValidTransactionForBlock(tx, block);
       if (!valid) {
         return {
           valid: false,
@@ -2390,7 +2390,10 @@ export class Node {
   }
 
   // Método específico para validar transações em blocos (não verifica duplicidade no bloco atual)
-  isValidTransactionForBlock(tx: Transaction): {
+  isValidTransactionForBlock(
+    tx: Transaction,
+    blockContext?: Block
+  ): {
     valid: boolean;
     reason?: string;
   } {
@@ -2471,9 +2474,12 @@ export class Node {
       }
     }
 
-    // 6. Verifica se não é uma transação duplicada APENAS na blockchain (não no bloco atual)
-    if (this.isTransactionDuplicateInBlockchain(tx.id)) {
-      return { valid: false, reason: 'Transação duplicada na blockchain' };
+    // 6. Verifica se não é uma transação duplicada APENAS no ramo do bloco
+    if (
+      blockContext &&
+      this.isTransactionDuplicateInBranch(tx.id, blockContext)
+    ) {
+      return { valid: false, reason: 'Transação duplicada no ramo do fork' };
     }
 
     return { valid: true };
@@ -2524,17 +2530,22 @@ export class Node {
     return false;
   }
 
-  // Método auxiliar para verificar se uma transação já existe na blockchain (não no bloco atual)
-  private isTransactionDuplicateInBlockchain(txId: string): boolean {
-    // Verifica se já existe em algum bloco da blockchain
-    for (const height of this.heights) {
-      for (const blockNode of height.blocks) {
-        if (blockNode.block.transactions.find((t) => t.id === txId)) {
-          return true;
-        }
+  // Novo método: verifica duplicidade apenas no ramo do bloco (ancestrais), ignorando o próprio bloco
+  private isTransactionDuplicateInBranch(txId: string, block: Block): boolean {
+    // Começa do bloco pai
+    let currentBlock: Block | undefined = this.getBlockByHeight(
+      block.height - 1,
+      block.previousHash
+    );
+    while (currentBlock) {
+      if (currentBlock.transactions.some((tx) => tx.id === txId)) {
+        return true;
       }
+      currentBlock = this.getBlockByHeight(
+        currentBlock.height - 1,
+        currentBlock.previousHash
+      );
     }
-
     return false;
   }
 
