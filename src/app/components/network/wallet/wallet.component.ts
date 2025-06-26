@@ -687,12 +687,29 @@ export class WalletComponent {
     return tx;
   }
 
+  // Retorna um Set com as chaves dos UTXOs gastos no bloco atual
+  private getSpentUtxosInCurrentBlock(): Set<string> {
+    if (!this.node?.currentBlock) return new Set();
+    const spent = new Set<string>();
+    for (const tx of this.node.currentBlock.transactions) {
+      for (const input of tx.inputs) {
+        spent.add(`${input.txid}:${input.vout}`);
+      }
+    }
+    return spent;
+  }
+
   // Seleção automática de UTXOs (FIFO), usando BitcoinUTXO
   selectUtxosFIFO(amount: number): {
     utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
     total: number;
   } {
-    const utxos: (BitcoinUTXO & { address: string; bipType: BipType })[] =
+    console.log(`[Wallet] selectUtxosFIFO called for amount: ${amount} sats`);
+
+    const spent = this.getSpentUtxosInCurrentBlock();
+
+    // Coleta todos os UTXOs disponíveis (confirmados + virtuais)
+    let utxos: (BitcoinUTXO & { address: string; bipType: BipType })[] =
       this.addresses.flatMap((addr) =>
         (addr.utxos || []).map((utxo: BitcoinUTXO) => ({
           ...utxo,
@@ -700,12 +717,62 @@ export class WalletComponent {
           bipType: addr.bipFormat, // extra para UI
         }))
       );
+
+    // FILTRA UTXOs já gastos no bloco atual
+    utxos = utxos.filter(
+      (utxo) => !spent.has(`${utxo.txId}:${utxo.outputIndex}`)
+    );
+
+    console.log(`[Wallet] Found ${utxos.length} confirmed UTXOs (disponíveis)`);
+
+    // Adiciona UTXOs virtuais do bloco atual que pertencem à wallet
+    const walletAddresses = new Set(this.addresses.map((addr) => addr.address));
+
+    if (this.node?.currentBlock) {
+      const virtualUtxos = this.node.getVirtualUtxos();
+      for (let i = 1; i < this.node.currentBlock.transactions.length; i++) {
+        const tx = this.node.currentBlock.transactions[i];
+        for (
+          let outputIndex = 0;
+          outputIndex < tx.outputs.length;
+          outputIndex++
+        ) {
+          const output = tx.outputs[outputIndex];
+          if (walletAddresses.has(output.scriptPubKey.address)) {
+            const virtualKey = `${tx.id}:${outputIndex}`;
+            const virtualUtxo = virtualUtxos.get(virtualKey);
+            if (virtualUtxo) {
+              const virtualUtxoData: BitcoinUTXO & {
+                address: string;
+                bipType: BipType;
+              } = {
+                txId: tx.id,
+                outputIndex: outputIndex,
+                output: output,
+                blockHeight: this.node.currentBlock!.height,
+                address: output.scriptPubKey.address,
+                bipType: detectBipType(output.scriptPubKey.address) || 'bip84',
+              };
+              utxos.push(virtualUtxoData);
+            }
+          }
+        }
+      }
+    }
+
+    console.log(
+      `[Wallet] Total UTXOs available (confirmed + virtual): ${utxos.length}`
+    );
+
+    // Ordena por FIFO (altura do bloco, txId, outputIndex)
     utxos.sort(
       (a, b) =>
         a.blockHeight - b.blockHeight ||
         a.txId.localeCompare(b.txId) ||
         a.outputIndex - b.outputIndex
     );
+
+    // Seleciona UTXOs até atingir o valor necessário
     let total = 0;
     const selected: (BitcoinUTXO & { address: string; bipType: BipType })[] =
       [];
@@ -714,6 +781,7 @@ export class WalletComponent {
       total += utxo.output.value;
       if (total >= amount) break;
     }
+
     return { utxos: selected, total };
   }
 
@@ -986,6 +1054,8 @@ export class WalletComponent {
       return;
     }
 
+    const spent = this.getSpentUtxosInCurrentBlock();
+
     // Preserva a seleção manual existente
     const currentSelection = new Map<string, boolean>();
     this.allAvailableUtxos.forEach((utxo) => {
@@ -993,9 +1063,11 @@ export class WalletComponent {
       currentSelection.set(key, utxo.selected);
     });
 
-    this.allAvailableUtxos = this.addresses
-      .flatMap((addr) =>
-        (addr.utxos || []).map((utxo) => {
+    // Coleta UTXOs confirmados e FILTRA os já gastos
+    this.allAvailableUtxos = this.addresses.flatMap((addr) =>
+      (addr.utxos || [])
+        .filter((utxo) => !spent.has(`${utxo.txId}:${utxo.outputIndex}`))
+        .map((utxo) => {
           const key = `${utxo.txId}-${utxo.outputIndex}`;
           return {
             ...utxo,
@@ -1004,8 +1076,48 @@ export class WalletComponent {
             selected: currentSelection.get(key) || false, // Preserva seleção anterior
           };
         })
-      )
-      .sort((a, b) => b.output.value - a.output.value); // Ordena por valor
+    );
+
+    // Adiciona UTXOs virtuais do bloco atual que pertencem à wallet
+    const walletAddresses = new Set(this.addresses.map((addr) => addr.address));
+
+    if (this.node?.currentBlock) {
+      const virtualUtxos = this.node.getVirtualUtxos();
+      for (let i = 1; i < this.node.currentBlock.transactions.length; i++) {
+        const tx = this.node.currentBlock.transactions[i];
+        for (
+          let outputIndex = 0;
+          outputIndex < tx.outputs.length;
+          outputIndex++
+        ) {
+          const output = tx.outputs[outputIndex];
+          if (walletAddresses.has(output.scriptPubKey.address)) {
+            const virtualKey = `${tx.id}:${outputIndex}`;
+            const virtualUtxo = virtualUtxos.get(virtualKey);
+            if (virtualUtxo) {
+              const key = `${tx.id}-${outputIndex}`;
+              const virtualUtxoData: BitcoinUTXO & {
+                address: string;
+                bipType: BipType;
+                selected: boolean;
+              } = {
+                txId: tx.id,
+                outputIndex: outputIndex,
+                output: output,
+                blockHeight: this.node.currentBlock!.height,
+                address: output.scriptPubKey.address,
+                bipType: detectBipType(output.scriptPubKey.address) || 'bip84',
+                selected: currentSelection.get(key) || false, // Preserva seleção anterior
+              };
+              this.allAvailableUtxos.push(virtualUtxoData);
+            }
+          }
+        }
+      }
+    }
+
+    // Ordena por valor (maior primeiro)
+    this.allAvailableUtxos.sort((a, b) => b.output.value - a.output.value);
   }
 
   setUtxoSelectionMode(mode: 'auto' | 'manual') {
@@ -1132,23 +1244,18 @@ export class WalletComponent {
   // Saldo projetado considerando UTXOs gastos e outputs criados no bloco atual
   get projectedBalance(): number {
     if (!this._wallet || !this.node?.currentBlock) return this.availableBalance;
-    // 1. Todos os UTXOs da carteira
+    const spent = this.getSpentUtxosInCurrentBlock();
+    // 1. Todos os UTXOs da carteira, filtrando os já gastos
     let utxos = this._wallet.addresses
       .flatMap((addrObj) => Object.values(addrObj))
-      .flatMap((addr) => addr.utxos || []);
-    // 2. Remova UTXOs já gastos por transações do bloco atual
-    const spentInputs = new Set<string>();
-    for (const tx of this.node.currentBlock.transactions) {
-      for (const input of tx.inputs) {
-        spentInputs.add(`${input.txid}:${input.vout}`);
-      }
-    }
-    utxos = utxos.filter(
-      (utxo) => !spentInputs.has(`${utxo.txId}:${utxo.outputIndex}`)
-    );
-    // 3. Some o valor dos UTXOs restantes
+      .flatMap((addr) =>
+        (addr.utxos || []).filter(
+          (utxo) => !spent.has(`${utxo.txId}:${utxo.outputIndex}`)
+        )
+      );
+    // 2. Some o valor dos UTXOs restantes
     let balance = utxos.reduce((sum, utxo) => sum + utxo.output.value, 0);
-    // 4. Adicione outputs das transações do bloco atual (exceto coinbase) que pertencem à carteira
+    // 3. Adicione outputs das transações do bloco atual (exceto coinbase) que pertencem à carteira
     const walletAddresses = new Set(
       this._wallet.addresses
         .flatMap((addrObj) => Object.values(addrObj))

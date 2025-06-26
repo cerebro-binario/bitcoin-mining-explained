@@ -142,6 +142,12 @@ export class Node {
     this._balances
   );
 
+  // UTXOs virtuais do bloco atual (para chained transactions)
+  private virtualUtxos: Map<
+    string,
+    { output: { value: number; scriptPubKey: ScriptPubKey } }
+  > = new Map();
+
   get balances(): Balances {
     return this._balances;
   }
@@ -264,6 +270,9 @@ export class Node {
   }
 
   initBlockTemplate(lastBlock?: Block): Block {
+    // Limpa UTXOs virtuais do bloco anterior
+    this.clearVirtualUtxos();
+
     const timestamp = Date.now();
     const previousHash =
       lastBlock?.hash ||
@@ -406,6 +415,9 @@ export class Node {
     this.checkHalving(block, event);
 
     EventManager.complete(event);
+
+    // Limpa UTXOs virtuais do bloco minerado
+    this.clearVirtualUtxos();
 
     // Cria um novo bloco para continuar minerando
     this.initBlockTemplate(block);
@@ -2239,6 +2251,9 @@ export class Node {
     if (this.isMalicious && isLocal) {
       this.currentBlock.addTransaction(tx);
       this.updateCoinbaseFees();
+      // Gerenciar UTXOs virtuais: primeiro adicionar outputs, depois remover inputs
+      this.addVirtualUtxos(tx);
+      this.removeVirtualUtxos(tx);
       if (event) {
         EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
       } else {
@@ -2252,8 +2267,14 @@ export class Node {
     const { valid, reason } = this.isValidTransaction(tx);
     if (!valid)
       return { success: false, error: reason || 'Transação inválida.' };
+
     this.currentBlock.addTransaction(tx);
     this.updateCoinbaseFees();
+
+    // Gerenciar UTXOs virtuais: primeiro adicionar outputs, depois remover inputs
+    this.addVirtualUtxos(tx);
+    this.removeVirtualUtxos(tx);
+
     if (event) {
       EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
     } else {
@@ -2532,6 +2553,31 @@ export class Node {
     txId: string,
     vout: number
   ): { output: { value: number; scriptPubKey: ScriptPubKey } } | null {
+    // 1. Primeiro procura nos UTXOs virtuais do bloco atual
+    const virtualKey = `${txId}:${vout}`;
+    const virtualUtxo = this.virtualUtxos.get(virtualKey);
+    if (virtualUtxo) {
+      return virtualUtxo;
+    }
+
+    // 2. Se não encontrou nos virtuais, procura nos UTXOs confirmados da blockchain
+    // MAS primeiro verifica se não foi gasto no bloco atual
+    if (this.currentBlock) {
+      // Cria um set de todos os UTXOs já gastos no bloco atual
+      const spentInputs = new Set<string>();
+      for (const tx of this.currentBlock.transactions) {
+        for (const input of tx.inputs) {
+          spentInputs.add(`${input.txid}:${input.vout}`);
+        }
+      }
+
+      // Se este UTXO foi gasto no bloco atual, não está disponível
+      if (spentInputs.has(virtualKey)) {
+        return null;
+      }
+    }
+
+    // 3. Agora procura nos UTXOs confirmados (que não foram gastos no bloco atual)
     for (const addressData of Object.values(this.balances)) {
       if (!addressData) continue;
 
@@ -2547,7 +2593,52 @@ export class Node {
         };
       }
     }
+
     return null;
+  }
+
+  // Método para adicionar UTXOs virtuais de uma transação
+  private addVirtualUtxos(tx: Transaction): void {
+    console.log(`[Node ${this.id}] Adding virtual UTXOs for tx ${tx.id}:`);
+    for (let i = 0; i < tx.outputs.length; i++) {
+      const output = tx.outputs[i];
+      const virtualKey = `${tx.id}:${i}`;
+      this.virtualUtxos.set(virtualKey, {
+        output: {
+          value: output.value,
+          scriptPubKey: output.scriptPubKey,
+        },
+      });
+      console.log(
+        `  - Added virtual UTXO ${virtualKey} = ${output.value} sats to ${output.scriptPubKey.address}`
+      );
+    }
+    console.log(
+      `[Node ${this.id}] Virtual UTXOs count after adding: ${this.virtualUtxos.size}`
+    );
+  }
+
+  // Método para remover UTXOs virtuais gastos por uma transação
+  private removeVirtualUtxos(tx: Transaction): void {
+    console.log(`[Node ${this.id}] Removing virtual UTXOs for tx ${tx.id}:`);
+    for (const input of tx.inputs) {
+      const virtualKey = `${input.txid}:${input.vout}`;
+      const wasRemoved = this.virtualUtxos.delete(virtualKey);
+      console.log(
+        `  - Removed virtual UTXO ${virtualKey} = ${input.value} sats from ${input.scriptPubKey.address} (was present: ${wasRemoved})`
+      );
+    }
+    console.log(
+      `[Node ${this.id}] Virtual UTXOs count after removing: ${this.virtualUtxos.size}`
+    );
+  }
+
+  // Método para limpar todos os UTXOs virtuais (quando o bloco é minerado ou descartado)
+  private clearVirtualUtxos(): void {
+    console.log(
+      `[Node ${this.id}] Clearing all virtual UTXOs (count: ${this.virtualUtxos.size})`
+    );
+    this.virtualUtxos.clear();
   }
 
   // Método auxiliar para verificar se uma transação já existe
@@ -2645,5 +2736,36 @@ export class Node {
       console.log(`[Node ${this.id}] Signature verification error: ${error}`);
       return false;
     }
+  }
+
+  // Método público para consultar UTXOs virtuais disponíveis
+  public getVirtualUtxos(): Map<
+    string,
+    { output: { value: number; scriptPubKey: ScriptPubKey } }
+  > {
+    console.log(
+      `[Node ${this.id}] getVirtualUtxos called, returning ${this.virtualUtxos.size} virtual UTXOs`
+    );
+    this.virtualUtxos.forEach((utxo, key) => {
+      console.log(
+        `  - Virtual UTXO ${key} = ${utxo.output.value} sats to ${utxo.output.scriptPubKey.address}`
+      );
+    });
+    return new Map(this.virtualUtxos);
+  }
+
+  // Método público para verificar se um UTXO foi gasto no bloco atual
+  public isUtxoSpentInCurrentBlock(txId: string, vout: number): boolean {
+    if (!this.currentBlock) return false;
+
+    const virtualKey = `${txId}:${vout}`;
+    for (const tx of this.currentBlock.transactions) {
+      for (const input of tx.inputs) {
+        if (`${input.txid}:${input.vout}` === virtualKey) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
