@@ -2184,40 +2184,68 @@ export class Node {
     event?: NodeEvent,
     logTxData: boolean = true,
     isLocal: boolean = false
-  ) {
-    if (!this.currentBlock) return;
-    if (this.currentBlock.transactions.find((t) => t.id === tx.id)) return;
+  ): { success: boolean; error?: string } {
+    if (!this.currentBlock)
+      return { success: false, error: 'Bloco atual não existe.' };
+    if (this.currentBlock.transactions.find((t) => t.id === tx.id))
+      return { success: false, error: 'Transação já existe no bloco atual.' };
 
-    // Se for malicioso e a transação é local, permite adicionar mesmo se inválida
+    // --- Validação de duplo gasto intra-bloco (exceto modo malicioso local) ---
+    if (!(this.isMalicious && isLocal)) {
+      // Cria um set de todos os UTXOs já usados como input no bloco atual
+      const usedInputs = new Set<string>();
+      for (const t of this.currentBlock.transactions) {
+        for (const input of t.inputs) {
+          usedInputs.add(`${input.txid}:${input.vout}`);
+        }
+      }
+      // Verifica se algum input da nova tx já foi usado
+      for (const input of tx.inputs) {
+        if (usedInputs.has(`${input.txid}:${input.vout}`)) {
+          // Mensagem de erro visual
+          if (event) {
+            EventManager.log(event, 'transaction-rejected', {
+              reason:
+                'Duplo gasto: este UTXO já foi usado por outra transação no bloco atual.',
+              txId: tx.id,
+            });
+            EventManager.fail(event);
+          }
+          return {
+            success: false,
+            error:
+              'Duplo gasto: este UTXO já foi usado por outra transação no bloco atual.',
+          };
+        }
+      }
+    }
+
+    // Só permite adicionar transação inválida se for malicioso E local
     if (this.isMalicious && isLocal) {
       this.currentBlock.addTransaction(tx);
-      // Atualiza as fees da coinbase sem recalcular o hash
       this.updateCoinbaseFees();
-      // NÃO recalcula o hash durante a mineração - isso invalidaria o hash atual
-      // this.currentBlock.hash = this.currentBlock.calculateHash();
       if (event) {
         EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
       } else {
         const txEvent = this.addEvent('transaction-added', { tx });
         EventManager.complete(txEvent);
       }
-      return;
+      return { success: true };
     }
 
-    // Validação normal
-    const { valid } = this.isValidTransaction(tx);
-    if (!valid) return;
+    // Validação normal (honesta) para qualquer transação não-local ou não-maliciosa
+    const { valid, reason } = this.isValidTransaction(tx);
+    if (!valid)
+      return { success: false, error: reason || 'Transação inválida.' };
     this.currentBlock.addTransaction(tx);
-    // Atualiza as fees da coinbase sem recalcular o hash
     this.updateCoinbaseFees();
-    // NÃO recalcula o hash durante a mineração - isso invalidaria o hash atual
-    // this.currentBlock.hash = this.currentBlock.calculateHash();
     if (event) {
       EventManager.log(event, 'transaction-added', logTxData ? { tx } : {});
     } else {
       const txEvent = this.addEvent('transaction-added', { tx });
       EventManager.complete(txEvent);
     }
+    return { success: true };
   }
 
   // Atualiza as fees da coinbase sem recalcular o hash do bloco
@@ -2282,7 +2310,7 @@ export class Node {
       peerId: peer.id,
     });
 
-    // 5. Valide a transação (assinaturas, UTXOs, etc)
+    // 5. Sempre valide honestamente transações recebidas de outros peers
     const { valid, reason } = this.isValidTransaction(tx);
     if (!valid) {
       EventManager.log(receiveEvent, 'transaction-rejected', {
@@ -2293,8 +2321,7 @@ export class Node {
     }
 
     // 6. Adicione ao bloco atual (passando o evento de recebimento)
-    // NÃO passar o tx no log para não duplicar o template visual
-    this.addTransaction(tx, receiveEvent, false);
+    this.addTransaction(tx, receiveEvent, false, false); // isLocal = false
 
     // 7. Propague para outros peers (exceto o de origem)
     this.broadcastTransaction(tx, peer.id);

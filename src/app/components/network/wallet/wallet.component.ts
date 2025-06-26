@@ -626,7 +626,12 @@ export class WalletComponent {
         this.sendError = reason || 'Transação inválida.';
         return;
       }
-      this.node.addTransaction(tx, undefined, true, true); // isLocal = true
+      // Use o retorno de addTransaction para feedback visual
+      const result = this.node.addTransaction(tx, undefined, true, true); // isLocal = true
+      if (!result.success) {
+        this.sendError = result.error || 'Erro ao adicionar transação.';
+        return;
+      }
       this.node.broadcastTransaction(tx);
       this.sendSuccess = 'Transação enviada!';
       // Limpar campos, etc...
