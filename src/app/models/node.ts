@@ -1929,7 +1929,6 @@ export class Node {
             ...addressData,
             balance: addressData.balance - utxo.output.value,
             utxos: newUtxos,
-            transactions: addressData.transactions,
           };
         } else {
           delete tempUtxoSet[input.scriptPubKey.address];
@@ -1982,7 +1981,6 @@ export class Node {
         tempUtxoSet[output.scriptPubKey.address] = {
           ...addressData,
           balance: addressData.balance + output.value,
-          transactions: addressData.transactions,
         };
       }
 
