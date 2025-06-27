@@ -57,7 +57,8 @@
             [ngClass]="{
               'text-green-400': tx.type === 'Recebida',
               'text-red-400': tx.type === 'Enviada',
-              'text-yellow-400': tx.type === 'Coinbase'
+              'text-yellow-400': tx.type === 'Coinbase',
+              'text-purple-400': tx.type === 'Interna'
             }"
           >
             <ng-container [ngSwitch]="tx.type">
@@ -70,9 +71,10 @@
                 class="pi pi-arrow-up-right mr-1"
               ></i>
               <i *ngSwitchCase="'Coinbase'" class="pi pi-star-fill mr-1"></i>
+              <i *ngSwitchCase="'Interna'" class="pi pi-sync mr-1"></i>
               <i *ngSwitchDefault class="pi pi-info-circle mr-1"></i>
             </ng-container>
-            {{ tx.type }}
+            {{ tx.type === "Interna" ? "Transferência interna" : tx.type }}
           </td>
           <td class="px-3 py-2">
             {{ tx.value / 100000000 | number : "1.8-8" }}
@@ -118,15 +120,20 @@
                 [ngClass]="{
                   'bg-red-900/30 border-red-500': d.type === 'input',
                   'bg-blue-900/30 border-blue-500': d.type === 'output',
-                  'bg-green-900/30 border-green-500': d.type === 'change'
+                  'bg-green-900/30 border-green-500': d.type === 'change',
+                  'bg-purple-900/30 border-purple-500':
+                    tx.type === 'Interna' && d.type === 'output'
                 }"
                 class="rounded-lg border-l-4 p-4 flex items-center gap-4 shadow"
               >
                 <i
                   [ngClass]="{
                     'pi-arrow-up-right text-red-400': d.type === 'input',
-                    'pi-arrow-down-left text-blue-400': d.type === 'output',
-                    'pi-sync text-green-400': d.type === 'change'
+                    'pi-arrow-down-left text-blue-400':
+                      d.type === 'output' && tx.type !== 'Interna',
+                    'pi-sync text-green-400': d.type === 'change',
+                    'pi-sync text-purple-400':
+                      tx.type === 'Interna' && d.type === 'output'
                   }"
                   class="text-2xl pi"
                 ></i>

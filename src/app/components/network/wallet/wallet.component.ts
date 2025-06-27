@@ -42,7 +42,7 @@ export interface TransactionDetail {
 
 export interface TransactionView {
   id: string;
-  type: 'Recebida' | 'Enviada' | 'Coinbase';
+  type: 'Recebida' | 'Enviada' | 'Coinbase' | 'Interna';
   value: number; // valor principal consolidado
   address: string; // endereço principal (destino ou recebido)
   bipType?: BipType;
@@ -907,19 +907,37 @@ export class WalletComponent {
         walletAddresses.has(i.scriptPubKey.address)
       );
       if (hasInputFromWallet) {
-        const valueSent = history.tx.outputs
-          .filter((o) => !walletAddresses.has(o.scriptPubKey.address))
-          .reduce((sum, o) => sum + o.value, 0);
+        // Se houver outputs para fora da wallet, soma esses valores
         const externalOutputs = history.tx.outputs.filter(
           (o) => !walletAddresses.has(o.scriptPubKey.address)
         );
-        const address =
-          externalOutputs.length > 0
-            ? externalOutputs[0].scriptPubKey.address
-            : '—';
+        let valueSent = 0;
+        let address = '—';
+        let txType: TransactionView['type'] = 'Enviada';
+        if (externalOutputs.length > 0) {
+          valueSent = externalOutputs.reduce((sum, o) => sum + o.value, 0);
+          address = externalOutputs[0].scriptPubKey.address;
+        } else {
+          // Se todos os outputs são para a própria wallet, exibe como 'Interna'
+          const walletOutputs = history.tx.outputs.filter((o) =>
+            walletAddresses.has(o.scriptPubKey.address)
+          );
+          if (walletOutputs.length === 1) {
+            valueSent = walletOutputs[0].value;
+            address = walletOutputs[0].scriptPubKey.address;
+          } else if (walletOutputs.length > 1) {
+            const minOutput = walletOutputs.reduce(
+              (min, o) => (o.value < min.value ? o : min),
+              walletOutputs[0]
+            );
+            valueSent = minOutput.value;
+            address = minOutput.scriptPubKey.address;
+          }
+          txType = 'Interna';
+        }
         transactionViews.push({
           id: history.tx.id,
-          type: 'Enviada',
+          type: txType,
           value: valueSent,
           address,
           bipType: detectBipType(address),
