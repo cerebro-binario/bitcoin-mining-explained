@@ -112,37 +112,31 @@
             <div class="text-xs text-zinc-400 mb-2 font-semibold">
               Detalhes da transação
             </div>
-            <table class="min-w-full text-xs text-left">
-              <thead>
-                <tr>
-                  <th class="px-2 py-1">Tipo</th>
-                  <th class="px-2 py-1">Valor (BTC)</th>
-                  <th class="px-2 py-1">Endereço</th>
-                  <th class="px-2 py-1">BIP</th>
-                  <th class="px-2 py-1">Wallet?</th>
-                  <th class="px-2 py-1">TxID</th>
-                  <th class="px-2 py-1">vout</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let d of tx.details">
-                  <td class="px-2 py-1">
-                    <span *ngIf="d.type === 'input'">Input</span>
-                    <span *ngIf="d.type === 'output'">Output</span>
-                    <span
-                      *ngIf="d.type === 'change'"
-                      class="text-blue-400 font-bold"
-                      >Change</span
-                    >
-                  </td>
-                  <td class="px-2 py-1">
-                    {{ d.value / 100000000 | number : "1.8-8" }}
-                  </td>
-                  <td
-                    class="px-4 py-2 font-mono break-all"
-                    [class.text-green-300]="d.bipType === 'bip44'"
-                    [class.text-blue-300]="d.bipType === 'bip49'"
-                    [class.text-purple-300]="d.bipType === 'bip84'"
+            <div class="flex flex-col gap-3">
+              <div
+                *ngFor="let d of tx.details"
+                [ngClass]="{
+                  'bg-red-900/30 border-red-500': d.type === 'input',
+                  'bg-blue-900/30 border-blue-500': d.type === 'output',
+                  'bg-green-900/30 border-green-500': d.type === 'change'
+                }"
+                class="rounded-lg border-l-4 p-4 flex items-center gap-4 shadow"
+              >
+                <i
+                  [ngClass]="{
+                    'pi-arrow-up-right text-red-400': d.type === 'input',
+                    'pi-arrow-down-left text-blue-400': d.type === 'output',
+                    'pi-sync text-green-400': d.type === 'change'
+                  }"
+                  class="text-2xl pi"
+                ></i>
+                <div class="flex-1">
+                  <div class="text-xl font-bold">
+                    {{ d.value / 1e8 | number : "1.8-8" }}
+                    <span class="text-base">BTC</span>
+                  </div>
+                  <div
+                    class="font-mono text-xs text-zinc-300 flex items-center gap-2"
                   >
                     <a
                       [routerLink]="['/miners', nodeId, 'addresses', d.address]"
@@ -150,35 +144,46 @@
                     >
                       {{ d.address }}
                     </a>
-                    <span class="text-xs text-zinc-500 ml-2">
-                      <span *ngIf="d.bipType === 'bip44'">Legacy</span>
-                      <span *ngIf="d.bipType === 'bip49'">SegWit</span>
-                      <span *ngIf="d.bipType === 'bip84'">Native</span>
-                      <span *ngIf="!d.bipType">—</span>
-                    </span>
-                  </td>
-                  <td class="px-2 py-1">
-                    <span *ngIf="d.bipType === 'bip44'">Legacy</span>
-                    <span *ngIf="d.bipType === 'bip49'">SegWit</span>
-                    <span *ngIf="d.bipType === 'bip84'">Native</span>
-                    <span *ngIf="!d.bipType">—</span>
-                  </td>
-                  <td class="px-2 py-1">
-                    <span *ngIf="d.isWallet" class="text-blue-400">Sim</span>
-                    <span *ngIf="!d.isWallet" class="text-zinc-500">Não</span>
-                  </td>
-                  <td
-                    class="px-2 py-1 font-mono text-xs text-blue-300 truncate max-w-[120px]"
-                    [title]="d.txId"
+                    <button
+                      (click)="copyToClipboard(d.address)"
+                      class="ml-1 text-zinc-400 hover:text-blue-400"
+                    >
+                      <i class="pi pi-copy"></i>
+                    </button>
+                  </div>
+                  <div
+                    class="text-xs text-zinc-400 mt-1 flex gap-3 flex-wrap items-center"
                   >
-                    {{ d.txId || "—" }}
-                  </td>
-                  <td class="px-2 py-1 text-center">
-                    {{ d.vout !== undefined ? d.vout : "—" }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <span
+                      *ngIf="d.type === 'change'"
+                      class="bg-green-700 text-white px-2 py-0.5 rounded"
+                      >Troco</span
+                    >
+                    <span>BIP: {{ d.addressType || "—" }}</span>
+                    <span
+                      >Wallet?
+                      <span
+                        [ngClass]="
+                          d.isWallet ? 'text-blue-400' : 'text-zinc-500'
+                        "
+                        >{{ d.isWallet ? "Sim" : "Não" }}</span
+                      ></span
+                    >
+                    <span>vout: {{ d.vout !== undefined ? d.vout : "—" }}</span>
+                    <span
+                      >TxID:
+                      <span class="font-mono">{{
+                        d.txId
+                          ? (d.txId | slice : 0 : 8) +
+                            "..." +
+                            (d.txId | slice : -6)
+                          : "—"
+                      }}</span></span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
           </td>
         </tr>
       </ng-template>
