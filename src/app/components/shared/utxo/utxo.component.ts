@@ -18,6 +18,7 @@ export class UtxoComponent {
   @Input() isChange: boolean = false;
   @Input() isWallet: boolean = false;
   @Input() isCoinbase: boolean = false;
+  @Input() isMiningCoinbase: boolean = false;
   @Input() compact: boolean = false; // modo compacto/expandido
   @Input() showActions: boolean = true; // mostrar botões copiar, etc.
   @Input() context?: 'input' | 'output' | 'utxo-list'; // para customizar ícone/cor

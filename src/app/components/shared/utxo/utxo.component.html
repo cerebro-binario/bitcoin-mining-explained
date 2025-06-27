@@ -11,13 +11,19 @@
   <!-- Badge visual de status -->
   <div class="absolute top-4 right-4 z-20">
     <span
-      *ngIf="!isSpent"
+      *ngIf="isCoinbase && isMiningCoinbase"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500 text-yellow-900 text-xs font-semibold shadow animate-pulse"
+    >
+      <i class="pi pi-spin pi pi-cog"></i> Em Mineração
+    </span>
+    <span
+      *ngIf="!isCoinbase && !isSpent"
       class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-900 text-green-300 text-xs font-semibold shadow"
     >
       <i class="pi pi-check-circle"></i> Disponível
     </span>
     <span
-      *ngIf="isSpent"
+      *ngIf="!isCoinbase && isSpent"
       class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-900 text-red-300 text-xs font-semibold shadow"
     >
       <i class="pi pi-times-circle"></i> Gasto
