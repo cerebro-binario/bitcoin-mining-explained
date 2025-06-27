@@ -8,30 +8,9 @@
     coinbase: isCoinbase
   }"
 >
-  <!-- Badge visual de status -->
-  <div class="absolute top-4 right-4 z-20">
-    <span
-      *ngIf="isCoinbase && isMiningCoinbase"
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500 text-yellow-900 text-xs font-semibold shadow animate-pulse"
-    >
-      <i class="pi pi-spin pi pi-cog"></i> Em Mineração
-    </span>
-    <span
-      *ngIf="!isCoinbase && !isSpent"
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-900 text-green-300 text-xs font-semibold shadow"
-    >
-      <i class="pi pi-check-circle"></i> Disponível
-    </span>
-    <span
-      *ngIf="!isCoinbase && isSpent"
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-900 text-red-300 text-xs font-semibold shadow"
-    >
-      <i class="pi pi-times-circle"></i> Gasto
-    </span>
-  </div>
   <!-- Badge visual de coinbase -->
   <ng-container *ngIf="isCoinbase">
-    <div class="mb-2">
+    <div class="mb-1">
       <span
         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400 text-yellow-900 text-xs font-bold shadow"
       >
@@ -39,6 +18,33 @@
       </span>
     </div>
   </ng-container>
+  <!-- Badge visual de status (Gastando, Recebendo, Disponível, Gasto) -->
+  <div class="absolute top-4 right-4 z-20">
+    <span
+      *ngIf="isVirtual && context === 'input'"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-900 text-red-200 text-xs font-semibold shadow"
+    >
+      <i class="pi pi-arrow-up"></i> Gastando
+    </span>
+    <span
+      *ngIf="isVirtual && context === 'output'"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-900 text-green-200 text-xs font-semibold shadow"
+    >
+      <i class="pi pi-arrow-down"></i> Recebendo
+    </span>
+    <span
+      *ngIf="!isCoinbase && !isSpent && !isVirtual"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-900 text-green-300 text-xs font-semibold shadow"
+    >
+      <i class="pi pi-check-circle"></i> Disponível
+    </span>
+    <span
+      *ngIf="!isCoinbase && isSpent && !isVirtual"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-900 text-red-300 text-xs font-semibold shadow"
+    >
+      <i class="pi pi-times-circle"></i> Gasto
+    </span>
+  </div>
 
   <ng-container *ngIf="!compact; else compactView">
     <!-- Marca d'água -->
