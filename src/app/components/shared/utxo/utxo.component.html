@@ -23,6 +23,16 @@
       <i class="pi pi-times-circle"></i> Gasto
     </span>
   </div>
+  <!-- Badge visual de coinbase -->
+  <ng-container *ngIf="isCoinbase">
+    <div class="mb-2">
+      <span
+        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400 text-yellow-900 text-xs font-bold shadow"
+      >
+        <i class="pi pi-gift"></i> Coinbase
+      </span>
+    </div>
+  </ng-container>
 
   <ng-container *ngIf="!compact; else compactView">
     <!-- Marca d'água -->
@@ -108,12 +118,6 @@
       <span *ngIf="isChange" class="badge badge-change" title="Troco"
         >Troco</span
       >
-      <span
-        *ngIf="isCoinbase"
-        class="badge badge-coinbase"
-        title="Recompensa de bloco (coinbase)"
-        >Coinbase</span
-      >
     </div>
   </ng-container>
   <ng-template #compactView>
@@ -171,12 +175,6 @@
     <div class="utxo-badges">
       <span *ngIf="isChange" class="badge badge-change" title="Troco"
         >Troco</span
-      >
-      <span
-        *ngIf="isCoinbase"
-        class="badge badge-coinbase"
-        title="Recompensa de bloco (coinbase)"
-        >Coinbase</span
       >
     </div>
   </ng-template>
