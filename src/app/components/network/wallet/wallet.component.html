@@ -68,6 +68,7 @@
     <div [hidden]="activeTab !== 'transacoes'" class="h-full">
       <div class="flex-1 min-h-0 flex flex-col h-full pt-4">
         <app-transaction-list
+          [nodeId]="node.id"
           [transactions]="pagedTransactionViews"
           [walletAddresses]="walletAddressesList"
           [totalTransactions]="transactionViews.length"
