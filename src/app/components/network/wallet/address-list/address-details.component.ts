@@ -6,11 +6,12 @@ import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { KeyService } from '../../../../services/key.service';
 import { getAddressType } from '../../../../utils/tools';
+import { UtxoComponent } from '../../../shared/utxo/utxo.component';
 
 @Component({
   selector: 'app-address-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, UtxoComponent],
   templateUrl: './address-details.component.html',
   styleUrls: ['./address-details.component.scss'],
 })

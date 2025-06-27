@@ -172,81 +172,23 @@
     <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
       <h3 class="text-lg font-semibold text-zinc-200 mb-6">UTXOs</h3>
 
-      <!-- UTXOs disponíveis -->
+      <!-- UTXOs disponíveis (usando app-utxo) -->
       <div *ngIf="addressData.utxos.length > 0" class="mb-8">
         <h4 class="text-md font-semibold text-green-300 mb-4">
           UTXOs Disponíveis ({{ addressData.utxos.length }})
         </h4>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div
+          <app-utxo
             *ngFor="let utxo of addressData.utxos"
-            class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg shadow-lg p-6 border-2 border-zinc-700 relative overflow-hidden"
-          >
-            <!-- Marca d'água -->
-            <div
-              class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
-            >
-              <i class="pi pi-bitcoin text-[200px] text-white"></i>
-            </div>
-            <!-- Elementos decorativos -->
-            <div
-              class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-zinc-600"
-            ></div>
-            <div
-              class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-zinc-600"
-            ></div>
-            <!-- Ícone e valor principal -->
-            <div
-              class="flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-800 rounded-full w-16 h-16 shadow-lg relative"
-            >
-              <i class="pi pi-money-bill text-3xl text-blue-300"></i>
-            </div>
-            <div class="flex-1 relative">
-              <!-- Valor em destaque -->
-              <div
-                class="text-2xl font-bold text-green-300 flex items-center gap-2 mb-2"
-              >
-                {{ utxo.output.value / 100000000 | number : "1.8-8" }}
-                <span class="text-base text-zinc-400">BTC</span>
-              </div>
-              <!-- Número de série (TxID) -->
-              <div class="text-xs text-zinc-400 mt-3 font-mono tracking-wider">
-                <span class="text-zinc-500">Nº de Série:</span>
-                <span class="ml-2 break-all">{{ utxo.txId }}</span>
-              </div>
-              <!-- Out como referência -->
-              <div class="text-xs text-zinc-400 mt-1 font-mono">
-                <span class="text-zinc-500">Referência:</span>
-                <span class="ml-2">{{ utxo.outputIndex }}</span>
-              </div>
-              <!-- Explicação didática -->
-              <div
-                class="text-xs text-zinc-500 mt-3 italic border-t border-zinc-700 pt-3"
-              >
-                <span class="font-semibold text-zinc-400">UTXO</span> = "Unspent
-                Transaction Output"<br />
-                Pense como uma nota digital: para gastar, é preciso assinar com
-                a chave privada correspondente.
-              </div>
-              <!-- Campo de assinatura -->
-              <div class="mt-4 border-t border-dashed border-zinc-700 pt-3">
-                <div class="text-xs text-zinc-500 mb-1">
-                  Assinatura do Proprietário
-                </div>
-                <div
-                  class="h-12 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-center"
-                >
-                  <div class="text-zinc-600 italic text-sm">
-                    Não assinado - UTXO disponível para gasto
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Elemento decorativo direito -->
-            <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-20">
-              <i class="pi pi-shield text-[100px] text-blue-400"></i>
-            </div>
-          </div>
+            [value]="utxo.output.value"
+            [address]="utxo.output.scriptPubKey.address"
+            [txid]="utxo.txId"
+            [vout]="utxo.outputIndex"
+            [isSpent]="false"
+            [isWallet]="true"
+            [isChange]="false"
+            [showActions]="true"
+          ></app-utxo>
         </div>
       </div>
 
