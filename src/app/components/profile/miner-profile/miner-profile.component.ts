@@ -241,4 +241,11 @@ export class MinerProfileComponent {
       queryParamsHandling: 'merge',
     });
   }
+
+  get walletAddresses(): string[] {
+    if (!this.miner?.wallet?.addresses) return [];
+    return this.miner.wallet.addresses.flatMap((addrObj) =>
+      Object.values(addrObj).map((addr) => addr.address)
+    );
+  }
 }

@@ -348,10 +348,7 @@
                 </div>
 
                 <!-- Transações -->
-                <div
-                  *ngIf="activeTab === 'transactions'"
-                  class="h-full flex flex-col min-h-0"
-                >
+                <ng-container *ngIf="activeTab === 'transactions'">
                   <div class="space-y-4 flex-1 overflow-y-auto pr-2">
                     <ng-container
                       *ngFor="
@@ -408,7 +405,11 @@
                                 [vout]="input.vout"
                                 [scriptSig]="input.scriptSig"
                                 [isSpent]="true"
-                                [isWallet]="false"
+                                [isWallet]="
+                                  walletAddresses.includes(
+                                    input.scriptPubKey.address
+                                  )
+                                "
                                 [isChange]="false"
                                 [isCoinbase]="tx.inputs.length === 0"
                                 [isMiningCoinbase]="false"
@@ -419,7 +420,6 @@
                               ></app-utxo>
                             </div>
                           </div>
-
                           <!-- Outputs -->
                           <div>
                             <div class="text-xs font-medium text-zinc-400 mb-2">
@@ -438,7 +438,11 @@
                                 [txid]="tx.id"
                                 [vout]="outputIndex"
                                 [isSpent]="false"
-                                [isWallet]="false"
+                                [isWallet]="
+                                  walletAddresses.includes(
+                                    output.scriptPubKey.address
+                                  )
+                                "
                                 [isChange]="false"
                                 [isCoinbase]="tx.inputs.length === 0"
                                 [isMiningCoinbase]="i === 0"
@@ -453,7 +457,7 @@
                       </div>
                     </ng-container>
                   </div>
-                </div>
+                </ng-container>
               </div>
             </ng-container>
             <ng-template #noBlock>

@@ -65,14 +65,21 @@
       <i class="pi pi-shield text-[100px] text-blue-400"></i>
     </div>
     <!-- Ícone e valor principal -->
-    <div
-      class="flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-800 rounded-full w-16 h-16 shadow-lg relative"
-    >
-      <i class="pi pi-money-bill text-3xl text-blue-300"></i>
-    </div>
-    <div class="text-2xl font-bold text-green-300 flex items-center gap-2 mb-2">
-      {{ value / 100000000 | number : "1.8-8" }}
-      <span class="text-base text-zinc-400">BTC</span>
+    <div class="flex items-center gap-2 mb-2">
+      <span
+        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-800 rounded-full w-16 h-16 shadow-lg relative"
+      >
+        <i class="pi pi-money-bill text-3xl text-blue-300"></i>
+      </span>
+      <span class="text-2xl font-bold text-green-300 flex items-center gap-2">
+        {{ value / 100000000 | number : "1.8-8" }}
+        <span class="text-base text-zinc-400">BTC</span>
+        <i
+          *ngIf="isWallet"
+          class="pi pi-wallet text-blue-400 text-lg ml-1"
+          title="Pertence à sua carteira"
+        ></i>
+      </span>
     </div>
     <!-- Nº de série (TxID) -->
     <div class="text-xs text-zinc-400 mt-3 font-mono tracking-wider">
@@ -155,10 +162,15 @@
       >
         <i class="pi pi-money-bill text-xl text-blue-300"></i>
       </span>
-      <span class="font-bold text-green-300 text-base">
+      <span class="font-bold text-green-300 text-base flex items-center gap-1">
         {{ value / 100000000 | number : "1.8-8" }}
+        <span class="text-base text-zinc-400">BTC</span>
+        <i
+          *ngIf="isWallet"
+          class="pi pi-wallet text-blue-400 text-sm ml-1"
+          title="Pertence à sua carteira"
+        ></i>
       </span>
-      <span class="text-xs text-zinc-400 ml-1">BTC</span>
     </div>
     <!-- Nº de série (TxID) -->
     <div class="text-xs text-zinc-400 font-mono tracking-wider">

@@ -185,7 +185,9 @@
             [txid]="utxo.txId"
             [vout]="utxo.outputIndex"
             [isSpent]="false"
-            [isWallet]="true"
+            [isWallet]="
+              utxo.output.scriptPubKey.address === addressData.address
+            "
             [isChange]="false"
             [showActions]="true"
           ></app-utxo>
