@@ -871,14 +871,27 @@ export class WalletComponent {
       history.tx.outputs.forEach((output, idx) => {
         const isWallet = walletAddresses.has(output.scriptPubKey.address);
         let detailType: TransactionDetail['type'] = 'output';
+
         if (
           isWallet &&
           history.tx.inputs.some((i) =>
             walletAddresses.has(i.scriptPubKey.address)
           )
         ) {
-          detailType = 'change';
+          // Identifica o change: output da wallet com maior vout (último output)
+          const walletOutputs = history.tx.outputs
+            .map((o, i) => ({ output: o, index: i }))
+            .filter(({ output }) =>
+              walletAddresses.has(output.scriptPubKey.address)
+            )
+            .sort((a, b) => b.index - a.index); // Ordena por vout decrescente
+
+          // O output com maior vout é o change (troco)
+          if (walletOutputs.length > 0 && walletOutputs[0].index === idx) {
+            detailType = 'change';
+          }
         }
+
         details.push({
           type: detailType,
           value: output.value,
