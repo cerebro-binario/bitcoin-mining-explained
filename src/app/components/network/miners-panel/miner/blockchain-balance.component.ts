@@ -1,21 +1,21 @@
 import { CommonModule } from '@angular/common';
 import {
-  Component,
-  Input,
-  OnInit,
-  Output,
-  EventEmitter,
-  OnChanges,
-  SimpleChanges,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { Node } from '../../../../models/node';
 import {
-  BipType,
-  BitcoinAddressData,
-  TOTAL_PRIVATE_KEY_RECORDS,
+    BipType,
+    BitcoinAddressData,
+    TOTAL_PRIVATE_KEY_RECORDS,
 } from '../../../../models/wallet.model';
 import { KeyService } from '../../../../services/key.service';
 import { ceilBigInt } from '../../../../utils/tools';
@@ -97,13 +97,13 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
   private mapBalancesToAddresses() {
     this.addresses = [];
     const entries = Object.entries(this.node.balances);
-    this.addresses = entries.reduce((acc, [address, balance]) => {
-      if (!balance) return acc;
+    this.addresses = entries.reduce((acc, [_, addressData]) => {
+      if (!addressData || addressData.balance === 0) return acc;
       if (
         this.bipFormat === 'all-bip-types' ||
-        balance.bipFormat === this.bipFormat
+        addressData.bipFormat === this.bipFormat
       ) {
-        acc.push(balance);
+        acc.push(addressData);
       }
       return acc;
     }, [] as BitcoinAddressData[]);

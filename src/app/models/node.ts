@@ -1924,15 +1924,11 @@ export class Node {
           (u) => !(u.txId === input.txid && u.outputIndex === input.vout)
         );
 
-        if (newUtxos.length > 0) {
-          tempUtxoSet[input.scriptPubKey.address] = {
-            ...addressData,
-            balance: addressData.balance - utxo.output.value,
-            utxos: newUtxos,
-          };
-        } else {
-          delete tempUtxoSet[input.scriptPubKey.address];
-        }
+        tempUtxoSet[input.scriptPubKey.address] = {
+          ...addressData,
+          balance: addressData.balance - utxo.output.value,
+          utxos: newUtxos,
+        };
       }
 
       // Processa outputs
@@ -2209,18 +2205,13 @@ export class Node {
             (u) => !(u.txId === tx.id && u.outputIndex === j)
           );
 
-          if (newUtxos.length > 0) {
-            tempUtxoSet[output.scriptPubKey.address] = {
-              ...addressData,
-              balance: addressData.balance - output.value,
-              utxos: newUtxos,
-              transactions:
-                addressData.transactions?.filter((t) => t.tx.id !== tx.id) ||
-                [],
-            };
-          } else {
-            delete tempUtxoSet[output.scriptPubKey.address];
-          }
+          tempUtxoSet[output.scriptPubKey.address] = {
+            ...addressData,
+            balance: Math.max(0, addressData.balance - output.value),
+            utxos: newUtxos,
+            transactions:
+              addressData.transactions?.filter((t) => t.tx.id !== tx.id) || [],
+          };
         }
       }
 
@@ -2255,7 +2246,6 @@ export class Node {
         tempUtxoSet[input.scriptPubKey.address] = {
           ...addressData,
           balance: addressData.balance + input.value,
-          transactions: addressData.transactions,
         };
       }
     }
@@ -2275,16 +2265,11 @@ export class Node {
           addressData.transactions?.filter((t) => t.tx.id !== coinbase.id) ||
           [];
 
-        if (newUtxos.length > 0) {
-          tempUtxoSet[address] = {
-            ...addressData,
-            balance: addressData.balance - coinbase.outputs[0].value,
-            utxos: newUtxos,
-            transactions: addressData.transactions,
-          };
-        } else {
-          delete tempUtxoSet[address];
-        }
+        tempUtxoSet[address] = {
+          ...addressData,
+          balance: Math.max(0, addressData.balance - coinbase.outputs[0].value),
+          utxos: newUtxos,
+        };
       }
     }
 
