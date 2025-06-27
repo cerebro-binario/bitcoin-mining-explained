@@ -201,5 +201,25 @@
         >Troco</span
       >
     </div>
+    <!-- Assinatura (apenas se existir) -->
+    <div
+      *ngIf="scriptSig"
+      class="mt-2 flex items-center gap-1 text-green-400 text-xs font-mono w-full px-2 py-1 rounded border border-green-700 bg-green-900/10"
+    >
+      <i class="pi pi-pen text-green-300"></i>
+      <span class="font-semibold text-green-300 mr-1">Assinatura:</span>
+      <span class="truncate break-all max-w-[8rem]" [title]="scriptSig">{{
+        scriptSig
+      }}</span>
+      <button
+        (click)="copyToClipboard(scriptSig)"
+        class="text-zinc-400 hover:text-blue-400"
+        title="Copiar assinatura"
+        type="button"
+      >
+        <i class="pi pi-copy"></i>
+      </button>
+      <span class="text-zinc-400 ml-1">(assinada)</span>
+    </div>
   </ng-template>
 </div>
