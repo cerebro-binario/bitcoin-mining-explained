@@ -23,88 +23,161 @@
       <i class="pi pi-times-circle"></i> Gasto
     </span>
   </div>
-  <!-- Marca d'água -->
-  <div
-    class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
-  >
-    <i class="pi pi-bitcoin text-[200px] text-white"></i>
-  </div>
-  <!-- Cantos decorativos -->
-  <div
-    class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-zinc-600"
-  ></div>
-  <div
-    class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-zinc-600"
-  ></div>
-  <!-- Escudo à direita -->
-  <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 z-10">
-    <i class="pi pi-shield text-[100px] text-blue-400"></i>
-  </div>
-  <!-- Ícone e valor principal -->
-  <div
-    class="flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-800 rounded-full w-16 h-16 shadow-lg relative"
-  >
-    <i class="pi pi-money-bill text-3xl text-blue-300"></i>
-  </div>
-  <div class="text-2xl font-bold text-green-300 flex items-center gap-2 mb-2">
-    {{ value / 100000000 | number : "1.8-8" }}
-    <span class="text-base text-zinc-400">BTC</span>
-  </div>
-  <!-- Nº de série (TxID) -->
-  <div class="text-xs text-zinc-400 mt-3 font-mono tracking-wider">
-    <span class="text-zinc-500">Nº de Série:</span>
-    <span class="ml-2 break-all">{{ txid }}</span>
-  </div>
-  <!-- Referência (vout) -->
-  <div class="text-xs text-zinc-400 mt-1 font-mono">
-    <span class="text-zinc-500">Referência:</span>
-    <span class="ml-2">{{ vout }}</span>
-  </div>
-  <!-- Endereço -->
-  <div class="flex items-center gap-2 mt-3">
-    <span class="font-mono text-sm text-blue-300 break-all">{{ address }}</span>
-    <button
-      *ngIf="showActions"
-      (click)="copyToClipboard(address)"
-      class="text-zinc-400 hover:text-blue-400"
-      title="Copiar endereço"
-    >
-      <i class="pi pi-copy"></i>
-    </button>
-  </div>
-  <!-- Explicação didática -->
-  <div class="text-xs text-zinc-500 mt-3 italic border-t border-zinc-700 pt-3">
-    <span class="font-semibold text-zinc-400">UTXO</span> = "Unspent Transaction
-    Output"<br />
-    Pense como uma nota digital: para gastar, é preciso assinar com a chave
-    privada correspondente.
-  </div>
-  <!-- Campo de assinatura -->
-  <div class="mt-4 border-t border-dashed border-zinc-700 pt-3">
-    <div class="text-xs text-zinc-500 mb-1">Assinatura do Proprietário</div>
+
+  <ng-container *ngIf="!compact; else compactView">
+    <!-- Marca d'água -->
     <div
-      class="h-12 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-center"
+      class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
     >
-      <ng-container *ngIf="scriptSig; else unsigned">
-        <div class="text-green-400 font-mono text-sm flex items-center gap-2">
-          <i class="pi pi-check-circle text-green-400"></i>
-          {{ scriptSig | slice : 0 : 16 }}... (assinada)
-        </div>
-      </ng-container>
-      <ng-template #unsigned>
-        <div class="text-zinc-600 italic text-sm">
-          Não assinado - UTXO disponível para gasto
-        </div>
-      </ng-template>
+      <i class="pi pi-bitcoin text-[200px] text-white"></i>
     </div>
-  </div>
-  <div class="utxo-badges">
-    <span *ngIf="isChange" class="badge badge-change" title="Troco">Troco</span>
-    <span
-      *ngIf="isCoinbase"
-      class="badge badge-coinbase"
-      title="Recompensa de bloco (coinbase)"
-      >Coinbase</span
+    <!-- Cantos decorativos -->
+    <div
+      class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-zinc-600"
+    ></div>
+    <div
+      class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-zinc-600"
+    ></div>
+    <!-- Escudo à direita -->
+    <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 z-10">
+      <i class="pi pi-shield text-[100px] text-blue-400"></i>
+    </div>
+    <!-- Ícone e valor principal -->
+    <div
+      class="flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-800 rounded-full w-16 h-16 shadow-lg relative"
     >
-  </div>
+      <i class="pi pi-money-bill text-3xl text-blue-300"></i>
+    </div>
+    <div class="text-2xl font-bold text-green-300 flex items-center gap-2 mb-2">
+      {{ value / 100000000 | number : "1.8-8" }}
+      <span class="text-base text-zinc-400">BTC</span>
+    </div>
+    <!-- Nº de série (TxID) -->
+    <div class="text-xs text-zinc-400 mt-3 font-mono tracking-wider">
+      <span class="text-zinc-500">Nº de Série:</span>
+      <span class="ml-2 break-all">{{ txid }}</span>
+    </div>
+    <!-- Referência (vout) -->
+    <div class="text-xs text-zinc-400 mt-1 font-mono">
+      <span class="text-zinc-500">Referência:</span>
+      <span class="ml-2">{{ vout }}</span>
+    </div>
+    <!-- Endereço -->
+    <div class="flex items-center gap-2 mt-3">
+      <span class="font-mono text-sm text-blue-300 break-all">{{
+        address
+      }}</span>
+      <button
+        *ngIf="showActions"
+        (click)="copyToClipboard(address)"
+        class="text-zinc-400 hover:text-blue-400"
+        title="Copiar endereço"
+      >
+        <i class="pi pi-copy"></i>
+      </button>
+    </div>
+    <!-- Explicação didática -->
+    <div
+      class="text-xs text-zinc-500 mt-3 italic border-t border-zinc-700 pt-3"
+    >
+      <span class="font-semibold text-zinc-400">UTXO</span> = "Unspent
+      Transaction Output"<br />
+      Pense como uma nota digital: para gastar, é preciso assinar com a chave
+      privada correspondente.
+    </div>
+    <!-- Campo de assinatura -->
+    <div class="mt-4 border-t border-dashed border-zinc-700 pt-3">
+      <div class="text-xs text-zinc-500 mb-1">Assinatura do Proprietário</div>
+      <div
+        class="h-12 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-center"
+      >
+        <ng-container *ngIf="scriptSig; else unsigned">
+          <div class="text-green-400 font-mono text-sm flex items-center gap-2">
+            <i class="pi pi-check-circle text-green-400"></i>
+            {{ scriptSig | slice : 0 : 16 }}... (assinada)
+          </div>
+        </ng-container>
+        <ng-template #unsigned>
+          <div class="text-zinc-600 italic text-sm">
+            Não assinado - UTXO disponível para gasto
+          </div>
+        </ng-template>
+      </div>
+    </div>
+    <div class="utxo-badges">
+      <span *ngIf="isChange" class="badge badge-change" title="Troco"
+        >Troco</span
+      >
+      <span
+        *ngIf="isCoinbase"
+        class="badge badge-coinbase"
+        title="Recompensa de bloco (coinbase)"
+        >Coinbase</span
+      >
+    </div>
+  </ng-container>
+  <ng-template #compactView>
+    <!-- Elementos decorativos de fundo -->
+    <div
+      class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
+    >
+      <i class="pi pi-bitcoin text-[120px] text-white"></i>
+    </div>
+    <div
+      class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-zinc-600"
+    ></div>
+    <div
+      class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-zinc-600"
+    ></div>
+    <div class="absolute right-2 top-1/2 -translate-y-1/2 opacity-20 z-10">
+      <i class="pi pi-shield text-[48px] text-blue-400"></i>
+    </div>
+    <!-- Ícone e valor principal (inline, menor) -->
+    <div class="flex items-center gap-2 mb-2">
+      <span
+        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-800 rounded-full w-6 h-6 shadow relative"
+      >
+        <i class="pi pi-money-bill text-xl text-blue-300"></i>
+      </span>
+      <span class="font-bold text-green-300 text-base">
+        {{ value / 100000000 | number : "1.8-8" }}
+      </span>
+      <span class="text-xs text-zinc-400 ml-1">BTC</span>
+    </div>
+    <!-- Nº de série (TxID) -->
+    <div class="text-xs text-zinc-400 font-mono tracking-wider">
+      <span class="text-zinc-500">Nº de Série:</span>
+      <span class="ml-2 break-all">{{ txid }}</span>
+    </div>
+    <!-- Referência (vout) -->
+    <div class="text-xs text-zinc-400 font-mono">
+      <span class="text-zinc-500">Referência:</span>
+      <span class="ml-2">{{ vout }}</span>
+    </div>
+    <!-- Endereço -->
+    <div class="flex items-center gap-2 mt-3">
+      <span class="font-mono text-xs text-blue-300 break-all">{{
+        address
+      }}</span>
+      <button
+        *ngIf="showActions"
+        (click)="copyToClipboard(address)"
+        class="text-zinc-400 hover:text-blue-400"
+        title="Copiar endereço"
+      >
+        <i class="pi pi-copy"></i>
+      </button>
+    </div>
+    <div class="utxo-badges">
+      <span *ngIf="isChange" class="badge badge-change" title="Troco"
+        >Troco</span
+      >
+      <span
+        *ngIf="isCoinbase"
+        class="badge badge-coinbase"
+        title="Recompensa de bloco (coinbase)"
+        >Coinbase</span
+      >
+    </div>
+  </ng-template>
 </div>

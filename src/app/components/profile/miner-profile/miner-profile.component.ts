@@ -11,6 +11,7 @@ import { BlockchainComponent } from '../../network/blockchain/blockchain.compone
 import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
+import { UtxoComponent } from '../../shared/utxo/utxo.component';
 
 @Component({
   selector: 'app-miner-profile',
@@ -25,6 +26,7 @@ import { WalletComponent } from '../../network/wallet/wallet.component';
     BlockchainBalanceComponent,
     FormsModule,
     SelectModule,
+    UtxoComponent,
   ],
 })
 export class MinerProfileComponent {
