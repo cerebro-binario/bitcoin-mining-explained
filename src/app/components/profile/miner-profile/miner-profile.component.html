@@ -287,7 +287,7 @@
               </div>
 
               <!-- Conteúdo das Tabs -->
-              <div class="flex-1 min-h-0">
+              <div class="flex-1 min-h-0 flex flex-col">
                 <!-- Metadados -->
                 <div
                   *ngIf="activeTab === 'metadata'"
@@ -348,7 +348,10 @@
                 </div>
 
                 <!-- Transações -->
-                <ng-container *ngIf="activeTab === 'transactions'">
+                <div
+                  *ngIf="activeTab === 'transactions'"
+                  class="flex-1 min-h-0 flex flex-col"
+                >
                   <div class="space-y-4 flex-1 overflow-y-auto pr-2">
                     <ng-container
                       *ngFor="
@@ -457,7 +460,7 @@
                       </div>
                     </ng-container>
                   </div>
-                </ng-container>
+                </div>
               </div>
             </ng-container>
             <ng-template #noBlock>
