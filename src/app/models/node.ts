@@ -1868,24 +1868,24 @@ export class Node {
     for (let i = 1; i < block.transactions.length; i++) {
       const tx = block.transactions[i];
 
-      // Se for malicioso e o bloco foi minerado por este nó, pula validação E processamento dos UTXOs
+      // Se for malicioso e o bloco foi minerado por este nó, pula apenas a validação
       const isOwnBlock = block.minerId === this.id;
-      if (this.isMalicious && isOwnBlock) {
-        continue;
-      }
+      const shouldSkipValidation = this.isMalicious && isOwnBlock;
 
-      // Validação completa da transação (sem verificar duplicidade no bloco atual)
-      const { valid, reason } = this.isValidTransactionForBlock(
-        tx,
-        block,
-        tempUtxoSet
-      );
-      if (!valid) {
-        return {
-          valid: false,
-          reason: reason || 'Transação inválida',
-          txId: tx.id,
-        };
+      // Validação completa da transação (pula se for malicioso local)
+      if (!shouldSkipValidation) {
+        const { valid, reason } = this.isValidTransactionForBlock(
+          tx,
+          block,
+          tempUtxoSet
+        );
+        if (!valid) {
+          return {
+            valid: false,
+            reason: reason || 'Transação inválida',
+            txId: tx.id,
+          };
+        }
       }
 
       let inputSum = 0;
@@ -1980,8 +1980,8 @@ export class Node {
         };
       }
 
-      // Valida que inputs >= outputs
-      if (inputSum < outputSum) {
+      // Valida que inputs >= outputs (pula se for malicioso local)
+      if (!shouldSkipValidation && inputSum < outputSum) {
         return { valid: false, reason: 'Fundos insuficientes', txId: tx.id };
       }
     }
