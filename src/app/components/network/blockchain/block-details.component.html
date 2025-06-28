@@ -110,79 +110,92 @@
             class="flex flex-col gap-4 border-l-2 border-dotted border-zinc-700 pl-4 ml-2"
           >
             <ng-container *ngFor="let event of getBlockEvents()">
-              <div class="flex items-center gap-3 group">
+              <div class="flex flex-col gap-0.5 group w-full">
+                <div class="flex items-center justify-between w-full">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-full flex items-center justify-center bg-zinc-900 border-2 border-zinc-700 shadow relative"
+                    >
+                      <i
+                        *ngIf="event.type === 'halving'"
+                        class="pi pi-percentage text-xl text-orange-400"
+                      ></i>
+                      <i
+                        *ngIf="event.type === 'difficulty-adjustment'"
+                        class="pi pi-chart-line text-xl text-purple-400"
+                      ></i>
+                      <i
+                        *ngIf="event.type === 'consensus-change'"
+                        class="pi pi-cog text-xl text-blue-400"
+                      ></i>
+                    </div>
+                    <div class="text-zinc-200 font-semibold text-sm">
+                      <span *ngIf="event.type === 'halving'">Halving</span>
+                      <span *ngIf="event.type === 'difficulty-adjustment'"
+                        >Ajuste de Dificuldade</span
+                      >
+                      <span *ngIf="event.type === 'consensus-change'"
+                        >Mudança de Consenso</span
+                      >
+                    </div>
+                  </div>
+                  <span
+                    class="text-xs text-zinc-400 ml-2 whitespace-nowrap"
+                    *ngIf="event.timestamp"
+                    >{{ event.timestamp | date : "short" }}</span
+                  >
+                </div>
                 <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center bg-zinc-900 border-2 border-zinc-700 shadow relative"
+                  class="text-xs text-zinc-400 font-normal mt-0.5 ml-11"
+                  *ngIf="event.type === 'halving' && event.data"
                 >
-                  <i
-                    *ngIf="event.type === 'halving'"
-                    class="pi pi-percentage text-xl text-orange-400"
-                  ></i>
-                  <i
-                    *ngIf="event.type === 'difficulty-adjustment'"
-                    class="pi pi-chart-line text-xl text-purple-400"
-                  ></i>
-                  <i
-                    *ngIf="event.type === 'consensus-change'"
-                    class="pi pi-cog text-xl text-blue-400"
-                  ></i>
+                  Recompensa:
+                  <span class="font-mono">{{ event.data.oldSubsidy }}</span> →
+                  <span class="font-mono">{{ event.data.newSubsidy }}</span> BTC
                 </div>
-                <div class="text-zinc-200 font-semibold text-sm">
-                  <span *ngIf="event.type === 'halving'">Halving</span>
-                  <span *ngIf="event.type === 'difficulty-adjustment'"
-                    >Ajuste de Dificuldade</span
-                  >
-                  <span *ngIf="event.type === 'consensus-change'"
-                    >Mudança de Consenso</span
-                  >
-                  <div
-                    class="text-xs text-zinc-400 font-normal mt-0.5"
-                    *ngIf="event.type === 'halving' && event.data"
-                  >
-                    Recompensa:
-                    <span class="font-mono">{{ event.data.oldSubsidy }}</span> →
-                    <span class="font-mono">{{ event.data.newSubsidy }}</span>
-                    BTC
-                  </div>
-                  <div
-                    class="text-xs text-zinc-400 font-normal mt-0.5"
-                    *ngIf="event.type === 'difficulty-adjustment' && event.data"
-                  >
-                    Dificuldade:
-                    <span class="font-mono">{{
-                      event.data.oldDifficulty
-                    }}</span>
-                    →
-                    <span class="font-mono">{{
-                      event.data.newDifficulty
-                    }}</span>
-                    <span class="ml-2"
-                      >(Fator:
-                      <span class="font-mono">{{
-                        event.data.adjustmentFactor
-                      }}</span
-                      >x)</span
-                    >
-                  </div>
-                  <div
-                    class="text-xs text-zinc-400 font-normal mt-0.5"
-                    *ngIf="event.type === 'consensus-change' && event.data"
-                  >
-                    Versão:
-                    <span class="font-mono"
-                      >v{{ event.data.oldConsensus?.version }}</span
-                    >
-                    →
-                    <span class="font-mono"
-                      >v{{ event.data.newConsensus?.version }}</span
-                    >
-                  </div>
-                </div>
-                <span
-                  class="text-xs text-zinc-400 ml-2"
-                  *ngIf="event.timestamp"
-                  >{{ event.timestamp | date : "short" }}</span
+                <div
+                  class="text-xs text-zinc-400 font-normal mt-0.5 ml-11"
+                  *ngIf="event.type === 'difficulty-adjustment' && event.data"
                 >
+                  <div
+                    class="grid grid-cols-[max-content_1fr] gap-x-2 gap-y-0.5"
+                  >
+                    <span class="text-zinc-500">Target anterior:</span>
+                    <span class="font-mono break-all">{{
+                      toHexTarget(
+                        event.data.oldTarget,
+                        event.data.oldDifficulty
+                      )
+                    }}</span>
+                    <span class="text-zinc-500">Novo target:</span>
+                    <span class="font-mono break-all">{{
+                      toHexTarget(
+                        event.data.newTarget,
+                        event.data.newDifficulty
+                      )
+                    }}</span>
+                  </div>
+                  <span class="ml-0"
+                    >(Fator:
+                    <span class="font-mono">{{
+                      event.data.adjustmentFactor
+                    }}</span
+                    >x)</span
+                  >
+                </div>
+                <div
+                  class="text-xs text-zinc-400 font-normal mt-0.5 ml-11"
+                  *ngIf="event.type === 'consensus-change' && event.data"
+                >
+                  Versão:
+                  <span class="font-mono"
+                    >v{{ event.data.oldConsensus?.version }}</span
+                  >
+                  →
+                  <span class="font-mono"
+                    >v{{ event.data.newConsensus?.version }}</span
+                  >
+                </div>
               </div>
             </ng-container>
           </div>

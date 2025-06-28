@@ -204,4 +204,35 @@ export class BlockDetailsComponent {
         e.type === 'consensus-change'
     );
   }
+
+  toHexTarget(target: any, nBits?: any): string {
+    if (target !== undefined && target !== null) {
+      try {
+        let n: bigint;
+        if (typeof target === 'bigint') n = target;
+        else if (typeof target === 'number') n = BigInt(target);
+        else if (typeof target === 'string') n = BigInt(target);
+        else return 'indisponível';
+        return '0x' + n.toString(16).padStart(64, '0');
+      } catch {
+        return 'indisponível';
+      }
+    }
+    // Se não há target, mas há nBits, calcula o target
+    if (nBits !== undefined && nBits !== null) {
+      try {
+        const n = this.nBitsToTarget(Number(nBits));
+        return '0x' + n.toString(16).padStart(64, '0');
+      } catch {
+        return 'indisponível';
+      }
+    }
+    return 'indisponível';
+  }
+
+  nBitsToTarget(nBits: number): bigint {
+    const exponent = nBits >> 24;
+    const mantissa = nBits & 0x00ffffff;
+    return BigInt(mantissa) * (1n << (8n * (BigInt(exponent) - 3n)));
+  }
 }
