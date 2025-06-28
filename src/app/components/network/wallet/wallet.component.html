@@ -446,6 +446,7 @@
                   [showActions]="false"
                   [isVirtual]="true"
                   [signatureMode]="signatureMode"
+                  [isInvalidSignature]="inputSignatureInvalid[i]"
                 >
                   <ng-container *ngIf="signatureMode === 'manual'" assinatura>
                     <div class="flex flex-col gap-2 w-full py-2">

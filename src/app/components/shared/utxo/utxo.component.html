@@ -135,12 +135,24 @@
       <ng-container *ngIf="!hasCustomSignatureContent">
         <div
           class="h-12 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-between px-4 mt-3 w-full"
+          [ngClass]="{
+            'border-red-500 bg-red-900/20': isInvalidSignature
+          }"
         >
           <ng-container *ngIf="scriptSig; else unsigned">
             <div class="flex items-center gap-3 w-full">
-              <i class="pi pi-check-circle text-green-400"></i>
+              <i
+                [class]="
+                  isInvalidSignature
+                    ? 'pi pi-times-circle text-red-400'
+                    : 'pi pi-check-circle text-green-400'
+                "
+              ></i>
               <span
-                class="truncate max-w-[16rem] text-green-300 font-mono text-sm"
+                class="truncate max-w-[16rem] font-mono text-sm"
+                [ngClass]="
+                  isInvalidSignature ? 'text-red-300' : 'text-green-300'
+                "
                 [title]="scriptSig"
                 >{{ scriptSig }}</span
               >
@@ -152,9 +164,18 @@
               >
                 Copiar
               </button>
-              <span class="ml-2 text-green-400 text-xs whitespace-nowrap">
+              <span
+                class="ml-2 text-xs whitespace-nowrap"
+                [ngClass]="
+                  isInvalidSignature ? 'text-red-400' : 'text-green-400'
+                "
+              >
                 {{
-                  isVirtual && context === "input" && signatureMode === "manual"
+                  isInvalidSignature
+                    ? "(assinatura inválida)"
+                    : isVirtual &&
+                      context === "input" &&
+                      signatureMode === "manual"
                     ? "(assinada manualmente)"
                     : "(assinada)"
                 }}
@@ -237,13 +258,31 @@
     <!-- Assinatura (apenas se existir) -->
     <div
       *ngIf="scriptSig"
-      class="mt-2 flex items-center gap-1 text-green-400 text-xs font-mono w-full px-2 py-1 rounded border border-green-700 bg-green-900/10"
+      class="mt-2 flex items-center gap-1 text-xs font-mono w-full px-2 py-1 rounded border"
+      [ngClass]="
+        isInvalidSignature
+          ? 'border-red-500 bg-red-900/20 text-red-400'
+          : 'border-green-700 bg-green-900/10 text-green-400'
+      "
     >
-      <i class="pi pi-pen text-green-300"></i>
-      <span class="font-semibold text-green-300 mr-1">Assinatura:</span>
-      <span class="truncate break-all max-w-[8rem]" [title]="scriptSig">{{
-        scriptSig
-      }}</span>
+      <i
+        [class]="
+          isInvalidSignature
+            ? 'pi pi-times text-red-300'
+            : 'pi pi-pen text-green-300'
+        "
+      ></i>
+      <span
+        class="font-semibold mr-1"
+        [ngClass]="isInvalidSignature ? 'text-red-300' : 'text-green-300'"
+        >Assinatura:</span
+      >
+      <span
+        class="truncate break-all max-w-[8rem]"
+        [title]="scriptSig"
+        [ngClass]="isInvalidSignature ? 'text-red-300' : 'text-green-300'"
+        >{{ scriptSig }}</span
+      >
       <button
         (click)="copyToClipboard(scriptSig)"
         class="text-zinc-400 hover:text-blue-400"
@@ -252,7 +291,12 @@
       >
         <i class="pi pi-copy"></i>
       </button>
-      <span class="text-zinc-400 ml-1">(assinada)</span>
+      <span
+        class="ml-1"
+        [ngClass]="isInvalidSignature ? 'text-red-400' : 'text-zinc-400'"
+      >
+        {{ isInvalidSignature ? "(inválida)" : "(assinada)" }}
+      </span>
     </div>
   </ng-template>
 </div>

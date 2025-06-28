@@ -2302,6 +2302,20 @@ export class Node {
 
     // Só permite adicionar transação inválida se for malicioso E local
     if (this.isMalicious && isLocal) {
+      // Preencher signatureValid nos inputs da transação adicionada
+      for (const input of tx.inputs) {
+        if (!input.scriptSig || input.scriptSig.length === 0) {
+          input.signatureValid = false;
+        } else {
+          input.signatureValid = this.verifySignature(
+            input.scriptSig,
+            input.scriptPubKey.pubKey,
+            input.txid,
+            input.vout
+          );
+          console.log(`[valid: ${input.signatureValid}]`, input);
+        }
+      }
       this.currentBlock.addTransaction(tx);
       this.updateCoinbaseFees();
       // Gerenciar UTXOs virtuais: primeiro adicionar outputs, depois remover inputs
@@ -2321,6 +2335,20 @@ export class Node {
     if (!valid)
       return { success: false, error: reason || 'Transação inválida.' };
 
+    // Sempre sobrescreva signatureValid antes de adicionar ao bloco
+    for (const input of tx.inputs) {
+      if (!input.scriptSig || input.scriptSig.length === 0) {
+        input.signatureValid = false;
+      } else {
+        input.signatureValid = this.verifySignature(
+          input.scriptSig,
+          input.scriptPubKey.pubKey,
+          input.txid,
+          input.vout
+        );
+        console.log(input.signatureValid);
+      }
+    }
     this.currentBlock.addTransaction(tx);
     this.updateCoinbaseFees();
 

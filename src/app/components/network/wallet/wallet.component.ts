@@ -41,6 +41,7 @@ export interface TransactionDetail {
   vout?: number;
   scriptSig?: string;
   blockHeight?: number;
+  signatureValid?: boolean;
 }
 
 export interface TransactionView {
@@ -110,7 +111,13 @@ export class WalletComponent {
   availableBalance = 0;
 
   // Campos do formulário de envio
-  sendToAddress: string = '';
+  private _sendToAddress: string = '';
+  get sendToAddress(): string {
+    return this._sendToAddress;
+  }
+  set sendToAddress(value: string) {
+    this._sendToAddress = value?.trim() ?? '';
+  }
   sendAmount: number | null = null;
   sendError: string = '';
   sendSuccess: string = '';
@@ -182,6 +189,7 @@ export class WalletComponent {
   // Estado para assinatura manual detalhada
   inputSignatureScripts: (string | null)[] = [];
   inputSignatureErrors: (string | null)[] = [];
+  inputSignatureInvalid: boolean[] = []; // Array para rastrear assinaturas inválidas
 
   selectedPrivateKey: (string | null)[] = [];
 
@@ -676,14 +684,32 @@ export class WalletComponent {
       blockHeight: utxo.blockHeight,
     }));
     // Monta outputs (destino + change)
-    const outputs: TransactionOutput[] = this.txOutputs.map((o) => ({
-      value: o.value,
-      scriptPubKey: {
-        address: o.address, // ou gere o script a partir do endereço
-        pubKey: '',
-      },
-      blockHeight: this.node.currentBlock?.height ?? 0,
-    }));
+    const outputs: TransactionOutput[] = this.txOutputs.map((o) => {
+      // Busca a pubKey correta se o endereço pertencer à carteira
+      let pubKey = '';
+      if (o.address) {
+        // Procura em todas as addresses da wallet
+        for (const addrObj of this._wallet?.addresses || []) {
+          for (const bipType of Object.keys(addrObj) as BipType[]) {
+            const addrData = addrObj[bipType];
+            if (addrData && addrData.address === o.address) {
+              pubKey = addrData.keys.pub.hex;
+              break;
+            }
+          }
+          if (pubKey) break; // Se encontrou, para de procurar
+        }
+      }
+
+      return {
+        value: o.value,
+        scriptPubKey: {
+          address: o.address,
+          pubKey: pubKey,
+        },
+        blockHeight: this.node.currentBlock?.height ?? 0,
+      };
+    });
     const timestamp = Date.now();
     // Cria a transação
     const tx: Transaction = {
@@ -868,6 +894,7 @@ export class WalletComponent {
           vout: input.vout,
           scriptSig: input.scriptSig,
           blockHeight: input.blockHeight,
+          signatureValid: input.signatureValid,
         });
       });
       history.tx.outputs.forEach((output, idx) => {
@@ -1218,10 +1245,19 @@ export class WalletComponent {
         this.signInputAuto(input)
       );
       this.inputSignatureErrors = this.previewInputs.map(() => null);
+      this.inputSignatureInvalid = this.previewInputs.map(() => false); // Assinaturas automáticas são sempre válidas
     } else {
       this.signedInputs = this.previewInputs.map(() => false);
       this.inputSignatureScripts = this.previewInputs.map(() => null);
       this.inputSignatureErrors = this.previewInputs.map(() => null);
+      this.inputSignatureInvalid = this.previewInputs.map(() => false);
+
+      // Valida assinaturas existentes se houver
+      this.previewInputs.forEach((_, index) => {
+        if (this.inputSignatureScripts[index]) {
+          this.updateSignatureValidity(index);
+        }
+      });
     }
   }
 
@@ -1257,6 +1293,9 @@ export class WalletComponent {
     this.inputSignatureScripts[inputIndex] = derSign;
     this.inputSignatureErrors[inputIndex] = null;
     this.signedInputs[inputIndex] = true;
+
+    // Valida a assinatura criada
+    this.updateSignatureValidity(inputIndex);
   }
 
   copyToClipboard(text: string) {
@@ -1321,6 +1360,45 @@ export class WalletComponent {
       }
     }
     return balance;
+  }
+
+  // Função para validar uma assinatura
+  private validateSignature(inputIndex: number, scriptSig: string): boolean {
+    if (!scriptSig || !this.previewInputs[inputIndex]) return false;
+
+    const input = this.previewInputs[inputIndex];
+    const message = `${input.txId}|${input.vout}|${input.address}`;
+
+    try {
+      // Procura a chave privada correspondente ao endereço
+      const keyEntry = this.availablePrivateKeys.find(
+        (k) => k.address === input.address
+      );
+      if (!keyEntry) return false;
+
+      // Extrai a chave pública da chave privada
+      const key = ec.keyFromPrivate(keyEntry.privateKey, 'hex');
+      const pubKey = key.getPublic('hex');
+
+      // Verifica se a assinatura é válida
+      const isValid = key.verify(message, scriptSig);
+      return isValid;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Função para atualizar o estado de assinatura inválida
+  private updateSignatureValidity(inputIndex: number) {
+    const scriptSig = this.inputSignatureScripts[inputIndex];
+    if (scriptSig) {
+      this.inputSignatureInvalid[inputIndex] = !this.validateSignature(
+        inputIndex,
+        scriptSig
+      );
+    } else {
+      this.inputSignatureInvalid[inputIndex] = false;
+    }
   }
 }
 

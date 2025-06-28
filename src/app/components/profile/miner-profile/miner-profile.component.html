@@ -420,6 +420,9 @@
                                 [compact]="true"
                                 [showActions]="false"
                                 [blockHeight]="input.blockHeight"
+                                [isInvalidSignature]="
+                                  input.signatureValid === false
+                                "
                                 context="input"
                               ></app-utxo>
                             </div>

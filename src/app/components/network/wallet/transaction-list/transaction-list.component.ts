@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
-import { TransactionView } from '../wallet.component';
 import { UtxoComponent } from '../../../shared/utxo/utxo.component';
+import { TransactionView } from '../wallet.component';
 
 // Função utilitária para copiar para a área de transferência
 function copyToClipboard(text: string) {

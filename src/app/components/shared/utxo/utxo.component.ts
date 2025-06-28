@@ -31,6 +31,7 @@ export class UtxoComponent implements AfterContentInit {
   @Input() isVirtual: boolean = false;
   @Input() blockHeight?: number;
   @Input() signatureMode?: 'auto' | 'manual';
+  @Input() isInvalidSignature: boolean = false;
 
   @ContentChild('[assinatura]', { static: false, read: ElementRef })
   customSignatureContent!: ElementRef;

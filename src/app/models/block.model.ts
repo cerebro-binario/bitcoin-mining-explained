@@ -127,6 +127,7 @@ export interface TransactionInput {
   scriptPubKey: ScriptPubKey; // Endereço do dono do UTXO
   value: number; // Valor do UTXO em satoshis
   blockHeight: number; // Altura do bloco de origem do UTXO
+  signatureValid?: boolean; // Status de validade da assinatura
 }
 
 export interface TransactionOutput {
