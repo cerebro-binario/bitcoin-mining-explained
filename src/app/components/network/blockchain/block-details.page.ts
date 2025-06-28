@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
 import { BlockDetailsComponent } from './block-details.component';
 import { Block } from '../../../models/block.model';
 import { Node } from '../../../models/node';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-block-details-page',
@@ -28,12 +29,13 @@ import { Node } from '../../../models/node';
     </ng-template>
   `,
 })
-export class BlockDetailsPage {
+export class BlockDetailsPage implements OnDestroy {
   block?: Block;
   node?: Node;
   nodeId?: number;
   prevBlock?: { height: number; hash: string };
   nextBlock?: { height: number; hash: string };
+  private balancesSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -49,7 +51,24 @@ export class BlockDetailsPage {
         ?.find((h) => h.n === height)
         ?.blocks.find((bn) => bn.block.hash === hash)?.block;
       this.updatePrevNext(height, hash);
+      this.subscribeToBalances(height, hash);
     });
+  }
+
+  subscribeToBalances(height: number, hash: string) {
+    if (!this.node) return;
+    if (this.balancesSub) this.balancesSub.unsubscribe();
+    this.balancesSub = this.node.balances$.subscribe(() => {
+      // Sempre que o saldo muda, pode ter havido novo bloco
+      this.block = this.node?.heights
+        ?.find((h) => h.n === height)
+        ?.blocks.find((bn) => bn.block.hash === hash)?.block;
+      this.updatePrevNext(height, hash);
+    });
+  }
+
+  ngOnDestroy() {
+    this.balancesSub?.unsubscribe();
   }
 
   updatePrevNext(height: number, hash: string) {
