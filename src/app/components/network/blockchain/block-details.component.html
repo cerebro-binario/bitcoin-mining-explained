@@ -94,6 +94,58 @@
           {{ block.previousHash }}
         </div>
       </div>
+      <ng-container *ngIf="getBlockEvents().length > 0">
+        <div class="mt-6">
+          <div
+            class="mb-2 text-sm font-semibold text-blue-300 flex items-center gap-2"
+          >
+            <i class="pi pi-bolt text-base"></i>
+            Eventos do Bloco
+          </div>
+          <div class="text-xs text-zinc-400 mb-3">
+            Os efeitos destes eventos acontecem
+            <span class="font-bold">após</span> a mineração deste bloco.
+          </div>
+          <div
+            class="flex flex-col gap-4 border-l-2 border-dotted border-zinc-700 pl-4 ml-2"
+          >
+            <ng-container *ngFor="let event of getBlockEvents()">
+              <div class="flex items-center gap-3 group">
+                <div
+                  class="w-8 h-8 rounded-full flex items-center justify-center bg-zinc-900 border-2 border-zinc-700 shadow relative"
+                >
+                  <i
+                    *ngIf="event.type === 'halving'"
+                    class="pi pi-percentage text-xl text-orange-400"
+                  ></i>
+                  <i
+                    *ngIf="event.type === 'difficulty-adjustment'"
+                    class="pi pi-chart-line text-xl text-purple-400"
+                  ></i>
+                  <i
+                    *ngIf="event.type === 'consensus-change'"
+                    class="pi pi-cog text-xl text-blue-400"
+                  ></i>
+                </div>
+                <div class="text-zinc-200 font-semibold text-sm">
+                  <span *ngIf="event.type === 'halving'">Halving</span>
+                  <span *ngIf="event.type === 'difficulty-adjustment'"
+                    >Ajuste de Dificuldade</span
+                  >
+                  <span *ngIf="event.type === 'consensus-change'"
+                    >Mudança de Consenso</span
+                  >
+                </div>
+                <span
+                  class="text-xs text-zinc-400 ml-2"
+                  *ngIf="event.timestamp"
+                  >{{ event.timestamp | date : "short" }}</span
+                >
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </ng-container>
     </div>
     <!-- Transações -->
     <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6 w-full">

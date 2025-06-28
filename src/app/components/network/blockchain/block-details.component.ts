@@ -191,4 +191,17 @@ export class BlockDetailsComponent {
     }
     return false;
   }
+
+  getBlockEvents() {
+    if (!this.node || !this.block) return [];
+    const heightObj = this.node.heights.find((h) => h.n === this.block.height);
+    if (!heightObj) return [];
+    // Filtrar apenas eventos relevantes
+    return (heightObj.events || []).filter(
+      (e) =>
+        e.type === 'halving' ||
+        e.type === 'difficulty-adjustment' ||
+        e.type === 'consensus-change'
+    );
+  }
 }
