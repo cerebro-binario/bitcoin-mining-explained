@@ -66,7 +66,10 @@
     </div>
     <!-- Transações -->
     <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6 w-full">
-      <h3 class="text-lg font-semibold text-zinc-200 mb-4">Transações</h3>
+      <h3 class="text-lg font-semibold text-zinc-200 mb-4">
+        Transações
+        <span class="text-blue-400">({{ block.transactions.length }})</span>
+      </h3>
       <div *ngIf="block.transactions.length > 0; else noTxs">
         <div class="space-y-6">
           <div
