@@ -29,7 +29,7 @@ export class BlockDetailsPage {
     private network: BitcoinNetworkService
   ) {
     this.route.params.subscribe((params) => {
-      this.nodeId = +params['nodeId'];
+      this.nodeId = +params['id'];
       const height = +params['height'];
       const node = this.network.nodes.find((n) => n.id === this.nodeId);
       this.block = node?.getBlocksByHeight(height)?.[0];
