@@ -314,6 +314,10 @@ export class Node {
       consensusVersion:
         this.consensus.getConsensusForHeight(blockHeight).version,
     });
+    // Calcula o merkleRoot inicial baseado na coinbase
+    this.currentBlock.merkleRoot = this.currentBlock.calculateMerkleRoot();
+    // Calcula o hash inicial do bloco
+    this.currentBlock.hash = this.currentBlock.calculateHash();
     return this.currentBlock;
   }
 
@@ -2317,6 +2321,9 @@ export class Node {
         }
       }
       this.currentBlock.addTransaction(tx);
+      // Recalcula o merkleRoot e hash após adicionar a transação
+      this.currentBlock.merkleRoot = this.currentBlock.calculateMerkleRoot();
+      this.currentBlock.hash = this.currentBlock.calculateHash();
       this.updateCoinbaseFees();
       // Gerenciar UTXOs virtuais: primeiro adicionar outputs, depois remover inputs
       this.addVirtualUtxos(tx);
@@ -2350,6 +2357,9 @@ export class Node {
       }
     }
     this.currentBlock.addTransaction(tx);
+    // Recalcula o merkleRoot e hash após adicionar a transação
+    this.currentBlock.merkleRoot = this.currentBlock.calculateMerkleRoot();
+    this.currentBlock.hash = this.currentBlock.calculateHash();
     this.updateCoinbaseFees();
 
     // Gerenciar UTXOs virtuais: primeiro adicionar outputs, depois remover inputs
