@@ -253,6 +253,12 @@ export class BlockchainComponent {
   }
 
   goToBlockDetails(block: any) {
-    this.router.navigate(['/miners', this.node.id, 'blocks', block.height]);
+    this.router.navigate([
+      '/miners',
+      this.node.id,
+      'blocks',
+      block.height,
+      block.hash,
+    ]);
   }
 }

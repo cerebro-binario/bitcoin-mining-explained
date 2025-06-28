@@ -31,8 +31,11 @@ export class BlockDetailsPage {
     this.route.params.subscribe((params) => {
       this.nodeId = +params['id'];
       const height = +params['height'];
+      const hash = params['hash'];
       const node = this.network.nodes.find((n) => n.id === this.nodeId);
-      this.block = node?.getBlocksByHeight(height)?.[0];
+      this.block = node?.heights
+        ?.find((h) => h.n === height)
+        ?.blocks.find((bn) => bn.block.hash === hash)?.block;
     });
   }
 }

@@ -43,7 +43,7 @@ export const routes: Routes = [
         canActivate: [NodeExistsGuard],
       },
       {
-        path: 'miners/:id/blocks/:height',
+        path: 'miners/:id/blocks/:height/:hash',
         loadComponent: () =>
           import('./components/network/blockchain/block-details.page').then(
             (m) => m.BlockDetailsPage
