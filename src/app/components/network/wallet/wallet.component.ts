@@ -712,8 +712,6 @@ export class WalletComponent {
     utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
     total: number;
   } {
-    console.log(`[Wallet] selectUtxosFIFO called for amount: ${amount} sats`);
-
     const spent = this.getSpentUtxosInCurrentBlock();
 
     // Coleta todos os UTXOs disponíveis (confirmados + virtuais)
@@ -730,8 +728,6 @@ export class WalletComponent {
     utxos = utxos.filter(
       (utxo) => !spent.has(`${utxo.txId}:${utxo.outputIndex}`)
     );
-
-    console.log(`[Wallet] Found ${utxos.length} confirmed UTXOs (disponíveis)`);
 
     // Adiciona UTXOs virtuais do bloco atual que pertencem à wallet
     const walletAddresses = new Set(this.addresses.map((addr) => addr.address));
@@ -767,10 +763,6 @@ export class WalletComponent {
         }
       }
     }
-
-    console.log(
-      `[Wallet] Total UTXOs available (confirmed + virtual): ${utxos.length}`
-    );
 
     // Ordena por FIFO (altura do bloco, txId, outputIndex)
     utxos.sort(
@@ -833,7 +825,6 @@ export class WalletComponent {
    * Atualiza a lista de transações da carteira, buscando na main chain do node
    */
   private updateWalletTransactions() {
-    debugger;
     if (!this._wallet) {
       this.transactions = [];
       this.transactionViews = [];

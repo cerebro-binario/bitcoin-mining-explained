@@ -875,27 +875,13 @@ export class Node {
 
       // Subscription de transação: só se ainda não existe
       if (!this.peerTransactionSubscriptions[peer.id!]) {
-        console.log(
-          `[Node ${this.id}] Creating transaction subscription for peer ${peer.id} with latency ${latency}ms`
-        );
         this.peerTransactionSubscriptions[peer.id!] = peer.transactionBroadcast$
           .pipe(delay(latency))
           .subscribe(({ tx, fromPeerId }) => {
-            console.log(
-              `[Node ${this.id}] Subscription received transaction ${tx.id} from peer ${peer.id}, fromPeerId: ${fromPeerId}`
-            );
             if (fromPeerId !== this.id) {
               this.onPeerTransactionReceived(tx, peer);
-            } else {
-              console.log(
-                `[Node ${this.id}] Ignoring own transaction ${tx.id}`
-              );
             }
           });
-      } else {
-        console.log(
-          `[Node ${this.id}] Transaction subscription already exists for peer ${peer.id}`
-        );
       }
 
       this.syncWith(peer, event);
@@ -919,27 +905,13 @@ export class Node {
 
       // Subscription de transação: só se ainda não existe
       if (!peer.peerTransactionSubscriptions[this.id!]) {
-        console.log(
-          `[Peer ${peer.id}] Creating transaction subscription for node ${this.id} with latency ${latency}ms`
-        );
         peer.peerTransactionSubscriptions[this.id!] = this.transactionBroadcast$
           .pipe(delay(latency))
           .subscribe(({ tx, fromPeerId }) => {
-            console.log(
-              `[Peer ${peer.id}] Subscription received transaction ${tx.id} from node ${this.id}, fromPeerId: ${fromPeerId}`
-            );
             if (fromPeerId !== peer.id) {
               peer.onPeerTransactionReceived(tx, this);
-            } else {
-              console.log(
-                `[Peer ${peer.id}] Ignoring own transaction ${tx.id}`
-              );
             }
           });
-      } else {
-        console.log(
-          `[Peer ${peer.id}] Transaction subscription already exists for node ${this.id}`
-        );
       }
 
       peer.syncWith(this, peerEvent);
@@ -961,29 +933,18 @@ export class Node {
       reason?: string;
     }
   ) {
-    console.log(`[Node ${this.id}] Disconnecting from peer ${peer.id}`);
-
     if (this.peerBlockSubscriptions[peer.id!]) {
-      console.log(
-        `[Node ${this.id}] Unsubscribing from block broadcast of peer ${peer.id}`
-      );
       this.peerBlockSubscriptions[peer.id!]?.unsubscribe();
       delete this.peerBlockSubscriptions[peer.id!];
     }
 
     if (this.peerTransactionSubscriptions[peer.id!]) {
-      console.log(
-        `[Node ${this.id}] Unsubscribing from transaction broadcast of peer ${peer.id}`
-      );
       this.peerTransactionSubscriptions[peer.id!]?.unsubscribe();
       delete this.peerTransactionSubscriptions[peer.id!];
     }
 
     // Remove o peer da lista de vizinhos deste nó
     this.peers = this.peers.filter((n) => n.node.id !== peer.id);
-    console.log(
-      `[Node ${this.id}] Removed peer ${peer.id} from peers list. Remaining peers: ${this.peers.length}`
-    );
 
     if (event) {
       EventManager.log(event.ref, event.logType, {
@@ -1538,9 +1499,6 @@ export class Node {
       const timeUntilTimeout = this.CONNECTION_TTL - timeSinceConnection;
 
       if (timeSinceConnection > this.CONNECTION_TTL) {
-        console.log(
-          `[Node ${this.id}] Peer ${p.node.id} connection timeout after ${timeSinceConnection}ms`
-        );
         this.disconnectFromPeer(p.node, undefined, {
           eventType: 'peer-disconnected',
           logType: 'connection-timeout',
@@ -1550,11 +1508,6 @@ export class Node {
           eventType: 'peer-disconnected',
           logType: 'connection-timeout',
         });
-      } else if (timeUntilTimeout < 30000) {
-        // Log quando faltar menos de 30 segundos
-        console.log(
-          `[Node ${this.id}] Peer ${p.node.id} will timeout in ${timeUntilTimeout}ms`
-        );
       }
     });
   }
@@ -2603,7 +2556,6 @@ export class Node {
 
   // Método para adicionar UTXOs virtuais de uma transação
   private addVirtualUtxos(tx: Transaction): void {
-    console.log(`[Node ${this.id}] Adding virtual UTXOs for tx ${tx.id}:`);
     for (let i = 0; i < tx.outputs.length; i++) {
       const output = tx.outputs[i];
       const virtualKey = `${tx.id}:${i}`;
@@ -2613,35 +2565,19 @@ export class Node {
           scriptPubKey: output.scriptPubKey,
         },
       });
-      console.log(
-        `  - Added virtual UTXO ${virtualKey} = ${output.value} sats to ${output.scriptPubKey.address}`
-      );
     }
-    console.log(
-      `[Node ${this.id}] Virtual UTXOs count after adding: ${this.virtualUtxos.size}`
-    );
   }
 
   // Método para remover UTXOs virtuais gastos por uma transação
   private removeVirtualUtxos(tx: Transaction): void {
-    console.log(`[Node ${this.id}] Removing virtual UTXOs for tx ${tx.id}:`);
     for (const input of tx.inputs) {
       const virtualKey = `${input.txid}:${input.vout}`;
       const wasRemoved = this.virtualUtxos.delete(virtualKey);
-      console.log(
-        `  - Removed virtual UTXO ${virtualKey} = ${input.value} sats from ${input.scriptPubKey.address} (was present: ${wasRemoved})`
-      );
     }
-    console.log(
-      `[Node ${this.id}] Virtual UTXOs count after removing: ${this.virtualUtxos.size}`
-    );
   }
 
   // Método para limpar todos os UTXOs virtuais (quando o bloco é minerado ou descartado)
   private clearVirtualUtxos(): void {
-    console.log(
-      `[Node ${this.id}] Clearing all virtual UTXOs (count: ${this.virtualUtxos.size})`
-    );
     this.virtualUtxos.clear();
   }
 
@@ -2720,24 +2656,16 @@ export class Node {
         // Tenta usar o scriptPubKey como chave pública diretamente
         const key = ec.keyFromPublic(scriptPubKey, 'hex');
         const isValid = key.verify(message, scriptSig);
-        console.log(
-          `[Node ${this.id}] Signature verification for ${scriptPubKey}: ${isValid}`
-        );
         return isValid;
       } catch (keyError) {
         // Se não conseguir extrair a chave pública, tenta uma abordagem alternativa
         // Em um sistema real, aqui extrairia a chave pública do scriptPubKey de forma correta
-
-        console.log(
-          `[Node ${this.id}] Could not extract public key from scriptPubKey: ${keyError}`
-        );
 
         // Fallback: verifica se a assinatura tem formato válido
         // Em um sistema real, aqui implementaria a extração correta da chave pública
         return scriptSig.length >= 70 && /^[0-9a-fA-F]+$/.test(scriptSig);
       }
     } catch (error) {
-      console.log(`[Node ${this.id}] Signature verification error: ${error}`);
       return false;
     }
   }
@@ -2747,14 +2675,6 @@ export class Node {
     string,
     { output: { value: number; scriptPubKey: ScriptPubKey } }
   > {
-    console.log(
-      `[Node ${this.id}] getVirtualUtxos called, returning ${this.virtualUtxos.size} virtual UTXOs`
-    );
-    this.virtualUtxos.forEach((utxo, key) => {
-      console.log(
-        `  - Virtual UTXO ${key} = ${utxo.output.value} sats to ${utxo.output.scriptPubKey.address}`
-      );
-    });
     return new Map(this.virtualUtxos);
   }
 
