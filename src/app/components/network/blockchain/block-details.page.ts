@@ -72,23 +72,40 @@ export class BlockDetailsPage implements OnDestroy {
   }
 
   updatePrevNext(height: number, hash: string) {
-    if (!this.node) {
+    if (!this.node || !this.block) {
       this.prevBlock = undefined;
       this.nextBlock = undefined;
       return;
     }
-    // Prev block: menor height, ou outro hash na mesma height
-    const prevHeight = this.node.heights.find((h) => h.n === height - 1);
+    // Prev block: pai direto (hash == previousHash do bloco atual)
+    let foundParent: { height: number; hash: string } | undefined = undefined;
+    for (const h of this.node.heights) {
+      for (const bn of h.blocks) {
+        if (
+          this.block.previousHash &&
+          bn.block.hash === this.block.previousHash
+        ) {
+          foundParent = { height: h.n, hash: bn.block.hash };
+          break;
+        }
+      }
+      if (foundParent) break;
+    }
     this.prevBlock =
-      prevHeight && prevHeight.blocks.length > 0 && prevHeight.n !== -1
-        ? { height: prevHeight.n, hash: prevHeight.blocks[0].block.hash }
-        : undefined;
-    // Next block: maior height, ou outro hash na mesma height
-    const nextHeight = this.node.heights.find((h) => h.n === height + 1);
-    this.nextBlock =
-      nextHeight && nextHeight.blocks.length > 0
-        ? { height: nextHeight.n, hash: nextHeight.blocks[0].block.hash }
-        : undefined;
+      foundParent && foundParent.height !== -1 ? foundParent : undefined;
+    // Próximo bloco: filho direto (previousHash == hash do bloco atual)
+    let foundChild: { height: number; hash: string } | undefined = undefined;
+    for (const h of this.node.heights) {
+      if (h.n <= height) continue;
+      for (const bn of h.blocks) {
+        if (bn.block.previousHash === this.block.hash) {
+          foundChild = { height: h.n, hash: bn.block.hash };
+          break;
+        }
+      }
+      if (foundChild) break;
+    }
+    this.nextBlock = foundChild;
   }
 
   goToBlock(blockInfo?: { height: number; hash: string }) {

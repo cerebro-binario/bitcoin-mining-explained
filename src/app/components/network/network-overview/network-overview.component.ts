@@ -40,4 +40,13 @@ export class NetworkOverviewComponent {
       this.router.navigate(['/users', node.id]);
     }
   }
+
+  startAllMiners() {
+    this.bitcoinNetwork.nodes.forEach((node) => {
+      if (node.nodeType === 'miner' && !node.isMining) {
+        node.isMining = true;
+        node.miningLastTickTime = Date.now();
+      }
+    });
+  }
 }
