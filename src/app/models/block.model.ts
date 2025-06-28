@@ -72,7 +72,7 @@ export class Block {
       height: this.height,
       timestamp: this.timestamp,
       previousHash: this.previousHash,
-      transactions: this.transactions,
+      merkleRoot: this.merkleRoot,
       nonce: this.nonce,
       nBits: this.nBits,
     };
