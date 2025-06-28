@@ -873,7 +873,7 @@ export class WalletComponent {
           txId: input.txid,
           vout: input.vout,
           scriptSig: input.scriptSig,
-          blockHeight: history.blockHeight,
+          blockHeight: input.blockHeight,
         });
       });
       history.tx.outputs.forEach((output, idx) => {
