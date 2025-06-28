@@ -64,14 +64,22 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
   };
   pagedTransactionViews: TransactionView[] = [];
 
-  // Paginação de UTXOs
-  utxoPagination = {
+  // Paginação de UTXOs (agora separada por aba)
+  utxoDisponiveisPagination = {
+    pageSize: 6,
+    currentPage: 0n,
+    totalPages: 0n,
+  };
+  utxoGastosPagination = {
     pageSize: 6,
     currentPage: 0n,
     totalPages: 0n,
   };
   pagedUtxos: any[] = [];
   pagedSpentUtxos: any[] = [];
+
+  // Aba ativa de UTXOs
+  activeUtxoTab: 'disponiveis' | 'gastos' = 'disponiveis';
 
   private subscription = new Subscription();
   private privateKeyParam?: string;
@@ -230,10 +238,15 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
       if (!tx.outputs) continue;
 
       tx.outputs.forEach((output: any, idx: number) => {
-        if (output.scriptPubKey === this.addressData!.address) {
+        if (
+          output.scriptPubKey &&
+          output.scriptPubKey.address === this.addressData!.address
+        ) {
           const key = `${tx.id}:${idx}`;
           if (!unspentSet.has(key)) {
+            // Procurar em todas as transações se algum input gastou esse UTXO
             let spentInTxId = null;
+            let spentScriptSig = null;
             for (const t of this.addressData!.transactions!) {
               if (
                 t.tx.inputs &&
@@ -241,10 +254,20 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
                   (input: any) =>
                     input.txid === tx.id &&
                     input.vout === idx &&
-                    input.scriptPubKey === this.addressData!.address
+                    input.scriptPubKey &&
+                    input.scriptPubKey.address === this.addressData!.address
                 )
               ) {
                 spentInTxId = t.tx.id;
+                // Pega o scriptSig do input correspondente
+                const input = t.tx.inputs.find(
+                  (input: any) =>
+                    input.txid === tx.id &&
+                    input.vout === idx &&
+                    input.scriptPubKey &&
+                    input.scriptPubKey.address === this.addressData!.address
+                );
+                spentScriptSig = input?.scriptSig || null;
                 break;
               }
             }
@@ -254,6 +277,7 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
               txId: tx.id,
               outputIndex: idx,
               spentInTxId,
+              scriptSig: spentScriptSig,
             });
           }
         }
@@ -583,118 +607,159 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     };
   }
 
-  private updateUtxoViews() {
-    // Paginar UTXOs disponíveis
-    const start =
-      Number(this.utxoPagination.currentPage) *
-      Number(this.utxoPagination.pageSize);
-    const end = start + Number(this.utxoPagination.pageSize);
-    this.pagedUtxos = this.addressData?.utxos?.slice(start, end) || [];
+  setActiveUtxoTab(tab: 'disponiveis' | 'gastos') {
+    this.activeUtxoTab = tab;
+    if (tab === 'disponiveis') {
+      this.utxoDisponiveisPagination.currentPage = 0n;
+    } else {
+      this.utxoGastosPagination.currentPage = 0n;
+    }
+    this.updateUtxoViews();
+  }
 
-    // Paginar UTXOs gastos (se houver)
-    const totalUtxos =
-      (this.addressData?.utxos?.length || 0) + this.spentUtxos.length;
-    const utxosPerPage = Number(this.utxoPagination.pageSize);
-
-    if (this.addressData?.utxos && this.addressData.utxos.length > 0) {
-      // Se estamos na página dos UTXOs disponíveis
-      if (start < (this.addressData.utxos.length || 0)) {
-        this.pagedUtxos = this.addressData.utxos.slice(start, end);
-        this.pagedSpentUtxos = [];
-      } else {
-        // Se estamos na página dos UTXOs gastos
-        const spentStart = start - (this.addressData.utxos.length || 0);
-        const spentEnd = spentStart + utxosPerPage;
-        this.pagedUtxos = [];
-        this.pagedSpentUtxos = this.spentUtxos.slice(spentStart, spentEnd);
+  // Métodos de paginação de UTXOs (agora separados)
+  get utxoCurrentPageDisplay(): number {
+    return (
+      Number(
+        this.activeUtxoTab === 'disponiveis'
+          ? this.utxoDisponiveisPagination.currentPage
+          : this.utxoGastosPagination.currentPage
+      ) + 1
+    );
+  }
+  get utxoTotalPagesDisplay(): number {
+    return Number(
+      this.activeUtxoTab === 'disponiveis'
+        ? this.utxoDisponiveisPagination.totalPages
+        : this.utxoGastosPagination.totalPages
+    );
+  }
+  get utxoPagePercent(): number {
+    const pag =
+      this.activeUtxoTab === 'disponiveis'
+        ? this.utxoDisponiveisPagination
+        : this.utxoGastosPagination;
+    if (pag.totalPages === 0n) return 0;
+    return ((Number(pag.currentPage) + 1) / Number(pag.totalPages)) * 100;
+  }
+  get utxoPrevDisabled(): boolean {
+    const pag =
+      this.activeUtxoTab === 'disponiveis'
+        ? this.utxoDisponiveisPagination
+        : this.utxoGastosPagination;
+    return pag.currentPage === 0n;
+  }
+  get utxoNextDisabled(): boolean {
+    const pag =
+      this.activeUtxoTab === 'disponiveis'
+        ? this.utxoDisponiveisPagination
+        : this.utxoGastosPagination;
+    return pag.currentPage >= pag.totalPages - 1n || pag.totalPages === 0n;
+  }
+  utxoGoToFirstPage() {
+    if (this.activeUtxoTab === 'disponiveis') {
+      this.utxoDisponiveisPagination.currentPage = 0n;
+    } else {
+      this.utxoGastosPagination.currentPage = 0n;
+    }
+    this.updateUtxoViews();
+  }
+  utxoGoToPreviousPage() {
+    if (this.activeUtxoTab === 'disponiveis') {
+      if (this.utxoDisponiveisPagination.currentPage > 0n) {
+        this.utxoDisponiveisPagination.currentPage--;
+        this.updateUtxoViews();
       }
     } else {
-      // Se não há UTXOs disponíveis, paginar apenas os gastos
-      this.pagedUtxos = [];
-      this.pagedSpentUtxos = this.spentUtxos.slice(start, end);
+      if (this.utxoGastosPagination.currentPage > 0n) {
+        this.utxoGastosPagination.currentPage--;
+        this.updateUtxoViews();
+      }
+    }
+  }
+  utxoGoToNextPage() {
+    if (this.activeUtxoTab === 'disponiveis') {
+      if (
+        this.utxoDisponiveisPagination.currentPage <
+        this.utxoDisponiveisPagination.totalPages - 1n
+      ) {
+        this.utxoDisponiveisPagination.currentPage++;
+        this.updateUtxoViews();
+      }
+    } else {
+      if (
+        this.utxoGastosPagination.currentPage <
+        this.utxoGastosPagination.totalPages - 1n
+      ) {
+        this.utxoGastosPagination.currentPage++;
+        this.updateUtxoViews();
+      }
+    }
+  }
+  utxoGoToLastPage() {
+    if (this.activeUtxoTab === 'disponiveis') {
+      this.utxoDisponiveisPagination.currentPage =
+        this.utxoDisponiveisPagination.totalPages - 1n;
+    } else {
+      this.utxoGastosPagination.currentPage =
+        this.utxoGastosPagination.totalPages - 1n;
+    }
+    this.updateUtxoViews();
+  }
+  utxoJumpToPage(pageInt: bigint) {
+    try {
+      let page = pageInt;
+      if (page < 1n) page = 1n;
+      if (this.activeUtxoTab === 'disponiveis') {
+        if (page > this.utxoDisponiveisPagination.totalPages)
+          page = this.utxoDisponiveisPagination.totalPages;
+        this.utxoDisponiveisPagination.currentPage = page - 1n;
+      } else {
+        if (page > this.utxoGastosPagination.totalPages)
+          page = this.utxoGastosPagination.totalPages;
+        this.utxoGastosPagination.currentPage = page - 1n;
+      }
+      this.updateUtxoViews();
+    } catch {
+      // ignore invalid input
     }
   }
 
+  private updateUtxoViews() {
+    // Paginar UTXOs disponíveis
+    const startDisp =
+      Number(this.utxoDisponiveisPagination.currentPage) *
+      Number(this.utxoDisponiveisPagination.pageSize);
+    const endDisp = startDisp + Number(this.utxoDisponiveisPagination.pageSize);
+    this.pagedUtxos = this.addressData?.utxos?.slice(startDisp, endDisp) || [];
+    // Paginar UTXOs gastos
+    const startGasto =
+      Number(this.utxoGastosPagination.currentPage) *
+      Number(this.utxoGastosPagination.pageSize);
+    const endGasto = startGasto + Number(this.utxoGastosPagination.pageSize);
+    this.pagedSpentUtxos = this.spentUtxos.slice(startGasto, endGasto);
+  }
+
   private updateUtxoTotalPages() {
-    const totalUtxos =
-      (this.addressData?.utxos?.length || 0) + this.spentUtxos.length;
-    const totalRecords = BigInt(totalUtxos);
-    this.utxoPagination = {
-      ...this.utxoPagination,
+    const totalDisponiveis = BigInt(this.addressData?.utxos?.length || 0);
+    const totalGastos = BigInt(this.spentUtxos.length);
+    this.utxoDisponiveisPagination = {
+      ...this.utxoDisponiveisPagination,
       totalPages: this.ceilBigInt(
-        totalRecords,
-        BigInt(this.utxoPagination.pageSize)
+        totalDisponiveis,
+        BigInt(this.utxoDisponiveisPagination.pageSize)
+      ),
+    };
+    this.utxoGastosPagination = {
+      ...this.utxoGastosPagination,
+      totalPages: this.ceilBigInt(
+        totalGastos,
+        BigInt(this.utxoGastosPagination.pageSize)
       ),
     };
   }
 
   private ceilBigInt(a: bigint, b: bigint): bigint {
     return (a + b - 1n) / b;
-  }
-
-  // Métodos de paginação de UTXOs
-  get utxoCurrentPageDisplay(): number {
-    return Number(this.utxoPagination.currentPage) + 1;
-  }
-
-  get utxoTotalPagesDisplay(): number {
-    return Number(this.utxoPagination.totalPages);
-  }
-
-  get utxoPagePercent(): number {
-    if (this.utxoPagination.totalPages === 0n) return 0;
-    return (
-      ((Number(this.utxoPagination.currentPage) + 1) /
-        Number(this.utxoPagination.totalPages)) *
-      100
-    );
-  }
-
-  get utxoPrevDisabled(): boolean {
-    return this.utxoPagination.currentPage === 0n;
-  }
-
-  get utxoNextDisabled(): boolean {
-    return (
-      this.utxoPagination.currentPage >= this.utxoPagination.totalPages - 1n ||
-      this.utxoPagination.totalPages === 0n
-    );
-  }
-
-  utxoGoToFirstPage() {
-    this.utxoPagination.currentPage = 0n;
-    this.updateUtxoViews();
-  }
-
-  utxoGoToPreviousPage() {
-    if (this.utxoPagination.currentPage > 0n) {
-      this.utxoPagination.currentPage--;
-      this.updateUtxoViews();
-    }
-  }
-
-  utxoGoToNextPage() {
-    if (this.utxoPagination.currentPage < this.utxoPagination.totalPages - 1n) {
-      this.utxoPagination.currentPage++;
-      this.updateUtxoViews();
-    }
-  }
-
-  utxoGoToLastPage() {
-    this.utxoPagination.currentPage = this.utxoPagination.totalPages - 1n;
-    this.updateUtxoViews();
-  }
-
-  utxoJumpToPage(pageInt: bigint) {
-    try {
-      let page = pageInt;
-      if (page < 1n) page = 1n;
-      if (page > this.utxoPagination.totalPages)
-        page = this.utxoPagination.totalPages;
-      this.utxoPagination.currentPage = page - 1n;
-      this.updateUtxoViews();
-    } catch {
-      // ignore invalid input
-    }
   }
 }
