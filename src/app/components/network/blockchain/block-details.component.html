@@ -73,17 +73,19 @@
       <div *ngIf="block.transactions.length > 0; else noTxs">
         <div class="space-y-6">
           <div
-            *ngFor="let tx of block.transactions; let i = index"
+            *ngFor="let tx of pagedTransactions; let i = index"
             class="bg-zinc-800 rounded p-4 border border-zinc-700 relative flex flex-col gap-2"
           >
             <div class="flex items-center gap-2 mb-2">
-              <span class="font-mono text-xs text-blue-300">Tx #{{ i }}</span>
+              <span class="font-mono text-xs text-blue-300"
+                >Tx #{{ getGlobalTxIndex(i) }}</span
+              >
               <span
                 class="font-mono text-xs text-blue-300 truncate max-w-[180px]"
                 >{{ tx.id }}</span
               >
               <span
-                *ngIf="i === 0"
+                *ngIf="getGlobalTxIndex(i) === 0"
                 class="ml-2 text-[10px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded font-bold tracking-wide"
                 >COINBASE</span
               >
@@ -136,7 +138,7 @@
                       [isSpent]="false"
                       [context]="'output'"
                       [compact]="true"
-                      [isCoinbase]="i === 0"
+                      [isCoinbase]="getGlobalTxIndex(i) === 0"
                       [blockHeight]="block.height"
                       [isWallet]="isWalletAddress(output.scriptPubKey.address)"
                       [isChange]="isChangeOutput(tx, j)"
@@ -147,6 +149,19 @@
             </div>
           </div>
         </div>
+        <app-pagination-bar
+          *ngIf="totalPages > 1"
+          [currentPage]="toNumber(currentPage)"
+          [totalPages]="toNumber(totalPages)"
+          [percent]="pagePercent"
+          [prevDisabled]="prevDisabled"
+          [nextDisabled]="nextDisabled"
+          (goToFirst)="goToFirstPage()"
+          (goToPrevious)="goToPreviousPage()"
+          (goToNext)="goToNextPage()"
+          (goToLast)="goToLastPage()"
+          (jumpToPage)="jumpToPage($event)"
+        ></app-pagination-bar>
       </div>
       <ng-template #noTxs>
         <div class="text-zinc-500 italic">Nenhuma transação neste bloco.</div>

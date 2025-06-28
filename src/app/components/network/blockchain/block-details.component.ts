@@ -10,17 +10,63 @@ import { Location } from '@angular/common';
 import { UtxoComponent } from '../../shared/utxo/utxo.component';
 import { Node } from '../../../models/node';
 import { BipType } from '../../../models/wallet.model';
+import { PaginationBarComponent } from '../wallet/pagination-bar.component';
 
 @Component({
   selector: 'app-block-details',
   standalone: true,
-  imports: [CommonModule, UtxoComponent],
+  imports: [CommonModule, UtxoComponent, PaginationBarComponent],
   templateUrl: './block-details.component.html',
   styleUrls: ['./block-details.component.scss'],
 })
 export class BlockDetailsComponent {
   @Input() block!: Block;
   @Input() node!: Node;
+
+  // Paginação de transações
+  pageSize = 5;
+  currentPage: bigint = 1n;
+
+  get totalPages(): bigint {
+    if (!this.block) return 1n;
+    return BigInt(Math.ceil(this.block.transactions.length / this.pageSize));
+  }
+
+  get pagedTransactions() {
+    if (!this.block) return [];
+    const start = Number((this.currentPage - 1n) * BigInt(this.pageSize));
+    return this.block.transactions.slice(start, start + this.pageSize);
+  }
+
+  get pagePercent(): number {
+    if (this.totalPages === 0n) return 0;
+    return (Number(this.currentPage) / Number(this.totalPages)) * 100;
+  }
+
+  get prevDisabled(): boolean {
+    return this.currentPage <= 1n;
+  }
+  get nextDisabled(): boolean {
+    return this.currentPage >= this.totalPages;
+  }
+
+  goToFirstPage() {
+    this.currentPage = 1n;
+  }
+  goToPreviousPage() {
+    if (this.currentPage > 1n) this.currentPage--;
+  }
+  goToNextPage() {
+    if (this.currentPage < this.totalPages) this.currentPage++;
+  }
+  goToLastPage() {
+    this.currentPage = this.totalPages;
+  }
+  jumpToPage(page: bigint) {
+    if (page >= 1n && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
 
   constructor(private location: Location) {}
 
@@ -82,5 +128,13 @@ export class BlockDetailsComponent {
       }
     }
     return addresses;
+  }
+
+  getGlobalTxIndex(i: number): number {
+    return Number((this.currentPage - 1n) * BigInt(this.pageSize)) + i;
+  }
+
+  toNumber(val: bigint): number {
+    return Number(val);
   }
 }
