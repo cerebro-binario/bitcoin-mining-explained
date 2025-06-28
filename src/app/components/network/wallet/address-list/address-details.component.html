@@ -75,110 +75,130 @@
       <!-- Chave Privada -->
       <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
         <h3 class="text-lg font-semibold text-zinc-200 mb-4">Chave Privada</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm text-zinc-500 mb-2">Hex:</label>
-            <div class="flex items-center gap-2">
-              <input
-                type="text"
-                readonly
-                [value]="'0x' + addressData.keys.priv.hex"
-                class="flex-1 bg-zinc-800 text-green-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
-              />
-              <button
-                type="button"
-                class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                (click)="copyToClipboard('0x' + addressData.keys.priv.hex)"
-                title="Copiar chave privada"
-              >
-                <i class="pi pi-copy"></i>
-              </button>
+        <ng-container *ngIf="addressData.keys?.priv?.hex; else noPrivKey">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm text-zinc-500 mb-2">Hex:</label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="'0x' + addressData.keys.priv.hex"
+                  class="flex-1 bg-zinc-800 text-green-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
+                />
+                <button
+                  type="button"
+                  class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                  (click)="copyToClipboard('0x' + addressData.keys.priv.hex)"
+                  title="Copiar chave privada"
+                >
+                  <i class="pi pi-copy"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm text-zinc-500 mb-2">Decimal:</label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="addressData.keys.priv.decimal"
+                  class="flex-1 bg-zinc-800 text-green-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
+                />
+                <button
+                  type="button"
+                  class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                  (click)="copyToClipboard(addressData.keys.priv.decimal)"
+                  title="Copiar chave privada"
+                >
+                  <i class="pi pi-copy"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm text-zinc-500 mb-2">WIF:</label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="addressData.keys.priv.wif"
+                  class="flex-1 bg-zinc-800 text-green-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
+                />
+                <button
+                  type="button"
+                  class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                  (click)="copyToClipboard(addressData.keys.priv.wif)"
+                  title="Copiar chave privada"
+                >
+                  <i class="pi pi-copy"></i>
+                </button>
+              </div>
             </div>
           </div>
-          <div>
-            <label class="block text-sm text-zinc-500 mb-2">Decimal:</label>
-            <div class="flex items-center gap-2">
-              <input
-                type="text"
-                readonly
-                [value]="addressData.keys.priv.decimal"
-                class="flex-1 bg-zinc-800 text-green-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
-              />
-              <button
-                type="button"
-                class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                (click)="copyToClipboard(addressData.keys.priv.decimal)"
-                title="Copiar chave privada"
-              >
-                <i class="pi pi-copy"></i>
-              </button>
-            </div>
+        </ng-container>
+        <ng-template #noPrivKey>
+          <div
+            class="flex items-center gap-2 text-zinc-500 italic p-4 bg-zinc-800 rounded"
+          >
+            <i class="pi pi-lock text-xl"></i>
+            Chave privada não disponível para este endereço.
           </div>
-          <div>
-            <label class="block text-sm text-zinc-500 mb-2">WIF:</label>
-            <div class="flex items-center gap-2">
-              <input
-                type="text"
-                readonly
-                [value]="addressData.keys.priv.wif"
-                class="flex-1 bg-zinc-800 text-green-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
-              />
-              <button
-                type="button"
-                class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                (click)="copyToClipboard(addressData.keys.priv.wif)"
-                title="Copiar chave privada"
-              >
-                <i class="pi pi-copy"></i>
-              </button>
-            </div>
-          </div>
-        </div>
+        </ng-template>
       </div>
 
       <!-- Chave Pública -->
       <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
         <h3 class="text-lg font-semibold text-zinc-200 mb-4">Chave Pública</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm text-zinc-500 mb-2">Hex:</label>
-            <div class="flex items-center gap-2">
-              <input
-                type="text"
-                readonly
-                [value]="'0x' + addressData.keys.pub.hex"
-                class="flex-1 bg-zinc-800 text-blue-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
-              />
-              <button
-                type="button"
-                class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                (click)="copyToClipboard('0x' + addressData.keys.pub.hex)"
-                title="Copiar chave pública"
-              >
-                <i class="pi pi-copy"></i>
-              </button>
+        <ng-container *ngIf="addressData.keys?.pub?.hex; else noPubKey">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm text-zinc-500 mb-2">Hex:</label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="'0x' + addressData.keys.pub.hex"
+                  class="flex-1 bg-zinc-800 text-blue-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
+                />
+                <button
+                  type="button"
+                  class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                  (click)="copyToClipboard('0x' + addressData.keys.pub.hex)"
+                  title="Copiar chave pública"
+                >
+                  <i class="pi pi-copy"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm text-zinc-500 mb-2">Decimal:</label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="addressData.keys.pub.decimal"
+                  class="flex-1 bg-zinc-800 text-blue-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
+                />
+                <button
+                  type="button"
+                  class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
+                  (click)="copyToClipboard(addressData.keys.pub.decimal)"
+                  title="Copiar chave pública"
+                >
+                  <i class="pi pi-copy"></i>
+                </button>
+              </div>
             </div>
           </div>
-          <div>
-            <label class="block text-sm text-zinc-500 mb-2">Decimal:</label>
-            <div class="flex items-center gap-2">
-              <input
-                type="text"
-                readonly
-                [value]="addressData.keys.pub.decimal"
-                class="flex-1 bg-zinc-800 text-blue-300 font-mono text-sm rounded px-3 py-2 border border-zinc-600"
-              />
-              <button
-                type="button"
-                class="p-2 text-zinc-400 hover:text-blue-400 transition-colors"
-                (click)="copyToClipboard(addressData.keys.pub.decimal)"
-                title="Copiar chave pública"
-              >
-                <i class="pi pi-copy"></i>
-              </button>
-            </div>
+        </ng-container>
+        <ng-template #noPubKey>
+          <div
+            class="flex items-center gap-2 text-zinc-500 italic p-4 bg-zinc-800 rounded"
+          >
+            <i class="pi pi-lock text-xl"></i>
+            Chave pública não disponível para este endereço.
           </div>
-        </div>
+        </ng-template>
       </div>
     </div>
 
