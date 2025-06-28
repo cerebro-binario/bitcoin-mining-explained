@@ -30,13 +30,13 @@
         *ngIf="isVirtual && context === 'input'"
         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-900 text-red-200 text-xs font-semibold shadow"
       >
-        <i class="pi pi-arrow-up"></i> Gastando
+        <i class="pi pi-arrow-up"></i> A gastar
       </span>
       <span
         *ngIf="isVirtual && context === 'output'"
         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-900 text-green-200 text-xs font-semibold shadow"
       >
-        <i class="pi pi-arrow-down"></i> Recebendo
+        <i class="pi pi-arrow-down"></i> A receber
       </span>
       <span
         *ngIf="!isCoinbase && !isSpent && !isVirtual"
