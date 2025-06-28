@@ -6,6 +6,7 @@ import { PeerProfileComponent } from './components/profile/peer-profile/peer-pro
 import { UserProfileComponent } from './components/profile/user-profile/user-profile.component';
 import { NodeExistsGuard } from './guards/miner-exists.guard';
 import { RootLayout } from './layouts/root.layout';
+import { BlockDetailsPage } from './components/network/blockchain/block-details.page';
 
 export const routes: Routes = [
   {
@@ -40,6 +41,13 @@ export const routes: Routes = [
         path: 'users/:id',
         component: UserProfileComponent,
         canActivate: [NodeExistsGuard],
+      },
+      {
+        path: 'miners/:nodeId/blocks/:height',
+        loadComponent: () =>
+          import('./components/network/blockchain/block-details.page').then(
+            (m) => m.BlockDetailsPage
+          ),
       },
     ],
   },

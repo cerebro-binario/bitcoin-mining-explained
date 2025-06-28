@@ -1,0 +1,88 @@
+<div class="min-h-screen bg-zinc-950 text-zinc-100">
+  <div class="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
+    <div class="flex items-center gap-4 mt-4">
+      <div>
+        <div class="text-lg font-bold text-blue-300 leading-tight">
+          Bloco Bitcoin
+        </div>
+        <div class="font-mono text-base text-zinc-200 break-all">
+          #{{ block.height }}
+        </div>
+        <div class="font-mono text-xs text-zinc-400 break-all mt-1">
+          Hash: {{ block.hash }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-6 py-8" *ngIf="block">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
+        <h3 class="text-lg font-semibold text-zinc-200 mb-4">
+          Informações do Bloco
+        </h3>
+        <div
+          class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 items-baseline"
+        >
+          <div class="text-zinc-500">Altura:</div>
+          <div class="font-mono text-zinc-200">{{ block.height }}</div>
+          <div class="text-blue-400 font-semibold">Hash:</div>
+          <div class="font-mono break-all text-blue-300">
+            0x{{ block.hash }}
+          </div>
+          <div class="text-yellow-400 font-semibold">Target:</div>
+          <div class="font-mono break-all text-yellow-300">
+            0x{{ block.target.toString(16).padStart(64, "0") }}
+          </div>
+          <div class="col-span-2 text-xs text-zinc-400 mb-2">
+            O hash do bloco deve ser menor que o target para ser válido.
+          </div>
+          <div class="text-zinc-500">Timestamp:</div>
+          <div class="font-mono text-zinc-400">
+            {{ block.timestamp | date : "medium" }}
+          </div>
+          <div class="text-zinc-500">Minerador:</div>
+          <div class="font-mono text-zinc-400">{{ block.minerId ?? "-" }}</div>
+          <div class="text-zinc-500">nBits:</div>
+          <div class="font-mono text-zinc-400">{{ block.nBits }}</div>
+          <div class="text-zinc-500">Merkle Root:</div>
+          <div class="font-mono break-all text-zinc-500">
+            {{ block.merkleRoot }}
+          </div>
+          <div class="text-zinc-500">Versão Consenso:</div>
+          <div class="font-mono text-zinc-400">
+            v{{ block.consensusVersion }}
+          </div>
+          <div class="text-zinc-500">Nonce:</div>
+          <div class="font-mono text-zinc-400">{{ block.nonce }}</div>
+          <div class="text-zinc-500">Previous Hash:</div>
+          <div class="font-mono break-all text-zinc-500">
+            {{ block.previousHash }}
+          </div>
+        </div>
+      </div>
+      <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
+        <h3 class="text-lg font-semibold text-zinc-200 mb-4">Transações</h3>
+        <div *ngIf="block.transactions.length > 0; else noTxs">
+          <div class="space-y-2">
+            <div
+              *ngFor="let tx of block.transactions; let i = index"
+              class="bg-zinc-800 rounded p-3"
+            >
+              <div class="font-mono text-xs text-blue-300">
+                Tx #{{ i }}: {{ tx.id }}
+              </div>
+              <div class="text-xs text-zinc-400">
+                Inputs: {{ tx.inputs.length }} | Outputs:
+                {{ tx.outputs.length }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noTxs>
+          <div class="text-zinc-500 italic">Nenhuma transação neste bloco.</div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

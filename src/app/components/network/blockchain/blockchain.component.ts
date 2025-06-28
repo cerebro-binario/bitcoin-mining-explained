@@ -7,6 +7,7 @@ import { Height } from '../../../models/height.model';
 import { Node } from '../../../models/node';
 import { EventLogMessagePipe } from '../events/event/event-log/event-log-message.pipe';
 import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-blockchain',
@@ -60,6 +61,8 @@ export class BlockchainComponent {
   };
 
   @Input() node!: Node;
+
+  constructor(private router: Router) {}
 
   // Método chamado após a view ser inicializada
   ngAfterViewInit() {
@@ -247,5 +250,9 @@ export class BlockchainComponent {
 
   trackByHeight(index: number, height: Height): number {
     return height.n;
+  }
+
+  goToBlockDetails(block: any) {
+    this.router.navigate(['/miners', this.node.id, 'blocks', block.height]);
   }
 }
