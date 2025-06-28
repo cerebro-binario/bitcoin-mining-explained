@@ -12,6 +12,7 @@ import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
 import { UtxoComponent } from '../../shared/utxo/utxo.component';
+import { ConsensusDialogComponent } from '../../network/miners-panel/miner/consensus-dialog/consensus-dialog.component';
 
 @Component({
   selector: 'app-miner-profile',
@@ -27,6 +28,7 @@ import { UtxoComponent } from '../../shared/utxo/utxo.component';
     FormsModule,
     SelectModule,
     UtxoComponent,
+    ConsensusDialogComponent,
   ],
 })
 export class MinerProfileComponent {
@@ -35,6 +37,7 @@ export class MinerProfileComponent {
   showAllLogs = false;
   isBlockchainVisible = true;
   showWalletDetails = false;
+  showConsensusDialog = false;
   displayModeBlockchainBalance: 'all-private-keys' | 'with-balance' =
     'with-balance';
   walletBipFormat: BipType | 'all-bip-types' = 'bip84';
@@ -247,5 +250,18 @@ export class MinerProfileComponent {
     return this.miner.wallet.addresses.flatMap((addrObj) =>
       Object.values(addrObj).map((addr) => addr.address)
     );
+  }
+
+  openConsensusDialog() {
+    this.showConsensusDialog = true;
+  }
+
+  closeConsensusDialog() {
+    this.showConsensusDialog = false;
+  }
+
+  onConsensusVersionChange() {
+    // Handler para quando a versão de consenso for alterada
+    // (pode ser expandido se necessário)
   }
 }
