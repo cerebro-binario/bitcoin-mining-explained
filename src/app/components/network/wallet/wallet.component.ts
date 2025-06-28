@@ -142,7 +142,7 @@ export class WalletComponent {
     address: string;
     value: number;
     bipType?: BipType;
-    height: number;
+    blockHeight: number;
     txId: string;
     vout: number;
   }[] = [];
@@ -503,7 +503,7 @@ export class WalletComponent {
       address: utxo.address,
       value: utxo.output.value,
       bipType: utxo.bipType,
-      height: utxo.blockHeight,
+      blockHeight: utxo.blockHeight,
       txId: utxo.txId,
       vout: utxo.outputIndex,
     }));
@@ -671,6 +671,7 @@ export class WalletComponent {
         pubKey: '',
       },
       value: utxo.output?.value ?? 0,
+      blockHeight: utxo.blockHeight,
     }));
     // Monta outputs (destino + change)
     const outputs: TransactionOutput[] = this.txOutputs.map((o) => ({
@@ -679,6 +680,7 @@ export class WalletComponent {
         address: o.address, // ou gere o script a partir do endereço
         pubKey: '',
       },
+      blockHeight: this.node.currentBlock?.height ?? 0,
     }));
     const timestamp = Date.now();
     // Cria a transação

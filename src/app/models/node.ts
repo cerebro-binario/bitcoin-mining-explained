@@ -290,6 +290,7 @@ export class Node {
           address: this.miningAddress.address,
           pubKey: this.miningAddress.keys.pub.hex,
         },
+        blockHeight,
       },
     ];
     const coinbaseTx: Transaction = {

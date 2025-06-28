@@ -126,11 +126,13 @@ export interface TransactionInput {
   scriptSig: string; // Assinatura do input
   scriptPubKey: ScriptPubKey; // Endereço do dono do UTXO
   value: number; // Valor do UTXO em satoshis
+  blockHeight: number; // Altura do bloco de origem do UTXO
 }
 
 export interface TransactionOutput {
   value: number; // Valor em satoshis
   scriptPubKey: ScriptPubKey; // Script de bloqueio (endereço do destinatário)
+  blockHeight: number; // Altura do bloco de origem do UTXO
 }
 
 // Representa um nó na árvore de blocos
