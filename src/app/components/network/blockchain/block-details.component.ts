@@ -18,6 +18,7 @@ import { UtxoComponent } from '../../shared/utxo/utxo.component';
 import { Node } from '../../../models/node';
 import { BipType } from '../../../models/wallet.model';
 import { PaginationBarComponent } from '../wallet/pagination-bar.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-block-details',
@@ -101,10 +102,14 @@ export class BlockDetailsComponent {
     }, 0);
   }
 
-  constructor(private location: Location) {}
+  constructor(private router: Router) {}
 
   onClose() {
-    this.location.back();
+    if (this.node?.id) {
+      this.router.navigate(['/miners', this.node.id]);
+    } else {
+      this.router.navigate(['/']);
+    }
   }
 
   // Verifica se um endereço pertence à carteira do nó
