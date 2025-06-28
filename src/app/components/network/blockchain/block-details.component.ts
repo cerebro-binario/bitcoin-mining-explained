@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef } from '@angular/core';
 import {
   Block,
   Transaction,
@@ -22,6 +22,8 @@ import { PaginationBarComponent } from '../wallet/pagination-bar.component';
 export class BlockDetailsComponent {
   @Input() block!: Block;
   @Input() node!: Node;
+
+  @ViewChild('transactionsTop') transactionsTop!: ElementRef;
 
   // Paginação de transações
   pageSize = 5;
@@ -52,20 +54,40 @@ export class BlockDetailsComponent {
 
   goToFirstPage() {
     this.currentPage = 1n;
+    this.scrollToTransactionsTop();
   }
   goToPreviousPage() {
-    if (this.currentPage > 1n) this.currentPage--;
+    if (this.currentPage > 1n) {
+      this.currentPage--;
+      this.scrollToTransactionsTop();
+    }
   }
   goToNextPage() {
-    if (this.currentPage < this.totalPages) this.currentPage++;
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.scrollToTransactionsTop();
+    }
   }
   goToLastPage() {
     this.currentPage = this.totalPages;
+    this.scrollToTransactionsTop();
   }
   jumpToPage(page: bigint) {
     if (page >= 1n && page <= this.totalPages) {
       this.currentPage = page;
+      this.scrollToTransactionsTop();
     }
+  }
+
+  scrollToTransactionsTop() {
+    setTimeout(() => {
+      if (this.transactionsTop?.nativeElement) {
+        this.transactionsTop.nativeElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+    }, 0);
   }
 
   constructor(private location: Location) {}
