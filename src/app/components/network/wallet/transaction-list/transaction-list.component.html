@@ -115,81 +115,22 @@
               Detalhes da transação
             </div>
             <div class="flex flex-col gap-3">
-              <div
+              <app-utxo
                 *ngFor="let d of tx.details"
-                [ngClass]="{
-                  'bg-red-900/30 border-red-500': d.type === 'input',
-                  'bg-blue-900/30 border-blue-500': d.type === 'output',
-                  'bg-green-900/30 border-green-500': d.type === 'change',
-                  'bg-purple-900/30 border-purple-500':
-                    tx.type === 'Interna' && d.type === 'output'
-                }"
-                class="rounded-lg border-l-4 p-4 flex items-center gap-4 shadow"
-              >
-                <i
-                  [ngClass]="{
-                    'pi-arrow-up-right text-red-400': d.type === 'input',
-                    'pi-arrow-down-left text-blue-400':
-                      d.type === 'output' && tx.type !== 'Interna',
-                    'pi-sync text-green-400': d.type === 'change',
-                    'pi-sync text-purple-400':
-                      tx.type === 'Interna' && d.type === 'output'
-                  }"
-                  class="text-2xl pi"
-                ></i>
-                <div class="flex-1">
-                  <div class="text-xl font-bold">
-                    {{ d.value / 1e8 | number : "1.8-8" }}
-                    <span class="text-base">BTC</span>
-                  </div>
-                  <div
-                    class="font-mono text-xs text-zinc-300 flex items-center gap-2"
-                  >
-                    <a
-                      [routerLink]="['/miners', nodeId, 'addresses', d.address]"
-                      class="hover:underline"
-                    >
-                      {{ d.address }}
-                    </a>
-                    <button
-                      (click)="copyToClipboard(d.address)"
-                      class="ml-1 text-zinc-400 hover:text-blue-400"
-                    >
-                      <i class="pi pi-copy"></i>
-                    </button>
-                  </div>
-                  <div
-                    class="text-xs text-zinc-400 mt-1 flex gap-3 flex-wrap items-center"
-                  >
-                    <span
-                      *ngIf="d.type === 'change'"
-                      class="bg-green-700 text-white px-2 py-0.5 rounded"
-                      >Troco</span
-                    >
-                    <span>BIP: {{ d.addressType || "—" }}</span>
-                    <span
-                      >Wallet?
-                      <span
-                        [ngClass]="
-                          d.isWallet ? 'text-blue-400' : 'text-zinc-500'
-                        "
-                        >{{ d.isWallet ? "Sim" : "Não" }}</span
-                      ></span
-                    >
-                    <span>vout: {{ d.vout !== undefined ? d.vout : "—" }}</span>
-                    <span
-                      >TxID:
-                      <span class="font-mono">{{
-                        d.txId
-                          ? (d.txId | slice : 0 : 8) +
-                            "..." +
-                            (d.txId | slice : -6)
-                          : "—"
-                      }}</span></span
-                    >
-                  </div>
-                </div>
-              </div>
+                [value]="d.value"
+                [address]="d.address"
+                [txid]="d.txId || ''"
+                [vout]="d.vout ?? 0"
+                [isSpent]="d.type === 'input'"
+                [isChange]="d.type === 'change'"
+                [isWallet]="d.isWallet"
+                [isCoinbase]="tx.type === 'Coinbase'"
+                [compact]="true"
+                [showActions]="true"
+                [context]="d.type === 'input' ? 'input' : 'output'"
+                [isVirtual]="false"
+                [scriptSig]="d.scriptSig"
+              ></app-utxo>
             </div>
           </td>
         </tr>

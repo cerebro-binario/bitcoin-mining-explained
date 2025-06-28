@@ -38,6 +38,7 @@ export interface TransactionDetail {
   isWallet: boolean;
   txId?: string;
   vout?: number;
+  scriptSig?: string;
 }
 
 export interface TransactionView {
@@ -866,6 +867,7 @@ export class WalletComponent {
           isWallet: walletAddresses.has(input.scriptPubKey.address),
           txId: input.txid,
           vout: input.vout,
+          scriptSig: input.scriptSig,
         });
       });
       history.tx.outputs.forEach((output, idx) => {
@@ -900,6 +902,7 @@ export class WalletComponent {
           isWallet,
           txId: history.tx.id,
           vout: idx,
+          scriptSig: undefined,
         });
       });
 

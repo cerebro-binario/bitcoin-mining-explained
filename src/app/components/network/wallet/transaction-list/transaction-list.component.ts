@@ -3,6 +3,7 @@ import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { TransactionView } from '../wallet.component';
+import { UtxoComponent } from '../../../shared/utxo/utxo.component';
 
 // Função utilitária para copiar para a área de transferência
 function copyToClipboard(text: string) {
@@ -21,7 +22,7 @@ function copyToClipboard(text: string) {
 @Component({
   selector: 'app-transaction-list',
   standalone: true,
-  imports: [CommonModule, TableModule, RouterLink],
+  imports: [CommonModule, TableModule, RouterLink, UtxoComponent],
   templateUrl: './transaction-list.component.html',
 })
 export class TransactionListComponent {
