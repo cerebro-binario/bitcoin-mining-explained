@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  Input,
+  ViewChild,
+  ElementRef,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import {
   Block,
   Transaction,
@@ -22,6 +29,10 @@ import { PaginationBarComponent } from '../wallet/pagination-bar.component';
 export class BlockDetailsComponent {
   @Input() block!: Block;
   @Input() node!: Node;
+  @Input() hasPrevBlock: boolean = false;
+  @Input() hasNextBlock: boolean = false;
+  @Output() goPrevBlock = new EventEmitter<void>();
+  @Output() goNextBlock = new EventEmitter<void>();
 
   @ViewChild('transactionsTop') transactionsTop!: ElementRef;
 

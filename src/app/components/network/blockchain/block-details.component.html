@@ -1,7 +1,8 @@
 <div class="min-h-screen bg-zinc-950 text-zinc-100">
   <div
-    class="bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center gap-4"
+    class="bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center justify-between gap-4"
   >
+    <!-- Botão Voltar -->
     <button
       (click)="onClose()"
       class="text-zinc-400 hover:text-red-400 text-xl font-bold flex-shrink-0"
@@ -9,7 +10,8 @@
     >
       <i class="pi pi-times"></i>
     </button>
-    <div>
+    <!-- Título Centralizado -->
+    <div class="flex-1 flex flex-col items-center">
       <div class="text-lg font-bold text-blue-300 leading-tight">
         Bloco Bitcoin
       </div>
@@ -19,6 +21,25 @@
       <div class="font-mono text-xs text-zinc-400 break-all mt-1">
         Hash: {{ block.hash }}
       </div>
+    </div>
+    <!-- Navegação Prev/Next -->
+    <div class="flex items-center gap-2">
+      <button
+        class="p-1.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition disabled:opacity-40"
+        [disabled]="!hasPrevBlock"
+        (click)="goPrevBlock.emit()"
+        title="Bloco anterior"
+      >
+        <i class="pi pi-angle-left text-lg"></i>
+      </button>
+      <button
+        class="p-1.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition disabled:opacity-40"
+        [disabled]="!hasNextBlock"
+        (click)="goNextBlock.emit()"
+        title="Próximo bloco"
+      >
+        <i class="pi pi-angle-right text-lg"></i>
+      </button>
     </div>
   </div>
 
