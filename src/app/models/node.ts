@@ -529,6 +529,13 @@ export class Node {
     return parseInt(significantBytes.toString(16) + significantBits, 16);
   }
 
+  // Converte nBits para target (método inverso)
+  private nBitsToTarget(nBits: number): bigint {
+    const exponent = nBits >> 24;
+    const mantissa = nBits & 0x00ffffff;
+    return BigInt(mantissa) * (1n << (8n * (BigInt(exponent) - 3n)));
+  }
+
   private calculateBlockSubsidy(blockHeight: number): number {
     const halvings = Math.floor(
       blockHeight / this.consensus.parameters.halvingInterval
@@ -1707,10 +1714,20 @@ export class Node {
     const difficulty = this.getDifficulty(block);
 
     if (difficulty.next) {
+      const targetFactor = difficulty.next.adjustmentFactor;
+      const difficultyFactor = 1 / targetFactor; // Inverso do fator do target
+
+      // Calcula os targets para exibição
+      const oldTarget = this.nBitsToTarget(difficulty.current.nBits);
+      const newTarget = this.nBitsToTarget(difficulty.next.nBits);
+
       const eventData = {
         oldDifficulty: difficulty.current.nBits,
         newDifficulty: difficulty.next.nBits,
-        adjustmentFactor: difficulty.next.adjustmentFactor.toFixed(2),
+        oldTarget: oldTarget.toString(),
+        newTarget: newTarget.toString(),
+        targetFactor: targetFactor.toFixed(2), // Fator do target (ex: 0.46x = target menor)
+        difficultyFactor: difficultyFactor.toFixed(2), // Fator da dificuldade (ex: 2.17x = dificuldade maior)
         height: block.height,
       };
       const adjustEvent = event

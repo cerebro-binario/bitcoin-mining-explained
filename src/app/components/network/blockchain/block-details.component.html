@@ -175,13 +175,20 @@
                       )
                     }}</span>
                   </div>
-                  <span class="ml-0"
-                    >(Fator:
-                    <span class="font-mono">{{
-                      event.data.adjustmentFactor
-                    }}</span
-                    >x)</span
-                  >
+                  <div class="mt-1 text-zinc-500">
+                    <span
+                      >Fator do target:
+                      <span class="font-mono text-zinc-300"
+                        >{{ event.data.targetFactor }}x</span
+                      ></span
+                    >
+                    <span class="ml-3"
+                      >Fator da dificuldade:
+                      <span class="font-mono text-zinc-300"
+                        >{{ event.data.difficultyFactor }}x</span
+                      ></span
+                    >
+                  </div>
                 </div>
                 <div
                   class="text-xs text-zinc-400 font-normal mt-0.5 ml-11"

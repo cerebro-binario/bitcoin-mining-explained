@@ -180,7 +180,7 @@ export const EVENT_LOG_VISUAL_MAP: Record<
     icon: 'pi pi-chart-line',
     label: 'Ajuste de Dificuldade',
     template:
-      'Dificuldade ajustada: {{oldDifficulty}} -> {{newDifficulty}} (fator: {{adjustmentFactor}}x)',
+      'Dificuldade ajustada: {{oldDifficulty}} -> {{newDifficulty}} (target: {{targetFactor}}x, dificuldade: {{difficultyFactor}}x)',
   },
   halving: {
     color: 'text-orange-400',
