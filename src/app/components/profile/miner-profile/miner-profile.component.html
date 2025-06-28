@@ -419,6 +419,7 @@
                                 [isVirtual]="activeTab === 'transactions'"
                                 [compact]="true"
                                 [showActions]="false"
+                                [blockHeight]="miner.currentBlock.height"
                                 context="input"
                               ></app-utxo>
                             </div>
@@ -452,6 +453,7 @@
                                 [isVirtual]="activeTab === 'transactions'"
                                 [compact]="true"
                                 [showActions]="false"
+                                [blockHeight]="miner.currentBlock.height"
                                 context="output"
                               ></app-utxo>
                             </div>

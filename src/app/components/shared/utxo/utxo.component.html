@@ -98,6 +98,13 @@
       <span class="text-zinc-500">Referência:</span>
       <span class="ml-2">{{ vout }}</span>
     </div>
+    <!-- Bloco -->
+    <div class="text-xs text-zinc-400 mt-1 font-mono">
+      <span class="text-zinc-500">Bloco:</span>
+      <span class="ml-2">{{
+        blockHeight !== undefined ? blockHeight : "—"
+      }}</span>
+    </div>
     <!-- Endereço -->
     <div class="flex items-center gap-2 mt-3">
       <span class="font-mono text-xs text-blue-300 break-all">{{
@@ -183,6 +190,13 @@
     <div class="text-xs text-zinc-400 font-mono">
       <span class="text-zinc-500">Referência:</span>
       <span class="ml-2">{{ vout }}</span>
+    </div>
+    <!-- Bloco -->
+    <div class="text-xs text-zinc-400 font-mono">
+      <span class="text-zinc-500">Bloco:</span>
+      <span class="ml-2">{{
+        blockHeight !== undefined ? blockHeight : "—"
+      }}</span>
     </div>
     <!-- Endereço -->
     <div class="flex items-center gap-2 mt-3">

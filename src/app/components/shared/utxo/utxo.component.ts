@@ -23,6 +23,7 @@ export class UtxoComponent {
   @Input() showActions: boolean = true; // mostrar botões copiar, etc.
   @Input() context?: 'input' | 'output' | 'utxo-list'; // para customizar ícone/cor
   @Input() isVirtual: boolean = false;
+  @Input() blockHeight?: number;
 
   get valueBTC(): string {
     return (this.value / 1e8).toLocaleString('pt-BR', {

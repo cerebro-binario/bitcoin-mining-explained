@@ -39,6 +39,7 @@ export interface TransactionDetail {
   txId?: string;
   vout?: number;
   scriptSig?: string;
+  blockHeight?: number;
 }
 
 export interface TransactionView {
@@ -868,6 +869,7 @@ export class WalletComponent {
           txId: input.txid,
           vout: input.vout,
           scriptSig: input.scriptSig,
+          blockHeight: history.blockHeight,
         });
       });
       history.tx.outputs.forEach((output, idx) => {
@@ -903,6 +905,7 @@ export class WalletComponent {
           txId: history.tx.id,
           vout: idx,
           scriptSig: undefined,
+          blockHeight: history.blockHeight,
         });
       });
 
