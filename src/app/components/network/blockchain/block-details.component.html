@@ -77,19 +77,33 @@
             *ngFor="let tx of pagedTransactions; let i = index"
             class="bg-zinc-800 rounded p-4 border border-zinc-700 relative flex flex-col gap-2"
           >
-            <div class="flex items-center gap-2 mb-2">
-              <span class="font-mono text-xs text-blue-300"
-                >Tx #{{ getGlobalTxIndex(i) }}</span
-              >
+            <div
+              class="flex items-center gap-2 mb-2 px-2 py-1 rounded bg-zinc-900/80 border border-zinc-700"
+            >
               <span
-                class="font-mono text-xs text-blue-300 truncate max-w-[180px]"
+                class="text-blue-400 font-bold text-sm flex items-center gap-1"
+              >
+                <i class="pi pi-hashtag text-xs"></i> Tx #{{
+                  getGlobalTxIndex(i)
+                }}
+              </span>
+              <span
+                class="font-mono text-xs text-blue-300 truncate max-w-[220px] ml-2"
                 >{{ tx.id }}</span
               >
+              <button
+                class="ml-1 p-1 rounded-full hover:bg-blue-900/40 transition"
+                (click)="$event.stopPropagation(); copyToClipboard(tx.id)"
+                title="Copiar TxID"
+              >
+                <i class="pi pi-copy text-xs text-blue-400"></i>
+              </button>
               <span
                 *ngIf="getGlobalTxIndex(i) === 0"
-                class="ml-2 text-[10px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded font-bold tracking-wide"
-                >COINBASE</span
+                class="ml-3 px-2 py-0.5 rounded-full bg-yellow-400 text-yellow-900 text-xs font-bold flex items-center gap-1 shadow"
               >
+                <i class="pi pi-gift"></i> COINBASE
+              </span>
             </div>
             <div
               class="flex flex-col md:flex-row gap-4 items-stretch justify-between"

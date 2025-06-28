@@ -159,4 +159,8 @@ export class BlockDetailsComponent {
   toNumber(val: bigint): number {
     return Number(val);
   }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+  }
 }
