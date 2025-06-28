@@ -115,22 +115,48 @@
               Detalhes da transação
             </div>
             <div class="flex flex-col gap-3">
-              <app-utxo
-                *ngFor="let d of tx.details"
-                [value]="d.value"
-                [address]="d.address"
-                [txid]="d.txId || ''"
-                [vout]="d.vout ?? 0"
-                [isSpent]="d.type === 'input'"
-                [isChange]="d.type === 'change'"
-                [isWallet]="d.isWallet"
-                [isCoinbase]="tx.type === 'Coinbase'"
-                [compact]="true"
-                [showActions]="true"
-                [context]="d.type === 'input' ? 'input' : 'output'"
-                [isVirtual]="false"
-                [scriptSig]="d.scriptSig"
-              ></app-utxo>
+              <ng-container *ngIf="getInputs(tx.details).length">
+                <div class="text-xs text-zinc-400 font-bold mb-1">Inputs</div>
+                <ng-container *ngFor="let d of getInputs(tx.details)">
+                  <app-utxo
+                    [value]="d.value"
+                    [address]="d.address"
+                    [txid]="d.txId || ''"
+                    [vout]="d.vout ?? 0"
+                    [isSpent]="true"
+                    [isChange]="false"
+                    [isWallet]="d.isWallet"
+                    [isCoinbase]="tx.type === 'Coinbase'"
+                    [compact]="true"
+                    [showActions]="true"
+                    [context]="'input'"
+                    [isVirtual]="false"
+                    [scriptSig]="d.scriptSig"
+                  ></app-utxo>
+                </ng-container>
+              </ng-container>
+              <ng-container *ngIf="getOutputs(tx.details).length">
+                <div class="text-xs text-zinc-400 font-bold mb-1 mt-3">
+                  Outputs
+                </div>
+                <ng-container *ngFor="let d of getOutputs(tx.details)">
+                  <app-utxo
+                    [value]="d.value"
+                    [address]="d.address"
+                    [txid]="d.txId || ''"
+                    [vout]="d.vout ?? 0"
+                    [isSpent]="false"
+                    [isChange]="d.type === 'change'"
+                    [isWallet]="d.isWallet"
+                    [isCoinbase]="tx.type === 'Coinbase'"
+                    [compact]="true"
+                    [showActions]="true"
+                    [context]="'output'"
+                    [isVirtual]="false"
+                    [scriptSig]="d.scriptSig"
+                  ></app-utxo>
+                </ng-container>
+              </ng-container>
             </div>
           </td>
         </tr>

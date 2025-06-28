@@ -36,4 +36,12 @@ export class TransactionListComponent {
   copyToClipboard(text: string) {
     copyToClipboard(text);
   }
+
+  getInputs(details: any[]): any[] {
+    return details.filter((d) => d.type === 'input');
+  }
+
+  getOutputs(details: any[]): any[] {
+    return details.filter((d) => d.type === 'output' || d.type === 'change');
+  }
 }
