@@ -298,6 +298,37 @@
         Nenhum UTXO encontrado para este endereço.
       </div>
     </div>
+
+    <!-- Transações -->
+    <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
+      <h3 class="text-lg font-semibold text-zinc-200 mb-6">Transações</h3>
+
+      <div class="flex-1 min-h-0 flex flex-col">
+        <app-transaction-list
+          [transactions]="pagedTransactionViews"
+          [walletAddresses]="[addressData.address || '']"
+          [totalTransactions]="transactionViews.length"
+          [currentPage]="transactionCurrentPageDisplay"
+          [pageSize]="transactionPagination.pageSize"
+          [nodeId]="nodeId || null"
+          class="flex-1 h-full"
+        ></app-transaction-list>
+
+        <app-pagination-bar
+          *ngIf="transactionTotalPagesDisplay > 1"
+          [currentPage]="transactionCurrentPageDisplay"
+          [totalPages]="transactionTotalPagesDisplay"
+          [percent]="transactionPagePercent"
+          [prevDisabled]="transactionPrevDisabled"
+          [nextDisabled]="transactionNextDisabled"
+          (goToFirst)="transactionGoToFirstPage()"
+          (goToPrevious)="transactionGoToPreviousPage()"
+          (goToNext)="transactionGoToNextPage()"
+          (goToLast)="transactionGoToLastPage()"
+          (jumpToPage)="transactionJumpToPage($event)"
+        ></app-pagination-bar>
+      </div>
+    </div>
   </div>
 
   <!-- Loading/Error state -->

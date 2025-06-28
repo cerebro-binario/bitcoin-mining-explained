@@ -1,18 +1,51 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
 import { KeyService } from '../../../../services/key.service';
 import { getAddressType } from '../../../../utils/tools';
 import { UtxoComponent } from '../../../shared/utxo/utxo.component';
-import { RouterLink } from '@angular/router';
+import { PaginationBarComponent } from '../pagination-bar.component';
+import { TransactionListComponent } from '../transaction-list/transaction-list.component';
+
+export interface TransactionDetail {
+  type: 'input' | 'output' | 'change';
+  value: number;
+  address: string;
+  addressType?: BipType;
+  isWallet: boolean;
+  txId?: string;
+  vout?: number;
+  scriptSig?: string;
+  blockHeight?: number;
+  signatureValid?: boolean;
+}
+
+export interface TransactionView {
+  id: string;
+  type: 'Recebida' | 'Enviada' | 'Coinbase' | 'Interna';
+  value: number; // valor principal consolidado
+  address: string; // endereço principal (destino ou recebido)
+  bipType?: BipType;
+  timestamp: number;
+  status: string;
+  details: TransactionDetail[];
+  transactionIndex: number; // Índice da transação no bloco (0 = coinbase, 1+ = transações normais)
+  blockHeight: number; // Altura do bloco para ordenação
+}
 
 @Component({
   selector: 'app-address-details',
   standalone: true,
-  imports: [CommonModule, UtxoComponent, RouterLink],
+  imports: [
+    CommonModule,
+    UtxoComponent,
+    RouterLink,
+    TransactionListComponent,
+    PaginationBarComponent,
+  ],
   templateUrl: './address-details.component.html',
   styleUrls: ['./address-details.component.scss'],
 })
@@ -21,6 +54,16 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
   addressId?: string;
   nodeId?: number;
   spentUtxos: any[] = [];
+  transactionViews: TransactionView[] = [];
+
+  // Paginação de transações
+  transactionPagination = {
+    pageSize: 10,
+    currentPage: 0n,
+    totalPages: 0n,
+  };
+  pagedTransactionViews: TransactionView[] = [];
+
   private subscription = new Subscription();
   private privateKeyParam?: string;
 
@@ -31,14 +74,17 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // Subscribe to route params
     this.subscription.add(
       this.route.paramMap.subscribe((paramMap) => {
         this.nodeId = +paramMap.get('id')!;
         this.addressId = paramMap.get('address')!;
+        this.setupBalancesSubscription();
         this.loadAddressData();
       })
     );
 
+    // Subscribe to query params
     this.subscription.add(
       this.route.queryParamMap.subscribe((queryParamMap) => {
         const pk = queryParamMap.get('pk');
@@ -48,12 +94,20 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
         }
       })
     );
+  }
 
-    this.subscription.add(
-      this.bitcoinNetworkService.nodes$.subscribe((nodes) => {
-        this.loadAddressData();
-      })
+  private setupBalancesSubscription() {
+    // Find the node directly
+    const minerNode = this.bitcoinNetworkService.nodes.find(
+      (node: any) => node.id === this.nodeId
     );
+    if (minerNode && minerNode.balances$) {
+      this.subscription.add(
+        minerNode.balances$.subscribe(() => {
+          this.loadAddressData();
+        })
+      );
+    }
   }
 
   ngOnDestroy() {
@@ -74,6 +128,7 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     if (foundAddressData) {
       this.addressData = foundAddressData;
       this.calculateSpentUtxos();
+      this.updateAddressTransactions();
       return;
     }
 
@@ -83,6 +138,7 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     if (foundAddressData) {
       this.addressData = foundAddressData;
       this.calculateSpentUtxos();
+      this.updateAddressTransactions();
       return;
     }
 
@@ -102,6 +158,7 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
             keys: reconstructedData.keys,
           };
           this.calculateSpentUtxos();
+          this.updateAddressTransactions();
           return;
         }
 
@@ -114,12 +171,14 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
             keys: reconstructedData.keys,
           };
           this.calculateSpentUtxos();
+          this.updateAddressTransactions();
           return;
         }
 
         // Se não encontrou em nenhum lugar, usa os dados reconstruídos
         this.addressData = reconstructedData;
         this.calculateSpentUtxos();
+        this.updateAddressTransactions();
         return;
       }
     }
@@ -193,6 +252,171 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private updateAddressTransactions() {
+    if (!this.addressData || !this.addressData.transactions) {
+      this.transactionViews = [];
+      this.pagedTransactionViews = [];
+      return;
+    }
+
+    const transactionViews: TransactionView[] = [];
+
+    for (const history of this.addressData.transactions) {
+      const timestamp = history.timestamp;
+      const status = history.status || 'Confirmada';
+      const details: TransactionDetail[] = [];
+
+      // Processa inputs
+      history.tx.inputs.forEach((input) => {
+        details.push({
+          type: 'input',
+          value: input.value,
+          address: input.scriptPubKey.address,
+          addressType: this.detectBipType(input.scriptPubKey.address),
+          isWallet: input.scriptPubKey.address === this.addressData!.address,
+          txId: input.txid,
+          vout: input.vout,
+          scriptSig: input.scriptSig,
+          blockHeight: input.blockHeight,
+          signatureValid: input.signatureValid,
+        });
+      });
+
+      // Processa outputs
+      history.tx.outputs.forEach((output, idx) => {
+        const isWallet =
+          output.scriptPubKey.address === this.addressData!.address;
+        let detailType: TransactionDetail['type'] = 'output';
+
+        if (
+          isWallet &&
+          history.tx.inputs.some(
+            (i) => i.scriptPubKey.address === this.addressData!.address
+          )
+        ) {
+          // Identifica o change: output da wallet com maior vout (último output)
+          const walletOutputs = history.tx.outputs
+            .map((o, i) => ({ output: o, index: i }))
+            .filter(
+              ({ output }) =>
+                output.scriptPubKey.address === this.addressData!.address
+            )
+            .sort((a, b) => b.index - a.index); // Ordena por vout decrescente
+
+          // O output com maior vout é o change (troco)
+          if (walletOutputs.length > 0 && walletOutputs[0].index === idx) {
+            detailType = 'change';
+          }
+        }
+
+        details.push({
+          type: detailType,
+          value: output.value,
+          address: output.scriptPubKey.address,
+          addressType: this.detectBipType(output.scriptPubKey.address),
+          isWallet,
+          txId: history.tx.id,
+          vout: idx,
+          scriptSig: undefined,
+          blockHeight: history.blockHeight,
+        });
+      });
+
+      const hasInputFromAddress = history.tx.inputs.some(
+        (i) => i.scriptPubKey.address === this.addressData!.address
+      );
+
+      if (hasInputFromAddress) {
+        // Se houver outputs para fora do endereço, soma esses valores
+        const externalOutputs = history.tx.outputs.filter(
+          (o) => o.scriptPubKey.address !== this.addressData!.address
+        );
+        let valueSent = 0;
+        let address = '—';
+        let txType: TransactionView['type'] = 'Enviada';
+
+        if (externalOutputs.length > 0) {
+          valueSent = externalOutputs.reduce((sum, o) => sum + o.value, 0);
+          address = externalOutputs[0].scriptPubKey.address;
+        } else {
+          // Se todos os outputs são para o próprio endereço, exibe como 'Interna'
+          const addressOutputs = history.tx.outputs.filter(
+            (o) => o.scriptPubKey.address === this.addressData!.address
+          );
+          if (addressOutputs.length === 1) {
+            valueSent = addressOutputs[0].value;
+            address = addressOutputs[0].scriptPubKey.address;
+          } else if (addressOutputs.length > 1) {
+            const minOutput = addressOutputs.reduce(
+              (min, o) => (o.value < min.value ? o : min),
+              addressOutputs[0]
+            );
+            valueSent = minOutput.value;
+            address = minOutput.scriptPubKey.address;
+          }
+          txType = 'Interna';
+        }
+
+        transactionViews.push({
+          id: history.tx.id,
+          type: txType,
+          value: valueSent,
+          address,
+          bipType: this.detectBipType(address),
+          timestamp,
+          status,
+          details,
+          transactionIndex: history.transactionIndex || 0,
+          blockHeight: history.blockHeight,
+        });
+      }
+
+      if (!hasInputFromAddress) {
+        const outputsToAddress = history.tx.outputs.filter(
+          (o) => o.scriptPubKey.address === this.addressData!.address
+        );
+        outputsToAddress.forEach((o) => {
+          transactionViews.push({
+            id: history.tx.id,
+            type: history.tx.inputs.length === 0 ? 'Coinbase' : 'Recebida',
+            value: o.value,
+            address: o.scriptPubKey.address,
+            bipType: this.detectBipType(o.scriptPubKey.address),
+            timestamp,
+            status,
+            details,
+            transactionIndex: history.transactionIndex || 0,
+            blockHeight: history.blockHeight,
+          });
+        });
+      }
+    }
+
+    // Ordena as transações
+    this.transactionViews = transactionViews.sort((a, b) => {
+      // Primeiro ordena por altura do bloco (decrescente - blocos mais recentes primeiro)
+      if (a.blockHeight !== b.blockHeight) {
+        return b.blockHeight - a.blockHeight;
+      }
+      // No mesmo bloco, coinbase primeiro (transactionIndex = 0)
+      if (a.transactionIndex !== b.transactionIndex) {
+        return b.transactionIndex - a.transactionIndex;
+      }
+      // Se ainda empatar, ordena por timestamp (decrescente)
+      return b.timestamp - a.timestamp;
+    });
+
+    this.updateTransactionTotalPages();
+    this.updateTransactionViews();
+  }
+
+  private detectBipType(address: string): BipType | undefined {
+    if (address.startsWith('1')) return 'bip44';
+    if (address.startsWith('3')) return 'bip49';
+    if (address.startsWith('bc1')) return 'bip84';
+    return undefined;
+  }
+
   private reconstructAddressDataFromPrivateKey(
     privateKeyDecimal: string
   ): BitcoinAddressData | undefined {
@@ -247,5 +471,107 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
 
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
+  }
+
+  // Métodos de paginação
+  get transactionCurrentPageDisplay(): number {
+    return Number(this.transactionPagination.currentPage) + 1;
+  }
+
+  get transactionTotalPagesDisplay(): number {
+    return Number(this.transactionPagination.totalPages);
+  }
+
+  get transactionPagePercent(): number {
+    if (this.transactionPagination.totalPages === 0n) return 0;
+    return (
+      ((Number(this.transactionPagination.currentPage) + 1) /
+        Number(this.transactionPagination.totalPages)) *
+      100
+    );
+  }
+
+  get transactionPrevDisabled(): boolean {
+    return this.transactionPagination.currentPage === 0n;
+  }
+
+  get transactionNextDisabled(): boolean {
+    return (
+      this.transactionPagination.currentPage >=
+        this.transactionPagination.totalPages - 1n ||
+      this.transactionPagination.totalPages === 0n
+    );
+  }
+
+  transactionGoToFirstPage() {
+    this.transactionPagination.currentPage = 0n;
+    this.updateTransactionViews();
+  }
+
+  transactionGoToPreviousPage() {
+    if (this.transactionPagination.currentPage > 0n) {
+      this.transactionPagination.currentPage--;
+      this.updateTransactionViews();
+    }
+  }
+
+  transactionGoToNextPage() {
+    if (
+      this.transactionPagination.currentPage <
+      this.transactionPagination.totalPages - 1n
+    ) {
+      this.transactionPagination.currentPage++;
+      this.updateTransactionViews();
+    }
+  }
+
+  transactionGoToLastPage() {
+    this.transactionPagination.currentPage =
+      this.transactionPagination.totalPages - 1n;
+    this.updateTransactionViews();
+  }
+
+  transactionGoToRandomPage() {
+    const rand = BigInt(
+      Math.floor(Math.random() * Number(this.transactionPagination.totalPages))
+    );
+    this.transactionPagination.currentPage = rand;
+    this.updateTransactionViews();
+  }
+
+  transactionJumpToPage(pageInt: bigint) {
+    try {
+      let page = pageInt;
+      if (page < 1n) page = 1n;
+      if (page > this.transactionPagination.totalPages)
+        page = this.transactionPagination.totalPages;
+      this.transactionPagination.currentPage = page - 1n;
+      this.updateTransactionViews();
+    } catch {
+      // ignore invalid input
+    }
+  }
+
+  private updateTransactionViews() {
+    const start =
+      Number(this.transactionPagination.currentPage) *
+      Number(this.transactionPagination.pageSize);
+    const end = start + Number(this.transactionPagination.pageSize);
+    this.pagedTransactionViews = this.transactionViews.slice(start, end);
+  }
+
+  private updateTransactionTotalPages() {
+    const totalRecords = BigInt(this.transactionViews.length);
+    this.transactionPagination = {
+      ...this.transactionPagination,
+      totalPages: this.ceilBigInt(
+        totalRecords,
+        BigInt(this.transactionPagination.pageSize)
+      ),
+    };
+  }
+
+  private ceilBigInt(a: bigint, b: bigint): bigint {
+    return (a + b - 1n) / b;
   }
 }
