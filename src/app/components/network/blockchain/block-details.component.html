@@ -135,6 +135,48 @@
                   <span *ngIf="event.type === 'consensus-change'"
                     >Mudança de Consenso</span
                   >
+                  <div
+                    class="text-xs text-zinc-400 font-normal mt-0.5"
+                    *ngIf="event.type === 'halving' && event.data"
+                  >
+                    Recompensa:
+                    <span class="font-mono">{{ event.data.oldSubsidy }}</span> →
+                    <span class="font-mono">{{ event.data.newSubsidy }}</span>
+                    BTC
+                  </div>
+                  <div
+                    class="text-xs text-zinc-400 font-normal mt-0.5"
+                    *ngIf="event.type === 'difficulty-adjustment' && event.data"
+                  >
+                    Dificuldade:
+                    <span class="font-mono">{{
+                      event.data.oldDifficulty
+                    }}</span>
+                    →
+                    <span class="font-mono">{{
+                      event.data.newDifficulty
+                    }}</span>
+                    <span class="ml-2"
+                      >(Fator:
+                      <span class="font-mono">{{
+                        event.data.adjustmentFactor
+                      }}</span
+                      >x)</span
+                    >
+                  </div>
+                  <div
+                    class="text-xs text-zinc-400 font-normal mt-0.5"
+                    *ngIf="event.type === 'consensus-change' && event.data"
+                  >
+                    Versão:
+                    <span class="font-mono"
+                      >v{{ event.data.oldConsensus?.version }}</span
+                    >
+                    →
+                    <span class="font-mono"
+                      >v{{ event.data.newConsensus?.version }}</span
+                    >
+                  </div>
                 </div>
                 <span
                   class="text-xs text-zinc-400 ml-2"
