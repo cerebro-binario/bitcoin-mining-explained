@@ -43,6 +43,16 @@
     </div>
   </div>
 
+  <ng-container *ngIf="block && node && !isActiveBlock()">
+    <div
+      class="bg-yellow-900 text-yellow-200 border border-yellow-600 px-6 py-3 text-center font-semibold text-base rounded-b-none rounded-t-lg"
+    >
+      <i class="pi pi-code-branch mr-2"></i>
+      Este bloco faz parte de um <span class="font-bold">fork inativo</span> da
+      blockchain.
+    </div>
+  </ng-container>
+
   <div class="container mx-auto px-6 py-8" *ngIf="block">
     <!-- Informações do Bloco -->
     <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6 mb-8 w-full">

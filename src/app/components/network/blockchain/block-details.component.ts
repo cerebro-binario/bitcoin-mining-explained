@@ -179,4 +179,16 @@ export class BlockDetailsComponent {
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
   }
+
+  isActiveBlock(): boolean {
+    if (!this.node || !this.block) return false;
+    for (const h of this.node.heights) {
+      for (const bn of h.blocks) {
+        if (bn.block.hash === this.block.hash) {
+          return bn.isActive;
+        }
+      }
+    }
+    return false;
+  }
 }
