@@ -1,16 +1,23 @@
 <div class="min-h-screen bg-zinc-950 text-zinc-100">
-  <div class="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
-    <div class="flex items-center gap-4 mt-4">
-      <div>
-        <div class="text-lg font-bold text-blue-300 leading-tight">
-          Bloco Bitcoin
-        </div>
-        <div class="font-mono text-base text-zinc-200 break-all">
-          #{{ block.height }}
-        </div>
-        <div class="font-mono text-xs text-zinc-400 break-all mt-1">
-          Hash: {{ block.hash }}
-        </div>
+  <div
+    class="bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center gap-4"
+  >
+    <button
+      (click)="onClose()"
+      class="text-zinc-400 hover:text-red-400 text-xl font-bold flex-shrink-0"
+      title="Voltar"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+    <div>
+      <div class="text-lg font-bold text-blue-300 leading-tight">
+        Bloco Bitcoin
+      </div>
+      <div class="font-mono text-base text-zinc-200 break-all">
+        #{{ block.height }}
+      </div>
+      <div class="font-mono text-xs text-zinc-400 break-all mt-1">
+        Hash: {{ block.hash }}
       </div>
     </div>
   </div>

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { Block } from '../../../models/block.model';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-block-details',
@@ -11,4 +12,10 @@ import { Block } from '../../../models/block.model';
 })
 export class BlockDetailsComponent {
   @Input() block!: Block;
+
+  constructor(private location: Location) {}
+
+  onClose() {
+    this.location.back();
+  }
 }
