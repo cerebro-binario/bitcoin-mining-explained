@@ -10,12 +10,19 @@
 >
   <!-- Linha de badges no topo: Coinbase (esquerda) e status (direita) -->
   <div class="flex items-start justify-between w-full mb-1">
-    <div>
+    <div class="flex items-center gap-2">
       <span
         *ngIf="isCoinbase"
         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400 text-yellow-900 text-xs font-bold shadow"
       >
         <i class="pi pi-gift"></i> Coinbase
+      </span>
+      <span
+        *ngIf="isChange"
+        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-700 text-white text-xs font-bold shadow"
+        title="Troco"
+      >
+        <i class="pi pi-refresh"></i> Troco
       </span>
     </div>
     <div>
@@ -93,7 +100,7 @@
     </div>
     <!-- Endereço -->
     <div class="flex items-center gap-2 mt-3">
-      <span class="font-mono text-sm text-blue-300 break-all">{{
+      <span class="font-mono text-xs text-blue-300 break-all">{{
         address
       }}</span>
       <button
@@ -132,11 +139,6 @@
           </div>
         </ng-template>
       </div>
-    </div>
-    <div class="utxo-badges">
-      <span *ngIf="isChange" class="badge badge-change" title="Troco"
-        >Troco</span
-      >
     </div>
   </ng-container>
   <ng-template #compactView>
@@ -195,11 +197,6 @@
       >
         <i class="pi pi-copy"></i>
       </button>
-    </div>
-    <div class="utxo-badges">
-      <span *ngIf="isChange" class="badge badge-change" title="Troco"
-        >Troco</span
-      >
     </div>
     <!-- Assinatura (apenas se existir) -->
     <div
