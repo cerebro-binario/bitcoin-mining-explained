@@ -1197,6 +1197,9 @@ export class WalletComponent {
     if (this.signatureMode === mode) return;
     this.signatureMode = mode;
     this.updateSignatureState();
+    if (mode === 'auto') {
+      this.updateTransactionPreview();
+    }
   }
 
   updateSignatureState() {

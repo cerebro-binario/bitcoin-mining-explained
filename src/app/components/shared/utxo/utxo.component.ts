@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import {
+  Component,
+  Input,
+  ContentChild,
+  AfterContentInit,
+  ElementRef,
+} from '@angular/core';
 
 @Component({
   selector: 'app-utxo',
@@ -8,7 +14,7 @@ import { Component, Input } from '@angular/core';
   standalone: true,
   imports: [CommonModule],
 })
-export class UtxoComponent {
+export class UtxoComponent implements AfterContentInit {
   @Input() value!: number; // em satoshis
   @Input() address!: string;
   @Input() txid!: string;
@@ -24,6 +30,15 @@ export class UtxoComponent {
   @Input() context?: 'input' | 'output' | 'utxo-list'; // para customizar ícone/cor
   @Input() isVirtual: boolean = false;
   @Input() blockHeight?: number;
+  @Input() signatureMode?: 'auto' | 'manual';
+
+  @ContentChild('[assinatura]', { static: false, read: ElementRef })
+  customSignatureContent!: ElementRef;
+  hasCustomSignatureContent = false;
+
+  ngAfterContentInit() {
+    this.hasCustomSignatureContent = !!this.customSignatureContent;
+  }
 
   get valueBTC(): string {
     return (this.value / 1e8).toLocaleString('pt-BR', {

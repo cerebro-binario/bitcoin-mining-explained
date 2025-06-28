@@ -445,7 +445,44 @@
                   [compact]="false"
                   [showActions]="false"
                   [isVirtual]="true"
-                ></app-utxo>
+                  [signatureMode]="signatureMode"
+                >
+                  <ng-container *ngIf="signatureMode === 'manual'" assinatura>
+                    <div class="flex flex-col gap-2 w-full py-2">
+                      <div class="flex flex-row gap-2 items-center">
+                        <p-select
+                          [options]="availablePrivateKeys"
+                          [(ngModel)]="selectedPrivateKey[i]"
+                          optionLabel="address"
+                          optionValue="privateKey"
+                          placeholder="Selecione a chave"
+                          [showClear]="true"
+                          [ngModelOptions]="{ standalone: true }"
+                          [filter]="true"
+                          [appendTo]="'body'"
+                          styleClass="max-w-xs w-full"
+                          (onChange)="onPrivateKeySelectChange(i, $event.value)"
+                        ></p-select>
+                        <button
+                          type="button"
+                          (click)="
+                            trySignInputWithKey(i, selectedPrivateKey[i]!)
+                          "
+                          class="px-4 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
+                          [disabled]="!selectedPrivateKey[i]"
+                        >
+                          Assinar Input
+                        </button>
+                      </div>
+                      <div
+                        *ngIf="inputSignatureErrors[i]"
+                        class="mt-1 text-xs text-red-400 font-mono w-full text-left"
+                      >
+                        {{ inputSignatureErrors[i] }}
+                      </div>
+                    </div>
+                  </ng-container>
+                </app-utxo>
               </div>
             </div>
 

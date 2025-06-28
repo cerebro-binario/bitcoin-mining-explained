@@ -131,21 +131,43 @@
     <!-- Campo de assinatura -->
     <div class="mt-4 border-t border-dashed border-zinc-700 pt-3">
       <div class="text-xs text-zinc-500 mb-1">Assinatura do Proprietário</div>
-      <div
-        class="h-12 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-center"
-      >
-        <ng-container *ngIf="scriptSig; else unsigned">
-          <div class="text-green-400 font-mono text-sm flex items-center gap-2">
-            <i class="pi pi-check-circle text-green-400"></i>
-            {{ scriptSig | slice : 0 : 16 }}... (assinada)
-          </div>
-        </ng-container>
-        <ng-template #unsigned>
-          <div class="text-zinc-600 italic text-sm">
-            Não assinado - UTXO disponível para gasto
-          </div>
-        </ng-template>
-      </div>
+      <ng-content select="[assinatura]"></ng-content>
+      <ng-container *ngIf="!hasCustomSignatureContent">
+        <div
+          class="h-12 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-between px-4 mt-3 w-full"
+        >
+          <ng-container *ngIf="scriptSig; else unsigned">
+            <div class="flex items-center gap-3 w-full">
+              <i class="pi pi-check-circle text-green-400"></i>
+              <span
+                class="truncate max-w-[16rem] text-green-300 font-mono text-sm"
+                [title]="scriptSig"
+                >{{ scriptSig }}</span
+              >
+              <button
+                type="button"
+                class="ml-1 px-2 py-0.5 rounded bg-zinc-700 text-zinc-200 text-xs hover:bg-zinc-600"
+                (click)="copyToClipboard(scriptSig)"
+                title="Copiar assinatura"
+              >
+                Copiar
+              </button>
+              <span class="ml-2 text-green-400 text-xs whitespace-nowrap">
+                {{
+                  isVirtual && context === "input" && signatureMode === "manual"
+                    ? "(assinada manualmente)"
+                    : "(assinada)"
+                }}
+              </span>
+            </div>
+          </ng-container>
+          <ng-template #unsigned>
+            <div class="text-zinc-600 italic text-sm w-full text-center">
+              Não assinado - UTXO disponível para gasto
+            </div>
+          </ng-template>
+        </div>
+      </ng-container>
     </div>
   </ng-container>
   <ng-template #compactView>
