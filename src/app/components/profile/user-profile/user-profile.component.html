@@ -2,6 +2,35 @@
   <!-- Header -->
   <div class="flex items-center gap-4 p-8 pb-0 max-w-7xl mx-auto w-full">
     <h1 class="text-3xl font-bold text-blue-400">Usuário #{{ user.id }}</h1>
+    <!-- Toggle Modo Malicioso -->
+    <label
+      *ngIf="walletExists"
+      class="flex items-center gap-2 cursor-pointer ml-4 select-none"
+    >
+      <input type="checkbox" [(ngModel)]="user.isMalicious" class="hidden" />
+      <span
+        class="w-10 h-5 flex items-center bg-zinc-800 rounded-full p-1 transition-colors"
+        [class.bg-red-600]="user.isMalicious"
+      >
+        <span
+          class="bg-white w-4 h-4 rounded-full shadow transform transition-transform"
+          [class.translate-x-5]="user.isMalicious"
+        ></span>
+      </span>
+      <span
+        class="text-xs font-semibold"
+        [class.text-red-400]="user.isMalicious"
+        [class.text-zinc-400]="!user.isMalicious"
+        title="Permite criar e minerar transações inválidas para fins didáticos"
+      >
+        Modo Malicioso
+      </span>
+      <i
+        class="pi pi-exclamation-triangle text-red-400"
+        *ngIf="user.isMalicious"
+        title="Modo malicioso ativo!"
+      ></i>
+    </label>
   </div>
 
   <!-- Content -->
