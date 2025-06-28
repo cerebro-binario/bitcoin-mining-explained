@@ -1,7 +1,21 @@
 <div class="min-h-screen bg-zinc-950 text-zinc-100">
   <div class="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
-    <div class="flex items-center justify-between mt-4">
-      <h1 class="text-xl font-semibold text-zinc-200">Detalhes do Endereço</h1>
+    <div class="flex items-center gap-4 mt-4">
+      <a
+        [routerLink]="['/miners', nodeId]"
+        class="text-zinc-400 hover:text-red-400 text-xl font-bold flex-shrink-0"
+        title="Voltar para o minerador"
+      >
+        <i class="pi pi-times"></i>
+      </a>
+      <div>
+        <div class="text-lg font-bold text-blue-300 leading-tight">
+          Endereço Bitcoin
+        </div>
+        <div class="font-mono text-base text-zinc-200 break-all">
+          {{ addressId }}
+        </div>
+      </div>
     </div>
   </div>
 

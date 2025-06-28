@@ -7,11 +7,12 @@ import { BitcoinNetworkService } from '../../../../services/bitcoin-network.serv
 import { KeyService } from '../../../../services/key.service';
 import { getAddressType } from '../../../../utils/tools';
 import { UtxoComponent } from '../../../shared/utxo/utxo.component';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-address-details',
   standalone: true,
-  imports: [CommonModule, UtxoComponent],
+  imports: [CommonModule, UtxoComponent, RouterLink],
   templateUrl: './address-details.component.html',
   styleUrls: ['./address-details.component.scss'],
 })
