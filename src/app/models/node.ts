@@ -1164,14 +1164,22 @@ export class Node {
 
     // Verificar se possui pai antes de validar consenso
     const parent = this.findParentNode(block);
+    let processResult: NodeEventLogReasons | undefined;
+    let orphanAccepted = false;
     if (!parent && block.height > 0) {
-      this.processOrphan(block, peer, event);
+      orphanAccepted = this.processOrphan(block, peer, event);
+      if (orphanAccepted) {
+        this.blockBroadcast$.next(block);
+      }
+      return;
     } else {
-      this.processBlock(block, peer, event);
+      processResult = this.processBlock(block, peer, event);
     }
 
-    // Repropagar para outros peers
-    this.blockBroadcast$.next(block);
+    // Só propaga se o bloco foi aceito (não rejeitado)
+    if (!processResult) {
+      this.blockBroadcast$.next(block);
+    }
   }
 
   onPeerBlockProcessingComplete(block: Block, peer: Node) {
@@ -1185,7 +1193,7 @@ export class Node {
     );
   }
 
-  private processOrphan(orphan: Block, peer: Node, event: NodeEvent) {
+  private processOrphan(orphan: Block, peer: Node, event: NodeEvent): boolean {
     // Armazena como órfão e encerra o fluxo
     if (!this.orphanBlocks.has(orphan.previousHash)) {
       this.orphanBlocks.set(orphan.previousHash, []);
@@ -1198,7 +1206,7 @@ export class Node {
         block: orphan,
       });
       EventManager.fail(event);
-      return;
+      return false;
     }
 
     this.orphanBlocks.get(orphan.previousHash)!.push(orphan);
@@ -1215,9 +1223,10 @@ export class Node {
       block: orphan,
     });
 
-    this.catchUpChain(orphan, peer, event);
+    const accepted = this.catchUpChain(orphan, peer, event);
 
     EventManager.complete(event);
+    return accepted;
   }
 
   private handleNonConsensualBlock(
@@ -1251,10 +1260,10 @@ export class Node {
     }
   }
 
-  private catchUpChain(orphan: Block, origin: Node, event: NodeEvent) {
+  private catchUpChain(orphan: Block, origin: Node, event: NodeEvent): boolean {
     if (this.checkIfBlockExists(orphan)) {
       EventManager.log(event, 'already-in-sync', { peerId: origin.id });
-      return;
+      return false;
     }
 
     let round = 0;
@@ -1284,7 +1293,7 @@ export class Node {
             reason: `(${EVENT_LOG_REASONS['block-not-found']})`,
           });
           EventManager.fail(event);
-          return;
+          return false;
         }
 
         continue;
@@ -1323,9 +1332,11 @@ export class Node {
           reason: `(${EVENT_LOG_REASONS[reason]})`,
         });
         EventManager.fail(event);
-        return;
+        return false;
       }
     }
+    // Se chegou até aqui, todos os blocos (incluindo o órfão) foram aceitos
+    return true;
   }
 
   private downloadParentBlockFromPeer(block: Block, peer: Node) {
@@ -2448,10 +2459,12 @@ export class Node {
     }
 
     // 6. Adicione ao bloco atual (passando o evento de recebimento)
-    this.addTransaction(tx, receiveEvent, false, false); // isLocal = false
+    const addResult = this.addTransaction(tx, receiveEvent, false, false); // isLocal = false
 
-    // 7. Propague para outros peers (exceto o de origem)
-    this.broadcastTransaction(tx, peer.id);
+    // 7. Propague para outros peers (exceto o de origem) SÓ SE foi adicionada com sucesso
+    if (addResult.success) {
+      this.broadcastTransaction(tx, peer.id);
+    }
 
     // 8. Completa o evento de recebimento
     EventManager.complete(receiveEvent);
