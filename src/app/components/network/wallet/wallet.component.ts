@@ -27,6 +27,7 @@ import { ceilBigInt, copyToClipboard } from '../../../utils/tools';
 import { AddressListComponent } from './address-list/address-list.component';
 import { PaginationBarComponent } from './pagination-bar.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
+import { UtxoComponent } from '../../shared/utxo/utxo.component';
 
 const ec = new EC.ec('secp256k1');
 
@@ -67,6 +68,7 @@ export interface TransactionView {
     TransactionListComponent,
     PaginationBarComponent,
     SelectModule,
+    UtxoComponent,
   ],
   templateUrl: './wallet.component.html',
 })

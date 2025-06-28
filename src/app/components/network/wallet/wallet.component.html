@@ -429,162 +429,22 @@
                 Inputs - UTXOs a serem gastos ({{ previewInputs.length }})
               </h4>
               <div class="space-y-4">
-                <div
+                <app-utxo
                   *ngFor="
                     let input of previewInputs;
                     let i = index;
                     trackBy: trackByAddress
                   "
-                  class="bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 rounded-lg shadow-lg p-5 border-2 border-zinc-600 relative overflow-hidden opacity-90"
-                >
-                  <!-- Elementos decorativos -->
-                  <div
-                    class="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-zinc-600/50 rounded-tl-lg"
-                  ></div>
-                  <div
-                    class="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-zinc-600/50 rounded-br-lg"
-                  ></div>
-                  <div class="relative z-10">
-                    <div class="flex items-center gap-2 mb-2">
-                      <div
-                        class="text-xl font-bold text-zinc-400 flex items-center gap-2"
-                      >
-                        {{ input.value / 100000000 | number : "1.8-8" }}
-                        <span class="text-base text-zinc-500">BTC</span>
-                      </div>
-                    </div>
-                    <div
-                      class="flex flex-wrap gap-4 text-xs font-mono text-zinc-400 mb-1"
-                    >
-                      <span
-                        >Bloco:
-                        <span class="text-white">{{ input.height }}</span></span
-                      >
-                      <span
-                        >TXID:
-                        <span class="text-white" [title]="input.txId"
-                          >{{ input.txId | slice : 0 : 8 }}...{{
-                            input.txId | slice : -6
-                          }}</span
-                        ></span
-                      >
-                      <span
-                        >vout:
-                        <span class="text-white">{{ input.vout }}</span></span
-                      >
-                    </div>
-                    <div
-                      class="text-xs text-zinc-400 mt-3 font-mono break-all"
-                      [title]="input.address"
-                    >
-                      <span class="text-zinc-500">Origem:</span>
-                      <span class="ml-2">{{ input.address }}</span>
-                    </div>
-
-                    <!-- Campo de assinatura -->
-                    <div
-                      class="mt-4 border-t border-dashed border-zinc-700 pt-3 w-full"
-                    >
-                      <div class="text-xs text-zinc-500 mb-1">
-                        Assinatura do Proprietário
-                      </div>
-                      <!-- MODO MANUAL -->
-                      <div
-                        *ngIf="signatureMode === 'manual'"
-                        class="flex flex-col gap-2 w-full"
-                      >
-                        <div class="flex flex-row gap-2 items-center">
-                          <p-select
-                            [options]="availablePrivateKeys"
-                            [(ngModel)]="selectedPrivateKey[i]"
-                            optionLabel="address"
-                            optionValue="privateKey"
-                            placeholder="Selecione a chave"
-                            [showClear]="true"
-                            [ngModelOptions]="{ standalone: true }"
-                            [filter]="true"
-                            [appendTo]="'body'"
-                            styleClass="max-w-xs w-full"
-                            (onChange)="
-                              onPrivateKeySelectChange(i, $event.value)
-                            "
-                          ></p-select>
-                          <button
-                            type="button"
-                            (click)="
-                              trySignInputWithKey(i, selectedPrivateKey[i]!)
-                            "
-                            class="px-4 py-1 rounded bg-blue-700 text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
-                            [disabled]="!selectedPrivateKey[i]"
-                          >
-                            Assinar Input
-                          </button>
-                        </div>
-                        <div
-                          *ngIf="inputSignatureScripts[i]"
-                          class="flex flex-col gap-1 mt-1 w-full"
-                        >
-                          <div class="flex items-center gap-2">
-                            <i class="pi pi-check-circle text-green-400"></i>
-                            <span class="text-green-400 font-mono text-sm"
-                              >Assinado manualmente</span
-                            >
-                          </div>
-                          <div class="flex items-center gap-2 w-full">
-                            <span
-                              class="text-xs text-green-300 font-mono truncate bg-zinc-900 border border-zinc-700 rounded px-2 py-1"
-                            >
-                              {{ inputSignatureScripts[i] }}
-                            </span>
-                            <button
-                              type="button"
-                              class="ml-1 px-2 py-0.5 rounded bg-zinc-700 text-zinc-200 text-xs hover:bg-zinc-600"
-                              (click)="
-                                copyToClipboard(inputSignatureScripts[i]!)
-                              "
-                              title="Copiar assinatura"
-                            >
-                              Copiar
-                            </button>
-                          </div>
-                        </div>
-                        <div
-                          *ngIf="inputSignatureErrors[i]"
-                          class="mt-1 text-xs text-red-400 font-mono w-full text-left"
-                        >
-                          {{ inputSignatureErrors[i] }}
-                        </div>
-                      </div>
-                      <!-- MODO AUTO -->
-                      <div
-                        *ngIf="signatureMode === 'auto'"
-                        class="flex flex-col gap-2 w-full"
-                      >
-                        <div class="flex items-center gap-2">
-                          <i class="pi pi-check-circle text-green-400"></i>
-                          <span class="text-green-400 font-mono text-sm"
-                            >Assinado automaticamente</span
-                          >
-                        </div>
-                        <div class="flex items-center gap-2 w-full">
-                          <span
-                            class="text-xs text-green-300 font-mono truncate bg-zinc-900 border border-zinc-700 rounded px-2 py-1"
-                          >
-                            {{ inputSignatureScripts[i] }}
-                          </span>
-                          <button
-                            type="button"
-                            class="ml-1 px-2 py-0.5 rounded bg-zinc-700 text-zinc-200 text-xs hover:bg-zinc-600"
-                            (click)="copyToClipboard(inputSignatureScripts[i]!)"
-                            title="Copiar assinatura"
-                          >
-                            Copiar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  [value]="input.value"
+                  [address]="input.address"
+                  [txid]="input.txId"
+                  [vout]="input.vout"
+                  [scriptSig]="inputSignatureScripts[i] ?? undefined"
+                  [blockHeight]="input.height"
+                  [context]="'input'"
+                  [compact]="false"
+                  [showActions]="false"
+                ></app-utxo>
               </div>
             </div>
 
@@ -599,84 +459,21 @@
                 }})
               </h4>
               <div class="space-y-4">
-                <div
-                  *ngFor="let output of previewOutputs; trackBy: trackByAddress"
-                  class="bg-gradient-to-br rounded-lg shadow-lg p-5 border-2 relative overflow-hidden"
-                  [ngClass]="{
-                    'from-blue-900/40 to-zinc-900 border-blue-700':
-                      output.type === 'destination',
-                    'from-zinc-800 to-zinc-900 border-zinc-700':
-                      output.type === 'change'
-                  }"
-                >
-                  <!-- Elementos decorativos -->
-                  <div
-                    class="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 rounded-tl-lg"
-                    [ngClass]="{
-                      'border-blue-700/80': output.type === 'destination',
-                      'border-zinc-600/50': output.type === 'change'
-                    }"
-                  ></div>
-                  <div
-                    class="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 rounded-br-lg"
-                    [ngClass]="{
-                      'border-blue-700/80': output.type === 'destination',
-                      'border-zinc-600/50': output.type === 'change'
-                    }"
-                  ></div>
-                  <div class="relative z-10">
-                    <div class="flex justify-between items-start">
-                      <div>
-                        <div
-                          class="text-xl font-bold flex items-center gap-2"
-                          [ngClass]="{
-                            'text-blue-300': output.type === 'destination',
-                            'text-zinc-300': output.type === 'change'
-                          }"
-                        >
-                          {{ output.value / 100000000 | number : "1.8-8" }}
-                          <span class="text-base text-zinc-400">BTC</span>
-                        </div>
-                        <span
-                          class="text-xs px-2 py-0.5 rounded-full mt-1 inline-block"
-                          [ngClass]="{
-                            'bg-blue-900/70 text-blue-300':
-                              output.type === 'destination',
-                            'bg-zinc-700 text-zinc-300':
-                              output.type === 'change'
-                          }"
-                        >
-                          {{
-                            output.type === "destination" ? "Destino" : "Troco"
-                          }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div
-                      class="text-xs text-zinc-400 mt-3 font-mono break-all"
-                      [title]="output.address"
-                    >
-                      <span class="text-zinc-500">Destino:</span>
-                      <span class="ml-2">{{ output.address }}</span>
-                    </div>
-                    <!-- Campo de assinatura -->
-                    <div
-                      class="mt-4 border-t border-dashed border-zinc-700 pt-3"
-                    >
-                      <div class="text-xs text-zinc-500 mb-1">
-                        Assinatura do Proprietário
-                      </div>
-                      <div
-                        class="h-10 bg-zinc-800/50 rounded border border-zinc-700 flex items-center justify-center"
-                      >
-                        <div class="text-zinc-500 italic text-sm">
-                          Não assinado - se tornará um novo UTXO
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <app-utxo
+                  *ngFor="
+                    let output of previewOutputs;
+                    let i = index;
+                    trackBy: trackByAddress
+                  "
+                  [value]="output.value"
+                  [address]="output.address"
+                  [vout]="i"
+                  [isChange]="output.type === 'change'"
+                  [context]="'output'"
+                  [compact]="false"
+                  [showActions]="false"
+                  [blockHeight]="node.currentBlock?.height ?? 0"
+                ></app-utxo>
               </div>
             </div>
           </div>
