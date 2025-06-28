@@ -187,13 +187,13 @@
       <h3 class="text-lg font-semibold text-zinc-200 mb-6">UTXOs</h3>
 
       <!-- UTXOs disponíveis (usando app-utxo) -->
-      <div *ngIf="addressData.utxos.length > 0" class="mb-8">
+      <div *ngIf="pagedUtxos.length > 0" class="mb-8">
         <h4 class="text-md font-semibold text-green-300 mb-4">
           UTXOs Disponíveis ({{ addressData.utxos.length }})
         </h4>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <app-utxo
-            *ngFor="let utxo of addressData.utxos"
+            *ngFor="let utxo of pagedUtxos"
             [value]="utxo.output.value"
             [address]="utxo.output.scriptPubKey.address"
             [txid]="utxo.txId"
@@ -210,13 +210,13 @@
       </div>
 
       <!-- UTXOs gastos -->
-      <div *ngIf="spentUtxos.length > 0">
+      <div *ngIf="pagedSpentUtxos.length > 0">
         <h4 class="text-md font-semibold text-zinc-400 mb-4">
           UTXOs Gastos ({{ spentUtxos.length }})
         </h4>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div
-            *ngFor="let utxo of spentUtxos"
+            *ngFor="let utxo of pagedSpentUtxos"
             class="bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 rounded-lg shadow-lg p-6 border-2 border-zinc-600 relative overflow-hidden opacity-80"
           >
             <!-- Marca d'água -->
@@ -297,6 +297,21 @@
       >
         Nenhum UTXO encontrado para este endereço.
       </div>
+
+      <!-- Paginação de UTXOs -->
+      <app-pagination-bar
+        *ngIf="utxoTotalPagesDisplay > 1"
+        [currentPage]="utxoCurrentPageDisplay"
+        [totalPages]="utxoTotalPagesDisplay"
+        [percent]="utxoPagePercent"
+        [prevDisabled]="utxoPrevDisabled"
+        [nextDisabled]="utxoNextDisabled"
+        (goToFirst)="utxoGoToFirstPage()"
+        (goToPrevious)="utxoGoToPreviousPage()"
+        (goToNext)="utxoGoToNextPage()"
+        (goToLast)="utxoGoToLastPage()"
+        (jumpToPage)="utxoJumpToPage($event)"
+      ></app-pagination-bar>
     </div>
 
     <!-- Transações -->

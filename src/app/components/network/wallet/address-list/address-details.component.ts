@@ -64,6 +64,15 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
   };
   pagedTransactionViews: TransactionView[] = [];
 
+  // Paginação de UTXOs
+  utxoPagination = {
+    pageSize: 6,
+    currentPage: 0n,
+    totalPages: 0n,
+  };
+  pagedUtxos: any[] = [];
+  pagedSpentUtxos: any[] = [];
+
   private subscription = new Subscription();
   private privateKeyParam?: string;
 
@@ -250,6 +259,9 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
         }
       });
     }
+
+    this.updateUtxoTotalPages();
+    this.updateUtxoViews();
   }
 
   private updateAddressTransactions() {
@@ -571,7 +583,118 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
     };
   }
 
+  private updateUtxoViews() {
+    // Paginar UTXOs disponíveis
+    const start =
+      Number(this.utxoPagination.currentPage) *
+      Number(this.utxoPagination.pageSize);
+    const end = start + Number(this.utxoPagination.pageSize);
+    this.pagedUtxos = this.addressData?.utxos?.slice(start, end) || [];
+
+    // Paginar UTXOs gastos (se houver)
+    const totalUtxos =
+      (this.addressData?.utxos?.length || 0) + this.spentUtxos.length;
+    const utxosPerPage = Number(this.utxoPagination.pageSize);
+
+    if (this.addressData?.utxos && this.addressData.utxos.length > 0) {
+      // Se estamos na página dos UTXOs disponíveis
+      if (start < (this.addressData.utxos.length || 0)) {
+        this.pagedUtxos = this.addressData.utxos.slice(start, end);
+        this.pagedSpentUtxos = [];
+      } else {
+        // Se estamos na página dos UTXOs gastos
+        const spentStart = start - (this.addressData.utxos.length || 0);
+        const spentEnd = spentStart + utxosPerPage;
+        this.pagedUtxos = [];
+        this.pagedSpentUtxos = this.spentUtxos.slice(spentStart, spentEnd);
+      }
+    } else {
+      // Se não há UTXOs disponíveis, paginar apenas os gastos
+      this.pagedUtxos = [];
+      this.pagedSpentUtxos = this.spentUtxos.slice(start, end);
+    }
+  }
+
+  private updateUtxoTotalPages() {
+    const totalUtxos =
+      (this.addressData?.utxos?.length || 0) + this.spentUtxos.length;
+    const totalRecords = BigInt(totalUtxos);
+    this.utxoPagination = {
+      ...this.utxoPagination,
+      totalPages: this.ceilBigInt(
+        totalRecords,
+        BigInt(this.utxoPagination.pageSize)
+      ),
+    };
+  }
+
   private ceilBigInt(a: bigint, b: bigint): bigint {
     return (a + b - 1n) / b;
+  }
+
+  // Métodos de paginação de UTXOs
+  get utxoCurrentPageDisplay(): number {
+    return Number(this.utxoPagination.currentPage) + 1;
+  }
+
+  get utxoTotalPagesDisplay(): number {
+    return Number(this.utxoPagination.totalPages);
+  }
+
+  get utxoPagePercent(): number {
+    if (this.utxoPagination.totalPages === 0n) return 0;
+    return (
+      ((Number(this.utxoPagination.currentPage) + 1) /
+        Number(this.utxoPagination.totalPages)) *
+      100
+    );
+  }
+
+  get utxoPrevDisabled(): boolean {
+    return this.utxoPagination.currentPage === 0n;
+  }
+
+  get utxoNextDisabled(): boolean {
+    return (
+      this.utxoPagination.currentPage >= this.utxoPagination.totalPages - 1n ||
+      this.utxoPagination.totalPages === 0n
+    );
+  }
+
+  utxoGoToFirstPage() {
+    this.utxoPagination.currentPage = 0n;
+    this.updateUtxoViews();
+  }
+
+  utxoGoToPreviousPage() {
+    if (this.utxoPagination.currentPage > 0n) {
+      this.utxoPagination.currentPage--;
+      this.updateUtxoViews();
+    }
+  }
+
+  utxoGoToNextPage() {
+    if (this.utxoPagination.currentPage < this.utxoPagination.totalPages - 1n) {
+      this.utxoPagination.currentPage++;
+      this.updateUtxoViews();
+    }
+  }
+
+  utxoGoToLastPage() {
+    this.utxoPagination.currentPage = this.utxoPagination.totalPages - 1n;
+    this.updateUtxoViews();
+  }
+
+  utxoJumpToPage(pageInt: bigint) {
+    try {
+      let page = pageInt;
+      if (page < 1n) page = 1n;
+      if (page > this.utxoPagination.totalPages)
+        page = this.utxoPagination.totalPages;
+      this.utxoPagination.currentPage = page - 1n;
+      this.updateUtxoViews();
+    } catch {
+      // ignore invalid input
+    }
   }
 }
