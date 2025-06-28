@@ -71,17 +71,81 @@
       <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
         <h3 class="text-lg font-semibold text-zinc-200 mb-4">Transações</h3>
         <div *ngIf="block.transactions.length > 0; else noTxs">
-          <div class="space-y-2">
+          <div class="space-y-6">
             <div
               *ngFor="let tx of block.transactions; let i = index"
-              class="bg-zinc-800 rounded p-3"
+              class="bg-zinc-800 rounded p-4 border border-zinc-700 relative flex flex-col gap-2"
             >
-              <div class="font-mono text-xs text-blue-300">
-                Tx #{{ i }}: {{ tx.id }}
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-blue-300">Tx #{{ i }}</span>
+                <span
+                  class="font-mono text-xs text-blue-300 truncate max-w-[180px]"
+                  >{{ tx.id }}</span
+                >
+                <span
+                  *ngIf="i === 0"
+                  class="ml-2 text-[10px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded font-bold tracking-wide"
+                  >COINBASE</span
+                >
               </div>
-              <div class="text-xs text-zinc-400">
-                Inputs: {{ tx.inputs.length }} | Outputs:
-                {{ tx.outputs.length }}
+              <div
+                class="flex flex-col md:flex-row gap-4 items-stretch justify-between"
+              >
+                <!-- Inputs -->
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs text-zinc-400 mb-1">Inputs</div>
+                  <div
+                    *ngIf="tx.inputs.length === 0"
+                    class="text-zinc-500 italic text-xs"
+                  >
+                    Coinbase
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <ng-container *ngFor="let input of tx.inputs">
+                      <app-utxo
+                        [value]="input.value"
+                        [address]="input.scriptPubKey.address"
+                        [txid]="input.txid"
+                        [vout]="input.vout"
+                        [scriptSig]="input.scriptSig"
+                        [isSpent]="true"
+                        [context]="'input'"
+                        [compact]="true"
+                        [blockHeight]="input.blockHeight"
+                        [isWallet]="isWalletAddress(input.scriptPubKey.address)"
+                      ></app-utxo>
+                    </ng-container>
+                  </div>
+                </div>
+                <!-- Arrow -->
+                <div class="flex flex-col items-center justify-center mx-2">
+                  <i class="pi pi-arrow-right text-2xl text-zinc-400"></i>
+                </div>
+                <!-- Outputs -->
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs text-zinc-400 mb-1">Outputs</div>
+                  <div class="flex flex-col gap-2">
+                    <ng-container
+                      *ngFor="let output of tx.outputs; let j = index"
+                    >
+                      <app-utxo
+                        [value]="output.value"
+                        [address]="output.scriptPubKey.address"
+                        [txid]="tx.id"
+                        [vout]="j"
+                        [isSpent]="false"
+                        [context]="'output'"
+                        [compact]="true"
+                        [isCoinbase]="i === 0"
+                        [blockHeight]="block.height"
+                        [isWallet]="
+                          isWalletAddress(output.scriptPubKey.address)
+                        "
+                        [isChange]="isChangeOutput(tx, j)"
+                      ></app-utxo>
+                    </ng-container>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
