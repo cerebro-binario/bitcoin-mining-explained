@@ -36,6 +36,7 @@ export interface TransactionHistory {
   timestamp: number;
   blockHeight: number;
   status?: string;
+  transactionIndex: number; // Índice da transação no bloco (0 = coinbase, 1+ = transações normais)
 }
 
 export interface BitcoinAddressData {

@@ -24,10 +24,10 @@ import {
 } from '../../../models/wallet.model';
 import { KeyService } from '../../../services/key.service';
 import { ceilBigInt, copyToClipboard } from '../../../utils/tools';
+import { UtxoComponent } from '../../shared/utxo/utxo.component';
 import { AddressListComponent } from './address-list/address-list.component';
 import { PaginationBarComponent } from './pagination-bar.component';
 import { TransactionListComponent } from './transaction-list/transaction-list.component';
-import { UtxoComponent } from '../../shared/utxo/utxo.component';
 
 const ec = new EC.ec('secp256k1');
 
@@ -52,6 +52,8 @@ export interface TransactionView {
   timestamp: number;
   status: string;
   details: TransactionDetail[];
+  transactionIndex: number; // Índice da transação no bloco (0 = coinbase, 1+ = transações normais)
+  blockHeight: number; // Altura do bloco para ordenação
 }
 
 @Component({
@@ -831,6 +833,7 @@ export class WalletComponent {
    * Atualiza a lista de transações da carteira, buscando na main chain do node
    */
   private updateWalletTransactions() {
+    debugger;
     if (!this._wallet) {
       this.transactions = [];
       this.transactionViews = [];
@@ -954,6 +957,8 @@ export class WalletComponent {
           timestamp,
           status,
           details,
+          transactionIndex: history.transactionIndex || 0,
+          blockHeight: history.blockHeight,
         });
       }
       if (!hasInputFromWallet) {
@@ -970,15 +975,26 @@ export class WalletComponent {
             timestamp,
             status,
             details,
+            transactionIndex: history.transactionIndex || 0,
+            blockHeight: history.blockHeight,
           });
         });
       }
     }
 
     this.transactions = transactionsHistory.map((h) => h.tx);
-    this.transactionViews = transactionViews.sort(
-      (a, b) => b.timestamp - a.timestamp
-    );
+    this.transactionViews = transactionViews.sort((a, b) => {
+      // Primeiro ordena por altura do bloco (decrescente - blocos mais recentes primeiro)
+      if (a.blockHeight !== b.blockHeight) {
+        return b.blockHeight - a.blockHeight;
+      }
+      // No mesmo bloco, coinbase primeiro (transactionIndex = 0)
+      if (a.transactionIndex !== b.transactionIndex) {
+        return b.transactionIndex - a.transactionIndex;
+      }
+      // Se ainda empatar, ordena por timestamp (decrescente)
+      return b.timestamp - a.timestamp;
+    });
     this.updateTransactionTotalPages();
     this.updateTransactionViews();
   }

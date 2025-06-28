@@ -1890,7 +1890,8 @@ export class Node {
       let outputSum = 0;
 
       // Processa inputs
-      for (const input of tx.inputs) {
+      for (let inputIndex = 0; inputIndex < tx.inputs.length; inputIndex++) {
+        const input = tx.inputs[inputIndex];
         const addressData = tempUtxoSet[input.scriptPubKey.address];
         if (!addressData) {
           return { valid: false, reason: 'UTXO não encontrado', txId: tx.id };
@@ -1914,6 +1915,7 @@ export class Node {
             timestamp: block.timestamp,
             blockHeight: block.height,
             status: 'Confirmada',
+            transactionIndex: i, // Índice da transação no bloco (1+ para transações normais)
           });
         }
 
@@ -1930,8 +1932,12 @@ export class Node {
       }
 
       // Processa outputs
-      for (let i = 0; i < tx.outputs.length; i++) {
-        const output = tx.outputs[i];
+      for (
+        let outputIndex = 0;
+        outputIndex < tx.outputs.length;
+        outputIndex++
+      ) {
+        const output = tx.outputs[outputIndex];
         outputSum += output.value;
 
         // Adiciona novo UTXO
@@ -1962,6 +1968,7 @@ export class Node {
             timestamp: block.timestamp,
             blockHeight: block.height,
             status: 'Confirmada',
+            transactionIndex: i, // Índice da transação no bloco (1+ para transações normais)
           });
         }
 
@@ -1969,7 +1976,7 @@ export class Node {
           output,
           blockHeight: block.height,
           txId: tx.id,
-          outputIndex: i,
+          outputIndex: outputIndex,
         });
 
         tempUtxoSet[output.scriptPubKey.address] = {
@@ -2160,6 +2167,7 @@ export class Node {
         timestamp: block.timestamp,
         blockHeight: block.height,
         status: 'Confirmada',
+        transactionIndex: 0, // Coinbase sempre tem índice 0
       });
     }
 
