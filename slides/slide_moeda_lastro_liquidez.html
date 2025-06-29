@@ -1716,6 +1716,144 @@
           max-width: 98vw;
         }
       }
+
+      .btc-strategic-cards-container {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 32px;
+      }
+      .btc-strategic-card {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 24px 20px;
+        min-width: 220px;
+        max-width: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .btc-strategic-title {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .btc-strategic-list {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .btc-strategic-icon {
+        font-size: 1.1rem;
+        margin-right: 8px;
+      }
+      .btc-strategic-network {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 38px 0 0 0;
+      }
+      .btc-network-circle {
+        position: relative;
+        width: 220px;
+        height: 220px;
+        margin-bottom: 18px;
+      }
+      .btc-network-btc {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3.2rem;
+        color: #f7931a;
+        background: #181818;
+        border: 3px solid #f7931a;
+        border-radius: 50%;
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        z-index: 2;
+        box-shadow: 0 0 18px #f7931a44;
+      }
+      .btc-network-node {
+        position: absolute;
+        font-size: 2rem;
+        background: #222233;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #e0e0e0;
+        border: 2px solid #333355;
+        z-index: 1;
+      }
+      .btc-network-node.node1 {
+        left: 50%;
+        top: 0;
+        transform: translate(-50%, 0);
+      }
+      .btc-network-node.node2 {
+        left: 100%;
+        top: 50%;
+        transform: translate(-100%, -50%);
+      }
+      .btc-network-node.node3 {
+        left: 50%;
+        top: 100%;
+        transform: translate(-50%, -100%);
+      }
+      .btc-network-node.node4 {
+        left: 0;
+        top: 50%;
+        transform: translate(0, -50%);
+      }
+      .btc-network-node.node5 {
+        left: 18%;
+        top: 18%;
+      }
+      .btc-network-node.node6 {
+        left: 82%;
+        top: 18%;
+      }
+      .btc-network-desc {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        text-align: center;
+        max-width: 420px;
+      }
+      .btc-strategic-impact {
+        color: #f7931a;
+        font-size: 1.01rem;
+        margin-top: 28px;
+        text-align: center;
+        max-width: 700px;
+      }
+      @media (max-width: 900px) {
+        .btc-strategic-cards-container {
+          flex-direction: column;
+          gap: 18px;
+          align-items: center;
+        }
+        .btc-strategic-card {
+          min-width: 160px;
+          max-width: 98vw;
+        }
+      }
     </style>
   </head>
   <body>
@@ -3943,6 +4081,236 @@
             align-items: center;
           }
           .dividends-card {
+            min-width: 160px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 18: O Bitcoin como Solução Estratégica para o Grande Capital -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Bitcoin como Solução Estratégica</h1>
+          <p class="subtitle">
+            A nova fronteira de alocação de capital para os mais eficientes
+          </p>
+        </div>
+        <div class="btc-strategic-cards-container">
+          <div class="btc-strategic-card">
+            <div class="btc-strategic-title">Para Empresas Produtivas</div>
+            <ul class="btc-strategic-list">
+              <li>
+                <span class="btc-strategic-icon">💼</span> Alocação eficiente de
+                capital
+              </li>
+              <li>
+                <span class="btc-strategic-icon">🛡️</span> Proteção contra
+                inflação
+              </li>
+              <li>
+                <span class="btc-strategic-icon">🏦</span> Retenção de valor
+              </li>
+              <li>
+                <span class="btc-strategic-icon">🌐</span> Participação no fluxo
+                global
+              </li>
+            </ul>
+          </div>
+          <div class="btc-strategic-card">
+            <div class="btc-strategic-title">Consórcio Global</div>
+            <ul class="btc-strategic-list">
+              <li>
+                <span class="btc-strategic-icon">🌍</span> Empresas mais
+                produtivas do mundo
+              </li>
+              <li>
+                <span class="btc-strategic-icon">🔄</span> Alocação universal de
+                capital
+              </li>
+              <li><span class="btc-strategic-icon">🤝</span> Proteção mútua</li>
+              <li>
+                <span class="btc-strategic-icon">🏦</span> Previdência privada
+                de capital
+              </li>
+            </ul>
+          </div>
+          <div class="btc-strategic-card">
+            <div class="btc-strategic-title">Mecanismo de Retenção</div>
+            <ul class="btc-strategic-list">
+              <li>
+                <span class="btc-strategic-icon">🏅</span> Apenas produtivos
+                acumulam
+              </li>
+              <li>
+                <span class="btc-strategic-icon">🛡️</span> Proteção contra
+                diluição
+              </li>
+              <li>
+                <span class="btc-strategic-icon">💧</span> Acesso a liquidez
+                real
+              </li>
+              <li>
+                <span class="btc-strategic-icon">₿</span> Lastro monetário
+                global
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="btc-strategic-network">
+          <div class="btc-network-circle">
+            <div class="btc-network-btc">₿</div>
+            <div class="btc-network-node node1">🏢</div>
+            <div class="btc-network-node node2">🏦</div>
+            <div class="btc-network-node node3">🌍</div>
+            <div class="btc-network-node node4">🏭</div>
+            <div class="btc-network-node node5">💼</div>
+            <div class="btc-network-node node6">🏬</div>
+          </div>
+          <div class="btc-network-desc">
+            Bitcoin no centro do consórcio global de capital eficiente,
+            incorpóreo, descentralizado e imune a decisões políticas.
+          </div>
+        </div>
+        <div class="btc-strategic-impact">
+          O Bitcoin surge como a nova fronteira de alocação de capital para os
+          mais eficientes, criando um lastro monetário global, incorpóreo,
+          descentralizado e imune a decisões políticas.
+        </div>
+      </div>
+      <style>
+        .btc-strategic-cards-container {
+          display: flex;
+          flex-direction: row;
+          gap: 48px;
+          justify-content: center;
+          align-items: flex-start;
+          margin-top: 32px;
+        }
+        .btc-strategic-card {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 24px 20px;
+          min-width: 220px;
+          max-width: 280px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .btc-strategic-title {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+        .btc-strategic-list {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .btc-strategic-icon {
+          font-size: 1.1rem;
+          margin-right: 8px;
+        }
+        .btc-strategic-network {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin: 38px 0 0 0;
+        }
+        .btc-network-circle {
+          position: relative;
+          width: 220px;
+          height: 220px;
+          margin-bottom: 18px;
+        }
+        .btc-network-btc {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 3.2rem;
+          color: #f7931a;
+          background: #181818;
+          border: 3px solid #f7931a;
+          border-radius: 50%;
+          width: 70px;
+          height: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 900;
+          z-index: 2;
+          box-shadow: 0 0 18px #f7931a44;
+        }
+        .btc-network-node {
+          position: absolute;
+          font-size: 2rem;
+          background: #222233;
+          border-radius: 50%;
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #e0e0e0;
+          border: 2px solid #333355;
+          z-index: 1;
+        }
+        .btc-network-node.node1 {
+          left: 50%;
+          top: 0;
+          transform: translate(-50%, 0);
+        }
+        .btc-network-node.node2 {
+          left: 100%;
+          top: 50%;
+          transform: translate(-100%, -50%);
+        }
+        .btc-network-node.node3 {
+          left: 50%;
+          top: 100%;
+          transform: translate(-50%, -100%);
+        }
+        .btc-network-node.node4 {
+          left: 0;
+          top: 50%;
+          transform: translate(0, -50%);
+        }
+        .btc-network-node.node5 {
+          left: 18%;
+          top: 18%;
+        }
+        .btc-network-node.node6 {
+          left: 82%;
+          top: 18%;
+        }
+        .btc-network-desc {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          text-align: center;
+          max-width: 420px;
+        }
+        .btc-strategic-impact {
+          color: #f7931a;
+          font-size: 1.01rem;
+          margin-top: 28px;
+          text-align: center;
+          max-width: 700px;
+        }
+        @media (max-width: 900px) {
+          .btc-strategic-cards-container {
+            flex-direction: column;
+            gap: 18px;
+            align-items: center;
+          }
+          .btc-strategic-card {
             min-width: 160px;
             max-width: 98vw;
           }
