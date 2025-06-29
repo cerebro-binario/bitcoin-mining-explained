@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { ThemeService } from '../services/theme.service';
 import { BitcoinNetworkService } from '../services/bitcoin-network.service';
 import { NgIf, NgFor, AsyncPipe } from '@angular/common';
@@ -123,6 +128,7 @@ import { map } from 'rxjs/operators';
               <li
                 *ngFor="let miner of miners$ | async"
                 class="flex items-center gap-2 px-3 py-2 rounded hover:bg-blue-900/30 transition cursor-pointer"
+                (click)="goToProfile(miner)"
               >
                 <i class="pi pi-cog text-blue-400"></i>
                 <span class="truncate">{{
@@ -155,6 +161,7 @@ import { map } from 'rxjs/operators';
               <li
                 *ngFor="let node of peers$ | async"
                 class="flex items-center gap-2 px-3 py-2 rounded hover:bg-green-900/30 transition cursor-pointer"
+                (click)="goToProfile(node)"
               >
                 <i class="pi pi-server text-green-400"></i>
                 <span class="truncate">{{ node.name || 'Nó ' + node.id }}</span>
@@ -180,6 +187,7 @@ import { map } from 'rxjs/operators';
               <li
                 *ngFor="let user of users$ | async"
                 class="flex items-center gap-2 px-3 py-2 rounded hover:bg-yellow-900/30 transition cursor-pointer"
+                (click)="goToProfile(user)"
               >
                 <i class="pi pi-user text-yellow-400"></i>
                 <span class="truncate">{{
@@ -201,6 +209,7 @@ export class RootLayout {
   mobileMenuOpen = false;
 
   bitcoinNetwork = inject(BitcoinNetworkService);
+  router = inject(Router);
 
   miners$ = this.bitcoinNetwork.nodes$.pipe(
     map((nodes) => nodes.filter((n) => n.nodeType === 'miner'))
@@ -235,5 +244,15 @@ export class RootLayout {
   }
   addUser() {
     this.bitcoinNetwork.addNode('user');
+  }
+
+  goToProfile(node: any) {
+    if (node.nodeType === 'miner') {
+      this.router.navigate(['/miners', node.id]);
+    } else if (node.nodeType === 'peer') {
+      this.router.navigate(['/peers', node.id]);
+    } else if (node.nodeType === 'user') {
+      this.router.navigate(['/users', node.id]);
+    }
   }
 }
