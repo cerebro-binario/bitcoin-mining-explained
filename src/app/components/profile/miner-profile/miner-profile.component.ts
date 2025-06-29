@@ -43,10 +43,10 @@ export class MinerProfileComponent {
   walletBipFormat: BipType | 'all-bip-types' = 'bip84';
   chainBipFormat: BipType | 'all-bip-types' = 'bip84';
   hashRateOptions = [
-    { label: '1 H/s', value: 1 },
-    { label: '1k H/s', value: 1000 },
-    { label: '10k H/s', value: 10000 },
-    { label: 'Máximo', value: null },
+    { value: 1, label: '1 H/s' },
+    { value: 1000, label: '1000 H/s' },
+    { value: 10000, label: '10000 H/s' },
+    { value: null, label: 'Máximo' },
   ];
 
   constructor(

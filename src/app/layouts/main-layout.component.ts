@@ -63,8 +63,8 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
 export class MainLayoutComponent {
   hashRateOptions = [
     { value: 1, label: '1 H/s' },
-    { value: 100, label: '100 H/s' },
     { value: 1000, label: '1000 H/s' },
+    { value: 10000, label: '10000 H/s' },
     { value: null, label: 'Máximo' },
   ];
 

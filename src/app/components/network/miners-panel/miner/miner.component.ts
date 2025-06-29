@@ -69,10 +69,10 @@ export class MinerComponent {
   isCollapsedHashRateSelectorOpen = false;
 
   hashRateOptions: HashRateOption[] = [
-    { label: '1 H/s', value: 1 },
-    { label: '10 H/s', value: 10 },
-    { label: '1000 H/s', value: 1000 },
-    { label: 'Máximo', value: null },
+    { value: 1, label: '1 H/s' },
+    { value: 1000, label: '1000 H/s' },
+    { value: 10000, label: '10000 H/s' },
+    { value: null, label: 'Máximo' },
   ];
 
   showConsensusDialog = false;

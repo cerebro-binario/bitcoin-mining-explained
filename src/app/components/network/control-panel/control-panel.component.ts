@@ -29,30 +29,34 @@ interface HashRateOption {
           Pausar Todos ({{ stats.nCanPause }})
         </button>
       </div>
-      <div class="flex items-center gap-4">
-        <span class="text-sm text-zinc-400"
-          >Hash Rate Global:
+      <div class="flex items-center gap-8 ml-6">
+        <!-- Hash Rate Global -->
+        <div class="flex items-baseline gap-2">
+          <span class="text-xs text-zinc-400">Hash Rate Global:</span>
           <span
-            class="font-bold text-blue-400 inline-block min-w-[90px] text-right"
+            class="font-bold text-blue-400 text-base tabular-nums min-w-[70px] text-right"
             >{{ stats.totalHashRate | number }}</span
           >
-          H/s</span
-        >
-        <span class="text-xs text-zinc-400">Hash Rate Padrão:</span>
-        <ng-container *ngFor="let rate of hashRateOptions">
-          <button
-            class="px-2 py-1 rounded text-xs font-semibold transition"
-            [ngClass]="{
-              'bg-blue-600 text-white': stats.defaultHashRate === rate.value,
-              'bg-zinc-700 text-zinc-300 hover:bg-zinc-600':
-                stats.defaultHashRate !== rate.value
-            }"
-            (click)="setDefaultHashRate.emit(rate.value)"
-            [title]="rate.label"
-          >
-            {{ rate.label }}
-          </button>
-        </ng-container>
+          <span class="text-xs text-zinc-400">H/s</span>
+        </div>
+        <!-- Hash Rate Padrão -->
+        <div class="flex items-baseline gap-2">
+          <span class="text-xs text-zinc-400">Hash Rate Padrão:</span>
+          <ng-container *ngFor="let rate of hashRateOptions">
+            <button
+              class="px-2 py-1 rounded text-xs font-semibold transition"
+              [ngClass]="{
+                'bg-blue-600 text-white': stats.defaultHashRate === rate.value,
+                'bg-zinc-700 text-zinc-300 hover:bg-zinc-600':
+                  stats.defaultHashRate !== rate.value
+              }"
+              (click)="setDefaultHashRate.emit(rate.value)"
+              [title]="rate.label"
+            >
+              {{ rate.label }}
+            </button>
+          </ng-container>
+        </div>
       </div>
     </div>
   `,

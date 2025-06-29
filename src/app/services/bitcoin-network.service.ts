@@ -28,17 +28,62 @@ export class BitcoinNetworkService {
   private lastAdjustmentTime = 0;
   private currentBatchSize = 1000;
 
-  stats: MinersStats = {
-    toCollapse: 0,
-    toExpand: 0,
-    allCollapsed: false,
-    nTotal: 0,
-    nMining: 0,
-    nCanStart: 0,
-    nCanPause: 0,
-    defaultHashRate: 1000,
-    totalHashRate: 0,
-  };
+  // Hash rate padrão para novos miners
+  private _defaultHashRate: number | null = 1000;
+
+  // Getter dinâmico para stats que calcula os valores em tempo real
+  get stats(): MinersStats {
+    const miners = this.nodes.filter((n) => n.nodeType === 'miner');
+    const nMining = miners.filter((n) => n.isMining).length;
+    const nCanStart = miners.filter((n) => !n.isMining).length;
+    const nCanPause = nMining;
+
+    // Calcula totalHashRate em tempo real
+    const totalHashRate = miners
+      .filter((n) => n.isMining)
+      .reduce((sum, n) => sum + n.currentHashRate, 0);
+
+    // Calcula estatísticas de collapse/expand
+    const collapsedMiners = miners.filter((n) => n.isCollapsed).length;
+    const toCollapse = miners.length - collapsedMiners;
+    const toExpand = collapsedMiners;
+    const allCollapsed = collapsedMiners === miners.length && miners.length > 0;
+
+    // Calcula o defaultHashRate dinamicamente
+    let defaultHashRate = this._defaultHashRate;
+    if (miners.length > 0) {
+      const rates = miners.map((m) => m.hashRate);
+      const allEqual = rates.every((r) => r === rates[0]);
+      defaultHashRate = allEqual ? rates[0] : this._defaultHashRate;
+    }
+
+    return {
+      toCollapse,
+      toExpand,
+      allCollapsed,
+      nTotal: miners.length,
+      nMining,
+      nCanStart,
+      nCanPause,
+      defaultHashRate,
+      totalHashRate,
+    };
+  }
+
+  // Getter e setter para defaultHashRate
+  get defaultHashRate(): number | null {
+    return this._defaultHashRate;
+  }
+
+  set defaultHashRate(value: number | null) {
+    this._defaultHashRate = value;
+    // Atualiza todos os miners existentes
+    this.nodes.forEach((node) => {
+      if (node.nodeType === 'miner') {
+        node.hashRate = value;
+      }
+    });
+  }
 
   constructor(private keyService: KeyService) {
     this.startMiningLoop();
@@ -73,11 +118,18 @@ export class BitcoinNetworkService {
       else if (nodeType === 'user') finalName = `Usuário #${this.nextNodeId}`;
       else finalName = `Nó #${this.nextNodeId}`;
     }
+
+    // Para miners, usa o defaultHashRate se não for especificado
+    let finalHashRate = hashRate;
+    if (nodeType === 'miner' && finalHashRate === null) {
+      finalHashRate = this._defaultHashRate;
+    }
+
     const node = new Node({
       id: this.nextNodeId++,
       nodeType,
       name: finalName,
-      hashRate,
+      hashRate: finalHashRate,
       peers: [],
       isCollapsed,
     });
@@ -125,14 +177,11 @@ export class BitcoinNetworkService {
     // Calcula o batch size adaptativo
     const adaptiveBatchSize = this.calculateAdaptiveBatchSize();
 
-    let currentHashRate = 0;
-
     this.nodes.forEach((node) => {
       if (!node) return;
 
       if (node.isMining) {
         node.processMiningTick(now, adaptiveBatchSize);
-        currentHashRate += node.currentHashRate;
       }
 
       // Autobusca de peers (com cooldown)
@@ -141,12 +190,6 @@ export class BitcoinNetworkService {
         node.searchPeersToConnect(this.nodes);
       }
     });
-
-    // Só atualiza o totalHashRate a cada HASH_RATE_UPDATE_INTERVAL ms
-    if (now - this.lastHashRateUpdate >= this.HASH_RATE_UPDATE_INTERVAL) {
-      this.stats.totalHashRate = currentHashRate;
-      this.lastHashRateUpdate = now;
-    }
 
     // Mede o tempo de execução do frame
     const frameTime = performance.now() - startTime;
@@ -227,9 +270,6 @@ export class BitcoinNetworkService {
   }
 
   setDefaultHashRate(value: number | null) {
-    this.nodes.forEach((node) => {
-      if (node.nodeType !== 'miner') return;
-      node.hashRate = value;
-    });
+    this.defaultHashRate = value;
   }
 }

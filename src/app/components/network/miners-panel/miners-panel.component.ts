@@ -35,27 +35,12 @@ export type MinersStats = {
   styleUrls: ['./miners-panel.component.scss'],
 })
 export class MinersPanelComponent implements OnDestroy {
-  private readonly DEFAULT_HASH_RATE: number | null = 1000;
-
   miners$!: Observable<Node[]>;
   miners: Node[] = [];
-  minersStats: MinersStats = {
-    toCollapse: 0,
-    toExpand: 0,
-    allCollapsed: false,
-    nTotal: 0,
-    nMining: 0,
-    nCanStart: 0,
-    nCanPause: 0,
-    defaultHashRate: this.DEFAULT_HASH_RATE,
-    totalHashRate: 0,
-  };
   maximizedMiner?: Node;
   lastCollapsed: boolean = false;
 
   @ViewChildren(MinerComponent) minerComponents!: QueryList<MinerComponent>;
-
-  @Output() statsChange = new EventEmitter<MinersStats>();
 
   constructor(
     public network: BitcoinNetworkService,
@@ -66,60 +51,38 @@ export class MinersPanelComponent implements OnDestroy {
       map((nodes) => nodes.filter((n) => n.nodeType === 'miner')),
       tap((miners) => {
         this.miners = miners;
-        this.updateStats(miners);
       })
     );
   }
 
   addMiner() {
-    const hashRate =
-      this.minersStats.defaultHashRate === undefined
-        ? this.DEFAULT_HASH_RATE
-        : this.minersStats.defaultHashRate;
-    const allCollapsed = this.minersStats.allCollapsed;
-    const miner = this.network.addNode(
-      'miner',
-      undefined,
-      hashRate,
-      allCollapsed
-    );
+    const allCollapsed = this.network.stats.allCollapsed;
+    const miner = this.network.addNode('miner', undefined, null, allCollapsed);
     miner.name = `Minerador ${miner.id}`;
   }
 
   startAllMiners() {
-    const miners = this.minerComponents.map((minerComponent) => {
+    this.minerComponents.forEach((minerComponent) => {
       minerComponent.startMining();
-
-      return minerComponent.miner;
     });
-    this.updateStats(miners);
   }
 
   pauseAllMiners() {
-    const miners = this.minerComponents.map((minerComponent) => {
+    this.minerComponents.forEach((minerComponent) => {
       minerComponent.stopMining();
-      return minerComponent.miner;
     });
-    this.updateStats(miners);
   }
 
   setOrToggleAllMinersCollapsed(collapsed?: boolean) {
     if (!this.minerComponents) return;
-    const newCollapsed = collapsed ?? !this.minersStats.allCollapsed;
-    const miners = this.minerComponents.map((minerComponent) => {
+    const newCollapsed = collapsed ?? !this.network.stats.allCollapsed;
+    this.minerComponents.forEach((minerComponent) => {
       minerComponent.setOrToggleCollapsed(newCollapsed);
-      return minerComponent.miner;
     });
-    this.updateStats(miners);
   }
 
   setDefaultHashRate(hashRate: number | null) {
-    this.minersStats.defaultHashRate = hashRate;
-    this.statsChange.emit(this.minersStats);
-
-    this.minerComponents.forEach((component) => {
-      component.setHashRate(hashRate);
-    });
+    this.network.setDefaultHashRate(hashRate);
   }
 
   onMinerRemoved(miner: Node) {
@@ -131,11 +94,11 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   onMiningChanged(miner: Node) {
-    this.updateStats(this.miners);
+    // Os stats são calculados dinamicamente no serviço
   }
 
   onMinerCollapsedChange(miner: Node) {
-    this.updateStats(this.miners);
+    // Os stats são calculados dinamicamente no serviço
   }
 
   onMinerMaximizedChange(miner: Node) {
@@ -160,7 +123,7 @@ export class MinersPanelComponent implements OnDestroy {
   }
 
   onHashRateChange(hashRate: number | null) {
-    this.updateStats(this.miners);
+    // Os stats são calculados dinamicamente no serviço
   }
 
   onBackdropClick(event: MouseEvent, miner: Node) {
@@ -173,44 +136,6 @@ export class MinersPanelComponent implements OnDestroy {
         this.onMinerMaximizedChange(miner);
       }
     }
-  }
-
-  private updateStats(miners: Node[]) {
-    this.minersStats = miners.reduce(
-      (acc, miner, i) => {
-        acc.allCollapsed =
-          i === 0 ? miner.isCollapsed : acc.allCollapsed && miner.isCollapsed;
-        acc.toCollapse += !miner.isCollapsed ? 1 : 0;
-        acc.toExpand += miner.isCollapsed ? 1 : 0;
-        acc.nTotal++;
-        acc.nMining += miner.isMining ? 1 : 0;
-        acc.nCanStart += !miner.isMining ? 1 : 0;
-        acc.nCanPause += miner.isMining ? 1 : 0;
-        acc.totalHashRate += miner.currentHashRate;
-        return acc;
-      },
-      {
-        allCollapsed: false,
-        toCollapse: 0,
-        toExpand: 0,
-        nTotal: 0,
-        nMining: 0,
-        nCanStart: 0,
-        nCanPause: 0,
-        defaultHashRate: this.DEFAULT_HASH_RATE,
-        totalHashRate: 0,
-      } as MinersStats
-    );
-
-    if (miners.length > 0) {
-      const rates = miners.map((m) => m.hashRate);
-      const allEqual = rates.every((r) => r === rates[0]);
-      this.minersStats.defaultHashRate = allEqual
-        ? rates[0]
-        : this.minersStats.defaultHashRate;
-    }
-
-    this.statsChange.emit(this.minersStats);
   }
 
   ngOnDestroy() {
