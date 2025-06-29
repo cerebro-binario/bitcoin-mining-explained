@@ -1,24 +1,23 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
-  Input,
-  ViewChild,
   ElementRef,
-  Output,
   EventEmitter,
+  Input,
+  Output,
+  ViewChild,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   Block,
   Transaction,
   TransactionInput,
   TransactionOutput,
 } from '../../../models/block.model';
-import { Location } from '@angular/common';
-import { UtxoComponent } from '../../shared/utxo/utxo.component';
 import { Node } from '../../../models/node';
 import { BipType } from '../../../models/wallet.model';
+import { UtxoComponent } from '../../shared/utxo/utxo.component';
 import { PaginationBarComponent } from '../wallet/pagination-bar.component';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-block-details',

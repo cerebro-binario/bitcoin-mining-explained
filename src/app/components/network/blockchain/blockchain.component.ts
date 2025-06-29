@@ -1,22 +1,15 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  Input,
-  AfterViewInit,
-  ViewChild,
-  ElementRef,
-  OnDestroy,
-} from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Node } from '../../../models/node';
+import { Subscription } from 'rxjs';
 import { Block, BlockNode } from '../../../models/block.model';
 import { Height } from '../../../models/height.model';
+import { Node } from '../../../models/node';
 import { EventLogMessagePipe } from '../events/event/event-log/event-log-message.pipe';
 import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
 import { BlockDetailsDialogComponent } from './block-details-dialog.component';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-blockchain',

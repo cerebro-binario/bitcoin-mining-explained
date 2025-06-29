@@ -438,7 +438,19 @@ export class Node {
    */
   private getDifficulty(referenceBlock?: Block): {
     current: { nBits: number };
-    next?: { nBits: number; adjustmentFactor: number };
+    next?: {
+      nBits: number;
+      targetFactor: number;
+      difficultyFactor: number;
+      totalMiningTime: number;
+      averageMiningTime: number;
+      expectedTotalTime: number;
+      expectedAverageTime: number;
+      oldDifficulty: number;
+      newDifficulty: number;
+      oldTarget: string;
+      newTarget: string;
+    };
   } {
     // Se não houver bloco de referência, assume que é o primeiro bloco
     if (!referenceBlock) {
@@ -497,9 +509,10 @@ export class Node {
     // Limita o fator de ajuste para evitar mudanças bruscas
     adjustmentFactor = Math.max(0.25, Math.min(adjustmentFactor, 4));
 
-    // Calcula o novo target
-    const prevTarget = Number(prevAdjustmentBlock.target);
-    const newTarget = Math.round(prevTarget * adjustmentFactor);
+    // Calcula o novo target com bigint para evitar overflow
+    const prevTarget = BigInt(prevAdjustmentBlock.target);
+    const adjustmentFactorBig = BigInt(Math.round(adjustmentFactor * 1e8)); // fator em escala fixa
+    const newTarget = (prevTarget * adjustmentFactorBig) / 100_000_000n;
     const newNBits = this.targetToNBits(newTarget);
 
     return {
@@ -508,23 +521,30 @@ export class Node {
       },
       next: {
         nBits: newNBits,
-        adjustmentFactor,
+        targetFactor: adjustmentFactor,
+        difficultyFactor: 1 / adjustmentFactor,
+        oldDifficulty: referenceBlock.nBits,
+        newDifficulty: newNBits,
+        oldTarget: prevTarget.toString(),
+        newTarget: newTarget.toString(),
+        totalMiningTime: actualTime,
+        averageMiningTime: actualTime / interval,
+        expectedTotalTime: expectedTime,
+        expectedAverageTime: expectedTime / interval,
       },
     };
   }
 
   // Converte um target para nBits
-  private targetToNBits(target: number): number {
+  private targetToNBits(target: bigint): number {
     // Encontra o número de bytes necessários para representar o target
-    const targetHex = target.toString(16);
-    const targetBytes = Math.ceil(targetHex.length / 2);
-
+    let targetHex = target.toString(16);
+    if (targetHex.length % 2 !== 0) targetHex = '0' + targetHex;
+    let targetBytes = targetHex.length / 2;
     // O primeiro byte é o número de bytes significativos
-    const significantBytes = targetBytes;
-
+    let significantBytes = targetBytes;
     // Os próximos 3 bytes são os bytes mais significativos do target
-    const significantBits = targetHex.slice(0, 6);
-
+    let significantBits = targetHex.slice(0, 6);
     // Combina os bytes para formar o nBits
     return parseInt(significantBytes.toString(16) + significantBits, 16);
   }
@@ -1714,57 +1734,18 @@ export class Node {
     const difficulty = this.getDifficulty(block);
 
     if (difficulty.next) {
-      const targetFactor = difficulty.next.adjustmentFactor;
-      const difficultyFactor = 1 / targetFactor; // Inverso do fator do target
-
-      // Calcula os targets para exibição
-      const oldTarget = this.nBitsToTarget(difficulty.current.nBits);
-      const newTarget = this.nBitsToTarget(difficulty.next.nBits);
-
-      // Calcula informações de tempo de mineração
-      const epoch = this.consensus.getConsensusForHeight(block.height);
-      const interval = epoch.parameters.difficultyAdjustmentInterval;
-      const targetBlockTime = epoch.parameters.targetBlockTime;
-      const adjustedHeight = block.height - epoch.startHeight + 1;
-      const prevAdjustmentHeight = adjustedHeight - interval;
-
-      // Encontra o bloco do último ajuste para calcular o tempo total
-      const prevIndex = this.getHeightIndex(prevAdjustmentHeight);
-      let prevAdjustmentBlock: Block | undefined = undefined;
-
-      if (prevIndex >= 0 && this.heights[prevIndex]) {
-        for (const candidate of this.heights[prevIndex].blocks) {
-          let current: Block | undefined = block;
-          while (current && current.height > prevAdjustmentHeight) {
-            current = this.findParentNode(current)?.block;
-          }
-          if (current && current.hash === candidate.block.hash) {
-            prevAdjustmentBlock = candidate.block;
-            break;
-          }
-        }
-      }
-
-      let totalMiningTime = 0;
-      let averageMiningTime = 0;
-
-      if (prevAdjustmentBlock) {
-        totalMiningTime = block.timestamp - prevAdjustmentBlock.timestamp;
-        averageMiningTime = totalMiningTime / interval;
-      }
-
       const eventData = {
-        oldDifficulty: difficulty.current.nBits,
-        newDifficulty: difficulty.next.nBits,
-        oldTarget: oldTarget.toString(),
-        newTarget: newTarget.toString(),
-        targetFactor: targetFactor.toFixed(2), // Fator do target (ex: 0.46x = target menor)
-        difficultyFactor: difficultyFactor.toFixed(2), // Fator da dificuldade (ex: 2.17x = dificuldade maior)
+        oldDifficulty: difficulty.next.oldDifficulty,
+        newDifficulty: difficulty.next.newDifficulty,
+        oldTarget: difficulty.next.oldTarget,
+        newTarget: difficulty.next.newTarget,
+        targetFactor: difficulty.next.targetFactor.toFixed(2),
+        difficultyFactor: difficulty.next.difficultyFactor.toFixed(2),
         height: block.height,
-        totalMiningTime, // Tempo total da época em ms
-        averageMiningTime, // Tempo médio por bloco em ms
-        expectedTotalTime: interval * targetBlockTime * 1000, // Tempo esperado total em ms
-        expectedAverageTime: targetBlockTime * 1000, // Tempo esperado por bloco em ms
+        totalMiningTime: difficulty.next.totalMiningTime,
+        averageMiningTime: difficulty.next.averageMiningTime,
+        expectedTotalTime: difficulty.next.expectedTotalTime,
+        expectedAverageTime: difficulty.next.expectedAverageTime,
       };
       const adjustEvent = event
         ? EventManager.log(event, 'difficulty-adjustment', eventData)
