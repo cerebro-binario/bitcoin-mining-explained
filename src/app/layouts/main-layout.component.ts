@@ -21,7 +21,6 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
         class="flex flex-col bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto relative"
         [style.width.px]="sidebarWidth"
         [style.minWidth.px]="480"
-        style="transition: width 0.15s cubic-bezier(.4,0,.2,1);"
       >
         <div class="flex gap-2 p-4 border-b border-zinc-800 bg-zinc-900">
           <button
