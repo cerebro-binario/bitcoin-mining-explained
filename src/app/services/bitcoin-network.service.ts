@@ -201,4 +201,35 @@ export class BitcoinNetworkService {
       this.frameTimes.shift();
     }
   }
+
+  startAllMiners() {
+    this.nodes.forEach((node) => {
+      if (node.nodeType !== 'miner') return;
+
+      if (!node || node.isMining) return;
+
+      // Cria um novo bloco se não houver um atual
+      if (!node.currentBlock) {
+        node.currentBlock = node.initBlockTemplate();
+      }
+
+      node.isMining = true;
+      node.miningLastTickTime = Date.now();
+    });
+  }
+
+  pauseAllMiners() {
+    this.nodes.forEach((node) => {
+      if (node.nodeType !== 'miner') return;
+      node.isMining = false;
+      node.miningLastTickTime = null;
+    });
+  }
+
+  setDefaultHashRate(value: number | null) {
+    this.nodes.forEach((node) => {
+      if (node.nodeType !== 'miner') return;
+      node.hashRate = value;
+    });
+  }
 }

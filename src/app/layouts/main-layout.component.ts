@@ -1,18 +1,27 @@
 import { Component } from '@angular/core';
-import { RouterOutlet, Router } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
+import { ControlPanelComponent } from '../components/network/control-panel/control-panel.component';
 import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.component';
 import { BitcoinNetworkService } from '../services/bitcoin-network.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, GraphPlotComponent],
+  imports: [RouterOutlet, GraphPlotComponent, ControlPanelComponent],
   template: `
     <div class="flex flex-row w-full h-full pt-16">
       <!-- Sidebar/contexto -->
       <aside
         class="flex flex-col bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"
       >
+        <app-control-panel
+          [stats]="bitcoinNetwork.stats"
+          [hashRateOptions]="hashRateOptions"
+          (startAll)="startAllMiners()"
+          (pauseAll)="pauseAllMiners()"
+          (setDefaultHashRate)="setDefaultHashRate($event)"
+          class="mb-4"
+        ></app-control-panel>
         <div class="flex gap-2 p-4 border-b border-zinc-800 bg-zinc-900">
           <button
             (click)="addMiner()"
@@ -50,6 +59,13 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
   `,
 })
 export class MainLayoutComponent {
+  hashRateOptions = [
+    { value: 1, label: '1 H/s' },
+    { value: 100, label: '100 H/s' },
+    { value: 1000, label: '1000 H/s' },
+    { value: null, label: 'Máximo' },
+  ];
+
   constructor(
     public bitcoinNetwork: BitcoinNetworkService,
     private router: Router
@@ -72,5 +88,14 @@ export class MainLayoutComponent {
     } else if (node.nodeType === 'user') {
       this.router.navigate(['/users', node.id]);
     }
+  }
+  startAllMiners() {
+    this.bitcoinNetwork.startAllMiners();
+  }
+  pauseAllMiners() {
+    this.bitcoinNetwork.pauseAllMiners();
+  }
+  setDefaultHashRate(value: number | null) {
+    this.bitcoinNetwork.setDefaultHashRate(value);
   }
 }

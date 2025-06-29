@@ -10,9 +10,9 @@ import { KeyService } from '../../../services/key.service';
 import { BlockchainComponent } from '../../network/blockchain/blockchain.component';
 import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
+import { ConsensusDialogComponent } from '../../network/miners-panel/miner/consensus-dialog/consensus-dialog.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
 import { UtxoComponent } from '../../shared/utxo/utxo.component';
-import { ConsensusDialogComponent } from '../../network/miners-panel/miner/consensus-dialog/consensus-dialog.component';
 
 @Component({
   selector: 'app-miner-profile',
@@ -106,22 +106,11 @@ export class MinerProfileComponent {
   }
 
   startMining() {
-    if (!this.miner || this.miner.isMining) return;
-
-    // Cria um novo bloco se não houver um atual
-    if (!this.miner.currentBlock) {
-      this.miner.currentBlock = this.miner.initBlockTemplate();
-    }
-
-    this.miner.isMining = true;
-    this.miner.miningLastTickTime = Date.now();
+    this.networkService.startAllMiners();
   }
 
   stopMining() {
-    if (!this.miner || !this.miner.isMining) return;
-
-    this.miner.isMining = false;
-    this.miner.miningLastTickTime = null;
+    this.networkService.pauseAllMiners();
   }
 
   getTarget(block: any): string {
