@@ -1663,6 +1663,16 @@ export class Node {
       oldConsensus,
     });
 
+    // Se não há blocos, não há nada para remover
+    if (!this.heights.length) {
+      EventManager.log(event, 'removing-incompatible-blocks-completed', {
+        newConsensus,
+        oldConsensus,
+        reason: '(Nenhum bloco removido)',
+      });
+      return;
+    }
+
     // Encontra o ponto de divergência (altura onde o consenso mudou)
     let highestVersion =
       newConsensus.version > oldConsensus.version ? newConsensus : oldConsensus;
@@ -1685,9 +1695,35 @@ export class Node {
     const changeStartIndex = this.getHeightIndex(changeStartHeight);
     let lastCompatibleIndex = undefined;
 
+    // Verifica se o índice está dentro dos limites válidos
+    if (changeStartIndex < 0 || changeStartIndex >= this.heights.length) {
+      // Se o índice está fora dos limites, não há blocos para remover
+      EventManager.log(event, 'removing-incompatible-blocks-completed', {
+        newConsensus,
+        oldConsensus,
+        reason: '(Nenhum bloco removido)',
+      });
+      return;
+    }
+
     for (let i = changeStartIndex; i >= 0; i--) {
-      for (let j = 0; j < this.heights[i].blocks.length; j++) {
-        const block = this.heights[i].blocks[j].block;
+      // Verifica se o índice está dentro dos limites válidos
+      if (i < 0 || i >= this.heights.length) {
+        continue;
+      }
+
+      const height = this.heights[i];
+      if (!height || !height.blocks) {
+        continue;
+      }
+
+      for (let j = 0; j < height.blocks.length; j++) {
+        const blockNode = height.blocks[j];
+        if (!blockNode || !blockNode.block) {
+          continue;
+        }
+
+        const block = blockNode.block;
         const reason = this.validateBlockConsensus(block);
         if (reason) {
           delete this.heights[i].blocks[j];
@@ -1698,8 +1734,24 @@ export class Node {
     }
 
     lastCompatibleIndex ??= changeStartIndex;
+
+    // Verifica se o índice final está dentro dos limites válidos
+    if (lastCompatibleIndex < 0 || lastCompatibleIndex >= this.heights.length) {
+      // Se o índice está fora dos limites, limpa toda a blockchain
+      this.heights = [];
+      EventManager.log(event, 'removing-incompatible-blocks-completed', {
+        newConsensus,
+        oldConsensus,
+      });
+      return;
+    }
+
     this.heights = this.heights.slice(lastCompatibleIndex);
-    this.heights[0].blocks.forEach((h) => (h.children = []));
+
+    // Verifica se ainda há heights após o slice
+    if (this.heights.length > 0 && this.heights[0] && this.heights[0].blocks) {
+      this.heights[0].blocks.forEach((h) => (h.children = []));
+    }
 
     EventManager.log(event, 'removing-incompatible-blocks-completed', {
       newConsensus,

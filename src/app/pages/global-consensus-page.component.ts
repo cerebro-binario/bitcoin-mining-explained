@@ -547,10 +547,16 @@ type ForkType = 'none' | 'soft' | 'hard';
             Cancelar
           </button>
           <button
+            class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+            (click)="toggleMinersSelection()"
+          >
+            Selecionar Nós ({{ getSelectedNodesCount() }})
+          </button>
+          <button
             class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
             (click)="confirmVersionChange()"
           >
-            Aplicar para todos os nós
+            Aplicar para nós selecionados
           </button>
           } @case('viewing'){
           <!-- Estado padrão inicial da página -->
@@ -560,6 +566,110 @@ type ForkType = 'none' | 'soft' | 'hard';
           >
             Voltar</button
           >}}
+        </div>
+      </div>
+
+      <!-- Modal de Seleção de Mineradores -->
+      <div
+        *ngIf="showMinersSelection"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      >
+        <div class="bg-zinc-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+          <!-- Header -->
+          <div
+            class="flex items-center justify-between p-6 border-b border-zinc-700"
+          >
+            <h3 class="text-lg font-semibold text-blue-400">Selecionar Nós</h3>
+            <button
+              class="text-zinc-400 hover:text-zinc-200 transition"
+              (click)="showMinersSelection = false"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div class="p-6 space-y-4">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm font-medium text-zinc-400">
+                Nós Disponíveis ({{ availableNodes.length }})
+              </span>
+              <div class="flex gap-2">
+                <button
+                  class="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition"
+                  (click)="selectAllNodes()"
+                >
+                  Selecionar Todos
+                </button>
+                <button
+                  class="px-3 py-1 rounded bg-zinc-600 text-white text-xs hover:bg-zinc-700 transition"
+                  (click)="deselectAllNodes()"
+                >
+                  Desmarcar Todos
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+              <div
+                *ngFor="let node of availableNodes"
+                class="flex items-center gap-3 p-3 rounded bg-zinc-900 border border-zinc-700 hover:border-zinc-600 transition"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="node.selected"
+                  (change)="toggleNodeSelection(node.id)"
+                  class="w-4 h-4 text-blue-600 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <span class="text-lg mr-2">{{
+                  getNodeTypeIcon(node.type)
+                }}</span>
+                <span class="text-white flex-1">{{ node.name }}</span>
+                <span
+                  class="text-xs px-2 py-1 rounded {{
+                    getNodeTypeColor(node.type)
+                  }} bg-zinc-800"
+                >
+                  {{ node.type }}
+                </span>
+                <span
+                  *ngIf="node.selected"
+                  class="ml-auto text-green-400 text-sm"
+                >
+                  ✓ Selecionado
+                </span>
+              </div>
+            </div>
+
+            <div class="text-sm text-zinc-400 mt-4">
+              <strong>{{ getSelectedNodesCount() }}</strong> de
+              {{ availableNodes.length }} nós selecionados
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div
+            class="flex items-center justify-end gap-3 p-6 border-t border-zinc-700"
+          >
+            <button
+              class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+              (click)="showMinersSelection = false"
+            >
+              Fechar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -611,6 +721,18 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
     };
   } = {};
 
+  // Seleção de mineradores
+  availableNodes: {
+    id: string;
+    name: string;
+    type: string;
+    selected: boolean;
+  }[] = [];
+  showMinersSelection = false;
+
+  // Subscription para monitorar mudanças na lista de nós
+  private nodesSubscription: any;
+
   constructor(
     private consensusService: ConsensusService,
     private bitcoinNetwork: BitcoinNetworkService,
@@ -639,6 +761,16 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
     // Inicializar copy para comparações de fork
     this.copy = ConsensusParameters.deepCopy(this.paramsOnView ?? {});
 
+    // Inicializar lista de nós disponíveis
+    this.initializeAvailableNodes();
+
+    // Subscription para monitorar mudanças na lista de nós
+    this.nodesSubscription = this.bitcoinNetwork.nodes$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.updateAvailableNodes();
+      });
+
     this.clearMessages();
 
     this.consensusService.versions$
@@ -649,6 +781,95 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
       });
 
     this.updateView();
+  }
+
+  initializeAvailableNodes() {
+    this.availableNodes = this.bitcoinNetwork.nodes.map((node) => ({
+      id: node.id.toString(),
+      name: this.getNodeDisplayName(node),
+      type: node.nodeType,
+      selected: true, // Por padrão, todos selecionados
+    }));
+  }
+
+  updateAvailableNodes() {
+    const currentNodes = this.bitcoinNetwork.nodes;
+    const currentNodeIds = currentNodes.map((n) => n.id.toString());
+
+    // Manter seleções existentes
+    const existingSelections = new Map(
+      this.availableNodes.map((n) => [n.id, n.selected])
+    );
+
+    // Atualizar lista com novos nós
+    this.availableNodes = currentNodes.map((node) => ({
+      id: node.id.toString(),
+      name: this.getNodeDisplayName(node),
+      type: node.nodeType,
+      selected: existingSelections.get(node.id.toString()) ?? true, // Manter seleção existente ou true para novos
+    }));
+  }
+
+  getSelectedNodesCount(): number {
+    return this.availableNodes.filter((n) => n.selected).length;
+  }
+
+  toggleMinersSelection() {
+    this.showMinersSelection = !this.showMinersSelection;
+  }
+
+  selectAllNodes() {
+    this.availableNodes.forEach((node) => (node.selected = true));
+  }
+
+  deselectAllNodes() {
+    this.availableNodes.forEach((node) => (node.selected = false));
+  }
+
+  toggleNodeSelection(nodeId: string) {
+    const node = this.availableNodes.find((n) => n.id === nodeId);
+    if (node) {
+      node.selected = !node.selected;
+    }
+  }
+
+  getNodeDisplayName(node: Node): string {
+    switch (node.nodeType) {
+      case 'miner':
+        return `Minerador ${node.id}`;
+      case 'peer':
+        return `Nó ${node.id}`;
+      case 'user':
+        return `Usuário ${node.id}`;
+      default:
+        return `Nó ${node.id}`;
+    }
+  }
+
+  getNodeTypeIcon(nodeType: string): string {
+    switch (nodeType) {
+      case 'miner':
+        return '⛏️';
+      case 'peer':
+        return '🖥️';
+      case 'user':
+        return '👤';
+      default:
+        return '🖥️';
+    }
+  }
+
+  getNodeTypeColor(nodeType: string): string {
+    switch (nodeType) {
+      case 'miner':
+        return 'text-blue-400';
+      case 'peer':
+        return 'text-green-400';
+      case 'user':
+        return 'text-yellow-400';
+      default:
+        return 'text-zinc-400';
+    }
   }
 
   getGlobalHeight(): number {
@@ -854,12 +1075,26 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
   }
 
   confirmVersionChange() {
-    // Aplicar a versão selecionada para todos os mineradores
-    const miners = this.bitcoinNetwork.nodes.filter(
-      (n) => n.nodeType === 'miner'
-    );
-    miners.forEach((miner) => {
-      miner.changeConsensus(this.selected);
+    // Aplicar a versão selecionada apenas aos nós selecionados
+    const selectedNodes = this.availableNodes
+      .filter((n) => n.selected)
+      .map((n) =>
+        this.bitcoinNetwork.nodes.find((node) => node.id.toString() === n.id)
+      )
+      .filter((n): n is Node => n !== undefined);
+
+    if (selectedNodes.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Nenhum nó foi selecionado para aplicar o consenso.',
+        life: 6000,
+      });
+      return;
+    }
+
+    selectedNodes.forEach((node) => {
+      node.changeConsensus(this.selected);
     });
 
     this.mode = 'viewing';
@@ -867,7 +1102,7 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
     this.messageService.add({
       severity: 'success',
       summary: 'Sucesso',
-      detail: `Versão v${this.selected.version} aplicada para todos os ${miners.length} mineradores.`,
+      detail: `Versão v${this.selected.version} aplicada para ${selectedNodes.length} nó(s) selecionado(s).`,
       life: 6000,
     });
     this.updateView();
@@ -1026,5 +1261,6 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.nodesSubscription?.unsubscribe();
   }
 }

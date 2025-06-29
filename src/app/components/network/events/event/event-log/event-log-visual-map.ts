@@ -167,7 +167,7 @@ export const EVENT_LOG_VISUAL_MAP: Record<
   'removing-incompatible-blocks-completed': {
     color: 'text-green-400',
     icon: 'pi pi-check',
-    label: 'Blocos incompatíveis removidos',
+    label: 'Remoção finalizada {{reason}}',
   },
   'future-consensus-change': {
     color: 'text-yellow-400',
