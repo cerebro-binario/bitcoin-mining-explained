@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { ControlPanelComponent } from '../components/network/control-panel/control-panel.component';
@@ -7,12 +8,20 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, GraphPlotComponent, ControlPanelComponent],
+  imports: [
+    RouterOutlet,
+    GraphPlotComponent,
+    ControlPanelComponent,
+    CommonModule,
+  ],
   template: `
     <div class="flex flex-row w-full h-full pt-16">
       <!-- Sidebar/contexto -->
       <aside
-        class="flex flex-col bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"
+        class="flex flex-col bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto relative"
+        [style.width.px]="sidebarWidth"
+        [style.minWidth.px]="480"
+        style="transition: width 0.15s cubic-bezier(.4,0,.2,1);"
       >
         <div class="flex gap-2 p-4 border-b border-zinc-800 bg-zinc-900">
           <button
@@ -52,7 +61,20 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
             (toggleAllMinersCollapse)="toggleAllMinersCollapse()"
           ></app-control-panel>
         </div>
+        <!-- Grip para redimensionar -->
+        <div
+          class="absolute top-0 right-0 h-full w-2 cursor-ew-resize z-50 bg-transparent hover:bg-blue-500/10 transition"
+          (mousedown)="onResizeStart($event)"
+        ></div>
       </aside>
+      <!-- Overlay para capturar mousemove/mouseup -->
+      <div
+        *ngIf="resizing"
+        class="fixed inset-0 z-40"
+        (mousemove)="onResize($event)"
+        (mouseup)="onResizeEnd()"
+        style="cursor: ew-resize;"
+      ></div>
       <!-- Conteúdo principal -->
       <main class="flex-1 min-h-0">
         <router-outlet></router-outlet>
@@ -68,10 +90,29 @@ export class MainLayoutComponent {
     { value: null, label: 'Máximo' },
   ];
 
+  sidebarWidth = 340; // valor inicial em px
+  resizing = false;
+
   constructor(
     public bitcoinNetwork: BitcoinNetworkService,
     private router: Router
   ) {}
+
+  onResizeStart(event: MouseEvent) {
+    this.resizing = true;
+    event.preventDefault();
+  }
+
+  onResize(event: MouseEvent) {
+    if (this.resizing) {
+      // Limite mínimo/máximo opcional
+      this.sidebarWidth = Math.max(480, Math.min(600, event.clientX));
+    }
+  }
+
+  onResizeEnd() {
+    this.resizing = false;
+  }
 
   addMiner() {
     this.bitcoinNetwork.addNode('miner');
