@@ -6,17 +6,15 @@ import { PeerProfileComponent } from './components/profile/peer-profile/peer-pro
 import { UserProfileComponent } from './components/profile/user-profile/user-profile.component';
 import { NodeExistsGuard } from './guards/miner-exists.guard';
 import { RootLayout } from './layouts/root.layout';
-import { BlockDetailsPage } from './components/network/blockchain/block-details.page';
+import { HomePageComponent } from './pages/home-page/home-page.component';
 
 export const routes: Routes = [
   {
     path: '',
     component: RootLayout,
     children: [
-      {
-        path: '',
-        component: NetworkOverviewComponent,
-      },
+      { path: '', component: HomePageComponent },
+      { path: 'network', component: NetworkOverviewComponent },
       {
         path: 'miners/:id',
         component: MinerProfileComponent,

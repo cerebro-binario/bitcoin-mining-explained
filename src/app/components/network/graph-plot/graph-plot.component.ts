@@ -8,11 +8,14 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Visualização da Rede</h2>
+    <div
+      class="w-full h-full flex items-center justify-center max-h-[500px] aspect-square"
+    >
       <svg
-        [attr.width]="width"
-        [attr.height]="height"
+        width="100%"
+        height="100%"
+        viewBox="0 0 400 400"
+        preserveAspectRatio="xMidYMid meet"
         class="bg-zinc-900 rounded shadow border border-zinc-700"
       >
         <!-- Definir gradientes para as animações -->
@@ -157,7 +160,7 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
   ],
 })
 export class GraphPlotComponent {
-  width = 700;
+  width = 400;
   height = 400;
   @Output() nodeSelected = new EventEmitter<BitcoinNode>();
 
@@ -167,12 +170,16 @@ export class GraphPlotComponent {
   getX(i: number): number {
     const n = this.network.nodes.length;
     const angle = (2 * Math.PI * i) / n;
-    return this.width / 2 + Math.cos(angle) * (this.height / 2.2);
+    const padding = 36; // 24 (raio) + 12 (margem extra)
+    const radius = this.width / 2 - padding;
+    return this.width / 2 + Math.cos(angle) * radius;
   }
   getY(i: number): number {
     const n = this.network.nodes.length;
     const angle = (2 * Math.PI * i) / n;
-    return this.height / 2 + Math.sin(angle) * (this.height / 2.5);
+    const padding = 36;
+    const radius = this.height / 2 - padding;
+    return this.height / 2 + Math.sin(angle) * radius;
   }
   getNodeById(id: number | undefined) {
     return this.network.nodes.find((n) => n.id === id);
