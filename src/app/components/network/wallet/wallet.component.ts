@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as EC from 'elliptic';
@@ -8,6 +15,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
+import { Subject, takeUntil } from 'rxjs';
 import {
   Transaction,
   TransactionInput,
@@ -75,10 +83,11 @@ export interface TransactionView {
   ],
   templateUrl: './wallet.component.html',
 })
-export class WalletComponent {
+export class WalletComponent implements OnDestroy, OnInit {
   private _wallet: Wallet | null = null;
   private _bipFormat: BipType | 'all-bip-types' = 'bip84';
   private goToLastPageAfterWalletUpdate = false;
+  private destroy$ = new Subject<void>();
 
   activeTab: 'enderecos' | 'transacoes' | 'enviar' = 'enderecos';
 
@@ -138,10 +147,12 @@ export class WalletComponent {
     address: string;
     bipType: BipType;
     selected: boolean;
+    isOwnedByWallet: boolean;
   })[] = [];
   manuallySelectedUtxos: (BitcoinUTXO & {
     address: string;
     bipType: BipType;
+    isOwnedByWallet: boolean;
   })[] = [];
   manualSelectionTotal = 0;
 
@@ -154,6 +165,7 @@ export class WalletComponent {
     blockHeight: number;
     txId: string;
     vout: number;
+    isOwnedByWallet: boolean;
   }[] = [];
   previewOutputs: {
     address: string;
@@ -219,6 +231,43 @@ export class WalletComponent {
           | 'transacoes'
           | 'enviar';
       }
+    });
+  }
+
+  ngOnInit() {
+    // Monitora mudanças no modo malicioso do nó
+    this.setupMaliciousModeReactivity();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupMaliciousModeReactivity() {
+    // Monitora mudanças no modo malicioso do nó
+    // Como o Node não tem um observable para isMalicious, vamos usar um getter
+    // que será chamado quando a lista de UTXOs for atualizada
+    let lastMaliciousState = this.node?.isMalicious || false;
+
+    const checkMaliciousMode = () => {
+      const currentMaliciousState = this.node?.isMalicious || false;
+      if (currentMaliciousState !== lastMaliciousState) {
+        lastMaliciousState = currentMaliciousState;
+        if (this.activeTab === 'enviar') {
+          // Se estamos na aba enviar, atualiza a lista de UTXOs quando o modo malicioso mudar
+          this.prepareAllUtxosForManualSelection();
+          this.updateTransactionPreview();
+        }
+      }
+    };
+
+    // Verifica a cada 500ms se o modo malicioso mudou
+    const interval = setInterval(checkMaliciousMode, 500);
+
+    // Limpa o interval quando o componente for destruído
+    this.destroy$.subscribe(() => {
+      clearInterval(interval);
     });
   }
 
@@ -466,7 +515,11 @@ export class WalletComponent {
 
     const amountSats = Math.round(this.sendAmount * 1e8);
 
-    let utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
+    let utxos: (BitcoinUTXO & {
+      address: string;
+      bipType: BipType;
+      isOwnedByWallet: boolean;
+    })[];
     let total: number = 0;
 
     if (this.utxoSelectionMode === 'auto') {
@@ -516,6 +569,7 @@ export class WalletComponent {
       blockHeight: utxo.blockHeight,
       txId: utxo.txId,
       vout: utxo.outputIndex,
+      isOwnedByWallet: utxo.isOwnedByWallet,
     }));
 
     // Calcule a taxa realista
@@ -583,8 +637,11 @@ export class WalletComponent {
     if (this.utxoSelectionMode === 'auto') {
       // Seleciona UTXOs suficientes para cobrir valor + taxa
       let needed = amountSats;
-      let selected: (BitcoinUTXO & { address: string; bipType: BipType })[] =
-        [];
+      let selected: (BitcoinUTXO & {
+        address: string;
+        bipType: BipType;
+        isOwnedByWallet: boolean;
+      })[] = [];
       for (let tries = 0; tries < 5; tries++) {
         const sel = this.selectUtxosFIFO(needed + fee);
         selected = sel.utxos;
@@ -735,25 +792,68 @@ export class WalletComponent {
 
   // Seleção automática de UTXOs (FIFO), usando BitcoinUTXO
   selectUtxosFIFO(amount: number): {
-    utxos: (BitcoinUTXO & { address: string; bipType: BipType })[];
+    utxos: (BitcoinUTXO & {
+      address: string;
+      bipType: BipType;
+      isOwnedByWallet: boolean;
+    })[];
     total: number;
   } {
     const spent = this.getSpentUtxosInCurrentBlock();
 
     // Coleta todos os UTXOs disponíveis (confirmados + virtuais)
-    let utxos: (BitcoinUTXO & { address: string; bipType: BipType })[] =
-      this.addresses.flatMap((addr) =>
-        (addr.utxos || []).map((utxo: BitcoinUTXO) => ({
-          ...utxo,
-          address: addr.address, // extra para UI
-          bipType: addr.bipFormat, // extra para UI
-        }))
+    let utxos: (BitcoinUTXO & {
+      address: string;
+      bipType: BipType;
+      isOwnedByWallet: boolean;
+    })[] = this.addresses.flatMap((addr) =>
+      (addr.utxos || []).map((utxo: BitcoinUTXO) => ({
+        ...utxo,
+        address: addr.address, // extra para UI
+        bipType: addr.bipFormat, // extra para UI
+        isOwnedByWallet: true, // UTXOs da própria wallet
+      }))
+    );
+
+    // Se o nó for malicioso, adiciona UTXOs de outros endereços
+    if (this.node.isMalicious) {
+      // Coleta todos os UTXOs da rede (exceto os da própria wallet)
+      const walletAddresses = new Set(
+        this.addresses.map((addr) => addr.address)
       );
 
-    // FILTRA UTXOs já gastos no bloco atual
-    utxos = utxos.filter(
-      (utxo) => !spent.has(`${utxo.txId}:${utxo.outputIndex}`)
-    );
+      // Busca UTXOs de outros endereços diretamente no balances do próprio nó
+      const otherNodesUtxos: (BitcoinUTXO & {
+        address: string;
+        bipType: BipType;
+        selected: boolean;
+        isOwnedByWallet: boolean;
+      })[] = [];
+
+      // Itera sobre todos os endereços no balances do próprio nó
+      if (this.node.balances) {
+        Object.values(this.node.balances).forEach((addressData) => {
+          if (addressData && !walletAddresses.has(addressData.address)) {
+            // UTXOs que não pertencem à wallet atual
+            (addressData.utxos || []).forEach((utxo) => {
+              if (!spent.has(`${utxo.txId}:${utxo.outputIndex}`)) {
+                const key = `${utxo.txId}-${utxo.outputIndex}`;
+                otherNodesUtxos.push({
+                  ...utxo,
+                  address: addressData.address,
+                  bipType: addressData.bipFormat || 'bip84',
+                  selected: false,
+                  isOwnedByWallet: false, // UTXOs externos
+                });
+              }
+            });
+          }
+        });
+      }
+
+      // Adiciona os UTXOs externos à lista
+      this.allAvailableUtxos.push(...otherNodesUtxos);
+    }
 
     // Adiciona UTXOs virtuais do bloco atual que pertencem à wallet
     const walletAddresses = new Set(this.addresses.map((addr) => addr.address));
@@ -775,6 +875,8 @@ export class WalletComponent {
               const virtualUtxoData: BitcoinUTXO & {
                 address: string;
                 bipType: BipType;
+                selected: boolean;
+                isOwnedByWallet: boolean;
               } = {
                 txId: tx.id,
                 outputIndex: outputIndex,
@@ -782,27 +884,34 @@ export class WalletComponent {
                 blockHeight: this.node.currentBlock!.height,
                 address: output.scriptPubKey.address,
                 bipType: detectBipType(output.scriptPubKey.address) || 'bip84',
+                selected: false,
+                isOwnedByWallet: true, // UTXOs virtuais da própria wallet
               };
-              utxos.push(virtualUtxoData);
+              this.allAvailableUtxos.push(virtualUtxoData);
             }
           }
         }
       }
     }
 
-    // Ordena por FIFO (altura do bloco, txId, outputIndex)
-    utxos.sort(
-      (a, b) =>
-        a.blockHeight - b.blockHeight ||
-        a.txId.localeCompare(b.txId) ||
-        a.outputIndex - b.outputIndex
-    );
+    // Ordena por valor (maior primeiro), mas coloca UTXOs próprios primeiro
+    this.allAvailableUtxos.sort((a, b) => {
+      // Primeiro ordena por propriedade (próprios primeiro)
+      if (a.isOwnedByWallet !== b.isOwnedByWallet) {
+        return a.isOwnedByWallet ? -1 : 1;
+      }
+      // Depois por valor (maior primeiro)
+      return b.output.value - a.output.value;
+    });
 
     // Seleciona UTXOs até atingir o valor necessário
     let total = 0;
-    const selected: (BitcoinUTXO & { address: string; bipType: BipType })[] =
-      [];
-    for (const utxo of utxos) {
+    const selected: (BitcoinUTXO & {
+      address: string;
+      bipType: BipType;
+      isOwnedByWallet: boolean;
+    })[] = [];
+    for (const utxo of this.allAvailableUtxos) {
       selected.push(utxo);
       total += utxo.output.value;
       if (total >= amount) break;
@@ -1111,6 +1220,12 @@ export class WalletComponent {
 
   setActiveTab(tab: 'enderecos' | 'transacoes' | 'enviar') {
     this.activeTab = tab;
+
+    // Se mudou para a aba enviar, atualiza a lista de UTXOs para refletir o estado atual do modo malicioso
+    if (tab === 'enviar') {
+      this.prepareAllUtxosForManualSelection();
+    }
+
     // Salva a aba ativa nos query params
     this.router.navigate([], {
       relativeTo: this.route,
@@ -1131,27 +1246,60 @@ export class WalletComponent {
 
     const spent = this.getSpentUtxosInCurrentBlock();
 
-    // Preserva a seleção manual existente
-    const currentSelection = new Map<string, boolean>();
-    this.allAvailableUtxos.forEach((utxo) => {
-      const key = `${utxo.txId}-${utxo.outputIndex}`;
-      currentSelection.set(key, utxo.selected);
-    });
-
     // Coleta UTXOs confirmados e FILTRA os já gastos
     this.allAvailableUtxos = this.addresses.flatMap((addr) =>
       (addr.utxos || [])
         .filter((utxo) => !spent.has(`${utxo.txId}:${utxo.outputIndex}`))
         .map((utxo) => {
-          const key = `${utxo.txId}-${utxo.outputIndex}`;
           return {
             ...utxo,
             address: addr.address,
             bipType: addr.bipFormat,
-            selected: currentSelection.get(key) || false, // Preserva seleção anterior
+            selected: false, // Preserva seleção anterior
+            isOwnedByWallet: true, // UTXOs da própria wallet
           };
         })
     );
+
+    // Se o nó for malicioso, adiciona UTXOs de outros endereços
+    if (this.node.isMalicious) {
+      // Coleta todos os UTXOs da rede (exceto os da própria wallet)
+      const walletAddresses = new Set(
+        this.addresses.map((addr) => addr.address)
+      );
+
+      // Busca UTXOs de outros endereços diretamente no balances do próprio nó
+      const otherNodesUtxos: (BitcoinUTXO & {
+        address: string;
+        bipType: BipType;
+        selected: boolean;
+        isOwnedByWallet: boolean;
+      })[] = [];
+
+      // Itera sobre todos os endereços no balances do próprio nó
+      if (this.node.balances) {
+        Object.values(this.node.balances).forEach((addressData) => {
+          if (addressData && !walletAddresses.has(addressData.address)) {
+            // UTXOs que não pertencem à wallet atual
+            (addressData.utxos || []).forEach((utxo) => {
+              if (!spent.has(`${utxo.txId}:${utxo.outputIndex}`)) {
+                const key = `${utxo.txId}-${utxo.outputIndex}`;
+                otherNodesUtxos.push({
+                  ...utxo,
+                  address: addressData.address,
+                  bipType: addressData.bipFormat || 'bip84',
+                  selected: false,
+                  isOwnedByWallet: false, // UTXOs externos
+                });
+              }
+            });
+          }
+        });
+      }
+
+      // Adiciona os UTXOs externos à lista
+      this.allAvailableUtxos.push(...otherNodesUtxos);
+    }
 
     // Adiciona UTXOs virtuais do bloco atual que pertencem à wallet
     const walletAddresses = new Set(this.addresses.map((addr) => addr.address));
@@ -1170,11 +1318,11 @@ export class WalletComponent {
             const virtualKey = `${tx.id}:${outputIndex}`;
             const virtualUtxo = virtualUtxos.get(virtualKey);
             if (virtualUtxo) {
-              const key = `${tx.id}-${outputIndex}`;
               const virtualUtxoData: BitcoinUTXO & {
                 address: string;
                 bipType: BipType;
                 selected: boolean;
+                isOwnedByWallet: boolean;
               } = {
                 txId: tx.id,
                 outputIndex: outputIndex,
@@ -1182,7 +1330,8 @@ export class WalletComponent {
                 blockHeight: this.node.currentBlock!.height,
                 address: output.scriptPubKey.address,
                 bipType: detectBipType(output.scriptPubKey.address) || 'bip84',
-                selected: currentSelection.get(key) || false, // Preserva seleção anterior
+                selected: false,
+                isOwnedByWallet: true, // UTXOs virtuais da própria wallet
               };
               this.allAvailableUtxos.push(virtualUtxoData);
             }
@@ -1191,8 +1340,15 @@ export class WalletComponent {
       }
     }
 
-    // Ordena por valor (maior primeiro)
-    this.allAvailableUtxos.sort((a, b) => b.output.value - a.output.value);
+    // Ordena por valor (maior primeiro), mas coloca UTXOs próprios primeiro
+    this.allAvailableUtxos.sort((a, b) => {
+      // Primeiro ordena por propriedade (próprios primeiro)
+      if (a.isOwnedByWallet !== b.isOwnedByWallet) {
+        return a.isOwnedByWallet ? -1 : 1;
+      }
+      // Depois por valor (maior primeiro)
+      return b.output.value - a.output.value;
+    });
   }
 
   setUtxoSelectionMode(mode: 'auto' | 'manual') {
@@ -1245,7 +1401,9 @@ export class WalletComponent {
         this.signInputAuto(input)
       );
       this.inputSignatureErrors = this.previewInputs.map(() => null);
-      this.inputSignatureInvalid = this.previewInputs.map(() => false); // Assinaturas automáticas são sempre válidas
+      this.inputSignatureInvalid = this.previewInputs.map(
+        (input) => !input.isOwnedByWallet
+      ); // Assinaturas de UTXOs externos são inválidas
     } else {
       this.signedInputs = this.previewInputs.map(() => false);
       this.inputSignatureScripts = this.previewInputs.map(() => null);
@@ -1285,6 +1443,23 @@ export class WalletComponent {
   // Tenta assinar um input manualmente com uma chave privada
   trySignInputWithKey(inputIndex: number, privateKey: string) {
     const input = this.previewInputs[inputIndex];
+
+    // Se o UTXO não pertence à wallet, gera uma assinatura falsa
+    if (!input.isOwnedByWallet) {
+      // Gera uma assinatura falsa usando uma chave privada aleatória
+      const fakePrivateKey = this.generateFakePrivateKey();
+      const message = `${input.txId}|${input.vout}|${input.address}`;
+      const key = ec.keyFromPrivate(fakePrivateKey, 'hex');
+      const signature = key.sign(message);
+      const derSign = signature.toDER('hex');
+      this.inputSignatureScripts[inputIndex] = derSign;
+      this.inputSignatureErrors[inputIndex] =
+        '⚠️ Assinatura falsa gerada para UTXO externo';
+      this.signedInputs[inputIndex] = true;
+      this.inputSignatureInvalid[inputIndex] = true; // Assinatura falsa é inválida
+      return;
+    }
+
     // Permite assinar quantas vezes quiser (sobrescreve assinatura anterior)
     const message = `${input.txId}|${input.vout}|${input.address}`;
     const key = ec.keyFromPrivate(privateKey, 'hex');
@@ -1302,13 +1477,35 @@ export class WalletComponent {
     copyToClipboard(text);
   }
 
+  // Gera uma chave privada falsa para assinaturas inválidas
+  private generateFakePrivateKey(): string {
+    // Gera uma chave privada aleatória de 64 caracteres hex
+    const chars = '0123456789abcdef';
+    let result = '';
+    for (let i = 0; i < 64; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
   // Função para assinar automaticamente um input com a chave correta
   private signInputAuto(input: {
     address: string;
     txId: string;
     vout: number;
+    isOwnedByWallet: boolean;
   }): string {
-    // Procura a chave privada do endereço
+    // Se o UTXO não pertence à wallet, gera uma assinatura falsa
+    if (!input.isOwnedByWallet) {
+      // Gera uma assinatura falsa usando uma chave privada aleatória
+      const fakePrivateKey = this.generateFakePrivateKey();
+      const message = `${input.txId}|${input.vout}|${input.address}`;
+      const key = ec.keyFromPrivate(fakePrivateKey, 'hex');
+      const signature = key.sign(message);
+      return signature.toDER('hex');
+    }
+
+    // Procura a chave privada do endereço (para UTXOs próprios)
     const keyEntry = this.availablePrivateKeys.find(
       (k) => k.address === input.address
     );
@@ -1399,6 +1596,30 @@ export class WalletComponent {
     } else {
       this.inputSignatureInvalid[inputIndex] = false;
     }
+  }
+
+  // Verifica se um input pertence à wallet atual
+  isInputOwnedByWallet(input: {
+    address: string;
+    txId: string;
+    vout: number;
+  }): boolean {
+    if (!this._wallet) return false;
+
+    const walletAddresses = new Set(
+      this._wallet.addresses
+        .flatMap((addrObj) => Object.values(addrObj))
+        .map((addr) => addr.address)
+    );
+
+    return walletAddresses.has(input.address);
+  }
+
+  // Getter para verificar se há inputs externos no preview
+  get hasExternalInputs(): boolean {
+    return this.previewInputs.some(
+      (input) => !this.isInputOwnedByWallet(input)
+    );
   }
 }
 

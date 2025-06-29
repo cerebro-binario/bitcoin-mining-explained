@@ -276,7 +276,11 @@
                 <label
                   *ngFor="let utxo of allAvailableUtxos"
                   class="flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer w-full"
-                  [ngClass]="{ 'bg-blue-900/30': utxo.selected }"
+                  [ngClass]="{
+                    'bg-blue-900/30': utxo.selected && utxo.isOwnedByWallet,
+                    'bg-red-900/30': utxo.selected && !utxo.isOwnedByWallet,
+                    'border-l-4 border-red-500': !utxo.isOwnedByWallet
+                  }"
                 >
                   <input
                     type="checkbox"
@@ -293,10 +297,20 @@
                         {{ utxo.output.value / 100000000 | number : "1.8-8" }}
                         BTC
                       </span>
-                      <span class="text-xs text-zinc-400 font-mono ml-2">
-                        Bloco:
-                        <span class="text-white">{{ utxo.blockHeight }}</span>
-                      </span>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs text-zinc-400 font-mono">
+                          Bloco:
+                          <span class="text-white">{{ utxo.blockHeight }}</span>
+                        </span>
+                        <!-- Indicador visual para UTXOs "roubados" -->
+                        <span
+                          *ngIf="!utxo.isOwnedByWallet"
+                          class="text-xs px-2 py-1 rounded bg-red-900/50 border border-red-700 text-red-200 font-semibold"
+                          title="UTXO que não pertence à sua carteira (modo malicioso)"
+                        >
+                          🔓 EXTERNO
+                        </span>
+                      </div>
                     </div>
                     <div
                       class="text-xs text-zinc-500 font-mono truncate mt-1"
@@ -310,6 +324,10 @@
                     <div
                       class="text-xs text-zinc-500 font-mono truncate"
                       [title]="utxo.address"
+                      [ngClass]="{
+                        'text-red-300': !utxo.isOwnedByWallet,
+                        'text-white': utxo.isOwnedByWallet
+                      }"
                     >
                       {{ utxo.address }}
                     </div>
@@ -328,6 +346,23 @@
                   {{ manualSelectionTotal / 100000000 | number : "1.8-8" }}
                   BTC</span
                 >
+              </div>
+              <!-- Aviso sobre modo malicioso -->
+              <div
+                *ngIf="node.isMalicious"
+                class="mt-2 p-3 bg-red-900/30 border border-red-700 rounded-md"
+              >
+                <div
+                  class="flex items-center gap-2 text-red-200 text-sm font-semibold"
+                >
+                  <i class="pi pi-exclamation-triangle"></i>
+                  MODO MALICIOSO ATIVO
+                </div>
+                <p class="text-red-300 text-xs mt-1">
+                  Você pode selecionar UTXOs que não pertencem à sua carteira.
+                  Estes UTXOs aparecem marcados como "EXTERNO" e não podem ser
+                  assinados corretamente, resultando em transações inválidas.
+                </p>
               </div>
             </div>
 
@@ -428,6 +463,23 @@
                 <i class="pi pi-arrow-right text-green-400"></i>
                 Inputs - UTXOs a serem gastos ({{ previewInputs.length }})
               </h4>
+              <!-- Aviso sobre inputs externos -->
+              <div
+                *ngIf="hasExternalInputs"
+                class="mb-3 p-2 bg-red-900/30 border border-red-700 rounded-md"
+              >
+                <div
+                  class="flex items-center gap-2 text-red-200 text-xs font-semibold"
+                >
+                  <i class="pi pi-exclamation-triangle"></i>
+                  ATENÇÃO: Inputs "externos" detectados!
+                </div>
+                <p class="text-red-300 text-xs mt-1">
+                  Esta transação contém UTXOs que não pertencem à sua carteira.
+                  Eles não podem ser assinados corretamente e resultarão em uma
+                  transação inválida.
+                </p>
+              </div>
               <div class="space-y-4">
                 <app-utxo
                   *ngFor="
@@ -476,7 +528,25 @@
                         </button>
                       </div>
                       <div
-                        *ngIf="inputSignatureErrors[i]"
+                        *ngIf="!isInputOwnedByWallet(input)"
+                        class="mt-1 text-xs text-red-400 font-semibold"
+                      >
+                        ⚠️ Este UTXO não pertence à sua carteira. Uma assinatura
+                        falsa será gerada para fins didáticos.
+                      </div>
+                      <div
+                        *ngIf="
+                          !isInputOwnedByWallet(input) &&
+                          inputSignatureErrors[i]
+                        "
+                        class="mt-1 text-xs text-orange-400 font-mono w-full text-left"
+                      >
+                        {{ inputSignatureErrors[i] }}
+                      </div>
+                      <div
+                        *ngIf="
+                          isInputOwnedByWallet(input) && inputSignatureErrors[i]
+                        "
                         class="mt-1 text-xs text-red-400 font-mono w-full text-left"
                       >
                         {{ inputSignatureErrors[i] }}
