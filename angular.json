@@ -33,6 +33,11 @@
                             {
                                 "glob": "**/*",
                                 "input": "src/assets"
+                            },
+                            {
+                                "glob": "404.html",
+                                "input": "src",
+                                "output": "."
                             }
                         ],
                         "styles": [
