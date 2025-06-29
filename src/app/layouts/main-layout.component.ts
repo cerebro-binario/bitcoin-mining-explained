@@ -25,21 +25,27 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
         <div class="flex gap-2 p-4 border-b border-zinc-800 bg-zinc-900">
           <button
             (click)="addMiner()"
-            class="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-2 text-sm font-semibold flex items-center gap-1 transition"
+            class="bg-blue-500/90 hover:bg-blue-600 text-white rounded-xl px-4 py-2 text-base font-semibold flex items-center gap-2 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-300/40"
           >
-            <i class="pi pi-cog"></i> Minerador
+            <span class="text-sm text-white/70 align-middle">+</span>
+            <i class="pi pi-cog text-lg opacity-80 ml-1"></i>
+            Minerador
           </button>
           <button
             (click)="addNode()"
-            class="bg-green-600 hover:bg-green-700 text-white rounded px-3 py-2 text-sm font-semibold flex items-center gap-1 transition"
+            class="bg-green-500/90 hover:bg-green-600 text-white rounded-xl px-4 py-2 text-base font-semibold flex items-center gap-2 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-300/40"
           >
-            <i class="pi pi-server"></i> Nó
+            <span class="text-sm text-white/70 align-middle">+</span>
+            <i class="pi pi-server text-lg opacity-80 ml-1"></i>
+            Nó
           </button>
           <button
             (click)="addUser()"
-            class="bg-yellow-500 hover:bg-yellow-600 text-zinc-900 rounded px-3 py-2 text-sm font-semibold flex items-center gap-1 transition"
+            class="bg-yellow-400/90 hover:bg-yellow-500 text-zinc-900 rounded-xl px-4 py-2 text-base font-semibold flex items-center gap-2 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-300/40"
           >
-            <i class="pi pi-user"></i> Usuário
+            <span class="text-sm text-zinc-900/70 align-middle">+</span>
+            <i class="pi pi-user text-lg opacity-80 ml-1"></i>
+            Usuário
           </button>
         </div>
         <div

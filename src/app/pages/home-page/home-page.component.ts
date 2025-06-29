@@ -26,21 +26,27 @@ import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
       <div class="flex gap-4">
         <button
           (click)="addAndGo('miner')"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded text-lg transition flex items-center gap-2"
+          class="bg-blue-500/90 hover:bg-blue-600 text-white rounded-xl px-6 py-3 text-lg font-semibold flex items-center gap-2 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-300/40"
         >
-          <i class="pi pi-cog"></i> Minerador
+          <span class="text-sm text-white/70 align-middle">+</span>
+          <i class="pi pi-cog text-xl opacity-80 ml-1"></i>
+          Minerador
         </button>
         <button
           (click)="addAndGo('peer')"
-          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded text-lg transition flex items-center gap-2"
+          class="bg-green-500/90 hover:bg-green-600 text-white rounded-xl px-6 py-3 text-lg font-semibold flex items-center gap-2 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-300/40"
         >
-          <i class="pi pi-server"></i> Nó
+          <span class="text-sm text-white/70 align-middle">+</span>
+          <i class="pi pi-server text-xl opacity-80 ml-1"></i>
+          Nó
         </button>
         <button
           (click)="addAndGo('user')"
-          class="bg-yellow-500 hover:bg-yellow-600 text-zinc-900 font-semibold px-6 py-3 rounded text-lg transition flex items-center gap-2"
+          class="bg-yellow-400/90 hover:bg-yellow-500 text-zinc-900 rounded-xl px-6 py-3 text-lg font-semibold flex items-center gap-2 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-300/40"
         >
-          <i class="pi pi-user"></i> Usuário
+          <span class="text-sm text-zinc-900/70 align-middle">+</span>
+          <i class="pi pi-user text-xl opacity-80 ml-1"></i>
+          Usuário
         </button>
       </div>
     </div>
