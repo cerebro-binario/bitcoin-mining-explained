@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router } from '@angular/router';
 import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.component';
 import { BitcoinNetworkService } from '../services/bitcoin-network.service';
 
@@ -50,7 +50,10 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
   `,
 })
 export class MainLayoutComponent {
-  constructor(public bitcoinNetwork: BitcoinNetworkService) {}
+  constructor(
+    public bitcoinNetwork: BitcoinNetworkService,
+    private router: Router
+  ) {}
 
   addMiner() {
     this.bitcoinNetwork.addNode('miner');
@@ -63,11 +66,11 @@ export class MainLayoutComponent {
   }
   goToProfile(node: any) {
     if (node.nodeType === 'miner') {
-      window.location.href = `/miners/${node.id}`;
+      this.router.navigate(['/miners', node.id]);
     } else if (node.nodeType === 'peer') {
-      window.location.href = `/peers/${node.id}`;
+      this.router.navigate(['/peers', node.id]);
     } else if (node.nodeType === 'user') {
-      window.location.href = `/users/${node.id}`;
+      this.router.navigate(['/users', node.id]);
     }
   }
 }
