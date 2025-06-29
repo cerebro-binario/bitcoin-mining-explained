@@ -14,14 +14,6 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
       <aside
         class="flex flex-col bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"
       >
-        <app-control-panel
-          [stats]="bitcoinNetwork.stats"
-          [hashRateOptions]="hashRateOptions"
-          (startAll)="startAllMiners()"
-          (pauseAll)="pauseAllMiners()"
-          (setDefaultHashRate)="setDefaultHashRate($event)"
-          class="mb-4"
-        ></app-control-panel>
         <div class="flex gap-2 p-4 border-b border-zinc-800 bg-zinc-900">
           <button
             (click)="addMiner()"
@@ -49,6 +41,16 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
             class="w-full h-full"
             (nodeSelected)="goToProfile($event)"
           />
+        </div>
+        <div class="px-4 pb-4 pt-2">
+          <app-control-panel
+            [stats]="bitcoinNetwork.stats"
+            [hashRateOptions]="hashRateOptions"
+            (startAll)="startAllMiners()"
+            (pauseAll)="pauseAllMiners()"
+            (setDefaultHashRate)="setDefaultHashRate($event)"
+            (toggleAllMinersCollapse)="toggleAllMinersCollapse()"
+          ></app-control-panel>
         </div>
       </aside>
       <!-- Conteúdo principal -->
@@ -97,5 +99,8 @@ export class MainLayoutComponent {
   }
   setDefaultHashRate(value: number | null) {
     this.bitcoinNetwork.setDefaultHashRate(value);
+  }
+  toggleAllMinersCollapse() {
+    // Método não implementado no serviço. Pode ser implementado se necessário.
   }
 }

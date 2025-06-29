@@ -32,9 +32,10 @@ interface HashRateOption {
       <div class="flex items-center gap-4">
         <span class="text-sm text-zinc-400"
           >Hash Rate Global:
-          <span class="font-bold text-blue-400">{{
-            stats.totalHashRate | number
-          }}</span>
+          <span
+            class="font-bold text-blue-400 inline-block min-w-[90px] text-right"
+            >{{ stats.totalHashRate | number }}</span
+          >
           H/s</span
         >
         <span class="text-xs text-zinc-400">Hash Rate Padrão:</span>
