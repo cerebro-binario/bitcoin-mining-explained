@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import {
   Router,
@@ -6,11 +6,9 @@ import {
   RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
-import { ThemeService } from '../services/theme.service';
-import { BitcoinNetworkService } from '../services/bitcoin-network.service';
-import { NgIf, NgFor, AsyncPipe } from '@angular/common';
 import { map } from 'rxjs/operators';
-import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.component';
+import { BitcoinNetworkService } from '../services/bitcoin-network.service';
+import { ThemeService } from '../services/theme.service';
 
 @Component({
   selector: 'app-root-layout',

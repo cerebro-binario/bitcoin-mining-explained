@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
+import { BitcoinNetworkService } from '../../services/bitcoin-network.service';
 
 @Component({
   selector: 'app-home-page',
@@ -21,14 +23,36 @@ import { RouterModule } from '@angular/router';
           Nenhum nó selecionado. Crie um nó para começar!
         </span>
       </div>
-      <a
-        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded text-lg transition flex items-center gap-2"
-        routerLink="/network"
-      >
-        <i class="pi pi-plus"></i>
-        Criar meu primeiro nó
-      </a>
+      <div class="flex gap-4">
+        <button
+          (click)="addAndGo('miner')"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded text-lg transition flex items-center gap-2"
+        >
+          <i class="pi pi-cog"></i> Minerador
+        </button>
+        <button
+          (click)="addAndGo('peer')"
+          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded text-lg transition flex items-center gap-2"
+        >
+          <i class="pi pi-server"></i> Nó
+        </button>
+        <button
+          (click)="addAndGo('user')"
+          class="bg-yellow-500 hover:bg-yellow-600 text-zinc-900 font-semibold px-6 py-3 rounded text-lg transition flex items-center gap-2"
+        >
+          <i class="pi pi-user"></i> Usuário
+        </button>
+      </div>
     </div>
   `,
 })
-export class HomePageComponent {}
+export class HomePageComponent {
+  constructor(
+    private bitcoinNetwork: BitcoinNetworkService,
+    private router: Router
+  ) {}
+
+  addAndGo(type: 'miner' | 'peer' | 'user') {
+    this.bitcoinNetwork.addNode(type);
+  }
+}
