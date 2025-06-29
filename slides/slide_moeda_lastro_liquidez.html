@@ -1311,6 +1311,118 @@
           max-width: 98vw;
         }
       }
+
+      .btc-strategy-container {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 32px;
+      }
+      .btc-block {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 28px 24px;
+        min-width: 240px;
+        max-width: 320px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .btc-block-title {
+        color: #f7931a;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 14px;
+      }
+      .btc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .btc-icon {
+        font-size: 1.1rem;
+        margin-right: 8px;
+      }
+      .btc-nao-title,
+      .btc-nao-icon {
+        color: #ff4d4d;
+      }
+      .btc-nao-note {
+        color: #ff4d4d;
+        font-size: 0.98rem;
+        margin-top: 12px;
+      }
+      .btc-sim-title,
+      .btc-sim-icon {
+        color: #3be07a;
+      }
+      .btc-sim-note {
+        color: #3be07a;
+        font-size: 0.98rem;
+        margin-top: 12px;
+      }
+      .btc-flow-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 220px;
+        max-width: 320px;
+      }
+      .btc-flow-title {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .btc-flow-diagram {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .btc-flow-piece {
+        font-size: 2.1rem;
+        background: #222233;
+        border-radius: 10px;
+        padding: 8px 14px;
+        border: 2px solid #333355;
+        color: #e0e0e0;
+      }
+      .btc-flow-btc {
+        color: #f7931a;
+        border: 2.5px solid #f7931a;
+        font-weight: 900;
+        background: #181818;
+      }
+      .btc-flow-arrow {
+        font-size: 1.5rem;
+        color: #f7931a;
+        font-weight: 700;
+      }
+      .btc-flow-desc {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        text-align: center;
+      }
+      @media (max-width: 900px) {
+        .btc-strategy-container {
+          flex-direction: column;
+          gap: 24px;
+          align-items: center;
+        }
+        .btc-block,
+        .btc-flow-center {
+          min-width: 180px;
+          max-width: 98vw;
+        }
+      }
     </style>
   </head>
   <body>
@@ -2846,6 +2958,203 @@
             align-items: center;
           }
           .inevitability-block {
+            min-width: 180px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 14: O Bitcoin como Ferramenta Estratégica -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Bitcoin como Ferramenta Estratégica</h1>
+          <p class="subtitle">Não é solução mágica, mas muda o jogo</p>
+        </div>
+        <div class="btc-strategy-container">
+          <!-- Bloco: Não é Solução -->
+          <div class="btc-block btc-block-nao">
+            <div class="btc-block-title btc-nao-title">Não é uma Solução</div>
+            <ul class="btc-list">
+              <li>
+                <span class="btc-icon btc-nao-icon">🚫</span> Não impede
+                problemas sistêmicos
+              </li>
+              <li>
+                <span class="btc-icon btc-nao-icon">❌</span> Não resolve
+                corrupção
+              </li>
+              <li>
+                <span class="btc-icon btc-nao-icon">💸</span> Não elimina
+                inflação
+              </li>
+              <li>
+                <span class="btc-icon btc-nao-icon">🔄</span> Não substitui o
+                sistema atual
+              </li>
+            </ul>
+            <div class="btc-nao-note">
+              Idealizar o Bitcoin como solução mágica é utópico.
+            </div>
+          </div>
+
+          <!-- Centro: Fluxo/Tabuleiro -->
+          <div class="btc-flow-center">
+            <div class="btc-flow-title">Fluxo Monetário</div>
+            <div class="btc-flow-diagram">
+              <div class="btc-flow-piece">💵</div>
+              <div class="btc-flow-arrow">→</div>
+              <div class="btc-flow-piece">🏦</div>
+              <div class="btc-flow-arrow">→</div>
+              <div class="btc-flow-piece">💳</div>
+              <div class="btc-flow-arrow">→</div>
+              <div class="btc-flow-piece btc-flow-btc">₿</div>
+              <div class="btc-flow-arrow">→</div>
+              <div class="btc-flow-piece">👥</div>
+            </div>
+            <div class="btc-flow-desc">
+              O Bitcoin entra no fluxo como mais uma peça estratégica,<br />participando
+              dos ciclos econômicos e sofrendo os mesmos efeitos.
+            </div>
+          </div>
+
+          <!-- Bloco: Peça Estratégica -->
+          <div class="btc-block btc-block-sim">
+            <div class="btc-block-title btc-sim-title">
+              É uma Peça Estratégica
+            </div>
+            <ul class="btc-list">
+              <li>
+                <span class="btc-icon btc-sim-icon">♟️</span> Participa do fluxo
+                monetário
+              </li>
+              <li>
+                <span class="btc-icon btc-sim-icon">💱</span> Sofre efeitos
+                inflacionários
+              </li>
+              <li>
+                <span class="btc-icon btc-sim-icon">🏛️</span> Funciona como
+                moeda lastro
+              </li>
+              <li>
+                <span class="btc-icon btc-sim-icon">🛑</span> Controla sanha
+                inflacionária
+              </li>
+            </ul>
+            <div class="btc-sim-note">
+              Bitcoin é ferramenta, não solução mágica.<br />Seu impacto depende
+              do contexto do sistema.
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .btc-strategy-container {
+          display: flex;
+          flex-direction: row;
+          gap: 48px;
+          justify-content: center;
+          align-items: flex-start;
+          margin-top: 32px;
+        }
+        .btc-block {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 28px 24px;
+          min-width: 240px;
+          max-width: 320px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .btc-block-title {
+          color: #f7931a;
+          font-size: 1.15rem;
+          font-weight: 700;
+          margin-bottom: 14px;
+        }
+        .btc-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .btc-icon {
+          font-size: 1.1rem;
+          margin-right: 8px;
+        }
+        .btc-nao-title,
+        .btc-nao-icon {
+          color: #ff4d4d;
+        }
+        .btc-nao-note {
+          color: #ff4d4d;
+          font-size: 0.98rem;
+          margin-top: 12px;
+        }
+        .btc-sim-title,
+        .btc-sim-icon {
+          color: #3be07a;
+        }
+        .btc-sim-note {
+          color: #3be07a;
+          font-size: 0.98rem;
+          margin-top: 12px;
+        }
+        .btc-flow-center {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-width: 220px;
+          max-width: 320px;
+        }
+        .btc-flow-title {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+        .btc-flow-diagram {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .btc-flow-piece {
+          font-size: 2.1rem;
+          background: #222233;
+          border-radius: 10px;
+          padding: 8px 14px;
+          border: 2px solid #333355;
+          color: #e0e0e0;
+        }
+        .btc-flow-btc {
+          color: #f7931a;
+          border: 2.5px solid #f7931a;
+          font-weight: 900;
+          background: #181818;
+        }
+        .btc-flow-arrow {
+          font-size: 1.5rem;
+          color: #f7931a;
+          font-weight: 700;
+        }
+        .btc-flow-desc {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          text-align: center;
+        }
+        @media (max-width: 900px) {
+          .btc-strategy-container {
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+          }
+          .btc-block,
+          .btc-flow-center {
             min-width: 180px;
             max-width: 98vw;
           }
