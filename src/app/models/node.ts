@@ -2440,7 +2440,6 @@ export class Node {
             input.txid,
             input.vout
           );
-          console.log(`[valid: ${input.signatureValid}]`, input);
         }
       }
       this.currentBlock.addTransaction(tx);
@@ -2476,7 +2475,6 @@ export class Node {
           input.txid,
           input.vout
         );
-        console.log(input.signatureValid);
       }
     }
     this.currentBlock.addTransaction(tx);
