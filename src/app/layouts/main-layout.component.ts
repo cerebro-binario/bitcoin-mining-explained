@@ -56,6 +56,16 @@ import { BitcoinNetworkService } from '../services/bitcoin-network.service';
             (nodeSelected)="goToProfile($event)"
           />
         </div>
+        <!-- Botão de consenso global -->
+        <div class="w-full px-4 pt-4">
+          <button
+            class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-zinc-800 text-white font-semibold text-lg border border-zinc-700 hover:border-blue-400 hover:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] hover:text-blue-200 focus:outline-none transition-all duration-200 mb-4"
+            (click)="showGlobalConsensus = true"
+          >
+            <i class="pi pi-cog text-xl text-blue-400"></i>
+            Consenso Global
+          </button>
+        </div>
         <div class="px-4 pb-4 pt-2">
           <app-control-panel
             [stats]="bitcoinNetwork.stats"
@@ -97,6 +107,7 @@ export class MainLayoutComponent {
 
   sidebarWidth = 340; // valor inicial em px
   resizing = false;
+  showGlobalConsensus = false;
 
   constructor(
     public bitcoinNetwork: BitcoinNetworkService,
