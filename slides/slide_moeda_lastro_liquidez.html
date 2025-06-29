@@ -1593,6 +1593,129 @@
           max-width: 98vw;
         }
       }
+
+      .dividends-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 32px;
+        gap: 18px;
+      }
+      .dividends-cards-row {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        justify-content: center;
+      }
+      .dividends-card {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 24px 20px;
+        min-width: 220px;
+        max-width: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .dividends-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .pos-title,
+      .pos-icon {
+        color: #3be07a;
+      }
+      .neg-title,
+      .neg-icon {
+        color: #ff4d4d;
+      }
+      .dividends-list {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .dividends-icon {
+        font-size: 1.1rem;
+        margin-right: 8px;
+      }
+      .dividends-flow {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 18px;
+        margin: 32px 0 10px 0;
+      }
+      .dividends-flow-piece {
+        font-size: 2rem;
+        background: #222233;
+        border-radius: 10px;
+        padding: 8px 14px;
+        border: 2px solid #333355;
+        color: #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .dividends-flow-label {
+        color: #f7931a;
+        font-size: 0.98rem;
+        font-weight: 600;
+      }
+      .dividends-flow-arrow {
+        font-size: 1.5rem;
+        color: #f7931a;
+        font-weight: 700;
+      }
+      .dividends-dilemma-row {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        margin: 18px 0 0 0;
+      }
+      .dividends-dilemma-block {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 12px;
+        padding: 12px 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .dividends-dilemma-title {
+        color: #f7931a;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+      .dividends-dilemma-desc {
+        color: #e0e0e0;
+        font-size: 0.97rem;
+      }
+      .dividends-impact {
+        color: #f7931a;
+        font-size: 1.01rem;
+        margin-top: 18px;
+        text-align: center;
+        max-width: 600px;
+      }
+      @media (max-width: 900px) {
+        .dividends-cards-row,
+        .dividends-dilemma-row {
+          flex-direction: column;
+          gap: 18px;
+          align-items: center;
+        }
+        .dividends-card {
+          min-width: 160px;
+          max-width: 98vw;
+        }
+      }
     </style>
   </head>
   <body>
@@ -3614,6 +3737,213 @@
           }
           .capital-option-card {
             min-width: 140px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 17: A Gambiarra da Distribuição de Dividendos -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">A "Gambiarra" da Distribuição de Dividendos</h1>
+          <p class="subtitle">
+            Solução temporária que transfere o dilema de alocação
+          </p>
+        </div>
+        <div class="dividends-container">
+          <div class="dividends-cards-row">
+            <div class="dividends-card pos">
+              <div class="dividends-card-title pos-title">Vantagens</div>
+              <ul class="dividends-list">
+                <li>
+                  <span class="dividends-icon pos-icon">💧</span> Fornece
+                  liquidez aos investidores
+                </li>
+                <li>
+                  <span class="dividends-icon pos-icon">🛑</span> Não requer
+                  venda de ativos
+                </li>
+                <li>
+                  <span class="dividends-icon pos-icon">🤝</span> Mantém
+                  participação acionária
+                </li>
+              </ul>
+            </div>
+            <div class="dividends-card neg">
+              <div class="dividends-card-title neg-title">Desvantagens</div>
+              <ul class="dividends-list">
+                <li>
+                  <span class="dividends-icon neg-icon">📉</span> Perda no
+                  balanço patrimonial
+                </li>
+                <li>
+                  <span class="dividends-icon neg-icon">💸</span> Saída de
+                  capital da empresa
+                </li>
+                <li>
+                  <span class="dividends-icon neg-icon">⚠️</span> Obriga ação
+                  dos retentores
+                </li>
+                <li>
+                  <span class="dividends-icon neg-icon">⏳</span> Solução
+                  temporária
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="dividends-flow">
+            <div class="dividends-flow-piece">
+              🏢<br /><span class="dividends-flow-label">Empresa</span>
+            </div>
+            <div class="dividends-flow-arrow">→</div>
+            <div class="dividends-flow-piece">
+              💸<br /><span class="dividends-flow-label">Dividendos</span>
+            </div>
+            <div class="dividends-flow-arrow">→</div>
+            <div class="dividends-flow-piece">
+              👥<br /><span class="dividends-flow-label">Investidores</span>
+            </div>
+          </div>
+          <div class="dividends-dilemma-row">
+            <div class="dividends-dilemma-block">
+              <span class="dividends-dilemma-title">Para ACUMULAR</span>
+              <span class="dividends-dilemma-desc"
+                >Precisa agir (reinvestir)</span
+              >
+            </div>
+            <div class="dividends-dilemma-block">
+              <span class="dividends-dilemma-title">Para LIQUIDEZ</span>
+              <span class="dividends-dilemma-desc"
+                >Não faz nada, só recebe</span
+              >
+            </div>
+          </div>
+          <div class="dividends-impact">
+            Distribuir dividendos é uma solução temporária: reduz o patrimônio
+            da empresa e transfere o dilema de alocação para o investidor.
+          </div>
+        </div>
+      </div>
+      <style>
+        .dividends-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 32px;
+          gap: 18px;
+        }
+        .dividends-cards-row {
+          display: flex;
+          flex-direction: row;
+          gap: 48px;
+          justify-content: center;
+        }
+        .dividends-card {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 24px 20px;
+          min-width: 220px;
+          max-width: 280px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .dividends-card-title {
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+        .pos-title,
+        .pos-icon {
+          color: #3be07a;
+        }
+        .neg-title,
+        .neg-icon {
+          color: #ff4d4d;
+        }
+        .dividends-list {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .dividends-icon {
+          font-size: 1.1rem;
+          margin-right: 8px;
+        }
+        .dividends-flow {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 18px;
+          margin: 32px 0 10px 0;
+        }
+        .dividends-flow-piece {
+          font-size: 2rem;
+          background: #222233;
+          border-radius: 10px;
+          padding: 8px 14px;
+          border: 2px solid #333355;
+          color: #e0e0e0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .dividends-flow-label {
+          color: #f7931a;
+          font-size: 0.98rem;
+          font-weight: 600;
+        }
+        .dividends-flow-arrow {
+          font-size: 1.5rem;
+          color: #f7931a;
+          font-weight: 700;
+        }
+        .dividends-dilemma-row {
+          display: flex;
+          flex-direction: row;
+          gap: 48px;
+          margin: 18px 0 0 0;
+        }
+        .dividends-dilemma-block {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 12px;
+          padding: 12px 22px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .dividends-dilemma-title {
+          color: #f7931a;
+          font-size: 1.05rem;
+          font-weight: 700;
+        }
+        .dividends-dilemma-desc {
+          color: #e0e0e0;
+          font-size: 0.97rem;
+        }
+        .dividends-impact {
+          color: #f7931a;
+          font-size: 1.01rem;
+          margin-top: 18px;
+          text-align: center;
+          max-width: 600px;
+        }
+        @media (max-width: 900px) {
+          .dividends-cards-row,
+          .dividends-dilemma-row {
+            flex-direction: column;
+            gap: 18px;
+            align-items: center;
+          }
+          .dividends-card {
+            min-width: 160px;
             max-width: 98vw;
           }
         }
