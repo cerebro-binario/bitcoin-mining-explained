@@ -1423,6 +1423,176 @@
           max-width: 98vw;
         }
       }
+
+      .capital-dilemma-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 32px;
+        gap: 18px;
+      }
+      .capital-agents-row {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        justify-content: center;
+      }
+      .capital-agent-card {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 24px 20px;
+        min-width: 220px;
+        max-width: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .capital-agent-card.low {
+        opacity: 0.7;
+      }
+      .capital-agent-card.high {
+        border-color: #f7931a;
+      }
+      .capital-agent-icon {
+        font-size: 2.1rem;
+        margin-bottom: 8px;
+      }
+      .capital-agent-title {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .capital-agent-list {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .capital-dilemma-arrow {
+        font-size: 2.2rem;
+        color: #f7931a;
+        margin: 18px 0 0 0;
+      }
+      .capital-dilemma-block {
+        background: #181818;
+        border: 2.5px solid #f7931a;
+        border-radius: 18px;
+        padding: 22px 18px 16px 18px;
+        max-width: 420px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .capital-dilemma-icon {
+        font-size: 2.1rem;
+        margin-bottom: 6px;
+      }
+      .capital-dilemma-title {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .capital-dilemma-list {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .capital-dilemma-note {
+        color: #f7931a;
+        font-size: 0.98rem;
+        margin-top: 10px;
+        text-align: center;
+      }
+      @media (max-width: 900px) {
+        .capital-agents-row {
+          flex-direction: column;
+          gap: 24px;
+          align-items: center;
+        }
+        .capital-agent-card {
+          min-width: 160px;
+          max-width: 98vw;
+        }
+      }
+
+      .capital-options-container {
+        display: flex;
+        flex-direction: row;
+        gap: 28px;
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 32px;
+        flex-wrap: wrap;
+      }
+      .capital-option-card {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 24px 20px;
+        min-width: 200px;
+        max-width: 260px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .capital-option-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+      .capital-option-title {
+        color: #f7931a;
+        font-size: 1.08rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+      .capital-option-list {
+        color: #e0e0e0;
+        font-size: 0.97rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .capital-options-note {
+        color: #f7931a;
+        font-size: 1.01rem;
+        margin-top: 18px;
+        text-align: center;
+      }
+      @media (max-width: 1100px) {
+        .capital-options-container {
+          flex-wrap: wrap;
+          gap: 18px;
+        }
+      }
+      @media (max-width: 900px) {
+        .capital-options-container {
+          flex-direction: column;
+          align-items: center;
+          gap: 18px;
+        }
+        .capital-option-card {
+          min-width: 140px;
+          max-width: 98vw;
+        }
+      }
     </style>
   </head>
   <body>
@@ -3156,6 +3326,294 @@
           .btc-block,
           .btc-flow-center {
             min-width: 180px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 15: O Dilema dos Grandes Acumuladores de Capital -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Problema de Alocação de Capital</h1>
+          <p class="subtitle">O dilema dos agentes mais eficientes</p>
+        </div>
+        <div class="capital-dilemma-container">
+          <div class="capital-agents-row">
+            <div class="capital-agent-card low">
+              <div class="capital-agent-icon">🧑‍🔧</div>
+              <div class="capital-agent-title">Baixo Superávit</div>
+              <ul class="capital-agent-list">
+                <li>Pouca retenção</li>
+                <li>Baixa produtividade</li>
+                <li>Capacidade limitada de acumulação</li>
+              </ul>
+            </div>
+            <div class="capital-agent-card high">
+              <div class="capital-agent-icon">🏢</div>
+              <div class="capital-agent-title">Alto Superávit</div>
+              <ul class="capital-agent-list">
+                <li>Alta retenção</li>
+                <li>Alta produtividade</li>
+                <li>Grande capacidade de acumulação</li>
+                <li>Empresas líderes de mercado</li>
+              </ul>
+            </div>
+          </div>
+          <div class="capital-dilemma-arrow">⬇️</div>
+          <div class="capital-dilemma-block">
+            <div class="capital-dilemma-icon">❓</div>
+            <div class="capital-dilemma-title">
+              Dilema das Empresas Produtivas
+            </div>
+            <ul class="capital-dilemma-list">
+              <li>Acúmulo excessivo de capital</li>
+              <li>Limitações de alocação</li>
+              <li>Problemas com retenção</li>
+              <li>Necessidade de estratégia</li>
+            </ul>
+            <div class="capital-dilemma-note">
+              Sem boa alocação, até os mais eficientes precisam correr atrás da
+              cenoura a cada ciclo.
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .capital-dilemma-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 32px;
+          gap: 18px;
+        }
+        .capital-agents-row {
+          display: flex;
+          flex-direction: row;
+          gap: 48px;
+          justify-content: center;
+        }
+        .capital-agent-card {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 24px 20px;
+          min-width: 220px;
+          max-width: 280px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .capital-agent-card.low {
+          opacity: 0.7;
+        }
+        .capital-agent-card.high {
+          border-color: #f7931a;
+        }
+        .capital-agent-icon {
+          font-size: 2.1rem;
+          margin-bottom: 8px;
+        }
+        .capital-agent-title {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        .capital-agent-list {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .capital-dilemma-arrow {
+          font-size: 2.2rem;
+          color: #f7931a;
+          margin: 18px 0 0 0;
+        }
+        .capital-dilemma-block {
+          background: #181818;
+          border: 2.5px solid #f7931a;
+          border-radius: 18px;
+          padding: 22px 18px 16px 18px;
+          max-width: 420px;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .capital-dilemma-icon {
+          font-size: 2.1rem;
+          margin-bottom: 6px;
+        }
+        .capital-dilemma-title {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        .capital-dilemma-list {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .capital-dilemma-note {
+          color: #f7931a;
+          font-size: 0.98rem;
+          margin-top: 10px;
+          text-align: center;
+        }
+        @media (max-width: 900px) {
+          .capital-agents-row {
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+          }
+          .capital-agent-card {
+            min-width: 160px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 16: Opções de Alocação de Capital -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">Opções de Alocação de Capital</h1>
+          <p class="subtitle">
+            Nenhuma opção é perfeita para grandes instituições
+          </p>
+        </div>
+        <div class="capital-options-container">
+          <div class="capital-option-card">
+            <div class="capital-option-icon">💼</div>
+            <div class="capital-option-title">Manter em Caixa</div>
+            <ul class="capital-option-list">
+              <li>Risco de captura burocrática</li>
+              <li>Perda para inflação</li>
+              <li>Vulnerabilidade sistêmica</li>
+            </ul>
+          </div>
+          <div class="capital-option-card">
+            <div class="capital-option-icon">🏭</div>
+            <div class="capital-option-title">Reinvestimento no Setor</div>
+            <ul class="capital-option-list">
+              <li>Limites de eficiência</li>
+              <li>Mercados saturados</li>
+              <li>Restrições de expansão</li>
+              <li>Riscos regulatórios</li>
+            </ul>
+          </div>
+          <div class="capital-option-card">
+            <div class="capital-option-icon">🔀</div>
+            <div class="capital-option-title">Diversificação Setorial</div>
+            <ul class="capital-option-list">
+              <li>Perda de foco</li>
+              <li>Complexidade gerencial</li>
+              <li>Riscos operacionais</li>
+              <li>Ineficiência de capital</li>
+            </ul>
+          </div>
+          <div class="capital-option-card">
+            <div class="capital-option-icon">🏠</div>
+            <div class="capital-option-title">Mercado Imobiliário</div>
+            <ul class="capital-option-list">
+              <li>Alocação limitada</li>
+              <li>Não é core business</li>
+              <li>Riscos específicos</li>
+              <li>Complexidade adicional</li>
+            </ul>
+          </div>
+          <div class="capital-option-card">
+            <div class="capital-option-icon">📄</div>
+            <div class="capital-option-title">Títulos Públicos</div>
+            <ul class="capital-option-list">
+              <li>Fonte do problema sistêmico</li>
+              <li>Risco de default</li>
+              <li>Inflação como pagamento</li>
+              <li>Perda de oportunidades</li>
+            </ul>
+          </div>
+        </div>
+        <div class="capital-options-note">
+          A corrida nunca acaba — o sistema força todos a buscar proteção a cada
+          ciclo.<br /><span style="color: #aaa; font-size: 0.97rem"
+            >Para grandes instituições, alocar capital é sempre um desafio de
+            risco e eficiência.</span
+          >
+        </div>
+      </div>
+      <style>
+        .capital-options-container {
+          display: flex;
+          flex-direction: row;
+          gap: 28px;
+          justify-content: center;
+          align-items: flex-start;
+          margin-top: 32px;
+          flex-wrap: wrap;
+        }
+        .capital-option-card {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 24px 20px;
+          min-width: 200px;
+          max-width: 260px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 18px;
+        }
+        .capital-option-icon {
+          font-size: 2rem;
+          margin-bottom: 8px;
+        }
+        .capital-option-title {
+          color: #f7931a;
+          font-size: 1.08rem;
+          font-weight: 700;
+          margin-bottom: 8px;
+          text-align: center;
+        }
+        .capital-option-list {
+          color: #e0e0e0;
+          font-size: 0.97rem;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .capital-options-note {
+          color: #f7931a;
+          font-size: 1.01rem;
+          margin-top: 18px;
+          text-align: center;
+        }
+        @media (max-width: 1100px) {
+          .capital-options-container {
+            flex-wrap: wrap;
+            gap: 18px;
+          }
+        }
+        @media (max-width: 900px) {
+          .capital-options-container {
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+          }
+          .capital-option-card {
+            min-width: 140px;
             max-width: 98vw;
           }
         }
