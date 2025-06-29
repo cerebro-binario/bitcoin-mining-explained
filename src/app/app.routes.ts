@@ -47,4 +47,12 @@ export const routes: Routes = [
       },
     ],
   },
+  // Rota para os slides (fora do layout principal)
+  {
+    path: 'slides',
+    loadComponent: () =>
+      import('./pages/slides-page/slides-page.component').then(
+        (m) => m.SlidesPageComponent
+      ),
+  },
 ];
