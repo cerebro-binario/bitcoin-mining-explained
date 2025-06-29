@@ -254,11 +254,9 @@ export class WalletComponent implements OnDestroy, OnInit {
       const currentMaliciousState = this.node?.isMalicious || false;
       if (currentMaliciousState !== lastMaliciousState) {
         lastMaliciousState = currentMaliciousState;
-        if (this.activeTab === 'enviar') {
-          // Se estamos na aba enviar, atualiza a lista de UTXOs quando o modo malicioso mudar
-          this.prepareAllUtxosForManualSelection();
-          this.updateTransactionPreview();
-        }
+        // Sempre atualiza UTXOs e preview, independente da aba
+        this.prepareAllUtxosForManualSelection();
+        this.updateTransactionPreview();
       }
     };
 
@@ -455,9 +453,15 @@ export class WalletComponent implements OnDestroy, OnInit {
     }
 
     if (this.utxoSelectionMode === 'auto') {
-      if (this.sendAmount * 1e8 > this.availableBalance) {
+      const maxSpendable = this.node.isMalicious
+        ? Number.MAX_SAFE_INTEGER / 1e8 // Permite qualquer valor no modo malicioso
+        : this.availableBalance / 1e8;
+
+      if (this.sendAmount > maxSpendable) {
         this.sendAmountValid = false;
-        this.sendAmountErrorMsg = 'Saldo insuficiente para esta transação.';
+        this.sendAmountErrorMsg = this.node.isMalicious
+          ? 'Modo malicioso ativo: valor muito alto pode causar overflow.'
+          : 'Saldo insuficiente para esta transação.';
         return;
       }
     } else {
@@ -467,7 +471,24 @@ export class WalletComponent implements OnDestroy, OnInit {
         this.sendAmountErrorMsg = 'Selecione pelo menos um UTXO para gastar.';
         return;
       }
-      if (this.sendAmount * 1e8 > this.manualSelectionTotal) {
+
+      if (this.node.isMalicious) {
+        // Permite qualquer valor (até o máximo seguro do JS)
+        const maxMalicious = Number.MAX_SAFE_INTEGER / 1e8;
+        if (this.sendAmount > maxMalicious) {
+          this.sendAmountValid = false;
+          this.sendAmountErrorMsg =
+            'Modo malicioso ativo: valor muito alto pode causar overflow.';
+          return;
+        }
+        // Caso contrário, é válido
+        this.sendAmountValid = true;
+        this.sendAmountErrorMsg = '';
+        return;
+      }
+
+      const maxSpendable = this.manualSelectionTotal / 1e8;
+      if (this.sendAmount > maxSpendable) {
         this.sendAmountValid = false;
         this.sendAmountErrorMsg =
           'O valor a ser enviado não pode exceder o total dos UTXOs selecionados.';
@@ -521,28 +542,90 @@ export class WalletComponent implements OnDestroy, OnInit {
       isOwnedByWallet: boolean;
     })[];
     let total: number = 0;
+    let fee = 0;
+    let change = 0;
+    let outputs: {
+      address: string;
+      value: number;
+      type: 'change' | 'destination';
+      bipType?: BipType;
+    }[] = [];
 
     if (this.utxoSelectionMode === 'auto') {
-      // Seleciona UTXOs suficientes para cobrir valor + taxa (estimada)
-      // Loop para garantir que a taxa seja suficiente mesmo se o número de inputs mudar
+      // Seleciona UTXOs suficientes para cobrir valor + taxa
       let needed = amountSats;
-      let selected: typeof utxos = [];
-      let fee = 0;
-      for (let tries = 0; tries < 5; tries++) {
-        const sel = this.selectUtxosFIFO(needed + fee);
-        selected = sel.utxos;
-        total = sel.total;
-        const numInputs = selected.length;
-        const numOutputs = total > amountSats + fee ? 2 : 1;
-        fee = this.estimateFee(numInputs, numOutputs);
-        needed = amountSats + fee;
-        if (total >= needed) break;
-      }
-      if (total < amountSats + fee) {
-        this.showTransactionPreview = false;
-        return;
+      let selected: (BitcoinUTXO & {
+        address: string;
+        bipType: BipType;
+        isOwnedByWallet: boolean;
+      })[] = [];
+      let totalInput = 0;
+
+      // No modo malicioso, se maliciousSpendMore estiver ativo, não precisa de UTXOs suficientes
+      if (this.node.isMalicious && amountSats > this.availableBalance) {
+        // Usa todos os UTXOs disponíveis, mesmo que insuficientes
+        const { utxos, total } = this.selectUtxosFIFO(this.availableBalance);
+        selected = utxos;
+        totalInput = total;
+        fee = 0; // Taxa zero para transação inválida
+        change = 0; // Sem troco
+        outputs = [
+          {
+            address: this.sendToAddress,
+            value: amountSats,
+            type: 'destination',
+            bipType: detectBipType(this.sendToAddress),
+          },
+        ];
+      } else {
+        for (let tries = 0; tries < 5; tries++) {
+          const sel = this.selectUtxosFIFO(needed + fee);
+          selected = sel.utxos;
+          totalInput = sel.total;
+          const numInputs = selected.length;
+          const numOutputs = totalInput > amountSats + fee ? 2 : 1;
+          fee = this.estimateFee(numInputs, numOutputs);
+          needed = amountSats + fee;
+          if (totalInput >= needed) break;
+        }
+        if (totalInput < amountSats + fee) {
+          if (!this.node.isMalicious) {
+            this.showTransactionPreview = false;
+            return;
+          }
+          // No modo malicioso, preview deve aparecer mesmo se valor > UTXOs
+          fee = 0;
+          change = 0;
+          outputs = [
+            {
+              address: this.sendToAddress,
+              value: amountSats,
+              type: 'destination',
+              bipType: detectBipType(this.sendToAddress),
+            },
+          ];
+        } else {
+          change = totalInput - amountSats - fee;
+          outputs = [
+            {
+              address: this.sendToAddress,
+              value: amountSats,
+              type: 'destination',
+              bipType: detectBipType(this.sendToAddress),
+            },
+          ];
+          if (change > 0) {
+            outputs.push({
+              address: this.getNextChangeAddress(),
+              value: change,
+              type: 'change',
+              bipType: detectBipType(this.getNextChangeAddress()),
+            });
+          }
+        }
       }
       utxos = selected;
+      total = totalInput;
     } else {
       // Manual
       if (this.manuallySelectedUtxos.length === 0) {
@@ -554,10 +637,41 @@ export class WalletComponent implements OnDestroy, OnInit {
       // Outputs: destino + troco se houver
       const numInputs = utxos.length;
       const numOutputs = total > amountSats ? 2 : 1;
-      const fee = this.estimateFee(numInputs, numOutputs);
+      fee = this.estimateFee(numInputs, numOutputs);
       if (total < amountSats + fee) {
-        this.showTransactionPreview = false;
-        return;
+        if (!this.node.isMalicious) {
+          this.showTransactionPreview = false;
+          return;
+        }
+        // No modo malicioso, preview deve aparecer mesmo se valor > UTXOs
+        fee = 0;
+        change = 0;
+        outputs = [
+          {
+            address: this.sendToAddress,
+            value: amountSats,
+            type: 'destination',
+            bipType: detectBipType(this.sendToAddress),
+          },
+        ];
+      } else {
+        change = total - amountSats - fee;
+        outputs = [
+          {
+            address: this.sendToAddress,
+            value: amountSats,
+            type: 'destination',
+            bipType: detectBipType(this.sendToAddress),
+          },
+        ];
+        if (change > 0) {
+          outputs.push({
+            address: this.getNextChangeAddress(),
+            value: change,
+            type: 'change',
+            bipType: detectBipType(this.getNextChangeAddress()),
+          });
+        }
       }
     }
 
@@ -575,14 +689,9 @@ export class WalletComponent implements OnDestroy, OnInit {
     // Calcule a taxa realista
     const numInputs = utxos.length;
     // Outputs: destino + troco se houver
-    let fee = this.estimateFee(numInputs, 2);
-    let change = total - amountSats - fee;
-    let outputs: {
-      address: string;
-      value: number;
-      type: 'change' | 'destination';
-      bipType?: BipType;
-    }[] = [
+    fee = this.estimateFee(numInputs, 2);
+    change = total - amountSats - fee;
+    outputs = [
       {
         address: this.sendToAddress,
         value: amountSats,
@@ -590,7 +699,21 @@ export class WalletComponent implements OnDestroy, OnInit {
         bipType: detectBipType(this.sendToAddress),
       },
     ];
-    if (change > 0) {
+
+    // No modo malicioso, permite outputs maiores que inputs
+    if (this.node.isMalicious && amountSats > total) {
+      // Output maior que input - não há troco, apenas o output principal
+      outputs = [
+        {
+          address: this.sendToAddress,
+          value: amountSats,
+          type: 'destination',
+          bipType: detectBipType(this.sendToAddress),
+        },
+      ];
+      fee = 0; // Taxa zero para transação inválida
+      change = 0;
+    } else if (change > 0) {
       outputs.push({
         address: this.getNextChangeAddress(),
         value: change,
@@ -642,35 +765,47 @@ export class WalletComponent implements OnDestroy, OnInit {
         bipType: BipType;
         isOwnedByWallet: boolean;
       })[] = [];
-      for (let tries = 0; tries < 5; tries++) {
-        const sel = this.selectUtxosFIFO(needed + fee);
-        selected = sel.utxos;
-        totalInput = sel.total;
-        const numInputs = selected.length;
-        const numOutputs = totalInput > amountSats + fee ? 2 : 1;
-        fee = this.estimateFee(numInputs, numOutputs);
-        needed = amountSats + fee;
-        if (totalInput >= needed) break;
-      }
-      if (totalInput < amountSats + fee) {
-        this.sendAmountValid = false;
-        this.sendAmountErrorMsg =
-          'Saldo insuficiente para cobrir valor + taxa.';
-        return;
+
+      // No modo malicioso, se maliciousSpendMore estiver ativo, não precisa de UTXOs suficientes
+      if (this.node.isMalicious && amountSats > this.availableBalance) {
+        // Usa todos os UTXOs disponíveis, mesmo que insuficientes
+        const { utxos, total } = this.selectUtxosFIFO(this.availableBalance);
+        selected = utxos;
+        totalInput = total;
+        fee = 0; // Taxa zero para transação inválida
+        change = 0; // Sem troco
+        outputs = [{ address: this.sendToAddress, value: amountSats }];
+      } else {
+        for (let tries = 0; tries < 5; tries++) {
+          const sel = this.selectUtxosFIFO(needed + fee);
+          selected = sel.utxos;
+          totalInput = sel.total;
+          const numInputs = selected.length;
+          const numOutputs = totalInput > amountSats + fee ? 2 : 1;
+          fee = this.estimateFee(numInputs, numOutputs);
+          needed = amountSats + fee;
+          if (totalInput >= needed) break;
+        }
+        if (totalInput < amountSats + fee && !this.node.isMalicious) {
+          this.sendAmountValid = false;
+          this.sendAmountErrorMsg =
+            'UTXOs selecionados insuficientes para cobrir valor + taxa.';
+          return;
+        }
+        change = totalInput - amountSats - fee;
+        outputs = [{ address: this.sendToAddress, value: amountSats }];
+        if (change > 0) {
+          outputs.push({ address: this.getNextChangeAddress(), value: change });
+        }
       }
       utxosToSpend = selected;
-      change = totalInput - amountSats - fee;
-      outputs = [{ address: this.sendToAddress, value: amountSats }];
-      if (change > 0) {
-        outputs.push({ address: this.getNextChangeAddress(), value: change });
-      }
     } else {
       utxosToSpend = this.manuallySelectedUtxos;
       totalInput = this.manualSelectionTotal;
       const numInputs = utxosToSpend.length;
       const numOutputs = totalInput > amountSats ? 2 : 1;
       fee = this.estimateFee(numInputs, numOutputs);
-      if (totalInput < amountSats + fee) {
+      if (totalInput < amountSats + fee && !this.node.isMalicious) {
         this.sendAmountValid = false;
         this.sendAmountErrorMsg =
           'UTXOs selecionados insuficientes para cobrir valor + taxa.';

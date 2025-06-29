@@ -283,6 +283,7 @@
                   }"
                 >
                   <input
+                    name="utxo"
                     type="checkbox"
                     class="h-4 w-4 rounded bg-zinc-800 border-zinc-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     [ngModel]="utxo.selected"
@@ -452,6 +453,24 @@
                 <span class="text-yellow-400 font-mono">
                   {{ previewFee / 100000000 | number : "1.8-8" }} BTC
                 </span>
+              </div>
+              <!-- Aviso sobre outputs maiores que inputs -->
+              <div
+                *ngIf="
+                  node.isMalicious && previewTotalOutput > previewTotalInput
+                "
+                class="mt-3 p-2 bg-red-900/30 border border-red-700 rounded-md"
+              >
+                <div
+                  class="flex items-center gap-2 text-red-200 text-xs font-semibold"
+                >
+                  <i class="pi pi-exclamation-triangle"></i>
+                  ATENÇÃO: Outputs maiores que inputs!
+                </div>
+                <p class="text-red-300 text-xs mt-1">
+                  Esta transação gera mais BTC do que consome. Será rejeitada
+                  pelos nós honestos.
+                </p>
               </div>
             </div>
 
