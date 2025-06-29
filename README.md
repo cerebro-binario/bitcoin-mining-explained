@@ -1,59 +1,77 @@
-# BitcoinMiningExplained
+# Bitcoin Mining Explained
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.0.6.
+Uma aplicação Angular interativa para explicar conceitos de mineração de Bitcoin e blockchain.
 
-## Development server
+## 🚀 Deploy
 
-To start a local development server, run:
+O projeto está configurado para deploy automático no GitHub Pages.
 
+### URLs de Acesso
+
+- **Aplicação Principal**: `https://cerebro-binario.github.io/bitcoin-mining-explained/`
+- **Slides de Moeda Lastro vs Liquidez**: `https://cerebro-binario.github.io/bitcoin-mining-explained/slides`
+- **Slides HTML Direto**: `https://cerebro-binario.github.io/bitcoin-mining-explained/assets/slides.html`
+
+## 📊 Slides Incluídos
+
+### Moeda Lastro vs Moeda de Liquidez
+Uma apresentação completa sobre:
+- Diferenças entre moeda lastro e moeda de liquidez
+- Perspectiva sistêmica vs individual
+- Importância do dinheiro forte
+- Pilares do sistema monetário atual
+- Complexidade da confiança
+- Ciclos econômicos e fluxo do dinheiro
+- Endividamento governamental
+- Falha sistêmica inevitável
+- Bitcoin como ferramenta estratégica
+- Dilema de alocação de capital
+- Hiperbitcoinização
+- Como conseguir bitcoins
+
+## 🛠️ Desenvolvimento
+
+### Pré-requisitos
+- Node.js 18+
+- npm
+
+### Instalação
 ```bash
-ng serve
+npm install
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### Executar em desenvolvimento
 ```bash
-ng generate component component-name
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
+### Build de produção
 ```bash
-ng generate --help
+npm run build
 ```
 
-## Building
+## 📁 Estrutura do Projeto
 
-To build the project run:
-
-```bash
-ng build
+```
+src/
+├── app/
+│   ├── pages/
+│   │   └── slides-page/          # Componente para exibir slides
+│   └── ...
+├── assets/
+│   └── slides.html              # Arquivo HTML dos slides
+└── ...
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 🔄 Deploy Automático
 
-## Running unit tests
+O projeto usa GitHub Actions para deploy automático:
+- Qualquer push para a branch `master` dispara o build
+- O resultado é publicado automaticamente no GitHub Pages
+- Os slides ficam disponíveis em `/slides` e `/assets/slides.html`
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## 📝 Notas
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Os slides são servidos como um componente Angular em `/slides`
+- Também é possível acessar diretamente o HTML em `/assets/slides.html`
+- O arquivo de slides está em `src/assets/slides.html`
