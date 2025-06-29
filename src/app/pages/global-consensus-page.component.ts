@@ -66,8 +66,25 @@ type ForkType = 'none' | 'soft' | 'hard';
             </div>
           </div>
 
+          <div
+            *ngIf="mode === 'editing-default'"
+            class="flex items-center gap-2"
+          >
+            <h3 class="text-lg font-semibold text-yellow-400">
+              Editando Versão Padrão
+              <span class="text-xs text-zinc-400 ml-2 italic"
+                >(v{{ selected.version }})</span
+              >
+            </h3>
+            <div
+              class="mb-2 p-2 rounded bg-yellow-900/40 border border-yellow-700 text-yellow-200 text-sm"
+            >
+              Alterando os parâmetros padrão que serão usados por novos nós.
+            </div>
+          </div>
+
           <!-- Versão do Consenso -->
-          <div *ngIf="mode !== 'creating'">
+          <div *ngIf="mode !== 'creating' && mode !== 'editing-default'">
             <div class="flex items-center justify-between mb-1">
               <label class="block text-sm font-medium text-zinc-400">
                 Versão do Consenso
@@ -101,6 +118,17 @@ type ForkType = 'none' | 'soft' | 'hard';
                     Criar nova versão
                   </button>
                 </ng-template>
+                <!-- Botão para editar versão padrão -->
+                <button
+                  *ngIf="consensusService.isDefaultVersion(selected)"
+                  type="button"
+                  class="text-yellow-500 hover:text-yellow-700 hover:underline transition text-xs font-medium px-1 py-0.5 rounded focus:outline-none focus:underline"
+                  (click)="startEditingDefault()"
+                  aria-label="Editar versão padrão"
+                  title="Editar versão padrão (v1)"
+                >
+                  Editar padrão
+                </button>
               </div>
             </div>
             <div class="flex flex-col gap-2">
@@ -119,6 +147,15 @@ type ForkType = 'none' | 'soft' | 'hard';
                       <span class="text-white"
                         >v{{ selectedOption.version }}</span
                       >
+                      <span
+                        *ngIf="
+                          consensusService.isDefaultVersion(selectedOption)
+                        "
+                        class="ml-2 text-yellow-400 text-xs"
+                        title="Versão padrão"
+                      >
+                        (Padrão)
+                      </span>
                       <span
                         *ngIf="
                           futureInfoByVersion[selectedOption.hash]
@@ -152,6 +189,13 @@ type ForkType = 'none' | 'soft' | 'hard';
                   <ng-template let-consensus pTemplate="item">
                     <div class="flex items-center">
                       <span class="text-white">v{{ consensus.version }}</span>
+                      <span
+                        *ngIf="consensusService.isDefaultVersion(consensus)"
+                        class="ml-2 text-yellow-400 text-xs"
+                        title="Versão padrão"
+                      >
+                        (Padrão)
+                      </span>
                       <span
                         *ngIf="
                           futureInfoByVersion[consensus.hash]
@@ -248,7 +292,12 @@ type ForkType = 'none' | 'soft' | 'hard';
               <span class="text-sm font-medium text-zinc-400 w-64"
                 >Intervalo de Ajuste de Dificuldade</span
               >
-              <ng-container *ngIf="mode === 'creating'; else exibeIntervalo">
+              <ng-container
+                *ngIf="
+                  mode === 'creating' || mode === 'editing-default';
+                  else exibeIntervalo
+                "
+              >
                 <input
                   type="number"
                   [(ngModel)]="newParams.difficultyAdjustmentInterval"
@@ -292,7 +341,10 @@ type ForkType = 'none' | 'soft' | 'hard';
                 >Intervalo de Halving</span
               >
               <ng-container
-                *ngIf="mode === 'creating'; else showHalvingInterval"
+                *ngIf="
+                  mode === 'creating' || mode === 'editing-default';
+                  else showHalvingInterval
+                "
               >
                 <input
                   type="number"
@@ -336,7 +388,12 @@ type ForkType = 'none' | 'soft' | 'hard';
               <span class="text-sm font-medium text-zinc-400 w-64"
                 >Máximo de Transações por Bloco</span
               >
-              <ng-container *ngIf="mode === 'creating'; else exibeTx">
+              <ng-container
+                *ngIf="
+                  mode === 'creating' || mode === 'editing-default';
+                  else exibeTx
+                "
+              >
                 <input
                   type="number"
                   [(ngModel)]="newParams.maxTransactionsPerBlock"
@@ -382,7 +439,12 @@ type ForkType = 'none' | 'soft' | 'hard';
               <span class="text-sm font-medium text-zinc-400 w-64"
                 >Tamanho Máximo do Bloco</span
               >
-              <ng-container *ngIf="mode === 'creating'; else exibeBloco">
+              <ng-container
+                *ngIf="
+                  mode === 'creating' || mode === 'editing-default';
+                  else exibeBloco
+                "
+              >
                 <input
                   type="number"
                   [(ngModel)]="newParams.maxBlockSize"
@@ -426,7 +488,12 @@ type ForkType = 'none' | 'soft' | 'hard';
               <span class="text-sm font-medium text-zinc-400 w-64"
                 >Tempo Alvo de Bloco</span
               >
-              <ng-container *ngIf="mode === 'creating'; else exibeTempo">
+              <ng-container
+                *ngIf="
+                  mode === 'creating' || mode === 'editing-default';
+                  else exibeTempo
+                "
+              >
                 <input
                   type="number"
                   [(ngModel)]="newParams.targetBlockTime"
@@ -467,7 +534,7 @@ type ForkType = 'none' | 'soft' | 'hard';
           </div>
 
           <!-- Última Atualização -->
-          <div>
+          <div *ngIf="mode !== 'creating' && mode !== 'editing-default'">
             <label class="block text-sm font-medium text-zinc-400 mb-1"
               >Última Atualização</label
             >
@@ -477,33 +544,34 @@ type ForkType = 'none' | 'soft' | 'hard';
           </div>
 
           <!-- Altura de Início da Epoca -->
-          @if (mode !== 'creating') { @if (futureOnView) {
-          <div>
-            <label class="block text-sm font-medium text-zinc-400 mb-1"
-              >Início de Vigência</label
-            >
-            <div class="text-sm text-zinc-300">
-              #{{ futureOnView.startHeight }}
-              <span class="text-zinc-500 italic"
-                >(faltam
-                {{ futureOnView.startHeight - currentHeight }} blocos)</span
+          <div *ngIf="mode !== 'creating' && mode !== 'editing-default'">
+            <div *ngIf="futureOnView">
+              <label class="block text-sm font-medium text-zinc-400 mb-1"
+                >Início de Vigência</label
               >
+              <div class="text-sm text-zinc-300">
+                #{{ futureOnView.startHeight }}
+                <span class="text-zinc-500 italic"
+                  >(faltam
+                  {{ futureOnView.startHeight - currentHeight }} blocos)</span
+                >
+              </div>
+            </div>
+            <div *ngIf="!futureOnView && selected.startHeight > 0">
+              <label class="block text-sm font-medium text-zinc-400 mb-1"
+                >Início de Vigência</label
+              >
+              <div class="text-sm text-zinc-300">
+                #{{ selected.startHeight }}
+              </div>
             </div>
           </div>
-          } @else if (selected.startHeight > 0) {
-          <div>
-            <label class="block text-sm font-medium text-zinc-400 mb-1"
-              >Início de Vigência</label
-            >
-            <div class="text-sm text-zinc-300">#{{ selected.startHeight }}</div>
-          </div>
-          } }
         </div>
       </div>
 
       <!-- Footer -->
       <div
-        class="relative flex items-end justify-between gap-6 p-6 border-t border-zinc-700 bg-zinc-900"
+        class="relative flex items-end justify-between gap-6 p-6 border-t border-zinc-700"
       >
         <div>
           <app-fork-warning
@@ -538,8 +606,22 @@ type ForkType = 'none' | 'soft' | 'hard';
                 : 'Confirmar nova versão'
             }}
           </button>
+          } @case ('editing-default') {
+          <button
+            class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+            (click)="cancelEditDefault()"
+          >
+            Cancelar
+          </button>
+          <button
+            [disabled]="!touched || sameParams"
+            class="px-4 py-2 rounded bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white not-disabled:hover:bg-yellow-700 transition"
+            (click)="confirmEditDefault()"
+          >
+            Salvar versão padrão
+          </button>
           } @case ('confirming') {
-          <!-- Mudando versão global para uma versão existente -->
+          <!-- Mudando versão local para uma versão existente -->
           <button
             class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
             (click)="cancelVersionChange()"
@@ -556,120 +638,118 @@ type ForkType = 'none' | 'soft' | 'hard';
             class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition"
             (click)="confirmVersionChange()"
           >
-            Aplicar para nós selecionados
+            Aplicar aos nós selecionados
           </button>
           } @case('viewing'){
-          <!-- Estado padrão inicial da página -->
+          <!-- Estado padrão inicial do dialog -->
           <button
-            class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+            class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
             (click)="goBack()"
           >
             Voltar</button
           >}}
         </div>
       </div>
+    </div>
 
-      <!-- Modal de Seleção de Mineradores -->
-      <div
-        *ngIf="showMinersSelection"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      >
-        <div class="bg-zinc-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-          <!-- Header -->
-          <div
-            class="flex items-center justify-between p-6 border-b border-zinc-700"
+    <!-- Modal de Seleção de Mineradores -->
+    <div
+      *ngIf="showMinersSelection"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+    >
+      <div class="bg-zinc-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <!-- Header -->
+        <div
+          class="flex items-center justify-between p-6 border-b border-zinc-700"
+        >
+          <h3 class="text-lg font-semibold text-blue-400">Selecionar Nós</h3>
+          <button
+            class="text-zinc-400 hover:text-zinc-200 transition"
+            (click)="showMinersSelection = false"
           >
-            <h3 class="text-lg font-semibold text-blue-400">Selecionar Nós</h3>
-            <button
-              class="text-zinc-400 hover:text-zinc-200 transition"
-              (click)="showMinersSelection = false"
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6 space-y-4">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm font-medium text-zinc-400">
+              Nós Disponíveis ({{ availableNodes.length }})
+            </span>
+            <div class="flex gap-2">
+              <button
+                class="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition"
+                (click)="selectAllNodes()"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+                Selecionar Todos
+              </button>
+              <button
+                class="px-3 py-1 rounded bg-zinc-600 text-white text-xs hover:bg-zinc-700 transition"
+                (click)="deselectAllNodes()"
+              >
+                Desmarcar Todos
+              </button>
+            </div>
           </div>
 
-          <!-- Content -->
-          <div class="p-6 space-y-4">
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-medium text-zinc-400">
-                Nós Disponíveis ({{ availableNodes.length }})
+          <div class="space-y-2 max-h-64 overflow-y-auto">
+            <div
+              *ngFor="let node of availableNodes"
+              class="flex items-center gap-3 p-3 rounded bg-zinc-900 border border-zinc-700 hover:border-zinc-600 transition"
+            >
+              <input
+                type="checkbox"
+                [checked]="node.selected"
+                (change)="toggleNodeSelection(node.id)"
+                class="w-4 h-4 text-blue-600 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-2"
+              />
+              <span class="text-lg mr-2">{{ getNodeTypeIcon(node.type) }}</span>
+              <span class="text-white flex-1">{{ node.name }}</span>
+              <span
+                class="text-xs px-2 py-1 rounded {{
+                  getNodeTypeColor(node.type)
+                }} bg-zinc-800"
+              >
+                {{ node.type }}
               </span>
-              <div class="flex gap-2">
-                <button
-                  class="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition"
-                  (click)="selectAllNodes()"
-                >
-                  Selecionar Todos
-                </button>
-                <button
-                  class="px-3 py-1 rounded bg-zinc-600 text-white text-xs hover:bg-zinc-700 transition"
-                  (click)="deselectAllNodes()"
-                >
-                  Desmarcar Todos
-                </button>
-              </div>
-            </div>
-
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-              <div
-                *ngFor="let node of availableNodes"
-                class="flex items-center gap-3 p-3 rounded bg-zinc-900 border border-zinc-700 hover:border-zinc-600 transition"
+              <span
+                *ngIf="node.selected"
+                class="ml-auto text-green-400 text-sm"
               >
-                <input
-                  type="checkbox"
-                  [checked]="node.selected"
-                  (change)="toggleNodeSelection(node.id)"
-                  class="w-4 h-4 text-blue-600 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-2"
-                />
-                <span class="text-lg mr-2">{{
-                  getNodeTypeIcon(node.type)
-                }}</span>
-                <span class="text-white flex-1">{{ node.name }}</span>
-                <span
-                  class="text-xs px-2 py-1 rounded {{
-                    getNodeTypeColor(node.type)
-                  }} bg-zinc-800"
-                >
-                  {{ node.type }}
-                </span>
-                <span
-                  *ngIf="node.selected"
-                  class="ml-auto text-green-400 text-sm"
-                >
-                  ✓ Selecionado
-                </span>
-              </div>
-            </div>
-
-            <div class="text-sm text-zinc-400 mt-4">
-              <strong>{{ getSelectedNodesCount() }}</strong> de
-              {{ availableNodes.length }} nós selecionados
+                ✓ Selecionado
+              </span>
             </div>
           </div>
 
-          <!-- Footer -->
-          <div
-            class="flex items-center justify-end gap-3 p-6 border-t border-zinc-700"
+          <div class="text-sm text-zinc-400 mt-4">
+            <strong>{{ getSelectedNodesCount() }}</strong> de
+            {{ availableNodes.length }} nós selecionados
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div
+          class="flex items-center justify-end gap-3 p-6 border-t border-zinc-700"
+        >
+          <button
+            class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
+            (click)="showMinersSelection = false"
           >
-            <button
-              class="px-4 py-2 rounded bg-zinc-700 text-white hover:bg-zinc-600 transition"
-              (click)="showMinersSelection = false"
-            >
-              Fechar
-            </button>
-          </div>
+            Fechar
+          </button>
         </div>
       </div>
     </div>
@@ -683,8 +763,9 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
   isEditing = false;
   touched = false;
   sameParams = false;
-  mode: 'creating' | 'confirming' | 'viewing' = 'viewing';
-  lastMode: 'creating' | 'confirming' | 'viewing' = 'viewing';
+  mode: 'creating' | 'confirming' | 'viewing' | 'editing-default' = 'viewing';
+  lastMode: 'creating' | 'confirming' | 'viewing' | 'editing-default' =
+    'viewing';
   applyImmediately = true;
   startHeight?: number;
   startHeightCopy?: number;
@@ -734,7 +815,7 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
   private nodesSubscription: any;
 
   constructor(
-    private consensusService: ConsensusService,
+    public consensusService: ConsensusService,
     private bitcoinNetwork: BitcoinNetworkService,
     private messageService: MessageService,
     private router: Router
@@ -921,6 +1002,33 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
+  startEditingDefault() {
+    this.lastMode = this.mode;
+    this.mode = 'editing-default';
+    this.isEditing = true;
+    this.touched = false;
+
+    // Obter a versão padrão
+    const defaultVersion = this.consensusService.getDefaultVersion();
+    if (!defaultVersion) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Versão padrão não encontrada',
+      });
+      return;
+    }
+
+    this.selected = defaultVersion;
+    this.newParams = ConsensusParameters.deepCopy(defaultVersion.parameters);
+
+    // Fazer uma cópia dos parâmetros atuais para poder restaurar caso necessário
+    this.copy = ConsensusParameters.deepCopy(defaultVersion.parameters);
+
+    // Limpar mensagens de erro e sucesso
+    this.clearMessages();
+  }
+
   onApplyImmediatelyChange() {
     if (this.applyImmediately) {
       this.startHeight = this.currentHeight;
@@ -1059,6 +1167,31 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
     }
   }
 
+  confirmEditDefault() {
+    // Atualizar a versão padrão
+    const success = this.consensusService.updateDefaultVersion(this.newParams);
+
+    if (success) {
+      this.mode = this.lastMode;
+      this.isEditing = false;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Versão padrão atualizada',
+        detail:
+          'Os parâmetros da versão padrão (v1) foram atualizados. Novos nós usarão estes parâmetros.',
+        life: 6000,
+      });
+      this.clearMessages();
+      this.updateView();
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao atualizar a versão padrão',
+      });
+    }
+  }
+
   onVersionSelect(event: any) {
     this.clearMessages();
 
@@ -1139,6 +1272,14 @@ export class GlobalConsensusPageComponent implements OnInit, OnDestroy {
     this.mode = this.lastMode;
     this.isEditing = false;
     this.paramsOnView = ConsensusParameters.deepCopy(this.copy);
+    this.clearMessages();
+    this.updateView();
+  }
+
+  cancelEditDefault() {
+    this.mode = this.lastMode;
+    this.isEditing = false;
+    this.newParams = ConsensusParameters.deepCopy(this.copy);
     this.clearMessages();
     this.updateView();
   }

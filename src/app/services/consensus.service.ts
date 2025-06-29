@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, tap } from 'rxjs';
-import { ConsensusVersion, DEFAULT_CONSENSUS } from '../models/consensus.model';
+import {
+  ConsensusVersion,
+  DEFAULT_CONSENSUS,
+  ConsensusParameters,
+} from '../models/consensus.model';
 
 @Injectable({ providedIn: 'root' })
 export class ConsensusService {
@@ -49,5 +53,34 @@ export class ConsensusService {
       this.versions.sort((a, b) => a.version - b.version);
       this.versionsSubject.next(this.versions);
     }
+  }
+
+  // Método para obter a versão padrão (v1)
+  getDefaultVersion(): ConsensusVersion | undefined {
+    return this.versions.find((v) => v.version === 1);
+  }
+
+  // Método para editar a versão padrão
+  updateDefaultVersion(newParameters: Partial<ConsensusParameters>): boolean {
+    const defaultVersion = this.getDefaultVersion();
+    if (!defaultVersion) {
+      return false;
+    }
+
+    // Atualiza os parâmetros da versão padrão
+    Object.assign(defaultVersion.parameters, newParameters);
+    (defaultVersion.parameters as ConsensusParameters).calculateHash();
+    defaultVersion.timestamp = Date.now();
+    defaultVersion.calculateHash();
+
+    // Atualiza a lista de versões
+    this.versionsSubject.next([...this.versions]);
+
+    return true;
+  }
+
+  // Método para verificar se uma versão é a padrão
+  isDefaultVersion(version: ConsensusVersion): boolean {
+    return version.version === 1;
   }
 }
