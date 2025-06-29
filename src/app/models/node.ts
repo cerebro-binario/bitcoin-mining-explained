@@ -310,7 +310,7 @@ export class Node {
       nBits,
       nonce: 0,
       hash: '',
-      miningElapsed: 0,
+      miningElapsed: 0, // Sempre inicia como 0
       consensusVersion:
         this.consensus.getConsensusForHeight(blockHeight).version,
     });
@@ -328,13 +328,26 @@ export class Node {
     const block = this.currentBlock;
     const hashRate = this.hashRate;
 
-    // Atualiza o tempo decorrido
+    // Atualiza o tempo decorrido baseado no tempo real desde o último bloco
+    if (block.height === 0) {
+      block.miningElapsed = 0;
+    } else {
+      // Busca o bloco anterior na main chain
+      const prevBlock = this.getBlockByHeight(
+        block.height - 1,
+        block.previousHash
+      );
+      if (prevBlock) {
+        block.miningElapsed = now - prevBlock.timestamp;
+      } else {
+        block.miningElapsed = 0;
+      }
+    }
+
     if (!this.miningLastTickTime) {
       this.miningLastTickTime = now;
     }
-
     const tickTime = now - this.miningLastTickTime;
-    this.miningElapsed = block.miningElapsed += tickTime;
     this.miningLastTickTime = now;
 
     if (hashRate === null) {

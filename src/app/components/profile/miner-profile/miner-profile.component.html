@@ -258,7 +258,11 @@
                 >
                   <i class="pi pi-clock flex items-center text-xs"></i>
                   <div class="min-w-[3.5em] text-right">
-                    {{ (miner.miningElapsed / 1000).toFixed(1) }}s
+                    {{
+                      ((miner.currentBlock?.miningElapsed || 0) / 1000).toFixed(
+                        1
+                      )
+                    }}s
                   </div>
                 </span>
               </div>
