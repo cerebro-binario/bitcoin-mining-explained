@@ -21,21 +21,7 @@ export class Block {
 
   constructor(init?: Partial<Block>) {
     if (init) {
-      // Handle target conversion if it exists in init
-      if (init.target !== undefined) {
-        this._target =
-          typeof init.target === 'bigint'
-            ? init.target.toString()
-            : String(init.target);
-        delete init.target; // Remove from init to avoid Object.assign issues
-      }
-
       Object.assign(this, init);
-
-      // Calculate target from nBits if provided
-      if (init.nBits) {
-        this.calculateTarget();
-      }
     }
   }
 
@@ -45,18 +31,6 @@ export class Block {
 
   set target(value: bigint) {
     this._target = value.toString(16);
-  }
-
-  public calculateTarget(): void {
-    // Convert nBits to target
-    const exponent = this.nBits >> 24;
-    const mantissa = this.nBits & 0x00ffffff;
-    this.target = BigInt(mantissa) * BigInt(2) ** BigInt(8 * (exponent - 3));
-  }
-
-  setNBits(nBits: number): void {
-    this.nBits = nBits;
-    this.calculateTarget();
   }
 
   // Add toJSON method to ensure proper serialization

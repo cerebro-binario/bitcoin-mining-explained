@@ -210,7 +210,8 @@ export class BlockDetailsComponent {
         let n: bigint;
         if (typeof target === 'bigint') n = target;
         else if (typeof target === 'number') n = BigInt(target);
-        else if (typeof target === 'string') n = BigInt(target);
+        else if (typeof target === 'string')
+          n = BigInt(target.startsWith('0x') ? target : '0x' + target);
         else return 'indisponível';
         return '0x' + n.toString(16).padStart(64, '0');
       } catch {

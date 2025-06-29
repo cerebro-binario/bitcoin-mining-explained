@@ -23,7 +23,7 @@ import { areConsensusVersionsCompatible } from './consensus.model';
 import { Height } from './height.model';
 import { BipType, BitcoinAddressData, Wallet } from './wallet.model';
 
-import { getAddressType } from '../utils/tools';
+import { getAddressType, padHex } from '../utils/tools';
 
 const ec = new EC.ec('secp256k1');
 
@@ -280,6 +280,8 @@ export class Node {
     // Calcula o nBits correto para o novo bloco
     const { next } = this.getDifficulty(lastBlock);
     const nBits = next?.nBits || lastBlock?.nBits || this.INITIAL_NBITS;
+    const target =
+      next?.newTarget || lastBlock?.target || this.nBitsToTarget(nBits);
     const blockHeight = lastBlock ? lastBlock.height + 1 : 0;
     const subsidy = this.calculateBlockSubsidy(blockHeight);
     // Cria a transação coinbase
@@ -308,6 +310,7 @@ export class Node {
       previousHash,
       transactions,
       nBits,
+      target,
       nonce: 0,
       hash: '',
       miningElapsed: 0, // Sempre inicia como 0
@@ -461,8 +464,8 @@ export class Node {
       expectedAverageTime: number;
       oldDifficulty: number;
       newDifficulty: number;
-      oldTarget: string;
-      newTarget: string;
+      oldTarget: bigint;
+      newTarget: bigint;
     };
   } {
     // Se não houver bloco de referência, assume que é o primeiro bloco
@@ -479,7 +482,7 @@ export class Node {
       referenceBlock.height - 1,
       referenceBlock.previousHash
     );
-    if (!parentBlock) {
+    if (!parentBlock || parentBlock.height === -1) {
       return {
         current: {
           nBits: this.INITIAL_NBITS,
@@ -495,7 +498,7 @@ export class Node {
     if (adjustedHeight % interval !== 0) {
       return {
         current: {
-          nBits: parentBlock.nBits,
+          nBits: referenceBlock.nBits,
         },
       };
     }
@@ -551,8 +554,8 @@ export class Node {
         difficultyFactor: 1 / adjustmentFactor,
         oldDifficulty: referenceBlock.nBits,
         newDifficulty: newNBits,
-        oldTarget: prevTarget.toString(),
-        newTarget: newTarget.toString(),
+        oldTarget: prevTarget,
+        newTarget: newTarget,
         totalMiningTime: actualTime,
         averageMiningTime: actualTime / interval,
         expectedTotalTime: expectedTime,
@@ -564,8 +567,7 @@ export class Node {
   // Converte um target para nBits
   private targetToNBits(target: bigint): number {
     // Encontra o número de bytes necessários para representar o target
-    let targetHex = target.toString(16);
-    if (targetHex.length % 2 !== 0) targetHex = '0' + targetHex;
+    let targetHex = padHex(target, 8);
     let targetBytes = targetHex.length / 2;
     // O primeiro byte é o número de bytes significativos
     let significantBytes = targetBytes;
