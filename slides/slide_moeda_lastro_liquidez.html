@@ -405,6 +405,117 @@
           padding: 30px 20px;
         }
       }
+
+      .cycle-animation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0 0 0;
+      }
+      .cycle-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #222233;
+        border-radius: 10px;
+        padding: 12px 16px;
+        min-width: 70px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        border: 1.5px solid #333355;
+        animation: cycle-pop 1.2s infinite;
+      }
+      .cycle-step:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .cycle-step:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .cycle-step:nth-child(5) {
+        animation-delay: 0.4s;
+      }
+      .cycle-step:nth-child(7) {
+        animation-delay: 0.6s;
+      }
+      .cycle-step:nth-child(9) {
+        animation-delay: 0.8s;
+      }
+      .cycle-step:nth-child(11) {
+        animation-delay: 1s;
+      }
+      .cycle-icon {
+        font-size: 2rem;
+        margin-bottom: 4px;
+      }
+      .cycle-label {
+        font-size: 0.95rem;
+        color: #f7931a;
+        font-weight: 500;
+      }
+      .cycle-arrow {
+        font-size: 1.5rem;
+        color: #f7931a;
+        opacity: 0.7;
+      }
+      @keyframes cycle-pop {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+        50% {
+          transform: scale(1.13);
+          box-shadow: 0 4px 16px rgba(247, 147, 26, 0.18);
+        }
+      }
+
+      .cycle-industria-animation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 18px 0 0 0;
+      }
+      .cycle-step-industria {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #222233;
+        border-radius: 10px;
+        padding: 12px 16px;
+        min-width: 90px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        border: 1.5px solid #333355;
+        animation: cycle-pop-industria 1.5s infinite;
+      }
+      .cycle-step-industria:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .cycle-step-industria:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .cycle-step-industria:nth-child(5) {
+        animation-delay: 0.6s;
+      }
+      .cycle-step-industria:nth-child(7) {
+        animation-delay: 0.9s;
+      }
+      .cycle-step-industria:nth-child(9) {
+        animation-delay: 1.2s;
+      }
+      @keyframes cycle-pop-industria {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+        50% {
+          transform: scale(1.13);
+          box-shadow: 0 4px 16px rgba(247, 147, 26, 0.18);
+        }
+      }
     </style>
   </head>
   <body>
@@ -1116,6 +1227,203 @@
                   <div class="priority-icon systemic-icon">⚔️</div>
                   <span><b>Conflito de interesses em todos os níveis</b></span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Eighth Slide -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Fluxo do Dinheiro e o Ciclo Econômico</h1>
+          <p class="subtitle">
+            A natureza cíclica e a analogia com recursos reais
+          </p>
+        </div>
+        <div
+          class="systemic-content"
+          style="gap: 40px; align-items: flex-start"
+        >
+          <!-- Ciclo Econômico -->
+          <div class="level-section">
+            <div class="level-card">
+              <h2 class="level-title">🔄 Ciclo Econômico</h2>
+              <div class="priority-list">
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">🌱</div>
+                  <span>Origem do dinheiro</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">🎯</div>
+                  <span>Destino do dinheiro</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">♻️</div>
+                  <span>Reutilização contínua</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">🔁</div>
+                  <span>Fluxo sem fim</span>
+                </div>
+              </div>
+            </div>
+            <div class="level-card">
+              <h2 class="level-title">📊 Importância da Análise</h2>
+              <div class="priority-list">
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">💡</div>
+                  <span>Compreensão da criação monetária</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">🔎</div>
+                  <span>Entendimento dos fluxos</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">⚠️</div>
+                  <span>Identificação de descasamentos</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">🛑</div>
+                  <span>Prevenção de colapsos</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analogia com Recursos Básicos e Animação do Ciclo de Produção -->
+          <div
+            class="transcendence-section"
+            style="
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              flex-direction: column;
+              gap: 40px;
+            "
+          >
+            <div
+              class="transcendence-container"
+              style="max-width: 600px; margin-bottom: 32px"
+            >
+              <h3 class="transcendence-title">
+                🍽️ Analogia: Alimentação e Produção
+              </h3>
+              <div
+                style="
+                  color: #f7931a;
+                  font-size: 1.05rem;
+                  font-weight: 600;
+                  text-align: center;
+                  margin-bottom: 18px;
+                "
+              >
+                "Não existe comer no crédito: o ciclo real não pode ser pulado."
+              </div>
+              <div class="cycle-animation">
+                <div class="cycle-step">
+                  <span class="cycle-icon">🌱</span>
+                  <span class="cycle-label">Plantio</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step">
+                  <span class="cycle-icon">⏳</span>
+                  <span class="cycle-label">Espera</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step">
+                  <span class="cycle-icon">🌾</span>
+                  <span class="cycle-label">Colheita</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step">
+                  <span class="cycle-icon">🚚</span>
+                  <span class="cycle-label">Transporte</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step">
+                  <span class="cycle-icon">🏪</span>
+                  <span class="cycle-label">Estocagem</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step">
+                  <span class="cycle-icon">🍽️</span>
+                  <span class="cycle-label">Consumo</span>
+                </div>
+              </div>
+              <div
+                style="
+                  margin-top: 18px;
+                  color: #e0e0e0;
+                  font-size: 0.98rem;
+                  text-align: center;
+                  opacity: 0.85;
+                "
+              >
+                Cada etapa é obrigatória. Recursos precisam existir antes do
+                consumo. O fluxo precisa ser real, não prometido.
+              </div>
+            </div>
+            <!-- Novo card: Todas as Indústrias, com animação -->
+            <div
+              class="transcendence-container"
+              style="
+                max-width: 480px;
+                min-width: 240px;
+                background: #181828;
+                border: 1.5px solid #f7931a;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+              "
+            >
+              <span
+                class="cycle-icon"
+                style="font-size: 2.2rem; margin-bottom: 8px"
+                >🏭</span
+              >
+              <h3 class="transcendence-title" style="margin-bottom: 18px">
+                Todas as Indústrias
+              </h3>
+              <div class="cycle-industria-animation">
+                <div class="cycle-step-industria">
+                  <span class="cycle-icon">🏗️</span
+                  ><span class="cycle-label">Produção</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step-industria">
+                  <span class="cycle-icon">⚙️</span
+                  ><span class="cycle-label">Transformação</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step-industria">
+                  <span class="cycle-icon">🚚</span
+                  ><span class="cycle-label">Transporte</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step-industria">
+                  <span class="cycle-icon">🏪</span
+                  ><span class="cycle-label">Armazenamento</span>
+                </div>
+                <div class="cycle-arrow">→</div>
+                <div class="cycle-step-industria">
+                  <span class="cycle-icon">🍽️</span
+                  ><span class="cycle-label">Consumo</span>
+                </div>
+              </div>
+              <div
+                style="
+                  color: #e0e0e0;
+                  font-size: 0.98rem;
+                  text-align: center;
+                  opacity: 0.85;
+                  margin-top: 12px;
+                "
+              >
+                O ciclo real é universal: nenhuma indústria pode pular
+                etapas.<br />O fluxo precisa ser respeitado em qualquer cadeia
+                produtiva.
               </div>
             </div>
           </div>
