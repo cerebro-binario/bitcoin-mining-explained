@@ -2152,6 +2152,127 @@
           max-width: 98vw;
         }
       }
+
+      /* Slide 21: Como Conseguir Bitcoins (Bônus) */
+      .btc-acquire-container {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        margin-top: 40px;
+        margin-bottom: 32px;
+      }
+      .btc-acquire-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .btc-acquire-title {
+        color: #f7931a;
+        font-size: 1.3rem;
+        font-weight: 700;
+        text-align: center;
+      }
+      .btc-acquire-card {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .btc-acquire-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+      }
+      .btc-acquire-subtitle {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .btc-acquire-desc {
+        color: #e0e0e0;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+      .btc-acquire-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+      }
+      .btc-acquire-option {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .btc-acquire-option-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+      .btc-acquire-option-title {
+        color: #f7931a;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .btc-acquire-option-desc {
+        color: #e0e0e0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+      .btc-acquire-warning {
+        background: #2a1a1a;
+        border: 2px solid #ff4d4d;
+        border-radius: 16px;
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .btc-acquire-warning-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+      }
+      .btc-acquire-warning-title {
+        color: #ff4d4d;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      .btc-acquire-warning-content {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        line-height: 1.6;
+      }
+      .btc-acquire-warning-content p {
+        margin-bottom: 12px;
+      }
+      .btc-acquire-warning-content p:last-child {
+        margin-bottom: 0;
+      }
+      @media (max-width: 900px) {
+        .btc-acquire-container {
+          gap: 24px;
+          margin-top: 24px;
+          margin-bottom: 8px;
+        }
+        .btc-acquire-options {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .btc-acquire-card,
+        .btc-acquire-option {
+          padding: 20px 16px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -4866,6 +4987,216 @@
           .hyperbtc-motor-col {
             min-width: 160px;
             max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 21: Como Conseguir Bitcoins (Bônus) -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">Como Conseguir Bitcoins</h1>
+          <p class="subtitle">
+            Estudar, trabalhar e comprar: as formas de entrar no sistema
+          </p>
+        </div>
+        <div class="btc-acquire-container">
+          <!-- Seção 1: Receber Remuneração -->
+          <div class="btc-acquire-section">
+            <div class="btc-acquire-title">
+              1️⃣ Receber Remuneração em Bitcoin
+            </div>
+            <div class="btc-acquire-card btc-acquire-work">
+              <div class="btc-acquire-icon">💼</div>
+              <div class="btc-acquire-subtitle">Estudar e Trabalhar</div>
+              <div class="btc-acquire-desc">
+                A primeira coisa que eu te encorajo é <strong>ESTUDAR</strong> o
+                suficiente para começar a
+                <strong>RECEBER REMUNERAÇÃO</strong> em bitcoin. Ou seja:
+                trabalhar e ser pago em bitcoin.
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção 2: Comprar Bitcoin -->
+          <div class="btc-acquire-section">
+            <div class="btc-acquire-title">2️⃣ Comprar Bitcoin</div>
+            <div class="btc-acquire-options">
+              <div class="btc-acquire-option">
+                <div class="btc-acquire-option-icon">📊</div>
+                <div class="btc-acquire-option-title">ETFs de Bitcoin</div>
+                <div class="btc-acquire-option-desc">
+                  Fundos negociados em bolsa
+                </div>
+              </div>
+              <div class="btc-acquire-option">
+                <div class="btc-acquire-option-icon">🏢</div>
+                <div class="btc-acquire-option-title">Ações de Treasury</div>
+                <div class="btc-acquire-option-desc">
+                  Empresas com estratégia BTC Yield
+                </div>
+              </div>
+              <div class="btc-acquire-option">
+                <div class="btc-acquire-option-icon">🏦</div>
+                <div class="btc-acquire-option-title">
+                  Bancos Digitais/Tradicionais
+                </div>
+                <div class="btc-acquire-option-desc">
+                  Alguns possuem broker para comprar
+                </div>
+              </div>
+              <div class="btc-acquire-option">
+                <div class="btc-acquire-option-icon">💱</div>
+                <div class="btc-acquire-option-title">Exchanges</div>
+                <div class="btc-acquire-option-desc">
+                  KYC, PIX, taxa de corretagem
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observação Importante -->
+          <div class="btc-acquire-warning">
+            <div class="btc-acquire-warning-icon">⚠️</div>
+            <div class="btc-acquire-warning-title">Observação Importante</div>
+            <div class="btc-acquire-warning-content">
+              <p>
+                <strong
+                  >Todas essas formas (exceto receber direto em uma carteira
+                  sua) são apenas CRÉDITOS DE BITCOIN.</strong
+                >
+              </p>
+              <p>
+                Os <strong>UTXOs não são seus</strong>, porque você não possui a
+                <strong>chave privada</strong> (senha) capaz de assinar para
+                gastá-los.
+              </p>
+              <p>
+                Então precisa entender isso também: comprar em instituições
+                centralizadas também tem o problema da
+                <strong>CONFIANÇA</strong>: a instituição REALMENTE tem os btcs?
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .btc-acquire-container {
+          display: flex;
+          flex-direction: column;
+          gap: 40px;
+          margin-top: 40px;
+          margin-bottom: 32px;
+        }
+        .btc-acquire-section {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        .btc-acquire-title {
+          color: #f7931a;
+          font-size: 1.3rem;
+          font-weight: 700;
+          text-align: center;
+        }
+        .btc-acquire-card {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 28px 24px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+        .btc-acquire-icon {
+          font-size: 2.5rem;
+          margin-bottom: 12px;
+        }
+        .btc-acquire-subtitle {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 12px;
+        }
+        .btc-acquire-desc {
+          color: #e0e0e0;
+          font-size: 1rem;
+          line-height: 1.5;
+        }
+        .btc-acquire-options {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 20px;
+        }
+        .btc-acquire-option {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 24px 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+        .btc-acquire-option-icon {
+          font-size: 2rem;
+          margin-bottom: 8px;
+        }
+        .btc-acquire-option-title {
+          color: #f7931a;
+          font-size: 1rem;
+          font-weight: 700;
+          margin-bottom: 6px;
+        }
+        .btc-acquire-option-desc {
+          color: #e0e0e0;
+          font-size: 0.9rem;
+          opacity: 0.9;
+        }
+        .btc-acquire-warning {
+          background: #2a1a1a;
+          border: 2px solid #ff4d4d;
+          border-radius: 16px;
+          padding: 28px 24px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+        .btc-acquire-warning-icon {
+          font-size: 2.5rem;
+          margin-bottom: 12px;
+        }
+        .btc-acquire-warning-title {
+          color: #ff4d4d;
+          font-size: 1.2rem;
+          font-weight: 700;
+          margin-bottom: 16px;
+        }
+        .btc-acquire-warning-content {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          line-height: 1.6;
+        }
+        .btc-acquire-warning-content p {
+          margin-bottom: 12px;
+        }
+        .btc-acquire-warning-content p:last-child {
+          margin-bottom: 0;
+        }
+        @media (max-width: 900px) {
+          .btc-acquire-container {
+            gap: 24px;
+            margin-top: 24px;
+            margin-bottom: 8px;
+          }
+          .btc-acquire-options {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+          .btc-acquire-card,
+          .btc-acquire-option {
+            padding: 20px 16px;
           }
         }
       </style>
