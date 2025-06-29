@@ -8,6 +8,7 @@ import { PeerProfileComponent } from './components/profile/peer-profile/peer-pro
 import { UserProfileComponent } from './components/profile/user-profile/user-profile.component';
 import { AddressDetailsComponent } from './components/network/wallet/address-list/address-details.component';
 import { NodeExistsGuard } from './guards/miner-exists.guard';
+import { GlobalConsensusPageComponent } from './pages/global-consensus-page.component';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,7 @@ export const routes: Routes = [
           { path: 'miners/:id', component: MinerProfileComponent },
           { path: 'peers/:id', component: PeerProfileComponent },
           { path: 'users/:id', component: UserProfileComponent },
+          { path: 'global-consensus', component: GlobalConsensusPageComponent },
         ],
       },
       { path: 'network', component: NetworkOverviewComponent },
