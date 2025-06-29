@@ -221,3 +221,15 @@
     </div>
   </cdk-virtual-scroll-viewport>
 </div>
+
+<!-- Block Details Dialog -->
+<app-block-details-dialog
+  [isOpen]="isDialogOpen"
+  [block]="selectedBlock!"
+  [node]="node"
+  [hasPrevBlock]="hasPrevBlock"
+  [hasNextBlock]="hasNextBlock"
+  (onClose)="onDialogClose()"
+  (goPrevBlock)="onGoPrevBlock()"
+  (goNextBlock)="onGoNextBlock()"
+></app-block-details-dialog>

@@ -1721,6 +1721,38 @@ export class Node {
       const oldTarget = this.nBitsToTarget(difficulty.current.nBits);
       const newTarget = this.nBitsToTarget(difficulty.next.nBits);
 
+      // Calcula informações de tempo de mineração
+      const epoch = this.consensus.getConsensusForHeight(block.height);
+      const interval = epoch.parameters.difficultyAdjustmentInterval;
+      const targetBlockTime = epoch.parameters.targetBlockTime;
+      const adjustedHeight = block.height - epoch.startHeight + 1;
+      const prevAdjustmentHeight = adjustedHeight - interval;
+
+      // Encontra o bloco do último ajuste para calcular o tempo total
+      const prevIndex = this.getHeightIndex(prevAdjustmentHeight);
+      let prevAdjustmentBlock: Block | undefined = undefined;
+
+      if (prevIndex >= 0 && this.heights[prevIndex]) {
+        for (const candidate of this.heights[prevIndex].blocks) {
+          let current: Block | undefined = block;
+          while (current && current.height > prevAdjustmentHeight) {
+            current = this.findParentNode(current)?.block;
+          }
+          if (current && current.hash === candidate.block.hash) {
+            prevAdjustmentBlock = candidate.block;
+            break;
+          }
+        }
+      }
+
+      let totalMiningTime = 0;
+      let averageMiningTime = 0;
+
+      if (prevAdjustmentBlock) {
+        totalMiningTime = block.timestamp - prevAdjustmentBlock.timestamp;
+        averageMiningTime = totalMiningTime / interval;
+      }
+
       const eventData = {
         oldDifficulty: difficulty.current.nBits,
         newDifficulty: difficulty.next.nBits,
@@ -1729,6 +1761,10 @@ export class Node {
         targetFactor: targetFactor.toFixed(2), // Fator do target (ex: 0.46x = target menor)
         difficultyFactor: difficultyFactor.toFixed(2), // Fator da dificuldade (ex: 2.17x = dificuldade maior)
         height: block.height,
+        totalMiningTime, // Tempo total da época em ms
+        averageMiningTime, // Tempo médio por bloco em ms
+        expectedTotalTime: interval * targetBlockTime * 1000, // Tempo esperado total em ms
+        expectedAverageTime: targetBlockTime * 1000, // Tempo esperado por bloco em ms
       };
       const adjustEvent = event
         ? EventManager.log(event, 'difficulty-adjustment', eventData)

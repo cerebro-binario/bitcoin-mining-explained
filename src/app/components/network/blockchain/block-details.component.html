@@ -1,48 +1,4 @@
 <div class="min-h-screen bg-zinc-950 text-zinc-100">
-  <div
-    class="bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center justify-between gap-4"
-  >
-    <!-- Botão Voltar -->
-    <button
-      (click)="onClose()"
-      class="text-zinc-400 hover:text-red-400 text-xl font-bold flex-shrink-0"
-      title="Voltar"
-    >
-      <i class="pi pi-times"></i>
-    </button>
-    <!-- Título Centralizado -->
-    <div class="flex-1 flex flex-col items-center">
-      <div class="text-lg font-bold text-blue-300 leading-tight">
-        Bloco Bitcoin
-      </div>
-      <div class="font-mono text-base text-zinc-200 break-all">
-        #{{ block.height }}
-      </div>
-      <div class="font-mono text-xs text-zinc-400 break-all mt-1">
-        Hash: {{ block.hash }}
-      </div>
-    </div>
-    <!-- Navegação Prev/Next -->
-    <div class="flex items-center gap-2">
-      <button
-        class="p-1.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition disabled:opacity-40"
-        [disabled]="!hasPrevBlock"
-        (click)="goPrevBlock.emit()"
-        title="Bloco anterior"
-      >
-        <i class="pi pi-angle-left text-lg"></i>
-      </button>
-      <button
-        class="p-1.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-blue-400 hover:bg-zinc-700 transition disabled:opacity-40"
-        [disabled]="!hasNextBlock"
-        (click)="goNextBlock.emit()"
-        title="Próximo bloco"
-      >
-        <i class="pi pi-angle-right text-lg"></i>
-      </button>
-    </div>
-  </div>
-
   <ng-container *ngIf="block && node && !isActiveBlock()">
     <div
       class="bg-yellow-900 text-yellow-200 border border-yellow-600 px-6 py-3 text-center font-semibold text-base rounded-b-none rounded-t-lg"
@@ -188,6 +144,36 @@
                         >{{ event.data.difficultyFactor }}x</span
                       ></span
                     >
+                  </div>
+                  <div class="mt-1 text-zinc-500">
+                    <div
+                      class="grid grid-cols-[max-content_1fr] gap-x-2 gap-y-0.5"
+                    >
+                      <span>Tempo total da época:</span>
+                      <span class="font-mono text-zinc-300"
+                        >{{
+                          (event.data.totalMiningTime / 1000).toFixed(1)
+                        }}s</span
+                      >
+                      <span>Tempo médio por bloco:</span>
+                      <span class="font-mono text-zinc-300"
+                        >{{
+                          (event.data.averageMiningTime / 1000).toFixed(1)
+                        }}s</span
+                      >
+                      <span>Tempo esperado total:</span>
+                      <span class="font-mono text-zinc-300"
+                        >{{
+                          (event.data.expectedTotalTime / 1000).toFixed(1)
+                        }}s</span
+                      >
+                      <span>Tempo esperado por bloco:</span>
+                      <span class="font-mono text-zinc-300"
+                        >{{
+                          (event.data.expectedAverageTime / 1000).toFixed(1)
+                        }}s</span
+                      >
+                    </div>
                   </div>
                 </div>
                 <div

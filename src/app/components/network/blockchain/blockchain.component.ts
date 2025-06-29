@@ -1,13 +1,22 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
-import { BlockNode } from '../../../models/block.model';
-import { Height } from '../../../models/height.model';
+import {
+  Component,
+  Input,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
+  OnDestroy,
+} from '@angular/core';
+import { Router } from '@angular/router';
 import { Node } from '../../../models/node';
+import { Block, BlockNode } from '../../../models/block.model';
+import { Height } from '../../../models/height.model';
 import { EventLogMessagePipe } from '../events/event/event-log/event-log-message.pipe';
 import { EventLogVisualPipe } from '../events/event/event-log/event-log-visual.pipe';
-import { Router } from '@angular/router';
+import { BlockDetailsDialogComponent } from './block-details-dialog.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-blockchain',
@@ -19,6 +28,7 @@ import { Router } from '@angular/router';
     EventLogVisualPipe,
     EventLogMessagePipe,
     ScrollingModule,
+    BlockDetailsDialogComponent,
   ],
   animations: [
     trigger('blockAnimation', [
@@ -40,7 +50,7 @@ import { Router } from '@angular/router';
     ]),
   ],
 })
-export class BlockchainComponent {
+export class BlockchainComponent implements OnDestroy {
   slideXValue = 'translateX(0)';
 
   // Propriedades para o cálculo de gaps
@@ -60,7 +70,15 @@ export class BlockchainComponent {
     },
   };
 
+  // Dialog properties
+  isDialogOpen = false;
+  selectedBlock: Block | null = null;
+  hasPrevBlock = false;
+  hasNextBlock = false;
+
   @Input() node!: Node;
+
+  private balancesSub?: Subscription;
 
   constructor(private router: Router) {}
 
@@ -72,6 +90,21 @@ export class BlockchainComponent {
       requestAnimationFrame(() => {
         this.calculateGaps();
       });
+    }
+
+    // Adiciona listener para ESC
+    document.addEventListener('keydown', this.handleKeyDown.bind(this));
+
+    this.balancesSub = this.node.balances$.subscribe(() => {
+      if (this.isDialogOpen && this.selectedBlock) {
+        this.calculateNavigationState(this.selectedBlock);
+      }
+    });
+  }
+
+  private handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && this.isDialogOpen) {
+      this.onDialogClose();
     }
   }
 
@@ -253,12 +286,87 @@ export class BlockchainComponent {
   }
 
   goToBlockDetails(block: any) {
-    this.router.navigate([
-      '/miners',
-      this.node.id,
-      'blocks',
-      block.height,
-      block.hash,
-    ]);
+    this.selectedBlock = block;
+    this.calculateNavigationState(block);
+    this.isDialogOpen = true;
+  }
+
+  private calculateNavigationState(block: Block) {
+    // Encontra o bloco atual na estrutura de heights
+    const currentHeightIndex = this.node.heights.findIndex(
+      (h) => h.n === block.height
+    );
+    if (currentHeightIndex === -1) return;
+
+    const currentHeight = this.node.heights[currentHeightIndex];
+    const currentBlockIndex = currentHeight.blocks.findIndex(
+      (b) => b.block.hash === block.hash
+    );
+    if (currentBlockIndex === -1) return;
+
+    // Verifica se há bloco anterior
+    this.hasPrevBlock = this.findPreviousBlock(block) !== null;
+
+    // Verifica se há próximo bloco
+    this.hasNextBlock = this.findNextBlock(block) !== null;
+  }
+
+  private findPreviousBlock(block: Block): Block | null {
+    // Busca o bloco pai real via previousHash (nunca altura -1 fake)
+    if (!block.previousHash || block.height <= 0) return null;
+    for (const h of this.node.heights) {
+      for (const bn of h.blocks) {
+        if (bn.block.hash === block.previousHash && bn.block.height >= 0) {
+          if (bn.block.height === -1) return null;
+          return bn.block;
+        }
+      }
+    }
+    return null;
+  }
+
+  private findNextBlock(block: Block): Block | null {
+    // Procura o próximo bloco na mesma chain
+    const nextHeightIndex = this.node.heights.findIndex(
+      (h) => h.n === block.height + 1
+    );
+    if (nextHeightIndex === -1) return null;
+
+    const nextHeight = this.node.heights[nextHeightIndex];
+    const nextBlock = nextHeight.blocks.find(
+      (b) => b.block.previousHash === block.hash
+    );
+    return nextBlock?.block || null;
+  }
+
+  onDialogClose() {
+    this.isDialogOpen = false;
+    this.selectedBlock = null;
+  }
+
+  onGoPrevBlock() {
+    if (this.selectedBlock) {
+      const prevBlock = this.findPreviousBlock(this.selectedBlock);
+      if (prevBlock) {
+        this.selectedBlock = prevBlock;
+        this.calculateNavigationState(prevBlock);
+      }
+    }
+  }
+
+  onGoNextBlock() {
+    if (this.selectedBlock) {
+      const nextBlock = this.findNextBlock(this.selectedBlock);
+      if (nextBlock) {
+        this.selectedBlock = nextBlock;
+        this.calculateNavigationState(nextBlock);
+      }
+    }
+  }
+
+  ngOnDestroy() {
+    // Remove listener para ESC
+    document.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    this.balancesSub?.unsubscribe();
   }
 }
