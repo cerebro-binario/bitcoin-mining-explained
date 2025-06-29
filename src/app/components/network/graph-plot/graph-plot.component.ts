@@ -88,6 +88,21 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
             stroke-dasharray="4"
             class="sync-circle"
           />
+          <!-- Partículas girando para minerador minerando -->
+          <g
+            *ngIf="node.nodeType === 'miner' && node.isMining"
+            class="mining-orbit"
+          >
+            <ng-container *ngFor="let n of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]">
+              <circle
+                [attr.cx]="getOrbitPosition(i, n, 10, 28).x"
+                [attr.cy]="getOrbitPosition(i, n, 10, 28).y"
+                r="3.2"
+                fill="#facc15"
+                opacity="0.85"
+              />
+            </ng-container>
+          </g>
           <!-- Nó principal -->
           <circle
             [attr.cx]="getX(i)"
@@ -156,6 +171,38 @@ import { BitcoinNetworkService } from '../../../services/bitcoin-network.service
           transform: rotate(360deg);
         }
       }
+
+      .mining-pulse {
+        opacity: 0.7;
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: miningPulse 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+      @keyframes miningPulse {
+        0% {
+          opacity: 0.7;
+          transform: scale(1);
+        }
+        70% {
+          opacity: 0.15;
+          transform: scale(1.5);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.7);
+        }
+      }
+
+      .mining-orbit {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: orbitSpin 10s linear infinite;
+      }
+      @keyframes orbitSpin {
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     `,
   ],
 })
@@ -180,6 +227,14 @@ export class GraphPlotComponent {
     const padding = 36;
     const radius = this.height / 2 - padding;
     return this.height / 2 + Math.sin(angle) * radius;
+  }
+  // Calcula a posição de uma partícula em órbita ao redor do nó
+  getOrbitPosition(i: number, n: number, total: number, radius: number) {
+    const angle = (2 * Math.PI * n) / total;
+    return {
+      x: this.getX(i) + Math.cos(angle) * radius,
+      y: this.getY(i) + Math.sin(angle) * radius,
+    };
   }
   getNodeById(id: number | undefined) {
     return this.network.nodes.find((n) => n.id === id);
