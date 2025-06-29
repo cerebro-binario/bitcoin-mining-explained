@@ -16,21 +16,35 @@
         background: #0a0a0a;
         height: 100vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         color: #e0e0e0;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .slides-container {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: 40px 0;
+        width: 100vw;
+        align-items: center;
+        min-width: unset;
       }
 
       .slide {
         background: #111111;
-        width: 90%;
+        width: 90vw;
         max-width: 1400px;
-        height: 90vh;
+        min-height: 70vh;
         padding: 60px;
         display: flex;
         flex-direction: column;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         border: 1px solid #1a1a1a;
+        flex-shrink: 0;
       }
 
       .header {
@@ -231,8 +245,133 @@
         opacity: 0.5;
       }
 
+      /* Second slide styles */
+      .systemic-content {
+        display: flex;
+        flex: 1;
+        gap: 60px;
+        align-items: stretch;
+      }
+
+      .level-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .level-card {
+        background: #1a1a1a;
+        border-radius: 12px;
+        padding: 30px;
+        border: 1px solid #2a2a2a;
+        transition: all 0.3s ease;
+      }
+
+      .level-card:hover {
+        border-color: #f7931a;
+        box-shadow: 0 8px 24px rgba(247, 147, 26, 0.2);
+      }
+
+      .level-title {
+        font-size: 1.8rem;
+        font-weight: 500;
+        margin-bottom: 20px;
+        color: #f7931a;
+        text-align: center;
+      }
+
+      .priority-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .priority-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1rem;
+        color: #f7931a;
+        opacity: 0.9;
+      }
+
+      .priority-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        background: #2a2a2a;
+      }
+
+      .systemic-icon {
+        background: #1e3a5f;
+        color: #4a9eff;
+      }
+
+      .individual-icon {
+        background: #3a1e5f;
+        color: #b366ff;
+      }
+
+      .transcendence-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .transcendence-container {
+        background: #1a1a1a;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        border: 1px solid #2a2a2a;
+        max-width: 500px;
+      }
+
+      .transcendence-title {
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin-bottom: 30px;
+        color: #f7931a;
+      }
+
+      .transcendence-visual {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .transcendence-arrow {
+        font-size: 2rem;
+        color: #f7931a;
+        opacity: 0.6;
+      }
+
+      .money-importance {
+        background: #1e3a5f;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+      }
+
+      .money-importance-text {
+        font-size: 1rem;
+        color: #4a9eff;
+        font-weight: 500;
+        line-height: 1.5;
+      }
+
       @media (max-width: 1024px) {
-        .main-content {
+        .main-content,
+        .systemic-content {
           flex-direction: column;
           gap: 40px;
         }
@@ -269,105 +408,210 @@
     </style>
   </head>
   <body>
-    <div class="slide">
-      <div class="header">
-        <h1 class="title">Moeda Lastro vs Moeda de Liquidez</h1>
-        <p class="subtitle">Análise Econômica do Bitcoin</p>
-      </div>
+    <div class="slides-container">
+      <!-- First Slide -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">Moeda Lastro vs Moeda de Liquidez</h1>
+          <p class="subtitle">Análise Econômica do Bitcoin</p>
+        </div>
 
-      <div class="main-content">
-        <div class="comparison">
-          <div class="currency-card lastro-card">
-            <span class="currency-icon">🏛️</span>
-            <h2 class="currency-title">Moeda Lastro</h2>
-            <div class="visual-elements">
-              <div class="element">
-                <div class="element-icon lastro-icon">V</div>
-                <span>Valor Real</span>
+        <div class="main-content">
+          <div class="comparison">
+            <div class="currency-card lastro-card">
+              <span class="currency-icon">🏛️</span>
+              <h2 class="currency-title">Moeda Lastro</h2>
+              <div class="visual-elements">
+                <div class="element">
+                  <div class="element-icon lastro-icon">V</div>
+                  <span>Valor Real</span>
+                </div>
+                <div class="element">
+                  <div class="element-icon lastro-icon">R</div>
+                  <span>Resgate</span>
+                </div>
+                <div class="element">
+                  <div class="element-icon lastro-icon">C</div>
+                  <span>Controle</span>
+                </div>
+                <div class="element">
+                  <div class="element-icon lastro-icon">G</div>
+                  <span>Garantia</span>
+                </div>
               </div>
-              <div class="element">
-                <div class="element-icon lastro-icon">R</div>
-                <span>Resgate</span>
-              </div>
-              <div class="element">
-                <div class="element-icon lastro-icon">C</div>
-                <span>Controle</span>
-              </div>
-              <div class="element">
-                <div class="element-icon lastro-icon">G</div>
-                <span>Garantia</span>
+            </div>
+
+            <div class="arrow">↔</div>
+
+            <div class="currency-card liquidez-card">
+              <span class="currency-icon">💳</span>
+              <h2 class="currency-title">Moeda de Liquidez</h2>
+              <div class="visual-elements">
+                <div class="element">
+                  <div class="element-icon liquidez-icon">F</div>
+                  <span>Facilita</span>
+                </div>
+                <div class="element">
+                  <div class="element-icon liquidez-icon">D</div>
+                  <span>Distribuição</span>
+                </div>
+                <div class="element">
+                  <div class="element-icon liquidez-icon">T</div>
+                  <span>Transações</span>
+                </div>
+                <div class="element">
+                  <div class="element-icon liquidez-icon">Q</div>
+                  <span>Quantidade</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="arrow">↔</div>
+          <div class="analogy-section">
+            <div class="analogy-container">
+              <h3 class="analogy-title">🎪 Festa Junina</h3>
 
-          <div class="currency-card liquidez-card">
-            <span class="currency-icon">💳</span>
-            <h2 class="currency-title">Moeda de Liquidez</h2>
-            <div class="visual-elements">
-              <div class="element">
-                <div class="element-icon liquidez-icon">F</div>
-                <span>Facilita</span>
+              <div class="analogy-visual">
+                <div class="analogy-item">
+                  <span class="analogy-icon">🎟️</span>
+                  <span class="analogy-label">Fichas</span>
+                </div>
+                <span class="equals">=</span>
+                <div class="analogy-item">
+                  <span class="analogy-icon">💳</span>
+                  <span class="analogy-label">Liquidez</span>
+                </div>
               </div>
-              <div class="element">
-                <div class="element-icon liquidez-icon">D</div>
-                <span>Distribuição</span>
+
+              <div class="analogy-visual">
+                <div class="analogy-item">
+                  <span class="analogy-icon">💰</span>
+                  <span class="analogy-label">Real</span>
+                </div>
+                <span class="equals">=</span>
+                <div class="analogy-item">
+                  <span class="analogy-icon">🏛️</span>
+                  <span class="analogy-label">Lastro</span>
+                </div>
               </div>
-              <div class="element">
-                <div class="element-icon liquidez-icon">T</div>
-                <span>Transações</span>
-              </div>
-              <div class="element">
-                <div class="element-icon liquidez-icon">Q</div>
-                <span>Quantidade</span>
+
+              <div class="flow-diagram">
+                <div class="flow-step">
+                  <span>Início</span>
+                  <span>Troca</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                  <span>Durante</span>
+                  <span>Uso</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                  <span>Final</span>
+                  <span>Resgate</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="analogy-section">
-          <div class="analogy-container">
-            <h3 class="analogy-title">🎪 Festa Junina</h3>
+      <!-- Second Slide -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">Sistêmico vs Pontual</h1>
+          <p class="subtitle">O Dinheiro Transcende o Individual</p>
+        </div>
 
-            <div class="analogy-visual">
-              <div class="analogy-item">
-                <span class="analogy-icon">🎟️</span>
-                <span class="analogy-label">Fichas</span>
-              </div>
-              <span class="equals">=</span>
-              <div class="analogy-item">
-                <span class="analogy-icon">💳</span>
-                <span class="analogy-label">Liquidez</span>
+        <div class="systemic-content">
+          <div class="level-section">
+            <div class="level-card">
+              <h2 class="level-title">👤 Nível Individual</h2>
+              <div class="priority-list">
+                <div class="priority-item">
+                  <div class="priority-icon individual-icon">❤️</div>
+                  <span>Saúde e Família</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon individual-icon">🍽️</div>
+                  <span>Alimentação</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon individual-icon">🧘</div>
+                  <span>Bem-estar Espiritual</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon individual-icon">🎯</div>
+                  <span>Propósito Pessoal</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon individual-icon">💰</div>
+                  <span>Obtenção de Recursos</span>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div class="analogy-visual">
-              <div class="analogy-item">
-                <span class="analogy-icon">💰</span>
-                <span class="analogy-label">Real</span>
+          <div class="transcendence-section">
+            <div class="transcendence-container">
+              <h3 class="transcendence-title">A Ponte</h3>
+
+              <div class="transcendence-visual">
+                <div class="analogy-item">
+                  <span class="analogy-icon">👤</span>
+                  <span class="analogy-label">Individual</span>
+                </div>
+                <span class="transcendence-arrow">⇄</span>
+                <div class="analogy-item">
+                  <span class="analogy-icon">💰</span>
+                  <span
+                    class="analogy-label"
+                    style="font-weight: 700; color: #f7931a"
+                    >Dinheiro<br /><span
+                      style="font-weight: 400; font-size: 0.9em; opacity: 0.8"
+                      >A Ponte</span
+                    ></span
+                  >
+                </div>
+                <span class="transcendence-arrow">⇄</span>
+                <div class="analogy-item">
+                  <span class="analogy-icon">🌍</span>
+                  <span class="analogy-label">Sistêmico</span>
+                </div>
               </div>
-              <span class="equals">=</span>
-              <div class="analogy-item">
-                <span class="analogy-icon">🏛️</span>
-                <span class="analogy-label">Lastro</span>
+
+              <div class="money-importance">
+                <p class="money-importance-text">
+                  "Acabar com o dinheiro traria mais problemas do que soluções"
+                </p>
               </div>
             </div>
+          </div>
 
-            <div class="flow-diagram">
-              <div class="flow-step">
-                <span>Início</span>
-                <span>Troca</span>
-              </div>
-              <span class="flow-arrow">→</span>
-              <div class="flow-step">
-                <span>Durante</span>
-                <span>Uso</span>
-              </div>
-              <span class="flow-arrow">→</span>
-              <div class="flow-step">
-                <span>Final</span>
-                <span>Resgate</span>
+          <div class="level-section">
+            <div class="level-card">
+              <h2 class="level-title">🌍 Nível Sistêmico</h2>
+              <div class="priority-list">
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">🏛️</div>
+                  <span>Organização Social</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">⚙️</div>
+                  <span>Alocação de Recursos</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">🔄</div>
+                  <span>Coordenação Econômica</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">📈</div>
+                  <span>Desenvolvimento</span>
+                </div>
+                <div class="priority-item">
+                  <div class="priority-icon systemic-icon">💎</div>
+                  <span>Ferramenta Monetária</span>
+                </div>
               </div>
             </div>
           </div>
