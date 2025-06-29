@@ -1854,6 +1854,304 @@
           max-width: 98vw;
         }
       }
+
+      .hyperbtc-main-container {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 48px;
+        margin-bottom: 32px;
+      }
+      .hyperbtc-side {
+        min-width: 220px;
+        max-width: 260px;
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 1;
+      }
+      .hyperbtc-spiral-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 320px;
+        max-width: 480px;
+        z-index: 2;
+      }
+      .hyperbtc-spiral {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        background: #222233;
+        border-radius: 18px;
+        padding: 24px 24px 18px 24px;
+        border: 2.5px solid #f7931a;
+        margin-bottom: 18px;
+        position: relative;
+        box-shadow: 0 6px 32px #000a;
+        max-width: 440px;
+      }
+      .hyperbtc-cycle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 70px;
+      }
+      .hyperbtc-cycle-label {
+        color: #f7931a;
+        font-size: 0.98rem;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .hyperbtc-cycle-icon {
+        font-size: 1.7rem;
+      }
+      .hyperbtc-arrow {
+        font-size: 1.5rem;
+        color: #f7931a;
+        font-weight: 700;
+      }
+      .hyperbtc-multiplier {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        margin-left: 18px;
+      }
+      .hyperbtc-multiplier-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .hyperbtc-multiplier-real {
+        color: #ff4d4d;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+      .hyperbtc-multiplier-less {
+        color: #ff4d4d;
+        font-size: 1.2rem;
+      }
+      .hyperbtc-multiplier-btc {
+        color: #f7931a;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+      .hyperbtc-multiplier-more {
+        color: #3be07a;
+        font-size: 1.2rem;
+      }
+      .hyperbtc-multiplier-text {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+      }
+      .hyperbtc-spiral-desc {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        text-align: center;
+        margin-top: 8px;
+      }
+      .hyperbtc-impact {
+        color: #f7931a;
+        font-size: 1.01rem;
+        margin-top: 28px;
+        text-align: center;
+        max-width: 700px;
+      }
+      @media (max-width: 1100px) {
+        .hyperbtc-main-container {
+          flex-direction: column;
+          gap: 32px;
+          align-items: center;
+          margin-top: 32px;
+          margin-bottom: 18px;
+        }
+        .hyperbtc-side,
+        .hyperbtc-spiral-container {
+          min-width: 160px;
+          max-width: 98vw;
+        }
+        .hyperbtc-spiral {
+          max-width: 98vw;
+        }
+      }
+      @media (max-width: 700px) {
+        .hyperbtc-main-container {
+          gap: 18px;
+          margin-top: 18px;
+          margin-bottom: 8px;
+        }
+        .hyperbtc-spiral {
+          padding: 12px 4px 10px 4px;
+          font-size: 0.95em;
+        }
+      }
+
+      /* Slide 19: O Fator Multiplicativo dos Ciclos Econômicos */
+      .hyperbtc-cycleonly-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+        margin-top: 48px;
+        margin-bottom: 32px;
+      }
+      .hyperbtc-cycleonly-spiral {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        background: #222233;
+        border-radius: 18px;
+        padding: 18px 10px 12px 10px;
+        border: 2.5px solid #f7931a;
+        max-width: 98vw;
+      }
+      .hyperbtc-cycleonly-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 70px;
+      }
+      .hyperbtc-cycleonly-label {
+        color: #f7931a;
+        font-size: 0.98rem;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .hyperbtc-cycleonly-icon {
+        font-size: 1.7rem;
+      }
+      .hyperbtc-cycleonly-arrow {
+        font-size: 1.5rem;
+        color: #f7931a;
+        font-weight: 700;
+      }
+      .hyperbtc-cycleonly-multiplier {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        margin-top: 24px;
+      }
+      .hyperbtc-cycleonly-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .hyperbtc-cycleonly-real {
+        color: #ff4d4d;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+      .hyperbtc-cycleonly-less {
+        color: #ff4d4d;
+        font-size: 1.2rem;
+      }
+      .hyperbtc-cycleonly-btc {
+        color: #f7931a;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+      .hyperbtc-cycleonly-more {
+        color: #3be07a;
+        font-size: 1.2rem;
+      }
+      .hyperbtc-cycleonly-text {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+      }
+      .hyperbtc-cycleonly-desc {
+        color: #e0e0e0;
+        font-size: 1.01rem;
+        text-align: center;
+        margin-top: 18px;
+      }
+      @media (max-width: 900px) {
+        .hyperbtc-cycleonly-container {
+          margin-top: 24px;
+          margin-bottom: 8px;
+          gap: 18px;
+        }
+        .hyperbtc-cycleonly-spiral {
+          flex-wrap: wrap;
+          padding: 10px 2px 8px 2px;
+        }
+      }
+
+      /* Slide 20: O Motor da Hiperbitcoinização */
+      .hyperbtc-motor-container {
+        display: flex;
+        flex-direction: row;
+        gap: 64px;
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 56px;
+        margin-bottom: 40px;
+      }
+      .hyperbtc-motor-col {
+        min-width: 240px;
+        max-width: 320px;
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .hyperbtc-motor-title {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .hyperbtc-motor-list {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .hyperbtc-motor-icon {
+        font-size: 1.1rem;
+        margin-right: 8px;
+      }
+      .hyperbtc-motor-hyper {
+        color: #f7931a;
+        font-weight: 700;
+        font-size: 1.08rem;
+      }
+      .hyperbtc-motor-impact {
+        color: #f7931a;
+        font-size: 1.01rem;
+        margin-top: 28px;
+        text-align: center;
+        max-width: 700px;
+      }
+      @media (max-width: 900px) {
+        .hyperbtc-motor-container {
+          flex-direction: column;
+          gap: 24px;
+          align-items: center;
+          margin-top: 24px;
+          margin-bottom: 8px;
+        }
+        .hyperbtc-motor-col {
+          min-width: 160px;
+          max-width: 98vw;
+        }
+      }
     </style>
   </head>
   <body>
@@ -4311,6 +4609,261 @@
             align-items: center;
           }
           .btc-strategic-card {
+            min-width: 160px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 19: O Fator Multiplicativo dos Ciclos Econômicos -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Fator Multiplicativo dos Ciclos Econômicos</h1>
+          <p class="subtitle">
+            A cada ciclo, 1 real vale menos e 1 satoshi vale mais
+          </p>
+        </div>
+        <div class="hyperbtc-cycleonly-container">
+          <div class="hyperbtc-cycleonly-spiral">
+            <div class="hyperbtc-cycleonly-step">
+              <div class="hyperbtc-cycleonly-label">Injeção de Liquidez</div>
+              <div class="hyperbtc-cycleonly-icon">💸</div>
+            </div>
+            <div class="hyperbtc-cycleonly-arrow">→</div>
+            <div class="hyperbtc-cycleonly-step">
+              <div class="hyperbtc-cycleonly-label">Circulação</div>
+              <div class="hyperbtc-cycleonly-icon">🔄</div>
+            </div>
+            <div class="hyperbtc-cycleonly-arrow">→</div>
+            <div class="hyperbtc-cycleonly-step">
+              <div class="hyperbtc-cycleonly-label">Endividamento</div>
+              <div class="hyperbtc-cycleonly-icon">📉</div>
+            </div>
+            <div class="hyperbtc-cycleonly-arrow">→</div>
+            <div class="hyperbtc-cycleonly-step">
+              <div class="hyperbtc-cycleonly-label">Crise de Liquidez</div>
+              <div class="hyperbtc-cycleonly-icon">💥</div>
+            </div>
+            <div class="hyperbtc-cycleonly-arrow">→</div>
+            <div class="hyperbtc-cycleonly-step">
+              <div class="hyperbtc-cycleonly-label">Nova Injeção</div>
+              <div class="hyperbtc-cycleonly-icon">💸</div>
+            </div>
+          </div>
+          <div class="hyperbtc-cycleonly-multiplier">
+            <div class="hyperbtc-cycleonly-row">
+              <span class="hyperbtc-cycleonly-real">R$</span>
+              <span class="hyperbtc-cycleonly-less">↓</span>
+              <span class="hyperbtc-cycleonly-text">1 real vale menos</span>
+            </div>
+            <div class="hyperbtc-cycleonly-row">
+              <span class="hyperbtc-cycleonly-btc">₿</span>
+              <span class="hyperbtc-cycleonly-more">↑</span>
+              <span class="hyperbtc-cycleonly-text">1 satoshi vale mais</span>
+            </div>
+          </div>
+        </div>
+        <div class="hyperbtc-cycleonly-desc">
+          A cada ciclo, o fator multiplicativo acelera: mais reais para menos
+          satoshis.
+        </div>
+      </div>
+      <style>
+        .hyperbtc-cycleonly-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 32px;
+          margin-top: 48px;
+          margin-bottom: 32px;
+        }
+        .hyperbtc-cycleonly-spiral {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 10px;
+          background: #222233;
+          border-radius: 18px;
+          padding: 18px 10px 12px 10px;
+          border: 2.5px solid #f7931a;
+          max-width: 98vw;
+        }
+        .hyperbtc-cycleonly-step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-width: 70px;
+        }
+        .hyperbtc-cycleonly-label {
+          color: #f7931a;
+          font-size: 0.98rem;
+          font-weight: 600;
+          margin-bottom: 2px;
+        }
+        .hyperbtc-cycleonly-icon {
+          font-size: 1.7rem;
+        }
+        .hyperbtc-cycleonly-arrow {
+          font-size: 1.5rem;
+          color: #f7931a;
+          font-weight: 700;
+        }
+        .hyperbtc-cycleonly-multiplier {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+          margin-top: 24px;
+        }
+        .hyperbtc-cycleonly-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .hyperbtc-cycleonly-real {
+          color: #ff4d4d;
+          font-size: 1.2rem;
+          font-weight: 700;
+        }
+        .hyperbtc-cycleonly-less {
+          color: #ff4d4d;
+          font-size: 1.2rem;
+        }
+        .hyperbtc-cycleonly-btc {
+          color: #f7931a;
+          font-size: 1.2rem;
+          font-weight: 700;
+        }
+        .hyperbtc-cycleonly-more {
+          color: #3be07a;
+          font-size: 1.2rem;
+        }
+        .hyperbtc-cycleonly-text {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+        }
+        .hyperbtc-cycleonly-desc {
+          color: #e0e0e0;
+          font-size: 1.01rem;
+          text-align: center;
+          margin-top: 18px;
+        }
+        @media (max-width: 900px) {
+          .hyperbtc-cycleonly-container {
+            margin-top: 24px;
+            margin-bottom: 8px;
+            gap: 18px;
+          }
+          .hyperbtc-cycleonly-spiral {
+            flex-wrap: wrap;
+            padding: 10px 2px 8px 2px;
+          }
+        }
+      </style>
+
+      <!-- Slide 20: O Motor da Hiperbitcoinização -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Motor da Hiperbitcoinização</h1>
+          <p class="subtitle">Por que o ciclo acelera até a virada de mesa</p>
+        </div>
+        <div class="hyperbtc-motor-container">
+          <div class="hyperbtc-motor-col hyperbtc-motor-factors">
+            <div class="hyperbtc-motor-title">O que turbina o ciclo</div>
+            <ul class="hyperbtc-motor-list">
+              <li>
+                <span class="hyperbtc-motor-icon">📈</span> Aumento da demanda
+                por Bitcoin
+              </li>
+              <li>
+                <span class="hyperbtc-motor-icon">⬇️</span> Diminuição da oferta
+                (halving)
+              </li>
+              <li>
+                <span class="hyperbtc-motor-icon">💰</span> Injeções crescentes
+                de liquidez
+              </li>
+            </ul>
+          </div>
+          <div class="hyperbtc-motor-col hyperbtc-motor-conseq">
+            <div class="hyperbtc-motor-title">Consequência</div>
+            <ul class="hyperbtc-motor-list">
+              <li>O fator multiplicativo acelera a cada ciclo</li>
+              <li>Ponto de inflexão: ninguém mais quer reais</li>
+              <li>Todos querem satoshis</li>
+              <li>
+                <span class="hyperbtc-motor-hyper">Hiperbitcoinização</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="hyperbtc-motor-impact">
+          A diferença entre a desvalorização do real e a valorização do satoshi
+          se torna insustentável.
+        </div>
+      </div>
+      <style>
+        .hyperbtc-motor-container {
+          display: flex;
+          flex-direction: row;
+          gap: 64px;
+          justify-content: center;
+          align-items: flex-start;
+          margin-top: 56px;
+          margin-bottom: 40px;
+        }
+        .hyperbtc-motor-col {
+          min-width: 240px;
+          max-width: 320px;
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 28px 24px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .hyperbtc-motor-title {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+        .hyperbtc-motor-list {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .hyperbtc-motor-icon {
+          font-size: 1.1rem;
+          margin-right: 8px;
+        }
+        .hyperbtc-motor-hyper {
+          color: #f7931a;
+          font-weight: 700;
+          font-size: 1.08rem;
+        }
+        .hyperbtc-motor-impact {
+          color: #f7931a;
+          font-size: 1.01rem;
+          margin-top: 28px;
+          text-align: center;
+          max-width: 700px;
+        }
+        @media (max-width: 900px) {
+          .hyperbtc-motor-container {
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+            margin-top: 24px;
+            margin-bottom: 8px;
+          }
+          .hyperbtc-motor-col {
             min-width: 160px;
             max-width: 98vw;
           }
