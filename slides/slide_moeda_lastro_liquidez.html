@@ -1040,6 +1040,277 @@
           padding: 14px 6px 10px 6px;
         }
       }
+
+      .solution-vs-reality {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 48px;
+        margin-top: 32px;
+      }
+      .solution-block {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 28px 24px;
+        min-width: 260px;
+        max-width: 340px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .solution-title {
+        color: #f7931a;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 18px;
+      }
+      .solution-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .solution-icon {
+        font-size: 1.2rem;
+        margin-right: 10px;
+      }
+      .solution-vs-arrow {
+        font-size: 2.5rem;
+        color: #ff4d4d;
+        align-self: center;
+        margin: 0 12px;
+      }
+      .reality-block {
+        background: #221818;
+        border-color: #ff4d4d;
+      }
+      .reality-title {
+        color: #ff4d4d;
+      }
+      .reality-icon {
+        color: #ff4d4d;
+      }
+      @media (max-width: 900px) {
+        .solution-vs-reality {
+          flex-direction: column;
+          gap: 24px;
+          align-items: center;
+        }
+        .solution-block {
+          min-width: 180px;
+          max-width: 98vw;
+        }
+      }
+
+      .chess-honesty-container {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 32px;
+      }
+      .chess-block {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 28px 24px;
+        min-width: 260px;
+        max-width: 340px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .chess-title {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .chess-board {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+      }
+      .chess-piece {
+        color: #f7931a;
+      }
+      .chess-vs {
+        color: #aaa;
+        font-size: 1.1rem;
+      }
+      .chess-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 8px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .chess-icon {
+        font-size: 1.1rem;
+        margin-right: 8px;
+      }
+      .chess-divider {
+        border-top: 1.5px dashed #f7931a;
+        margin: 10px 0 10px 0;
+        width: 100%;
+      }
+      .chess-list-reality .chess-icon,
+      .reality-icon {
+        color: #ff4d4d;
+      }
+      .honesty-block {
+        background: #221818;
+        border: 2px solid #ff4d4d;
+        border-radius: 16px;
+        padding: 28px 24px;
+        min-width: 260px;
+        max-width: 340px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .honesty-title {
+        color: #ff4d4d;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .honesty-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 8px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .honesty-icon {
+        font-size: 1.1rem;
+        margin-right: 8px;
+      }
+      .honesty-conseq {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        margin-top: 10px;
+        text-align: left;
+      }
+      @media (max-width: 900px) {
+        .chess-honesty-container {
+          flex-direction: column;
+          gap: 24px;
+          align-items: center;
+        }
+        .chess-block,
+        .honesty-block {
+          min-width: 180px;
+          max-width: 98vw;
+        }
+      }
+
+      .inevitability-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 32px;
+      }
+      .inevitability-paths {
+        display: flex;
+        flex-direction: row;
+        gap: 48px;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .inevitability-block {
+        background: #181818;
+        border: 2px solid #f7931a;
+        border-radius: 16px;
+        padding: 28px 24px;
+        min-width: 240px;
+        max-width: 320px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .inevitability-title {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .inevitability-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .inevitability-icon {
+        font-size: 1.1rem;
+        margin-right: 8px;
+      }
+      .inevitability-or {
+        align-self: center;
+        color: #aaa;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0 12px;
+      }
+      .inevitability-block-collapse {
+        background: #221818;
+        border-color: #ff4d4d;
+      }
+      .inevitability-title-collapse,
+      .collapse-icon {
+        color: #ff4d4d;
+      }
+      .inevitability-final {
+        margin-top: 36px;
+        background: #181818;
+        border: 2.5px solid #f7931a;
+        border-radius: 18px;
+        padding: 22px 18px 16px 18px;
+        max-width: 520px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .inevitability-final-icon {
+        font-size: 2.2rem;
+        margin-bottom: 6px;
+      }
+      .inevitability-final-title {
+        color: #f7931a;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .inevitability-final-desc ul {
+        color: #e0e0e0;
+        font-size: 1rem;
+        margin: 0;
+        padding-left: 18px;
+      }
+      @media (max-width: 900px) {
+        .inevitability-paths {
+          flex-direction: column;
+          gap: 24px;
+          align-items: center;
+        }
+        .inevitability-block {
+          min-width: 180px;
+          max-width: 98vw;
+        }
+      }
     </style>
   </head>
   <body>
@@ -2113,6 +2384,473 @@
           </p>
         </div>
       </div>
+
+      <!-- Slide 11: Solução Ideal vs. Realidade -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">A Solução Ideal vs. A Realidade</h1>
+          <p class="subtitle">Por que a honestidade sistêmica é impossível</p>
+        </div>
+        <div class="solution-vs-reality">
+          <div class="solution-block">
+            <div class="solution-title">Solução Teórica</div>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon">🧑‍💼</span> Pessoas competentes em
+                todas as instituições
+              </li>
+              <li>
+                <span class="solution-icon">🤝</span> Gestão responsável e
+                honesta
+              </li>
+              <li>
+                <span class="solution-icon">🔍</span> Transparência nas
+                operações
+              </li>
+              <li>
+                <span class="solution-icon">⚙️</span> Eficiência administrativa
+              </li>
+            </ul>
+          </div>
+          <div class="solution-vs-arrow">✖️</div>
+          <div class="solution-block reality-block">
+            <div class="solution-title reality-title">Por que é Ingênuo</div>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon reality-icon">🦹</span> Competição
+                com inescrupulosos
+              </li>
+              <li>
+                <span class="solution-icon reality-icon">🧤</span> Necessidade
+                de "se sujar" para competir
+              </li>
+              <li>
+                <span class="solution-icon reality-icon">🏛️</span> Captura
+                administrativa inevitável
+              </li>
+              <li>
+                <span class="solution-icon reality-icon">⚡</span> Contradição
+                inerente ao sistema
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <style>
+        .solution-vs-reality {
+          display: flex;
+          flex-direction: row;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 48px;
+          margin-top: 32px;
+        }
+        .solution-block {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 28px 24px;
+          min-width: 260px;
+          max-width: 340px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .solution-title {
+          color: #f7931a;
+          font-size: 1.2rem;
+          font-weight: 700;
+          margin-bottom: 18px;
+        }
+        .solution-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .solution-icon {
+          font-size: 1.2rem;
+          margin-right: 10px;
+        }
+        .solution-vs-arrow {
+          font-size: 2.5rem;
+          color: #ff4d4d;
+          align-self: center;
+          margin: 0 12px;
+        }
+        .reality-block {
+          background: #221818;
+          border-color: #ff4d4d;
+        }
+        .reality-title {
+          color: #ff4d4d;
+        }
+        .reality-icon {
+          color: #ff4d4d;
+        }
+        @media (max-width: 900px) {
+          .solution-vs-reality {
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+          }
+          .solution-block {
+            min-width: 180px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 12: Analogia do Xadrez & Honestidade -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">
+            A Analogia do Xadrez & a Natureza da Honestidade
+          </h1>
+          <p class="subtitle">Por que o jogo é impossível para os honestos</p>
+        </div>
+        <div class="chess-honesty-container">
+          <div class="chess-block">
+            <div class="chess-title">Jogo Limpo vs. Jogo Sujo</div>
+            <div class="chess-board">
+              <span class="chess-piece">♔</span>
+              <span class="chess-vs">vs</span>
+              <span class="chess-piece">♚</span>
+            </div>
+            <ul class="chess-list">
+              <li><span class="chess-icon">📖</span> Estudo das regras</li>
+              <li><span class="chess-icon">🧠</span> Preparação técnica</li>
+              <li><span class="chess-icon">🎯</span> Estratégia</li>
+              <li><span class="chess-icon">🤝</span> Confiança no sistema</li>
+            </ul>
+            <div class="chess-divider"></div>
+            <ul class="chess-list chess-list-reality">
+              <li>
+                <span class="chess-icon reality-icon">🚫</span> Violação das
+                regras
+              </li>
+              <li>
+                <span class="chess-icon reality-icon">🕵️</span> Manipulação do
+                jogo
+              </li>
+              <li>
+                <span class="chess-icon reality-icon">👨‍⚖️</span> Árbitro
+                conivente
+              </li>
+              <li>
+                <span class="chess-icon reality-icon">❌</span> Impossibilidade
+                de competição justa
+              </li>
+            </ul>
+          </div>
+          <div class="honesty-block">
+            <div class="honesty-title">Honestidade Absoluta</div>
+            <ul class="honesty-list">
+              <li>
+                <span class="honesty-icon">⚖️</span> Não existe "meio termo"
+              </li>
+              <li>
+                <span class="honesty-icon">🚫</span> Contradição em transigir
+              </li>
+              <li>
+                <span class="honesty-icon">🥦</span> Analogia com o veganismo
+              </li>
+              <li>
+                <span class="honesty-icon">🔄</span> Honestos não competem
+                efetivamente
+              </li>
+            </ul>
+            <div class="honesty-conseq">
+              O sistema favorece os inescrupulosos.<br />Captura administrativa
+              é inevitável.
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .chess-honesty-container {
+          display: flex;
+          flex-direction: row;
+          gap: 48px;
+          justify-content: center;
+          align-items: flex-start;
+          margin-top: 32px;
+        }
+        .chess-block {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 28px 24px;
+          min-width: 260px;
+          max-width: 340px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .chess-title {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 12px;
+        }
+        .chess-board {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 2.2rem;
+          margin-bottom: 10px;
+        }
+        .chess-piece {
+          color: #f7931a;
+        }
+        .chess-vs {
+          color: #aaa;
+          font-size: 1.1rem;
+        }
+        .chess-list {
+          list-style: none;
+          padding: 0;
+          margin: 0 0 8px 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .chess-icon {
+          font-size: 1.1rem;
+          margin-right: 8px;
+        }
+        .chess-divider {
+          border-top: 1.5px dashed #f7931a;
+          margin: 10px 0 10px 0;
+          width: 100%;
+        }
+        .chess-list-reality .chess-icon,
+        .reality-icon {
+          color: #ff4d4d;
+        }
+        .honesty-block {
+          background: #221818;
+          border: 2px solid #ff4d4d;
+          border-radius: 16px;
+          padding: 28px 24px;
+          min-width: 260px;
+          max-width: 340px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .honesty-title {
+          color: #ff4d4d;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 12px;
+        }
+        .honesty-list {
+          list-style: none;
+          padding: 0;
+          margin: 0 0 8px 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .honesty-icon {
+          font-size: 1.1rem;
+          margin-right: 8px;
+        }
+        .honesty-conseq {
+          color: #e0e0e0;
+          font-size: 0.98rem;
+          margin-top: 10px;
+          text-align: left;
+        }
+        @media (max-width: 900px) {
+          .chess-honesty-container {
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+          }
+          .chess-block,
+          .honesty-block {
+            min-width: 180px;
+            max-width: 98vw;
+          }
+        }
+      </style>
+
+      <!-- Slide 13: Consequências e Falha Sistêmica Inevitável -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">As Consequências e a Falha Sistêmica Inevitável</h1>
+          <p class="subtitle">
+            O sistema sempre colapsa — é só questão de tempo
+          </p>
+        </div>
+        <div class="inevitability-container">
+          <div class="inevitability-paths">
+            <div class="inevitability-block">
+              <div class="inevitability-title">Corrupção Controlada</div>
+              <ul class="inevitability-list">
+                <li>
+                  <span class="inevitability-icon">🟠</span> Nível "aceitável"
+                  de desvios
+                </li>
+                <li>
+                  <span class="inevitability-icon">🎭</span> Aparência de
+                  normalidade
+                </li>
+                <li>
+                  <span class="inevitability-icon">💧</span> Honestos como
+                  "liquidez" do sistema
+                </li>
+                <li>
+                  <span class="inevitability-icon">🤫</span> Esquemas discretos
+                  e gerenciados
+                </li>
+              </ul>
+            </div>
+            <div class="inevitability-or">ou</div>
+            <div class="inevitability-block inevitability-block-collapse">
+              <div class="inevitability-title inevitability-title-collapse">
+                Colapso Econômico
+              </div>
+              <ul class="inevitability-list">
+                <li>
+                  <span class="inevitability-icon collapse-icon">💣</span>
+                  Corrupção insustentável
+                </li>
+                <li>
+                  <span class="inevitability-icon collapse-icon">🔥</span> Perda
+                  de controle
+                </li>
+                <li>
+                  <span class="inevitability-icon collapse-icon">🔍</span>
+                  Exposição dos esquemas
+                </li>
+                <li>
+                  <span class="inevitability-icon collapse-icon">💥</span>
+                  Ruptura do sistema
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="inevitability-final">
+            <div class="inevitability-final-icon">⚙️💔</div>
+            <div class="inevitability-final-title">
+              A Falha Sistêmica Inevitável
+            </div>
+            <div class="inevitability-final-desc">
+              <ul>
+                <li>O problema é estrutural, não comportamental</li>
+                <li>Instituições sempre serão capturadas</li>
+                <li>Honestos não podem competir efetivamente</li>
+                <li>O sistema recompensa a desonestidade</li>
+                <li>O controle é sempre temporário</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .inevitability-container {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 32px;
+        }
+        .inevitability-paths {
+          display: flex;
+          flex-direction: row;
+          gap: 48px;
+          justify-content: center;
+          align-items: flex-start;
+        }
+        .inevitability-block {
+          background: #181818;
+          border: 2px solid #f7931a;
+          border-radius: 16px;
+          padding: 28px 24px;
+          min-width: 240px;
+          max-width: 320px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .inevitability-title {
+          color: #f7931a;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 12px;
+        }
+        .inevitability-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .inevitability-icon {
+          font-size: 1.1rem;
+          margin-right: 8px;
+        }
+        .inevitability-or {
+          align-self: center;
+          color: #aaa;
+          font-size: 1.2rem;
+          font-weight: 700;
+          margin: 0 12px;
+        }
+        .inevitability-block-collapse {
+          background: #221818;
+          border-color: #ff4d4d;
+        }
+        .inevitability-title-collapse,
+        .collapse-icon {
+          color: #ff4d4d;
+        }
+        .inevitability-final {
+          margin-top: 36px;
+          background: #181818;
+          border: 2.5px solid #f7931a;
+          border-radius: 18px;
+          padding: 22px 18px 16px 18px;
+          max-width: 520px;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .inevitability-final-icon {
+          font-size: 2.2rem;
+          margin-bottom: 6px;
+        }
+        .inevitability-final-title {
+          color: #f7931a;
+          font-size: 1.2rem;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        .inevitability-final-desc ul {
+          color: #e0e0e0;
+          font-size: 1rem;
+          margin: 0;
+          padding-left: 18px;
+        }
+        @media (max-width: 900px) {
+          .inevitability-paths {
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+          }
+          .inevitability-block {
+            min-width: 180px;
+            max-width: 98vw;
+          }
+        }
+      </style>
     </div>
   </body>
 </html>
