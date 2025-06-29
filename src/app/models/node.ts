@@ -474,16 +474,28 @@ export class Node {
       };
     }
 
+    // Encontra o bloco pai
+    const parentBlock = this.getBlockByHeight(
+      referenceBlock.height - 1,
+      referenceBlock.previousHash
+    );
+    if (!parentBlock) {
+      return {
+        current: {
+          nBits: this.INITIAL_NBITS,
+        },
+      };
+    }
+
     const epoch = this.consensus.getConsensusForHeight(referenceBlock.height);
     const interval = epoch.parameters.difficultyAdjustmentInterval;
-    const targetBlockTime = epoch.parameters.targetBlockTime;
     const adjustedHeight = referenceBlock.height - epoch.startHeight + 1;
 
     // Se não for um bloco de ajuste, retorna apenas a dificuldade atual
     if (adjustedHeight % interval !== 0) {
       return {
         current: {
-          nBits: referenceBlock.nBits,
+          nBits: parentBlock.nBits,
         },
       };
     }
@@ -515,6 +527,7 @@ export class Node {
       };
     }
 
+    const targetBlockTime = epoch.parameters.targetBlockTime;
     const actualTime = referenceBlock.timestamp - prevAdjustmentBlock.timestamp;
     const expectedTime = interval * targetBlockTime * 1000;
     let adjustmentFactor = actualTime / expectedTime;
