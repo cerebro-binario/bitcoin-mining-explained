@@ -44,8 +44,8 @@ export class MinerProfileComponent {
   chainBipFormat: BipType | 'all-bip-types' = 'bip84';
   hashRateOptions = [
     { value: 1, label: '1 H/s' },
-    { value: 1000, label: '1000 H/s' },
-    { value: 10000, label: '10000 H/s' },
+    { value: 1000, label: '1.000 H/s' },
+    { value: 10000, label: '10.000 H/s' },
     { value: null, label: 'Máximo' },
   ];
 
@@ -106,11 +106,22 @@ export class MinerProfileComponent {
   }
 
   startMining() {
-    this.networkService.startAllMiners();
+    if (!this.miner || this.miner.isMining) return;
+
+    // Cria um novo bloco se não houver um atual
+    if (!this.miner.currentBlock) {
+      this.miner.currentBlock = this.miner.initBlockTemplate();
+    }
+
+    this.miner.isMining = true;
+    this.miner.miningLastTickTime = Date.now();
   }
 
   stopMining() {
-    this.networkService.pauseAllMiners();
+    if (!this.miner || !this.miner.isMining) return;
+
+    this.miner.isMining = false;
+    this.miner.miningLastTickTime = null;
   }
 
   getTarget(block: any): string {
