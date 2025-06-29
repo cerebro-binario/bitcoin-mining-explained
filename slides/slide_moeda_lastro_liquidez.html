@@ -780,6 +780,266 @@
         opacity: 0.85;
         margin-top: 4px;
       }
+
+      .gov-debt-cycle-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .gov-debt-flow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        margin-top: 24px;
+      }
+      .gov-agents {
+        display: flex;
+        gap: 18px;
+        margin-bottom: 2px;
+      }
+      .gov-agent {
+        font-size: 2rem;
+        color: #3be07a;
+      }
+      .gov-arrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.3rem;
+        color: #f7931a;
+        font-weight: 600;
+      }
+      .gov-arrow-label {
+        font-size: 1rem;
+        color: #aaa;
+        font-weight: 400;
+        margin-left: 4px;
+      }
+      .gov-reservoir {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .gov-label {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .gov-tank {
+        width: 90px;
+        height: 60px;
+        background: #222233;
+        border-radius: 12px 12px 16px 16px;
+        border: 2px solid #f7931a;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .gov-tank-fill {
+        width: 80%;
+        height: 60%;
+        background: linear-gradient(0deg, #f7931a 80%, #fff2 100%);
+        border-radius: 0 0 12px 12px;
+        position: absolute;
+        left: 10%;
+        bottom: 0;
+      }
+      .gov-tank-leak {
+        position: absolute;
+        left: 50%;
+        bottom: -18px;
+        transform: translateX(-50%);
+        font-size: 1.2rem;
+        color: #4ad2ff;
+      }
+      .gov-tank-leak-label {
+        position: absolute;
+        left: 50%;
+        bottom: -34px;
+        transform: translateX(-50%);
+        font-size: 0.85rem;
+        color: #aaa;
+        opacity: 0.8;
+      }
+      .gov-arrow-to-market {
+        margin-top: 18px;
+      }
+      .gov-market {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .gov-market-label {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .gov-market-tank {
+        width: 90px;
+        height: 36px;
+        background: #222233;
+        border-radius: 10px 10px 14px 14px;
+        border: 2px solid #f7931a;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .gov-market-fill {
+        width: 80%;
+        height: 18%;
+        background: linear-gradient(0deg, #f7931a 80%, #fff2 100%);
+        border-radius: 0 0 10px 10px;
+        position: absolute;
+        left: 10%;
+        bottom: 0;
+      }
+      .gov-market-warning {
+        position: absolute;
+        left: 50%;
+        bottom: -18px;
+        transform: translateX(-50%);
+        font-size: 1.2rem;
+        color: #ff4d4d;
+      }
+      .gov-market-warning-label {
+        position: absolute;
+        left: 50%;
+        bottom: -34px;
+        transform: translateX(-50%);
+        font-size: 0.85rem;
+        color: #aaa;
+        opacity: 0.8;
+      }
+      .gov-arrow-rupture {
+        margin-top: 10px;
+        color: #ff4d4d;
+      }
+      .gov-centralbank {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .gov-centralbank-label {
+        color: #f7931a;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .gov-centralbank-inject {
+        color: #3be07a;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .gov-cycle-vertical {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      .gov-block {
+        width: 100%;
+        background: #181818;
+        border: 2.5px solid #f7931a;
+        border-radius: 18px;
+        padding: 22px 18px 16px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 4px 18px #0008;
+        position: relative;
+      }
+      .gov-block-mercado {
+        border-color: #f7931a;
+      }
+      .gov-block-mercado-low {
+        opacity: 0.7;
+      }
+      .gov-block-governo {
+        border-color: #f7931a;
+      }
+      .gov-block-rupture {
+        border-color: #ff4d4d;
+        background: #2a1818;
+      }
+      .gov-block-bc {
+        border-color: #f7931a;
+        background: #181828;
+      }
+      .gov-block-title {
+        color: #f7931a;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        text-align: center;
+      }
+      .gov-block-icon {
+        font-size: 2.1rem;
+        margin-bottom: 6px;
+      }
+      .gov-block-desc {
+        color: #e0e0e0;
+        font-size: 1rem;
+        text-align: center;
+      }
+      .gov-leak {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .gov-leak-icon {
+        font-size: 1.3rem;
+        color: #4ad2ff;
+      }
+      .gov-leak-label {
+        color: #4ad2ff;
+        font-size: 0.98rem;
+        font-weight: 600;
+      }
+      .gov-arrow-vertical {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #f7931a;
+        font-size: 2.1rem;
+        font-weight: 700;
+        margin: 0 0 0 0;
+      }
+      .gov-arrow-label {
+        font-size: 0.95rem;
+        color: #aaa;
+        font-weight: 400;
+        margin-top: -2px;
+      }
+      .gov-arrow-rupture {
+        color: #ff4d4d;
+      }
+      @media (max-width: 600px) {
+        .gov-cycle-vertical {
+          max-width: 98vw;
+        }
+        .gov-block {
+          padding: 14px 6px 10px 6px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1770,6 +2030,87 @@
               liquidez.
             </p>
           </div>
+        </div>
+      </div>
+
+      <!-- Tenth Slide (Refatorado) -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Ciclo do Endividamento Governamental</h1>
+          <p class="subtitle">
+            Como o governo suga a liquidez e perpetua a ineficiência
+          </p>
+        </div>
+        <div class="gov-cycle-vertical">
+          <!-- Mercado Inicial -->
+          <div class="gov-block gov-block-mercado">
+            <div class="gov-block-title">Mercado</div>
+            <div class="gov-block-icon">💰💰💰</div>
+            <div class="gov-block-desc">Origem da liquidez</div>
+          </div>
+          <div class="gov-arrow-vertical">
+            ↓<span class="gov-arrow-label">Títulos Públicos</span>
+          </div>
+          <!-- Governo -->
+          <div class="gov-block gov-block-governo">
+            <div class="gov-block-title">Governo</div>
+            <div class="gov-block-icon">🏦</div>
+            <div class="gov-block-desc">Capta recursos prometendo retorno</div>
+            <div class="gov-leak">
+              <span class="gov-leak-icon">💧💧💧</span>
+              <span class="gov-leak-label"
+                >Ineficiência, corrupção, má gestão</span
+              >
+            </div>
+          </div>
+          <div class="gov-arrow-vertical">
+            ↓<span class="gov-arrow-label">Gastos Governamentais</span>
+          </div>
+          <!-- Mercado Final (liquidez baixa) -->
+          <div class="gov-block gov-block-mercado gov-block-mercado-low">
+            <div class="gov-block-title">Mercado</div>
+            <div class="gov-block-icon">💰</div>
+            <div class="gov-block-desc">Liquidez se esgota</div>
+          </div>
+          <div class="gov-arrow-vertical gov-arrow-rupture">
+            ↓<span class="gov-arrow-label">Ponto de Ruptura</span>
+          </div>
+          <div class="gov-block gov-block-rupture">
+            <div class="gov-block-icon">💥</div>
+            <div class="gov-block-title" style="color: #ff4d4d">
+              Ponto de Ruptura
+            </div>
+            <div class="gov-block-desc">
+              O governo não consegue mais captar recursos
+            </div>
+          </div>
+          <div class="gov-arrow-vertical">
+            ↓<span class="gov-arrow-label">Intervenção</span>
+          </div>
+          <!-- Banco Central -->
+          <div class="gov-block gov-block-bc">
+            <div class="gov-block-title">Banco Central</div>
+            <div class="gov-block-icon">🏦</div>
+            <div class="gov-block-desc">
+              Nova injeção de liquidez<br /><span
+                style="color: #f7931a; font-weight: 600"
+                >🔄 O ciclo recomeça</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="gov-cycle-note">
+          <p
+            style="
+              color: #f7931a;
+              font-weight: 600;
+              text-align: center;
+              margin-top: 24px;
+            "
+          >
+            O governo nunca quebra: o ciclo recomeça com a intervenção do Banco
+            Central.
+          </p>
         </div>
       </div>
     </div>
