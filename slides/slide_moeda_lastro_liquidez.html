@@ -516,6 +516,270 @@
           box-shadow: 0 4px 16px rgba(247, 147, 26, 0.18);
         }
       }
+
+      .cycle-money-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .cycle-money-animation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 32px;
+      }
+      .cycle-money-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #222233;
+        border-radius: 10px;
+        padding: 18px 20px;
+        min-width: 110px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        border: 1.5px solid #333355;
+        animation: cycle-money-pop 2.4s infinite;
+      }
+      .cycle-money-step:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .cycle-money-step:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      .cycle-money-step:nth-child(5) {
+        animation-delay: 0.8s;
+      }
+      .cycle-money-step:nth-child(7) {
+        animation-delay: 1.2s;
+      }
+      .cycle-money-step:nth-child(9) {
+        animation-delay: 1.6s;
+      }
+      .cycle-money-icon {
+        font-size: 2.2rem;
+        margin-bottom: 6px;
+      }
+      .cycle-money-label {
+        font-size: 1rem;
+        color: #f7931a;
+        font-weight: 500;
+        text-align: center;
+      }
+      .cycle-money-arrow {
+        font-size: 2rem;
+        color: #f7931a;
+        opacity: 0.7;
+      }
+      @keyframes cycle-money-pop {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+        50% {
+          transform: scale(1.13);
+          box-shadow: 0 4px 16px rgba(247, 147, 26, 0.18);
+        }
+      }
+
+      .accumulation-visual {
+        display: flex;
+        align-items: flex-end;
+        gap: 18px;
+        margin-bottom: 8px;
+      }
+      .agent-tank {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 54px;
+      }
+      .tank-label {
+        font-size: 0.85rem;
+        color: #aaa;
+        margin-bottom: 2px;
+      }
+      .tank-outer {
+        width: 32px;
+        height: 60px;
+        border-radius: 10px 10px 8px 8px;
+        background: #222233;
+        border: 2px solid #f7931a;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2px;
+      }
+      .tank-fill {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(0deg, #f7931a 80%, #fff2 100%);
+        width: 100%;
+        border-radius: 0 0 8px 8px;
+        animation: tank-fill-anim 2.4s infinite;
+      }
+      .tank-full {
+        height: 90%;
+        animation-delay: 0s;
+      }
+      .tank-medium {
+        height: 55%;
+        animation-delay: 0.2s;
+      }
+      .tank-low {
+        height: 20%;
+        animation-delay: 0.4s;
+      }
+      .tank-empty {
+        height: 0%;
+        animation-delay: 0.6s;
+      }
+      .tank-coin {
+        font-size: 1.3rem;
+        margin-top: 2px;
+      }
+      .tank-broken {
+        border: 2px solid #f00;
+        position: relative;
+      }
+      .tank-crack {
+        position: absolute;
+        left: 12px;
+        top: 30px;
+        width: 8px;
+        height: 22px;
+        border-left: 2px dashed #f00;
+        z-index: 2;
+      }
+      @keyframes tank-fill-anim {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        50% {
+          filter: brightness(1.25);
+        }
+      }
+
+      .money-circulation-visual {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .agents-circle {
+        position: relative;
+        width: 220px;
+        height: 220px;
+        margin-bottom: 12px;
+      }
+      .agent {
+        position: absolute;
+        width: 54px;
+        height: 54px;
+        background: #222233;
+        border: 2px solid #f7931a;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: #f7931a;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      }
+      .agent-label {
+        font-size: 1.1rem;
+        color: #f7931a;
+        font-weight: 700;
+      }
+      .agent-balance {
+        font-size: 1.2rem;
+        margin-top: 2px;
+      }
+      .balance-high {
+        color: #3be07a;
+      }
+      .balance-mid {
+        color: #f7931a;
+      }
+      .balance-low {
+        color: #aaa;
+      }
+      .balance-zero {
+        color: #ff4d4d;
+      }
+      .agent-a {
+        left: 50%;
+        top: 0;
+        transform: translate(-50%, 0);
+      }
+      .agent-b {
+        left: 100%;
+        top: 50%;
+        transform: translate(-100%, -50%);
+      }
+      .agent-c {
+        left: 50%;
+        top: 100%;
+        transform: translate(-50%, -100%);
+      }
+      .agent-d {
+        left: 0;
+        top: 50%;
+        transform: translate(0, -50%);
+      }
+      .money-flow {
+        position: absolute;
+        font-size: 1.5rem;
+        animation: money-circulate 2.4s linear infinite;
+        opacity: 0.85;
+      }
+      .money-flow-1 {
+        left: 50%;
+        top: 20px;
+        animation-delay: 0s;
+      }
+      .money-flow-2 {
+        left: 170px;
+        top: 50%;
+        animation-delay: 0.8s;
+      }
+      .money-flow-3 {
+        left: 50%;
+        top: 170px;
+        animation-delay: 1.6s;
+      }
+      @keyframes money-circulate {
+        0% {
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        30% {
+          opacity: 1;
+        }
+        40% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      .money-circulation-desc {
+        color: #e0e0e0;
+        font-size: 0.98rem;
+        text-align: center;
+        opacity: 0.85;
+        margin-top: 4px;
+      }
     </style>
   </head>
   <body>
@@ -1426,6 +1690,85 @@
                 produtiva.
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ninth Slide -->
+      <div class="slide">
+        <div class="header">
+          <h1 class="title">O Ciclo do Dinheiro</h1>
+          <p class="subtitle">Como o sistema gira (e repete) indefinidamente</p>
+        </div>
+        <div class="cycle-money-container">
+          <div class="cycle-money-animation">
+            <div class="cycle-money-step">
+              <span class="cycle-money-icon">💸</span>
+              <span class="cycle-money-label">Injeção de Liquidez</span>
+            </div>
+            <div class="cycle-money-arrow">→</div>
+            <div class="cycle-money-step">
+              <span class="cycle-money-icon">🔄</span>
+              <span class="cycle-money-label">Circulação</span>
+            </div>
+            <div class="cycle-money-arrow">→</div>
+            <div class="cycle-money-step">
+              <!-- Circulação de Dinheiro Visual -->
+              <div class="money-circulation-visual">
+                <div class="agents-circle">
+                  <div class="agent agent-a">
+                    <span class="agent-label">A</span
+                    ><span class="agent-balance balance-high">●●●</span>
+                  </div>
+                  <div class="agent agent-b">
+                    <span class="agent-label">B</span
+                    ><span class="agent-balance balance-mid">●●</span>
+                  </div>
+                  <div class="agent agent-c">
+                    <span class="agent-label">C</span
+                    ><span class="agent-balance balance-low">●</span>
+                  </div>
+                  <div class="agent agent-d">
+                    <span class="agent-label">D</span
+                    ><span class="agent-balance balance-zero"></span>
+                  </div>
+                  <div class="money-flow money-flow-1">●</div>
+                  <div class="money-flow money-flow-2">●</div>
+                  <div class="money-flow money-flow-3">●</div>
+                </div>
+                <div class="money-circulation-desc">
+                  O dinheiro circula entre os agentes, mas vai se concentrando
+                  em poucos e esgotando nos menos eficientes.
+                </div>
+              </div>
+              <span class="cycle-money-label"
+                >Circulação e Acúmulo Desigual</span
+              >
+            </div>
+            <div class="cycle-money-arrow">→</div>
+            <div class="cycle-money-step">
+              <span class="cycle-money-icon">❌</span>
+              <span class="cycle-money-label">Calote dos Negativados</span>
+            </div>
+            <div class="cycle-money-arrow">→</div>
+            <div class="cycle-money-step">
+              <span class="cycle-money-icon">💥</span>
+              <span class="cycle-money-label">Crise de Liquidez</span>
+            </div>
+            <div class="cycle-money-arrow">⟲</div>
+          </div>
+          <div class="cycle-money-desc">
+            <p
+              style="
+                color: #f7931a;
+                font-weight: 600;
+                text-align: center;
+                margin-top: 24px;
+              "
+            >
+              O ciclo se repete: a solução para a crise é sempre mais injeção de
+              liquidez.
+            </p>
           </div>
         </div>
       </div>
