@@ -1,21 +1,21 @@
 import { CommonModule } from '@angular/common';
 import {
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    SimpleChanges,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { Node } from '../../../../models/node';
 import {
-    BipType,
-    BitcoinAddressData,
-    TOTAL_PRIVATE_KEY_RECORDS,
+  BipType,
+  BitcoinAddressData,
+  TOTAL_PRIVATE_KEY_RECORDS,
 } from '../../../../models/wallet.model';
 import { KeyService } from '../../../../services/key.service';
 import { ceilBigInt } from '../../../../utils/tools';
@@ -185,8 +185,13 @@ export class BlockchainBalanceComponent implements OnInit, OnChanges {
 
   identifyAddress = (addressRef: BitcoinAddressData) => {
     const { address } = addressRef;
-    const addressData =
-      this.node.balances[address] || this.findAddressInWallet(address);
+    const addressInWallet = this.findAddressInWallet(address);
+    const addressData = this.node.balances[address] || addressInWallet;
+
+    if (addressInWallet && addressData) {
+      addressData.nodeId = this.node.id;
+    }
+
     return addressData || addressRef;
   };
 
