@@ -15,14 +15,7 @@ import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.
 @Component({
   selector: 'app-root-layout',
   standalone: true,
-  imports: [
-    RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
-    CommonModule,
-    NgIf,
-    GraphPlotComponent,
-  ],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, NgIf],
   template: `
     <div class="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
       <!-- Navbar Global Fixa -->
@@ -42,7 +35,6 @@ import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.
                 <span class="sm:hidden">BME</span>
               </a>
             </div>
-
             <!-- Navigation Links -->
             <div class="hidden md:flex items-center space-x-8">
               <a
@@ -62,7 +54,6 @@ import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.
                 Ferramentas
               </a>
             </div>
-
             <!-- Mobile menu button -->
             <div class="md:hidden">
               <button
@@ -74,7 +65,6 @@ import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.
               </button>
             </div>
           </div>
-
           <!-- Mobile menu -->
           <div
             *ngIf="mobileMenuOpen"
@@ -104,46 +94,8 @@ import { GraphPlotComponent } from '../components/network/graph-plot/graph-plot.
         </div>
       </nav>
 
-      <!-- Layout em 2 colunas: Sidebar fluida (grafo) + Conteúdo principal -->
-      <div class="flex flex-row flex-1 pt-16 w-full">
-        <!-- Sidebar fluida com grafo -->
-        <aside
-          class="flex flex-col bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"
-        >
-          <!-- Botões de adicionar -->
-          <div class="flex gap-2 p-4 border-b border-zinc-800 bg-zinc-900">
-            <button
-              (click)="addMiner()"
-              class="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-2 text-sm font-semibold flex items-center gap-1 transition"
-            >
-              <i class="pi pi-cog"></i> Minerador
-            </button>
-            <button
-              (click)="addNode()"
-              class="bg-green-600 hover:bg-green-700 text-white rounded px-3 py-2 text-sm font-semibold flex items-center gap-1 transition"
-            >
-              <i class="pi pi-server"></i> Nó
-            </button>
-            <button
-              (click)="addUser()"
-              class="bg-yellow-500 hover:bg-yellow-600 text-zinc-900 rounded px-3 py-2 text-sm font-semibold flex items-center gap-1 transition"
-            >
-              <i class="pi pi-user"></i> Usuário
-            </button>
-          </div>
-          <!-- Grafo ocupa o restante -->
-          <div class="flex-1 flex items-center justify-center p-2 max-w-[35vw]">
-            <app-graph-plot
-              class="w-full h-full"
-              (nodeSelected)="goToProfile($event)"
-            />
-          </div>
-        </aside>
-        <!-- Conteúdo principal -->
-        <main class="flex-1 min-h-0 bg-zinc-950">
-          <router-outlet></router-outlet>
-        </main>
-      </div>
+      <!-- Main Content -->
+      <router-outlet></router-outlet>
     </div>
   `,
 })
