@@ -139,38 +139,46 @@
             <button
               class="w-full md:w-auto flex items-center justify-center gap-2 py-3 px-6 mt-4 rounded-lg transition-all shadow mx-auto"
               [ngClass]="
-                showWalletDetails
+                miner.pageState.wallet === 'open'
                   ? 'bg-zinc-800/60 hover:bg-zinc-700 text-zinc-400 focus:outline-none'
                   : 'bg-blue-900/60 hover:bg-blue-800 text-blue-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400'
               "
               (click)="toggleWalletDetails()"
-              [attr.aria-expanded]="showWalletDetails"
+              [attr.aria-expanded]="miner.pageState.wallet === 'open'"
               title="Clique para ver endereços, transações e enviar BTC"
             >
               <i
                 class="pi"
                 [ngClass]="
-                  showWalletDetails ? 'pi-chevron-up' : 'pi-chevron-down'
+                  miner.pageState.wallet === 'open'
+                    ? 'pi-chevron-up'
+                    : 'pi-chevron-down'
                 "
               ></i>
               <span>
-                {{ showWalletDetails ? "Fechar carteira" : "Abrir carteira" }}
+                {{
+                  miner.pageState.wallet === "open"
+                    ? "Fechar carteira"
+                    : "Abrir carteira"
+                }}
               </span>
             </button>
             <div
               class="transition-all duration-300"
               [ngStyle]="{
-                'min-height': showWalletDetails ? '70vh' : '0',
-                'max-height': showWalletDetails ? '999999px' : '0',
-                opacity: showWalletDetails ? '1' : '0',
-                'pointer-events': showWalletDetails ? 'auto' : 'none'
+                'min-height': miner.pageState.wallet === 'open' ? '70vh' : '0',
+                'max-height':
+                  miner.pageState.wallet === 'open' ? '999999px' : '0',
+                opacity: miner.pageState.wallet === 'open' ? '1' : '0',
+                'pointer-events':
+                  miner.pageState.wallet === 'open' ? 'auto' : 'none'
               }"
             >
               <div class="flex flex-col flex-1 min-h-0 pt-4 w-full h-full">
                 <app-wallet
                   [node]="miner"
                   [wallet]="miner.wallet"
-                  [bipFormat]="walletBipFormat"
+                  [bipFormat]="miner.pageState.walletBipFormat"
                   (bipFormatChange)="onWalletBipFormatChange($event)"
                   (deriveNextAddress)="deriveNextAddress()"
                   class="h-full"
@@ -273,7 +281,7 @@
                 <button
                   class="px-4 py-2 text-sm font-medium transition-colors"
                   [ngClass]="
-                    activeTab === 'metadata'
+                    miner.pageState.currentBlockTab === 'metadata'
                       ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-zinc-400 hover:text-zinc-300'
                   "
@@ -284,7 +292,7 @@
                 <button
                   class="px-4 py-2 text-sm font-medium transition-colors"
                   [ngClass]="
-                    activeTab === 'transactions'
+                    miner.pageState.currentBlockTab === 'transactions'
                       ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-zinc-400 hover:text-zinc-300'
                   "
@@ -298,7 +306,7 @@
               <div class="flex-1 min-h-0 flex flex-col">
                 <!-- Metadados -->
                 <div
-                  *ngIf="activeTab === 'metadata'"
+                  *ngIf="miner.pageState.currentBlockTab === 'metadata'"
                   class="h-full flex flex-col min-h-0"
                 >
                   <div class="grid grid-cols-2 gap-4 flex-1 overflow-y-auto">
@@ -357,7 +365,7 @@
 
                 <!-- Transações -->
                 <div
-                  *ngIf="activeTab === 'transactions'"
+                  *ngIf="miner.pageState.currentBlockTab === 'transactions'"
                   class="flex-1 min-h-0 flex flex-col"
                 >
                   <div class="space-y-4 flex-1 overflow-y-auto pr-2">
@@ -424,7 +432,10 @@
                                 [isChange]="false"
                                 [isCoinbase]="tx.inputs.length === 0"
                                 [isMiningCoinbase]="false"
-                                [isVirtual]="activeTab === 'transactions'"
+                                [isVirtual]="
+                                  miner.pageState.currentBlockTab ===
+                                  'transactions'
+                                "
                                 [compact]="true"
                                 [showActions]="false"
                                 [blockHeight]="input.blockHeight"
@@ -461,7 +472,10 @@
                                 [isChange]="false"
                                 [isCoinbase]="tx.inputs.length === 0"
                                 [isMiningCoinbase]="i === 0"
-                                [isVirtual]="activeTab === 'transactions'"
+                                [isVirtual]="
+                                  miner.pageState.currentBlockTab ===
+                                  'transactions'
+                                "
                                 [compact]="true"
                                 [showActions]="false"
                                 [blockHeight]="miner.currentBlock.height"
@@ -516,8 +530,8 @@
           </h2>
           <app-blockchain-balance
             [node]="miner"
-            [displayModeInput]="displayModeBlockchainBalance"
-            [bipFormat]="chainBipFormat"
+            [displayModeInput]="miner.pageState.blockchainBalanceDisplayMode"
+            [bipFormat]="miner.pageState.blockchainBipFormat"
             (bipFormatChange)="onChainBipFormatChange($event)"
             (displayModeChange)="onBlockchainBalanceDisplayModeChange($event)"
             class="flex flex-col flex-1 min-h-0 h-full"
@@ -643,12 +657,14 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-zinc-400">{{
-              isBlockchainVisible ? "Recolher" : "Expandir"
+              miner.pageState.blockchain === "open" ? "Recolher" : "Expandir"
             }}</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-5 w-5 text-zinc-400 transition-transform"
-              [ngClass]="{ 'rotate-180': isBlockchainVisible }"
+              [ngClass]="{
+                'rotate-180': miner.pageState.blockchain === 'open'
+              }"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -665,9 +681,9 @@
         <div
           class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
           [ngStyle]="{
-            'max-height': !isBlockchainVisible ? '0px' : null,
-            opacity: isBlockchainVisible ? '1' : '0',
-            overflow: isBlockchainVisible ? 'visible' : 'hidden',
+            'max-height': miner.pageState.blockchain === 'closed' ? '0px' : null,
+            opacity: miner.pageState.blockchain === 'open' ? '1' : '0',
+            overflow: miner.pageState.blockchain === 'open' ? 'visible' : 'hidden',
           }"
         >
           <app-blockchain [node]="miner"></app-blockchain>

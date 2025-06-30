@@ -174,6 +174,24 @@ export class Node {
 
   isMalicious: boolean = false;
 
+  pageState: {
+    wallet: 'closed' | 'open';
+    walletBipFormat: BipType | 'all-bip-types';
+    blockchain: 'open' | 'closed';
+    blockchainBalanceDisplayMode: 'all-private-keys' | 'with-balance';
+    blockchainBipFormat: BipType | 'all-bip-types';
+    currentBlockTab: 'metadata' | 'transactions';
+  } = {
+    wallet: 'closed',
+    walletBipFormat: 'bip84' as BipType,
+    blockchain: 'open',
+    blockchainBalanceDisplayMode: 'with-balance' as
+      | 'all-private-keys'
+      | 'with-balance',
+    blockchainBipFormat: 'bip84' as BipType,
+    currentBlockTab: 'metadata',
+  };
+
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
   }

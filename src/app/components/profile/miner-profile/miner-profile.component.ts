@@ -33,15 +33,8 @@ import { UtxoComponent } from '../../shared/utxo/utxo.component';
 })
 export class MinerProfileComponent {
   miner!: BitcoinNode;
-  activeTab: 'metadata' | 'transactions' = 'metadata';
   showAllLogs = false;
-  isBlockchainVisible = true;
-  showWalletDetails = false;
   showConsensusDialog = false;
-  displayModeBlockchainBalance: 'all-private-keys' | 'with-balance' =
-    'with-balance';
-  walletBipFormat: BipType | 'all-bip-types' = 'bip84';
-  chainBipFormat: BipType | 'all-bip-types' = 'bip84';
   hashRateOptions = [
     { value: 1, label: '1 H/s' },
     { value: 1000, label: '1.000 H/s' },
@@ -66,26 +59,6 @@ export class MinerProfileComponent {
         this.router.navigate(['/']);
       }
     });
-    this.route.queryParams.subscribe((params) => {
-      this.showWalletDetails = params['wallet'] === 'open';
-      if (params['displayMode']) {
-        this.displayModeBlockchainBalance = params['displayMode'] as
-          | 'all-private-keys'
-          | 'with-balance';
-      }
-      if (params['tab']) {
-        this.activeTab = params['tab'] as 'metadata' | 'transactions';
-      }
-      if (params['walletBipFormat']) {
-        this.walletBipFormat = params['walletBipFormat'] as BipType;
-      }
-      if (params['chainBipFormat']) {
-        this.chainBipFormat = params['chainBipFormat'] as BipType;
-      }
-      if (params['blockchain'] !== undefined) {
-        this.isBlockchainVisible = params['blockchain'] === 'open';
-      }
-    });
   }
 
   showNodeLogs() {
@@ -97,12 +70,8 @@ export class MinerProfileComponent {
   }
 
   toggleBlockchainVisibility() {
-    this.isBlockchainVisible = !this.isBlockchainVisible;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { blockchain: this.isBlockchainVisible ? 'open' : 'closed' },
-      queryParamsHandling: 'merge',
-    });
+    this.miner.pageState.blockchain =
+      this.miner.pageState.blockchain === 'open' ? 'closed' : 'open';
   }
 
   startMining() {
@@ -190,59 +159,26 @@ export class MinerProfileComponent {
   }
 
   toggleWalletDetails() {
-    this.showWalletDetails = !this.showWalletDetails;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { wallet: this.showWalletDetails ? 'open' : null },
-      queryParamsHandling: 'merge',
-    });
+    this.miner.pageState.wallet =
+      this.miner.pageState.wallet === 'open' ? 'closed' : 'open';
   }
 
   onBlockchainBalanceDisplayModeChange(
     mode: 'all-private-keys' | 'with-balance'
   ) {
-    this.displayModeBlockchainBalance = mode;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { displayMode: mode },
-      queryParamsHandling: 'merge',
-    });
+    this.miner.pageState.blockchainBalanceDisplayMode = mode;
   }
 
   setActiveTab(tab: 'metadata' | 'transactions') {
-    this.activeTab = tab;
-    const queryParams = { ...this.route.snapshot.queryParams, tab };
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: 'merge',
-    });
+    this.miner.pageState.currentBlockTab = tab;
   }
 
   onWalletBipFormatChange(format: BipType | 'all-bip-types') {
-    this.walletBipFormat = format;
-    const queryParams = {
-      ...this.route.snapshot.queryParams,
-      walletBipFormat: format,
-    };
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: 'merge',
-    });
+    this.miner.pageState.walletBipFormat = format;
   }
 
   onChainBipFormatChange(format: BipType | 'all-bip-types') {
-    this.chainBipFormat = format;
-    const queryParams = {
-      ...this.route.snapshot.queryParams,
-      chainBipFormat: format,
-    };
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: 'merge',
-    });
+    this.miner.pageState.blockchainBipFormat = format;
   }
 
   get walletAddresses(): string[] {
