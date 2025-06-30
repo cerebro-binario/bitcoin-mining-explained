@@ -104,37 +104,45 @@
             <button
               class="w-full md:w-auto flex items-center justify-center gap-2 py-3 px-6 mt-4 rounded-lg transition-all shadow mx-auto"
               [ngClass]="
-                showWalletDetails
+                node.pageState.wallet === 'open'
                   ? 'bg-zinc-800/60 hover:bg-zinc-700 text-zinc-400 focus:outline-none'
                   : 'bg-blue-900/60 hover:bg-blue-800 text-blue-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400'
               "
               (click)="toggleWalletDetails()"
-              [attr.aria-expanded]="showWalletDetails"
+              [attr.aria-expanded]="node.pageState.wallet === 'open'"
               title="Clique para ver endereços, transações e enviar BTC"
             >
               <i
                 class="pi"
                 [ngClass]="
-                  showWalletDetails ? 'pi-chevron-up' : 'pi-chevron-down'
+                  node.pageState.wallet === 'open'
+                    ? 'pi-chevron-up'
+                    : 'pi-chevron-down'
                 "
               ></i>
               <span>
-                {{ showWalletDetails ? "Fechar carteira" : "Abrir carteira" }}
+                {{
+                  node.pageState.wallet === "open"
+                    ? "Fechar carteira"
+                    : "Abrir carteira"
+                }}
               </span>
             </button>
             <div
               class="transition-all duration-300"
               [ngStyle]="{
-                height: showWalletDetails ? '70vh' : '0',
-                'max-height': showWalletDetails ? '70vh' : '0',
-                opacity: showWalletDetails ? '1' : '0'
+                height: node.pageState.wallet === 'open' ? '70vh' : '0',
+                'max-height': node.pageState.wallet === 'open' ? '70vh' : '0',
+                opacity: node.pageState.wallet === 'open' ? '1' : '0'
               }"
             >
               <div class="flex flex-col flex-1 min-h-0 pt-4 w-full h-full">
                 <app-wallet
                   [node]="node"
                   [wallet]="node.wallet"
-                  [bipFormat]="walletBipFormat"
+                  [bipFormat]="node.pageState.walletBipFormat"
+                  [activeTab]="node.pageState.walletActiveTab"
+                  (activeTabChange)="onWalletActiveTabChange($event)"
                   (bipFormatChange)="onWalletBipFormatChange($event)"
                   (deriveNextAddress)="deriveNextAddress()"
                   class="h-full"
@@ -205,7 +213,7 @@
                 <button
                   class="px-4 py-2 text-sm font-medium transition-colors"
                   [ngClass]="
-                    activeTab === 'metadata'
+                    node.pageState.currentBlockTab === 'metadata'
                       ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-zinc-400 hover:text-zinc-300'
                   "
@@ -216,7 +224,7 @@
                 <button
                   class="px-4 py-2 text-sm font-medium transition-colors"
                   [ngClass]="
-                    activeTab === 'transactions'
+                    node.pageState.currentBlockTab === 'transactions'
                       ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-zinc-400 hover:text-zinc-300'
                   "
@@ -230,7 +238,7 @@
               <div class="flex-1 min-h-0">
                 <!-- Metadados -->
                 <div
-                  *ngIf="activeTab === 'metadata'"
+                  *ngIf="node.pageState.currentBlockTab === 'metadata'"
                   class="h-full flex flex-col min-h-0"
                 >
                   <div class="grid grid-cols-2 gap-4 flex-1 overflow-y-auto">
@@ -301,7 +309,7 @@
 
                 <!-- Transações -->
                 <div
-                  *ngIf="activeTab === 'transactions'"
+                  *ngIf="node.pageState.currentBlockTab === 'transactions'"
                   class="h-full flex flex-col min-h-0"
                 >
                   <div class="space-y-4 flex-1 overflow-y-auto pr-2">
@@ -503,8 +511,8 @@
           </h2>
           <app-blockchain-balance
             [node]="node"
-            [displayModeInput]="displayModeBlockchainBalance"
-            [bipFormat]="chainBipFormat"
+            [displayModeInput]="node.pageState.blockchainBalanceDisplayMode"
+            [bipFormat]="node.pageState.blockchainBipFormat"
             (bipFormatChange)="onChainBipFormatChange($event)"
             (displayModeChange)="onBlockchainBalanceDisplayModeChange($event)"
             class="flex flex-col flex-1 min-h-0 h-full"
@@ -628,12 +636,12 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-zinc-400">{{
-              isBlockchainVisible ? "Recolher" : "Expandir"
+              node.pageState.blockchain === "open" ? "Recolher" : "Expandir"
             }}</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-5 w-5 text-zinc-400 transition-transform"
-              [ngClass]="{ 'rotate-180': isBlockchainVisible }"
+              [ngClass]="{ 'rotate-180': node.pageState.blockchain === 'open' }"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -650,9 +658,9 @@
         <div
           class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
           [ngStyle]="{
-            'max-height': !isBlockchainVisible ? '0px' : null,
-            opacity: isBlockchainVisible ? '1' : '0',
-            overflow: isBlockchainVisible ? 'visible' : 'hidden',
+            'max-height': node.pageState.blockchain === 'open' ? '0px' : null,
+            opacity: node.pageState.blockchain === 'open' ? '1' : '0',
+            overflow: node.pageState.blockchain === 'open' ? 'visible' : 'hidden',
           }"
         >
           <app-blockchain [node]="node"></app-blockchain>

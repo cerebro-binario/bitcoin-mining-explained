@@ -200,4 +200,8 @@ export class MinerProfileComponent {
     // Handler para quando a versão de consenso for alterada
     // (pode ser expandido se necessário)
   }
+
+  onWalletActiveTabChange(tab: 'enderecos' | 'transacoes' | 'enviar') {
+    this.miner.pageState.walletActiveTab = tab;
+  }
 }

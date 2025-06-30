@@ -179,6 +179,8 @@
                   [node]="miner"
                   [wallet]="miner.wallet"
                   [bipFormat]="miner.pageState.walletBipFormat"
+                  [activeTab]="miner.pageState.walletActiveTab"
+                  (activeTabChange)="onWalletActiveTabChange($event)"
                   (bipFormatChange)="onWalletBipFormatChange($event)"
                   (deriveNextAddress)="deriveNextAddress()"
                   class="h-full"

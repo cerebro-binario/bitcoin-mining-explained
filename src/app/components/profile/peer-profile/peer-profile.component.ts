@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SelectModule } from 'primeng/select';
+import { Block } from '../../../models/block.model';
 import type { Node as BitcoinNode } from '../../../models/node';
 import { BipType } from '../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../services/bitcoin-network.service';
@@ -11,7 +12,6 @@ import { BlockchainComponent } from '../../network/blockchain/blockchain.compone
 import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
-import { Block } from '../../../models/block.model';
 
 @Component({
   selector: 'app-peer-profile',
@@ -30,14 +30,7 @@ import { Block } from '../../../models/block.model';
 })
 export class PeerProfileComponent implements OnInit {
   node!: BitcoinNode;
-  activeTab: 'metadata' | 'transactions' = 'metadata';
   showAllLogs = false;
-  isBlockchainVisible = true;
-  showWalletDetails = false;
-  displayModeBlockchainBalance: 'all-private-keys' | 'with-balance' =
-    'with-balance';
-  walletBipFormat: BipType | 'all-bip-types' = 'bip84';
-  chainBipFormat: BipType | 'all-bip-types' = 'bip84';
 
   constructor(
     private route: ActivatedRoute,
@@ -56,26 +49,6 @@ export class PeerProfileComponent implements OnInit {
         this.router.navigate(['/']);
       }
     });
-    this.route.queryParams.subscribe((params) => {
-      this.showWalletDetails = params['wallet'] === 'open';
-      if (params['displayMode']) {
-        this.displayModeBlockchainBalance = params['displayMode'] as
-          | 'all-private-keys'
-          | 'with-balance';
-      }
-      if (params['tab']) {
-        this.activeTab = params['tab'] as 'metadata' | 'transactions';
-      }
-      if (params['walletBipFormat']) {
-        this.walletBipFormat = params['walletBipFormat'] as BipType;
-      }
-      if (params['chainBipFormat']) {
-        this.chainBipFormat = params['chainBipFormat'] as BipType;
-      }
-      if (params['blockchain'] !== undefined) {
-        this.isBlockchainVisible = params['blockchain'] === 'open';
-      }
-    });
   }
 
   showNodeLogs() {
@@ -87,12 +60,8 @@ export class PeerProfileComponent implements OnInit {
   }
 
   toggleBlockchainVisibility() {
-    this.isBlockchainVisible = !this.isBlockchainVisible;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { blockchain: this.isBlockchainVisible ? 'open' : 'closed' },
-      queryParamsHandling: 'merge',
-    });
+    this.node.pageState.blockchain =
+      this.node.pageState.blockchain === 'open' ? 'closed' : 'open';
   }
 
   getTotalBalanceBTC(): string {
@@ -157,48 +126,24 @@ export class PeerProfileComponent implements OnInit {
   onBlockchainBalanceDisplayModeChange(
     mode: 'all-private-keys' | 'with-balance'
   ) {
-    this.displayModeBlockchainBalance = mode;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { displayMode: mode },
-      queryParamsHandling: 'merge',
-    });
+    this.node.pageState.blockchainBalanceDisplayMode = mode;
   }
 
   setActiveTab(tab: 'metadata' | 'transactions') {
-    this.activeTab = tab;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab },
-      queryParamsHandling: 'merge',
-    });
+    this.node.pageState.currentBlockTab = tab;
   }
 
   onWalletBipFormatChange(format: BipType | 'all-bip-types') {
-    this.walletBipFormat = format;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { walletBipFormat: format },
-      queryParamsHandling: 'merge',
-    });
+    this.node.pageState.walletBipFormat = format;
   }
 
   onChainBipFormatChange(format: BipType | 'all-bip-types') {
-    this.chainBipFormat = format;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { chainBipFormat: format },
-      queryParamsHandling: 'merge',
-    });
+    this.node.pageState.blockchainBipFormat = format;
   }
 
   toggleWalletDetails() {
-    this.showWalletDetails = !this.showWalletDetails;
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { wallet: this.showWalletDetails ? 'open' : 'closed' },
-      queryParamsHandling: 'merge',
-    });
+    this.node.pageState.wallet =
+      this.node.pageState.wallet === 'open' ? 'closed' : 'open';
   }
 
   getNodeStatus(): string {
@@ -243,5 +188,9 @@ export class PeerProfileComponent implements OnInit {
   getTarget(block: Block | null): string {
     if (!block) return '0'.repeat(64);
     return block.target.toString(16).padStart(64, '0');
+  }
+
+  onWalletActiveTabChange(tab: 'enderecos' | 'transacoes' | 'enviar') {
+    this.node.pageState.walletActiveTab = tab;
   }
 }

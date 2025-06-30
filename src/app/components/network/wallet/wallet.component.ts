@@ -89,7 +89,7 @@ export class WalletComponent implements OnDestroy, OnInit {
   private goToLastPageAfterWalletUpdate = false;
   private destroy$ = new Subject<void>();
 
-  activeTab: 'enderecos' | 'transacoes' | 'enviar' = 'enderecos';
+  @Input() activeTab: 'enderecos' | 'transacoes' | 'enviar' = 'enderecos';
 
   @Input() set wallet(wallet: Wallet | null) {
     if (this._wallet === wallet) return;
@@ -107,6 +107,9 @@ export class WalletComponent implements OnDestroy, OnInit {
   }
   @Output() deriveNextAddress = new EventEmitter<void>();
   @Output() bipFormatChange = new EventEmitter<BipType | 'all-bip-types'>();
+  @Output() activeTabChange = new EventEmitter<
+    'enderecos' | 'transacoes' | 'enviar'
+  >();
 
   addresses: BitcoinAddressData[] = [];
   addressesDisplay: BitcoinAddressData[] = [];
@@ -1361,12 +1364,7 @@ export class WalletComponent implements OnDestroy, OnInit {
       this.prepareAllUtxosForManualSelection();
     }
 
-    // Salva a aba ativa nos query params
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { walletTab: tab },
-      queryParamsHandling: 'merge',
-    });
+    this.activeTabChange.emit(tab);
   }
 
   trackByAddress(index: number, item: { address: string }): string {

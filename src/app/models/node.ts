@@ -177,6 +177,7 @@ export class Node {
   pageState: {
     wallet: 'closed' | 'open';
     walletBipFormat: BipType | 'all-bip-types';
+    walletActiveTab: 'enderecos' | 'transacoes' | 'enviar';
     blockchain: 'open' | 'closed';
     blockchainBalanceDisplayMode: 'all-private-keys' | 'with-balance';
     blockchainBipFormat: BipType | 'all-bip-types';
@@ -184,6 +185,7 @@ export class Node {
   } = {
     wallet: 'closed',
     walletBipFormat: 'bip84' as BipType,
+    walletActiveTab: 'enderecos',
     blockchain: 'open',
     blockchainBalanceDisplayMode: 'with-balance' as
       | 'all-private-keys'
