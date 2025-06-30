@@ -99,6 +99,25 @@
     </button>
     <app-bitcoin-emission-chart></app-bitcoin-emission-chart>
   </div>
+
+  <div
+    class="relative"
+    [class.fullscreen]="isFullscreen['brute-force-impossibility']"
+  >
+    <button
+      class="absolute top-2 right-2 z-10 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-white transition-colors"
+      (click)="toggleFullscreen('brute-force-impossibility')"
+      pTooltip="Expandir para tela cheia"
+      tooltipPosition="left"
+    >
+      <i
+        class="pi"
+        [class.pi-window-minimize]="isFullscreen['brute-force-impossibility']"
+        [class.pi-window-maximize]="!isFullscreen['brute-force-impossibility']"
+      ></i>
+    </button>
+    <app-brute-force-impossibility></app-brute-force-impossibility>
+  </div>
 </div>
 
 <!-- EXPLICAÇÃO VISUAL: Seed, Master Key e Endereços -->

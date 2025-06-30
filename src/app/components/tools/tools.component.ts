@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { BitcoinEmissionChartComponent } from './bitcoin-emission-chart/bitcoin-emission-chart.component';
+import { BruteForceImpossibilityComponent } from './brute-force-impossibility/brute-force-impossibility.component';
 import { DiceAnalogyComponent } from './dice-analogy/dice-analogy.component';
 import { HashTargetComponent } from './hash-target/hash-target.component';
 import { HashComponent } from './hash/hash.component';
@@ -24,6 +25,7 @@ import { SeedAddressVisualComponent } from './seed-address-visual/seed-address-v
     DiceAnalogyComponent,
     BitcoinEmissionChartComponent,
     SeedAddressVisualComponent,
+    BruteForceImpossibilityComponent,
   ],
 })
 export class ToolsComponent {
@@ -34,6 +36,7 @@ export class ToolsComponent {
     'dice-analogy': false,
     'hash-target': false,
     'bitcoin-emission-chart': false,
+    'brute-force-impossibility': false,
   };
 
   toggleFullscreen(section: string) {

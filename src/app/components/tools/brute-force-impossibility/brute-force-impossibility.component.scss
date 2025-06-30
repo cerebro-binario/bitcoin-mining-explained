@@ -1,0 +1,86 @@
+:host {
+  display: block;
+}
+
+// Estilos para a barra de progresso
+.progress-bar {
+  transition: width 0.3s ease;
+}
+
+// Animações para os números
+.number-animation {
+  transition: all 0.3s ease;
+}
+
+// Estilos para os cards de comparação
+.comparison-card {
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Estilos para os ícones
+.icon-large {
+  font-size: 1.5rem;
+}
+
+// Estilos para o texto de destaque
+.highlight-text {
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Estilos para os botões de controle
+.control-button {
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Estilos para o status da simulação
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+// Estilos para as comparações visuais
+.comparison-item {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+
+  &.warning {
+    border-left-color: #f59e0b;
+  }
+
+  &.danger {
+    border-left-color: #ef4444;
+  }
+
+  &.success {
+    border-left-color: #10b981;
+  }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-item {
+    flex-direction: column;
+    text-align: center;
+  }
+}

@@ -1,0 +1,299 @@
+<div class="bg-zinc-900 rounded-lg border border-zinc-700 p-6">
+  <h2 class="text-2xl font-bold text-blue-300 mb-4">
+    <i class="pi pi-shield text-red-400 mr-2"></i>
+    Impossibilidade da Força Bruta
+  </h2>
+
+  <p class="text-zinc-300 mb-6">
+    Esta demonstração mostra por que é praticamente impossível quebrar uma chave
+    privada Bitcoin usando força bruta, mesmo com o computador mais rápido do
+    mundo.
+  </p>
+
+  <!-- Configuração da Simulação -->
+  <div class="bg-zinc-800 rounded-lg p-4 mb-6">
+    <h3 class="text-lg font-semibold text-zinc-200 mb-3">
+      Configuração da Simulação
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm text-zinc-400 mb-2"
+          >Velocidade de Hash (H/s)</label
+        >
+        <input
+          type="text"
+          [(ngModel)]="hashesPerSecondInput"
+          (ngModelChange)="onHashesPerSecondChange()"
+          class="w-full bg-zinc-700 border border-zinc-600 rounded px-3 py-2 text-zinc-200 font-mono"
+          placeholder="1000000000000"
+          [disabled]="isRunning"
+        />
+        <p class="text-xs text-zinc-500 mt-1">
+          Atual: {{ formatBigNumber(hashesPerSecond) }} H/s
+        </p>
+        <p class="text-xs text-zinc-400 mt-1">
+          <i class="pi pi-info-circle mr-1"></i>
+          Você pode inserir valores muito grandes (ex: 1000000000000000000 para
+          1 quintilhão)
+        </p>
+        <p class="text-xs text-zinc-500 mt-1">
+          <i class="pi pi-lightbulb mr-1"></i>
+          Exemplos: 1e18 (quintilhão), 1e21 (sextilhão), 1e24 (septilhão), 1e27
+          (octilhão)
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm text-zinc-400 mb-2"
+          >Chave Privada Alvo</label
+        >
+        <div
+          class="font-mono text-sm bg-zinc-700 p-2 rounded border border-zinc-600 text-green-300 break-all"
+        >
+          {{ targetPrivateKey }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controles da Simulação -->
+  <div class="flex gap-2 mb-6">
+    <p-button
+      [label]="isRunning ? 'Pausar' : 'Iniciar Simulação'"
+      [icon]="isRunning ? 'pi pi-pause' : 'pi pi-play'"
+      [severity]="isRunning ? 'warn' : 'success'"
+      (onClick)="isRunning ? stopSimulation() : startSimulation()"
+      [disabled]="false"
+    ></p-button>
+
+    <p-button
+      label="Resetar"
+      icon="pi pi-refresh"
+      severity="secondary"
+      (onClick)="resetSimulation()"
+      [disabled]="isRunning"
+    ></p-button>
+  </div>
+
+  <!-- Status da Simulação -->
+  <div class="bg-zinc-800 rounded-lg p-4 mb-6">
+    <h3 class="text-lg font-semibold text-zinc-200 mb-3">
+      Status da Simulação
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-blue-400">
+          {{ formatTime(elapsedTime) }}
+        </div>
+        <div class="text-sm text-zinc-400">Tempo Decorrido</div>
+      </div>
+
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-400">
+          {{ formatBigNumber(currentAttempt) }}
+        </div>
+        <div class="text-sm text-zinc-400">Tentativas Realizadas</div>
+      </div>
+
+      <div class="text-center">
+        <div class="text-2xl font-bold text-yellow-400">
+          {{ getProgressText() }}
+        </div>
+        <div class="text-sm text-zinc-400">Progresso</div>
+      </div>
+    </div>
+
+    <!-- Barra de Progresso -->
+    <div class="mb-2">
+      <div class="flex justify-between text-sm text-zinc-400 mb-1">
+        <span>Progresso</span>
+        <span>{{ getProgressText() }}</span>
+      </div>
+      <div class="w-full bg-zinc-700 rounded-full h-4">
+        <div
+          class="h-4 rounded-full transition-all duration-300"
+          [class]="getProgressColor()"
+          [style.width]="progress + '%'"
+        ></div>
+      </div>
+      <div class="text-xs text-zinc-500 mt-1">
+        <i class="pi pi-info-circle mr-1"></i>
+        A barra de progresso pode parecer vazia mesmo após muito tempo - isso
+        demonstra a magnitude do problema!
+      </div>
+    </div>
+  </div>
+
+  <!-- Tempo para Quebrar -->
+  <div class="bg-zinc-800 rounded-lg p-4 mb-6">
+    <h3 class="text-lg font-semibold text-zinc-200 mb-3">
+      <i class="pi pi-clock text-red-400 mr-2"></i>
+      Tempo para Quebrar a Chave Privada
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="text-center p-4 bg-red-900/20 border border-red-700 rounded">
+        <div class="text-3xl font-bold text-red-400 mb-2">
+          {{ timeToBreak.years }}
+        </div>
+        <div class="text-sm text-zinc-400">Tempo Necessário</div>
+        <div class="text-xs text-zinc-500 mt-1">
+          {{ timeToBreak.description }}
+        </div>
+      </div>
+
+      <div
+        class="text-center p-4 bg-orange-900/20 border border-orange-700 rounded"
+      >
+        <div class="text-lg font-bold text-orange-400 mb-2">
+          {{ formatBigNumber(timeToBreak.seconds) }}
+        </div>
+        <div class="text-sm text-zinc-400">Segundos Necessários</div>
+        <div class="text-xs text-zinc-500 mt-1">
+          Cálculo baseado na velocidade atual
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 p-3 bg-zinc-700 rounded border border-zinc-600">
+      <div class="text-sm text-zinc-300">
+        <strong>Fórmula:</strong> Tempo = 2²⁵⁶ possibilidades ÷
+        {{ formatBigNumber(hashesPerSecond) }} H/s
+      </div>
+      <div class="text-xs text-zinc-500 mt-1">
+        <i class="pi pi-exclamation-triangle mr-1"></i>
+        Este cálculo assume que você testaria todas as possibilidades
+        sequencialmente até encontrar a chave correta.
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparações Visuais -->
+  <div class="bg-zinc-800 rounded-lg p-4 mb-6">
+    <h3 class="text-lg font-semibold text-zinc-200 mb-3">
+      Comparações Visuais
+    </h3>
+
+    <div class="space-y-4">
+      <div
+        *ngFor="let comp of comparisons"
+        class="flex items-center justify-between p-3 bg-zinc-700 rounded border border-zinc-600"
+      >
+        <div class="flex-1">
+          <div class="font-semibold text-zinc-200">{{ comp.name }}</div>
+          <div class="text-sm text-zinc-400">{{ comp.description }}</div>
+        </div>
+
+        <div class="text-right">
+          <div class="text-lg font-bold text-blue-400">
+            {{ formatNumber(comp.value) }}
+          </div>
+          <div class="text-xs text-zinc-500">total</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparação com o espaço de chaves -->
+    <div class="mt-6 p-4 bg-red-900/20 border border-red-700 rounded">
+      <h4 class="text-lg font-semibold text-red-300 mb-2">
+        <i class="pi pi-exclamation-triangle mr-2"></i>
+        Espaço de Chaves Bitcoin
+      </h4>
+      <div class="text-2xl font-bold text-red-400 mb-2">
+        2²⁵⁶ = ~10⁷⁷ possibilidades
+      </div>
+      <div class="text-sm text-zinc-400">
+        Para comparação: mesmo com {{ formatBigNumber(hashesPerSecond) }} H/s,
+        você testaria apenas {{ formatBigNumber(currentAttempt) }} chaves em
+        {{ formatTime(elapsedTime) }}.
+      </div>
+    </div>
+  </div>
+
+  <!-- Explicação Matemática -->
+  <div class="bg-zinc-800 rounded-lg p-4">
+    <h3 class="text-lg font-semibold text-zinc-200 mb-3">
+      Por que é Impossível?
+    </h3>
+
+    <div class="space-y-3 text-zinc-300">
+      <div class="flex items-start gap-3">
+        <i class="pi pi-calculator text-blue-400 mt-1"></i>
+        <div>
+          <strong>Espaço de Chaves:</strong> Uma chave privada Bitcoin tem 256
+          bits, resultando em 2²⁵⁶ possibilidades (aproximadamente 10⁷⁷).
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <i class="pi pi-clock text-orange-400 mt-1"></i>
+        <div>
+          <strong>Tempo Necessário:</strong> Mesmo com 1 quintilhão de hashes
+          por segundo, levaria bilhões de anos para testar todas as
+          possibilidades.
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <i class="pi pi-bolt text-red-400 mt-1"></i>
+        <div>
+          <strong>Energia:</strong> A energia necessária seria maior que toda a
+          energia disponível no universo conhecido.
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <i class="pi pi-shield text-green-400 mt-1"></i>
+        <div>
+          <strong>Segurança:</strong> Esta é a base da segurança criptográfica
+          do Bitcoin - a impossibilidade computacional de quebrar chaves
+          privadas.
+        </div>
+      </div>
+    </div>
+
+    <!-- Escala de Números -->
+    <div class="mt-6 p-4 bg-blue-900/20 border border-blue-700 rounded">
+      <h4 class="text-lg font-semibold text-blue-300 mb-3">
+        <i class="pi pi-chart-line mr-2"></i>
+        Escala de Números Suportados
+      </h4>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-blue-400">1e15</div>
+          <div class="text-zinc-400">Quatrilhões</div>
+        </div>
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-blue-400">1e18</div>
+          <div class="text-zinc-400">Quintilhões</div>
+        </div>
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-blue-400">1e21</div>
+          <div class="text-zinc-400">Sextilhões</div>
+        </div>
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-blue-400">1e24</div>
+          <div class="text-zinc-400">Septilhões</div>
+        </div>
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-blue-400">1e27</div>
+          <div class="text-zinc-400">Octilhões</div>
+        </div>
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-blue-400">1e30</div>
+          <div class="text-zinc-400">Nonilhões</div>
+        </div>
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-blue-400">1e33</div>
+          <div class="text-zinc-400">Decilhões</div>
+        </div>
+        <div class="text-center p-2 bg-zinc-700 rounded">
+          <div class="font-bold text-red-400">>1e33</div>
+          <div class="text-zinc-400">Notação Científica</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
