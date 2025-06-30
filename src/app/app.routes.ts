@@ -45,6 +45,13 @@ export const routes: Routes = [
           ),
         canActivate: [NodeExistsGuard],
       },
+      {
+        path: 'tools',
+        loadComponent: () =>
+          import('./components/tools/tools.component').then(
+            (m) => m.ToolsComponent
+          ),
+      },    
     ],
   },
   // Rota para os slides (fora do layout principal)
