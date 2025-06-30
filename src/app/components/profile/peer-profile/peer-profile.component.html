@@ -13,6 +13,14 @@
           >
             v{{ node.consensus.version }}
           </span>
+          <button
+            class="ml-2 px-3 py-1 rounded bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold flex items-center gap-2 transition"
+            (click)="openConsensusDialog()"
+            title="Editar parâmetros de consenso"
+          >
+            <i class="pi pi-cog text-xs"></i>
+            Parâmetros de Consenso
+          </button>
           <span
             class="ml-4 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center min-w-[110px] transition-colors"
             [ngClass]="getNodeStatusClass()"
@@ -702,3 +710,11 @@
     </div>
   </div>
 </ng-template>
+
+<!-- Diálogo de Consenso -->
+<app-consensus-dialog
+  *ngIf="showConsensusDialog"
+  [miner]="node"
+  (close)="closeConsensusDialog()"
+  (versionChange)="onConsensusVersionChange()"
+></app-consensus-dialog>

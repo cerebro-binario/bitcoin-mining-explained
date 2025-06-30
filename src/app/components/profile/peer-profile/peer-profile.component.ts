@@ -11,6 +11,7 @@ import { KeyService } from '../../../services/key.service';
 import { BlockchainComponent } from '../../network/blockchain/blockchain.component';
 import { EventComponent } from '../../network/events/event/event.component';
 import { BlockchainBalanceComponent } from '../../network/miners-panel/miner/blockchain-balance.component';
+import { ConsensusDialogComponent } from '../../network/miners-panel/miner/consensus-dialog/consensus-dialog.component';
 import { WalletComponent } from '../../network/wallet/wallet.component';
 
 @Component({
@@ -26,11 +27,13 @@ import { WalletComponent } from '../../network/wallet/wallet.component';
     BlockchainBalanceComponent,
     FormsModule,
     SelectModule,
+    ConsensusDialogComponent,
   ],
 })
 export class PeerProfileComponent implements OnInit {
   node!: BitcoinNode;
   showAllLogs = false;
+  showConsensusDialog = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -192,5 +195,18 @@ export class PeerProfileComponent implements OnInit {
 
   onWalletActiveTabChange(tab: 'enderecos' | 'transacoes' | 'enviar') {
     this.node.pageState.walletActiveTab = tab;
+  }
+
+  openConsensusDialog() {
+    this.showConsensusDialog = true;
+  }
+
+  closeConsensusDialog() {
+    this.showConsensusDialog = false;
+  }
+
+  onConsensusVersionChange() {
+    // Handler para quando a versão de consenso for alterada
+    // (pode ser expandido se necessário)
   }
 }
