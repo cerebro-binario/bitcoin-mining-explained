@@ -658,7 +658,7 @@
         <div
           class="relative transition-all duration-300 ease-in-out w-[calc(100%+theme('spacing.6')*2)] -left-6"
           [ngStyle]="{
-            'max-height': node.pageState.blockchain === 'open' ? '0px' : null,
+            'max-height': node.pageState.blockchain === 'closed' ? '0px' : null,
             opacity: node.pageState.blockchain === 'open' ? '1' : '0',
             overflow: node.pageState.blockchain === 'open' ? 'visible' : 'hidden',
           }"
