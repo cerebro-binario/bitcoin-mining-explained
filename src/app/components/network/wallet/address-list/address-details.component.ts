@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BipType, BitcoinAddressData } from '../../../../models/wallet.model';
 import { BitcoinNetworkService } from '../../../../services/bitcoin-network.service';
@@ -42,7 +42,6 @@ export interface TransactionView {
   imports: [
     CommonModule,
     UtxoComponent,
-    RouterLink,
     TransactionListComponent,
     PaginationBarComponent,
   ],
@@ -86,6 +85,7 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private bitcoinNetworkService: BitcoinNetworkService,
     private keyService: KeyService
   ) {}
@@ -761,5 +761,9 @@ export class AddressDetailsComponent implements OnInit, OnDestroy {
 
   private ceilBigInt(a: bigint, b: bigint): bigint {
     return (a + b - 1n) / b;
+  }
+
+  goBack() {
+    window.history.back();
   }
 }

@@ -1,13 +1,13 @@
 <div class="min-h-screen bg-zinc-950 text-zinc-100 mt-16">
   <div class="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
     <div class="flex items-center gap-4 mt-4">
-      <a
-        [routerLink]="['/miners', nodeId]"
+      <button
+        (click)="goBack()"
         class="text-zinc-400 hover:text-red-400 text-xl font-bold flex-shrink-0"
-        title="Voltar para o minerador"
+        title="Voltar"
       >
         <i class="pi pi-times"></i>
-      </a>
+      </button>
       <div>
         <div class="text-lg font-bold text-blue-300 leading-tight">
           Endereço Bitcoin
