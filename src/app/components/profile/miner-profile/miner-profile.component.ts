@@ -197,8 +197,9 @@ export class MinerProfileComponent {
   }
 
   onConsensusVersionChange() {
-    // Handler para quando a versão de consenso for alterada
-    // (pode ser expandido se necessário)
+    // Recomeçar a mineração do bloco atual para que seja gerado com a nova versão do consenso
+    const latestBlock = this.miner.getLatestBlock();
+    this.miner.currentBlock = this.miner.initBlockTemplate(latestBlock);
   }
 
   onWalletActiveTabChange(tab: 'enderecos' | 'transacoes' | 'enviar') {
