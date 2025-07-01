@@ -514,18 +514,21 @@ export class Node {
     const interval = epoch.parameters.difficultyAdjustmentInterval;
     const adjustedHeight = referenceBlock.height - epoch.startHeight + 1;
 
-    let compareBlock = this.currentBlock;
+    let expectedNBits;
 
-    while (compareBlock && compareBlock.height > referenceBlock.height) {
-      compareBlock = this.findParentNode(compareBlock!)?.block;
+    if (parentBlock.hash === this.currentBlock?.previousHash) {  
+      expectedNBits = this.currentBlock.nBits;
+    } else if (referenceBlock.height === this.currentBlock?.height) {
+      expectedNBits = this.getDifficulty(parentBlock).next?.nBits || this.INITIAL_NBITS;
+    } else {
+      expectedNBits = referenceBlock.nBits;
     }
 
     // Se não for um bloco de ajuste, retorna apenas a dificuldade atual esperada para a altura atual
     if (adjustedHeight % interval !== 0) {
-
       return {
         current: {
-          nBits: compareBlock?.nBits || this.INITIAL_NBITS,
+          nBits: expectedNBits || this.INITIAL_NBITS,
         },
       };
     }
@@ -552,7 +555,7 @@ export class Node {
     if (!prevAdjustmentBlock) {
       return {
         current: {
-          nBits: compareBlock?.nBits || this.INITIAL_NBITS,
+          nBits: expectedNBits || this.INITIAL_NBITS,
         },
       };
     }
@@ -573,7 +576,7 @@ export class Node {
 
     return {
       current: {
-        nBits: compareBlock?.nBits || this.INITIAL_NBITS,
+        nBits: expectedNBits || this.INITIAL_NBITS,
       },
       next: {
         nBits: newNBits,
