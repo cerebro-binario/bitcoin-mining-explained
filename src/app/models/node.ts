@@ -183,16 +183,16 @@ export class Node {
     blockchainBipFormat: BipType | 'all-bip-types';
     currentBlockTab: 'metadata' | 'transactions';
   } = {
-    wallet: 'closed',
-    walletBipFormat: 'bip84' as BipType,
-    walletActiveTab: 'enderecos',
-    blockchain: 'open',
-    blockchainBalanceDisplayMode: 'with-balance' as
-      | 'all-private-keys'
-      | 'with-balance',
-    blockchainBipFormat: 'bip84' as BipType,
-    currentBlockTab: 'metadata',
-  };
+      wallet: 'closed',
+      walletBipFormat: 'bip84' as BipType,
+      walletActiveTab: 'enderecos',
+      blockchain: 'open',
+      blockchainBalanceDisplayMode: 'with-balance' as
+        | 'all-private-keys'
+        | 'with-balance',
+      blockchainBipFormat: 'bip84' as BipType,
+      currentBlockTab: 'metadata',
+    };
 
   constructor(init?: Partial<Node>) {
     Object.assign(this, init);
@@ -514,11 +514,18 @@ export class Node {
     const interval = epoch.parameters.difficultyAdjustmentInterval;
     const adjustedHeight = referenceBlock.height - epoch.startHeight + 1;
 
+    let compareBlock = this.currentBlock;
+
+    while (compareBlock && compareBlock.height > referenceBlock.height) {
+      compareBlock = this.findParentNode(compareBlock!)?.block;
+    }
+
     // Se não for um bloco de ajuste, retorna apenas a dificuldade atual esperada para a altura atual
     if (adjustedHeight % interval !== 0) {
+
       return {
         current: {
-          nBits: this.currentBlock?.nBits || this.INITIAL_NBITS,
+          nBits: compareBlock?.nBits || this.INITIAL_NBITS,
         },
       };
     }
@@ -545,7 +552,7 @@ export class Node {
     if (!prevAdjustmentBlock) {
       return {
         current: {
-          nBits: this.currentBlock?.nBits || this.INITIAL_NBITS,
+          nBits: compareBlock?.nBits || this.INITIAL_NBITS,
         },
       };
     }
@@ -566,7 +573,7 @@ export class Node {
 
     return {
       current: {
-        nBits: this.currentBlock?.nBits || this.INITIAL_NBITS,
+        nBits: compareBlock?.nBits || this.INITIAL_NBITS,
       },
       next: {
         nBits: newNBits,
@@ -1168,9 +1175,8 @@ export class Node {
         const validationResult = this.validateAndProcessTransactions(block);
         if (!validationResult.valid) {
           EventManager.log(event, 'block-rejected', {
-            reason: `${EVENT_LOG_REASONS[reason]}: ${
-              validationResult.reason || ''
-            }`,
+            reason: `${EVENT_LOG_REASONS[reason]}: ${validationResult.reason || ''
+              }`,
             txId: validationResult.txId,
           });
         } else {
@@ -2055,11 +2061,11 @@ export class Node {
           ...(isMinerCoinbase
             ? { keys: this.wallet.addresses[0].bip84.keys }
             : {
-                keys: {
-                  pub: { hex: '', decimal: '' },
-                  priv: { hex: '', decimal: '', wif: '' },
-                },
-              }),
+              keys: {
+                pub: { hex: '', decimal: '' },
+                priv: { hex: '', decimal: '', wif: '' },
+              },
+            }),
           bipFormat: getAddressType(output.scriptPubKey.address),
           transactions: [],
         };
@@ -2241,11 +2247,11 @@ export class Node {
       ...(isMinerCoinbase
         ? { keys: this.wallet.addresses[0].bip84.keys }
         : {
-            keys: {
-              pub: { hex: '', decimal: '' },
-              priv: { hex: '', decimal: '', wif: '' },
-            },
-          }),
+          keys: {
+            pub: { hex: '', decimal: '' },
+            priv: { hex: '', decimal: '', wif: '' },
+          },
+        }),
       bipFormat: getAddressType(address),
       transactions: [],
     };
