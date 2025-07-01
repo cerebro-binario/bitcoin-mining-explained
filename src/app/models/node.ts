@@ -1604,13 +1604,15 @@ export class Node {
 
   private isPeerConsensusCompatible(peer: Node): boolean {
     // Obtém a altura atual
-    const currentHeight = this.getLatestBlock()?.height || 0;
+    const latestBlock = this.getLatestBlock();
+    const peerLatestBlock = peer.getLatestBlock();
 
-    return areConsensusVersionsCompatible(
-      this.consensus,
-      peer.consensus,
-      currentHeight
-    );
+    if (!latestBlock || !peerLatestBlock) return true;
+
+    const myReason = this.validateBlockConsensus(peerLatestBlock);
+    const peerReason = peer.validateBlockConsensus(latestBlock);
+
+    return myReason === undefined && peerReason === undefined;
   }
 
   addEvent(type: NodeEventType, data?: any, logs: NodeEventLog[] = []) {
