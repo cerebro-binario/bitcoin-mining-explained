@@ -526,7 +526,8 @@ export class Node {
       expectedNBits = compareBlock.nBits;
     } else if (referenceBlock.height === compareBlock?.height) {
       // forks diferentes, mesma altura
-      expectedNBits = this.getDifficulty(parentBlock).next?.nBits || this.INITIAL_NBITS;
+      const parentDifficulty = this.getDifficulty(parentBlock);
+      expectedNBits = parentDifficulty.next?.nBits || parentDifficulty.current.nBits;
     } else {
       expectedNBits = referenceBlock.nBits;
     }
@@ -535,7 +536,7 @@ export class Node {
     if (adjustedHeight % interval !== 0) {
       return {
         current: {
-          nBits: expectedNBits || this.INITIAL_NBITS,
+          nBits: expectedNBits,
         },
       };
     }
@@ -562,7 +563,7 @@ export class Node {
     if (!prevAdjustmentBlock) {
       return {
         current: {
-          nBits: expectedNBits || this.INITIAL_NBITS,
+          nBits: expectedNBits,
         },
       };
     }
@@ -583,7 +584,7 @@ export class Node {
 
     return {
       current: {
-        nBits: expectedNBits || this.INITIAL_NBITS,
+        nBits: expectedNBits,
       },
       next: {
         nBits: newNBits,
