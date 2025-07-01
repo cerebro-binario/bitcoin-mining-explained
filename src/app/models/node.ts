@@ -514,11 +514,11 @@ export class Node {
     const interval = epoch.parameters.difficultyAdjustmentInterval;
     const adjustedHeight = referenceBlock.height - epoch.startHeight + 1;
 
-    // Se não for um bloco de ajuste, retorna apenas a dificuldade atual
+    // Se não for um bloco de ajuste, retorna apenas a dificuldade atual esperada para a altura atual
     if (adjustedHeight % interval !== 0) {
       return {
         current: {
-          nBits: referenceBlock.nBits,
+          nBits: this.currentBlock?.nBits || this.INITIAL_NBITS,
         },
       };
     }
@@ -545,7 +545,7 @@ export class Node {
     if (!prevAdjustmentBlock) {
       return {
         current: {
-          nBits: referenceBlock.nBits,
+          nBits: this.currentBlock?.nBits || this.INITIAL_NBITS,
         },
       };
     }
@@ -566,7 +566,7 @@ export class Node {
 
     return {
       current: {
-        nBits: referenceBlock.nBits,
+        nBits: this.currentBlock?.nBits || this.INITIAL_NBITS,
       },
       next: {
         nBits: newNBits,
