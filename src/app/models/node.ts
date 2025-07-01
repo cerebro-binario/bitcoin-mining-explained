@@ -542,7 +542,7 @@ export class Node {
     }
 
     // Encontra o bloco do último ajuste
-    const prevAdjustmentHeight = adjustedHeight - interval;
+    const prevAdjustmentHeight = Math.max(referenceBlock.height - interval, 0);
     const prevIndex = this.getHeightIndex(prevAdjustmentHeight);
     let prevAdjustmentBlock: Block | undefined = undefined;
 
