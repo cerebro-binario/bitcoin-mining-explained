@@ -515,10 +515,17 @@ export class Node {
     const adjustedHeight = referenceBlock.height - epoch.startHeight + 1;
 
     let expectedNBits;
+    let compareBlock = this.currentBlock;
 
-    if (parentBlock.hash === this.currentBlock?.previousHash) {  
-      expectedNBits = this.currentBlock.nBits;
-    } else if (referenceBlock.height === this.currentBlock?.height) {
+    while (compareBlock && compareBlock.height > referenceBlock.height) {
+      compareBlock = this.findParentNode(compareBlock)?.block;
+    }
+
+    if (parentBlock.hash === compareBlock?.previousHash) {
+      // mesmo fork, mesma altura
+      expectedNBits = compareBlock.nBits;
+    } else if (referenceBlock.height === compareBlock?.height) {
+      // forks diferentes, mesma altura
       expectedNBits = this.getDifficulty(parentBlock).next?.nBits || this.INITIAL_NBITS;
     } else {
       expectedNBits = referenceBlock.nBits;
